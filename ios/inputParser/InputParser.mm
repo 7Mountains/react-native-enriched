@@ -233,6 +233,9 @@
            [currentActiveStyles containsObject:@([H1Style getStyleType])] ||
            [currentActiveStyles containsObject:@([H2Style getStyleType])] ||
            [currentActiveStyles containsObject:@([H3Style getStyleType])] ||
+           [currentActiveStyles containsObject:@([H4Style getStyleType])] ||
+           [currentActiveStyles containsObject:@([H5Style getStyleType])] ||
+           [currentActiveStyles containsObject:@([H6Style getStyleType])] ||
            [currentActiveStyles containsObject:@([BlockQuoteStyle getStyleType])] ||
            [currentActiveStyles containsObject:@([CodeBlockStyle getStyleType])] ||
            [currentActiveStyles containsObject:@([CheckBoxStyle getStyleType])]
@@ -376,6 +379,9 @@
       [previousActiveStyles containsObject:@([H1Style getStyleType])] ||
       [previousActiveStyles containsObject:@([H2Style getStyleType])] ||
       [previousActiveStyles containsObject:@([H3Style getStyleType])] ||
+      [previousActiveStyles containsObject:@([H4Style getStyleType])] || 
+      [previousActiveStyles containsObject:@([H5Style getStyleType])] ||
+      [previousActiveStyles containsObject:@([H6Style getStyleType])] ||
       [previousActiveStyles containsObject:@([CheckBoxStyle getStyleType])]
     ) {
       // do nothing, heading closing tag has already been appended
@@ -517,8 +523,13 @@
     return @"h2";
   } else if ([style isEqualToNumber:@([H3Style getStyleType])]) {
     return @"h3";
-  } else if ([style isEqualToNumber:@([UnorderedListStyle getStyleType])] ||
-             [style isEqualToNumber:@([OrderedListStyle getStyleType])]) {
+  } else if([style isEqualToNumber:@([H4Style getStyleType])]) {
+    return @"h4";
+  } else if([style isEqualToNumber:@([H5Style getStyleType])]) {
+    return @"h5";
+  } else if([style isEqualToNumber:@([H6Style getStyleType])]) {
+    return @"h6";
+  } else if([style isEqualToNumber:@([UnorderedListStyle getStyleType])] || [style isEqualToNumber:@([OrderedListStyle getStyleType])]) {
     return @"li";
   } else if ([style isEqualToNumber:@([BlockQuoteStyle getStyleType])] ||
              [style isEqualToNumber:@([CodeBlockStyle getStyleType])]) {
@@ -748,45 +759,21 @@
     fixedHtml = [self stringByAddingNewlinesToTag:@"<h1>" inString:fixedHtml leading:YES trailing:NO];
     fixedHtml = [self stringByAddingNewlinesToTag:@"<h2>" inString:fixedHtml leading:YES trailing:NO];
     fixedHtml = [self stringByAddingNewlinesToTag:@"<h3>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<h4>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<h5>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<h6>" inString:fixedHtml leading:YES trailing:NO];
     fixedHtml = [self stringByAddingNewlinesToTag:@"<checklist>" inString:fixedHtml leading:YES trailing:NO];
     
     // line closing tags
-    fixedHtml = [self stringByAddingNewlinesToTag:@"</p>"
-                                         inString:fixedHtml
-                                          leading:NO
-                                         trailing:YES];
-    fixedHtml = [self stringByAddingNewlinesToTag:@"</li>"
-                                         inString:fixedHtml
-                                          leading:NO
-                                         trailing:YES];
-    fixedHtml = [self stringByAddingNewlinesToTag:@"</h1>"
-                                         inString:fixedHtml
-                                          leading:NO
-                                         trailing:YES];
-    fixedHtml = [self stringByAddingNewlinesToTag:@"</h2>"
-                                         inString:fixedHtml
-                                          leading:NO
-                                         trailing:YES];
-    fixedHtml = [self stringByAddingNewlinesToTag:@"</h3>"
-                                         inString:fixedHtml
-                                          leading:NO
-                                         trailing:YES];
-
-    // this is more like a hack but for some reason the last <br> in
-    // <blockquote> and <codeblock> are not properly changed into zero width
-    // space so we do that manually here
-    fixedHtml = [fixedHtml
-        stringByReplacingOccurrencesOfString:@"<br>\n</blockquote>"
-                                  withString:@"<p>\u200B</p>\n</blockquote>"];
-    fixedHtml = [fixedHtml
-        stringByReplacingOccurrencesOfString:@"<br>\n</codeblock>"
-                                  withString:@"<p>\u200B</p>\n</codeblock>"];
-
-    // replace "<br>" at the end with "<br>\n" if input is not empty to properly
-    // handle last <br> in html
-    if ([fixedHtml hasSuffix:@"<br>"] && fixedHtml.length != 4) {
-      fixedHtml = [fixedHtml stringByAppendingString:@"\n"];
-    }
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</p>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</li>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</h1>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</h2>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</h3>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</h4>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</h5>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</h6>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"</checklist>" inString:fixedHtml leading:NO trailing:YES];
   }
 
   return fixedHtml;
@@ -1220,6 +1207,12 @@
         [styleArr addObject:@([H2Style getStyleType])];
       } else if ([tagName isEqualToString:@"h3"]) {
         [styleArr addObject:@([H3Style getStyleType])];
+      } else if([tagName isEqualToString:@"h4"]) {
+        [styleArr addObject:@([H4Style getStyleType])];
+      } else if([tagName isEqualToString:@"h5"]) {
+        [styleArr addObject:@([H5Style getStyleType])];
+      } else if([tagName isEqualToString:@"h6"]) {
+        [styleArr addObject:@([H6Style getStyleType])];
       }
     } else if ([tagName isEqualToString:@"ul"]) {
       [styleArr addObject:@([UnorderedListStyle getStyleType])];
