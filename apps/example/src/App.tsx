@@ -26,6 +26,8 @@ import {
   DEFAULT_IMAGE_WIDTH,
   prepareImageDimensions,
 } from './utils/prepareImageDimensions';
+import type { OnChangeColorEvent } from '../../src/EnrichedTextInputNativeComponent';
+import ColorPreview from './components/ColorPreview';
 
 type StylesState = OnChangeStateEvent;
 
@@ -36,6 +38,8 @@ interface Selection {
   end: number;
   text: string;
 }
+
+const PRIMARY_COLOR = '#000000';
 
 const DEFAULT_STYLE: StylesState = {
   isBold: false,
@@ -54,6 +58,7 @@ const DEFAULT_STYLE: StylesState = {
   isImage: false,
   isMention: false,
   isCheckList: false,
+  isColored: false,
 };
 
 const DEFAULT_LINK_STATE = {
@@ -83,6 +88,7 @@ export default function App() {
   const [stylesState, setStylesState] = useState<StylesState>(DEFAULT_STYLE);
   const [currentLink, setCurrentLink] =
     useState<CurrentLinkState>(DEFAULT_LINK_STATE);
+  const [selectionColor, setSelectionColor] = useState<string>(PRIMARY_COLOR);
 
   const ref = useRef<EnrichedTextInputInstance>(null);
 
@@ -282,6 +288,12 @@ export default function App() {
     setSelection(sel);
   };
 
+  const handleSelectionColorChange = (e: OnChangeColorEvent) => {
+    if (e.color) {
+      setSelectionColor(e.color);
+    }
+  };
+
   return (
     <>
       <ScrollView
@@ -303,6 +315,10 @@ export default function App() {
             onChangeText={(e) => handleChangeText(e.nativeEvent)}
             onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
+            defaultValue="<html><checklist checked='false'>test</checklist></html>"
+            onColorChangeInSelection={(e) =>
+              handleSelectionColorChange(e.nativeEvent)
+            }
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}
@@ -318,6 +334,7 @@ export default function App() {
           <Toolbar
             stylesState={stylesState}
             editorRef={ref}
+            selectionColor={selectionColor}
             onOpenLinkModal={openLinkModal}
             onSelectImage={openImageModal}
           />
@@ -338,6 +355,7 @@ export default function App() {
         <Text>is Check list {stylesState.isCheckList ? 'true' : 'false'}</Text>
         <HtmlSection currentHtml={currentHtml} />
         {DEBUG_SCROLLABLE && <View style={styles.scrollPlaceholder} />}
+        <ColorPreview color={selectionColor} />
       </ScrollView>
       <LinkModal
         isOpen={isLinkModalOpen}
@@ -403,7 +421,7 @@ const htmlStyle: HtmlStyle = {
     backgroundColor: 'yellow',
   },
   a: {
-    color: 'green',
+    color: 'blue',
     textDecorationLine: 'underline',
   },
   mention: {
