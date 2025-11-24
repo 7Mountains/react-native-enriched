@@ -347,6 +347,11 @@ export default function App() {
           <Button title="Blur" onPress={handleBlur} style={styles.button} />
         </View>
         <Button
+          title="Add Divider"
+          onPress={() => ref.current?.addDividerAtNewLine()}
+          style={styles.valueButton}
+        />
+        <Button
           title="Set input's value"
           onPress={openValueModal}
           style={styles.valueButton}
@@ -479,6 +484,11 @@ const htmlStyle: HtmlStyle = {
     marginLeft: 0,
     gapWidth: 6,
     checkedTextColor: 'gray',
+  },
+  divider: {
+    height: 24,
+    color: 'gray',
+    thickness: 2,
   },
 };
 

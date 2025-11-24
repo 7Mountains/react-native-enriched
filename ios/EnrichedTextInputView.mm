@@ -118,6 +118,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([CodeBlockStyle getStyleType]): [[CodeBlockStyle alloc] initWithInput:self],
     @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self],
     @([CheckBoxStyle getStyleType]): [[CheckBoxStyle alloc] initWithInput:self]
+    @([DividerStyle getStyleType]): [[DividerStyle alloc] initWithInput:self],
   };
 
   conflictingStyles = @{
@@ -176,6 +177,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([CodeBlockStyle getStyleType]): @[],
     @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType])],
     @([CheckBoxStyle getStyleType]): @[],
+    @([DividerStyle getStyleType]): @[]
   };
 
   parser = [[InputParser alloc] initWithInput:self];
@@ -382,6 +384,18 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   
   if(newViewProps.htmlStyle.checkbox.checkedTextColor != oldViewProps.htmlStyle.checkbox.checkedTextColor) {
     [newConfig setCheckedTextColor: RCTUIColorFromSharedColor(newViewProps.htmlStyle.checkbox.checkedTextColor)];
+  if(newViewProps.htmlStyle.divider.color != oldViewProps.htmlStyle.divider.color) {
+    [newConfig setDividerColor: RCTUIColorFromSharedColor(newViewProps.htmlStyle.divider.color)];
+    stylePropChanged = YES;
+  }
+  
+  if(newViewProps.htmlStyle.divider.thickness != oldViewProps.htmlStyle.divider.thickness) {
+    [newConfig setDividerThickness: newViewProps.htmlStyle.divider.thickness];
+    stylePropChanged = YES;
+  }
+
+  if(newViewProps.htmlStyle.divider.height != oldViewProps.htmlStyle.divider.height) {
+    [newConfig setDividerHeight: newViewProps.htmlStyle.divider.height];
     stylePropChanged = YES;
   }
   
@@ -762,27 +776,20 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (CGSize)measureSize:(CGFloat)maxWidth {
   // copy the the whole attributed string
-  NSMutableAttributedString *currentStr = [[NSMutableAttributedString alloc]
-      initWithAttributedString:textView.textStorage];
-
-  // edge case: empty input should still be of a height of a single line, so we
-  // add a mock "I" character
-  if ([currentStr length] == 0) {
-    [currentStr
-        appendAttributedString:[[NSAttributedString alloc]
-                                   initWithString:@"I"
-                                       attributes:textView.typingAttributes]];
+  NSMutableAttributedString *currentStr = [[NSMutableAttributedString alloc] initWithAttributedString:textView.textStorage];
+  
+  // edge case: empty input should still be of a height of a single line, so we add a mock "I" character
+  if([currentStr length] == 0 ) {
+    [currentStr appendAttributedString:
+      [[NSAttributedString alloc] initWithString:@"I" attributes:textView.typingAttributes]
+    ];
   }
-
-  // edge case: input with only a zero width space should still be of a height
-  // of a single line, so we add a mock "I" character
-  if ([currentStr length] == 1 &&
-      [[currentStr.string substringWithRange:NSMakeRange(0, 1)]
-          isEqualToString:@"\u200B"]) {
-    [currentStr
-        appendAttributedString:[[NSAttributedString alloc]
-                                   initWithString:@"I"
-                                       attributes:textView.typingAttributes]];
+  
+  // edge case: input with only a zero width space should still be of a height of a single line, so we add a mock "I" character
+  if([currentStr length] == 1 && [[currentStr.string substringWithRange:NSMakeRange(0, 1)] isEqualToString:@"\u200B"]) {
+    [currentStr appendAttributedString:
+      [[NSAttributedString alloc] initWithString:@"I" attributes:textView.typingAttributes]
+    ];
   }
 
   // edge case: trailing newlines aren't counted towards height calculations, so
@@ -1045,6 +1052,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self requestHTML:requestId];
   } else if([commandName isEqualToString:@"toggleCheckList"]) {
     [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
+  } else if([commandName isEqualToString:@"addDividerAtNewLine"]) {
+    [self addDividerAtNewLine];
   }
 }
 
@@ -1288,22 +1297,18 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
-- (void)addMention:(NSString *)indicator
-              text:(NSString *)text
-        attributes:(NSString *)attributes {
-  MentionStyle *mentionStyleClass =
-      (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
-  if (mentionStyleClass == nullptr) {
-    return;
-  }
-  if ([mentionStyleClass getActiveMentionRange] == nullptr) {
-    return;
-  }
+-(void)addDividerAtNewLine {
+  DividerStyle *dividerStyle = stylesDict[(@([DividerStyle getStyleType]))];
+  [dividerStyle insertDividerAtNewLine];
+  [self anyTextMayHaveBeenModified];
+}
 
-  if ([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType]
-                                    range:[[mentionStyleClass
-                                              getActiveMentionRange]
-                                              rangeValue]]) {
+- (void)addMention:(NSString *)indicator text:(NSString *)text attributes:(NSString *)attributes {
+  MentionStyle *mentionStyleClass = (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
+  if(mentionStyleClass == nullptr) { return; }
+  if([mentionStyleClass getActiveMentionRange] == nullptr) { return; }
+  
+  if([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType] range:[[mentionStyleClass getActiveMentionRange] rangeValue]]) {
     [mentionStyleClass addMention:indicator text:text attributes:attributes];
     [self anyTextMayHaveBeenModified];
   }
@@ -1720,6 +1725,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 // link or starting mention with indicator doesn't fire it) so all the logic is
 // in anyTextMayHaveBeenModified
 - (void)textViewDidChange:(UITextView *)textView {
+  DividerStyle *dividerStyle = stylesDict[@([DividerStyle getStyleType])];
+  
+  [dividerStyle handleConflictingStylesInParagraph];
+  
   [self anyTextMayHaveBeenModified];
 }
 

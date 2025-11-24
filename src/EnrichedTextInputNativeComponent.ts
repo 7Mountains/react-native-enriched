@@ -140,6 +140,11 @@ export interface HtmlStyleInternal {
     gapWidth?: Float;
     checkedTextColor?: ColorValue;
   };
+  divider?: {
+    height?: Float;
+    color?: ColorValue;
+    thickness?: Float;
+  };
 }
 
 export interface NativeProps extends ViewProps {
@@ -245,6 +250,7 @@ interface NativeCommands {
     viewRef: React.ElementRef<ComponentType>,
     color: string
   ) => void;
+  addDividerAtNewLine: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -278,6 +284,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'requestHTML',
     'toggleCheckList',
     'toggleColor',
+    'addDividerAtNewLine',
   ],
 });
 
