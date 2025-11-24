@@ -66,6 +66,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   ) => void;
   toggleCheckList: () => void;
   toggleColor: (color: string) => void;
+  addDividerAtNewLine: () => void;
 }
 
 export interface OnChangeMentionEvent {
@@ -125,6 +126,11 @@ export interface HtmlStyle {
     marginLeft?: number;
     gapWidth?: number;
     checkedTextColor?: ColorValue;
+  };
+  divider?: {
+    height?: number;
+    color?: ColorValue;
+    thickness?: number;
   };
 }
 
@@ -327,6 +333,8 @@ export const EnrichedTextInput = ({
     toggleColor: (color: string) => {
       Commands.toggleColor(nullthrows(nativeRef.current), color);
     },
+    addDividerAtNewLine: () =>
+      Commands.addDividerAtNewLine(nullthrows(nativeRef.current)),
   }));
 
   const handleMentionEvent = (e: NativeSyntheticEvent<OnMentionEvent>) => {
