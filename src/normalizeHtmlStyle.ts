@@ -75,6 +75,11 @@ const defaultStyle: Required<HtmlStyle> = {
     gapWidth: 8,
     checkedTextColor: 'gray',
   },
+  divider: {
+    height: 20,
+    color: 'darkgray',
+    thickness: 2,
+  },
 };
 
 const isMentionStyleRecord = (

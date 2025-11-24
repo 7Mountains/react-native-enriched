@@ -3,6 +3,7 @@
 #import "LinkData.h"
 #import "MentionParams.h"
 #import "ImageData.h"
+#import "DividerAttachment.h"
 
 @interface BoldStyle : NSObject <BaseStyleProtocol>
 @end
@@ -109,4 +110,9 @@
 - (BOOL)isCheckedAt:(NSUInteger)location;
 - (void)toggleCheckedAt:(NSUInteger)location;
 - (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked;
+@end
+
+@interface DividerStyle : NSObject<BaseStyleProtocol>
+- (void)insertDividerAtNewLine;
+- (void)handleConflictingStylesInParagraph;
 @end

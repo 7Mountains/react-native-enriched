@@ -101,4 +101,11 @@
 - (void)setCheckBoxListGapWidth:(CGFloat)newValue;
 - (UIColor *)checkedTextColor;
 - (void)setCheckedTextColor:(UIColor *)newValue;
+- (CGFloat)dividerHeight;
+- (UIColor *)dividerColor;
+- (CGFloat)dividerThickness;
+- (void)dividerThickness:(CGFloat)newValue;
+- (void)setDividerHeight:(CGFloat)newValue;
+- (void)setDividerColor:(UIColor *)newValue;
+- (void)setDividerThickness:(CGFloat)newValue;
 @end
