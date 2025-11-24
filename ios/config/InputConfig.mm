@@ -54,6 +54,9 @@
   CGFloat _checkBoxWidth;
   CGFloat _checkBoxHeight;
   UIColor *_checkedTextColor;
+  CGFloat _dividerHeight;
+  CGFloat _dividerThickness;
+  UIColor *_dividerColor;
 }
 
 - (instancetype)init {
@@ -115,6 +118,9 @@
   copy->_checkBoxWidth = _checkBoxWidth;
   copy->_checkBoxHeight = _checkBoxHeight;
   copy->_checkedTextColor = _checkedTextColor;
+  copy->_dividerColor = [_dividerColor copy];
+  copy->_dividerHeight = _dividerHeight;
+  copy-> _dividerThickness = _dividerThickness;
   return copy;
 }
 
@@ -559,6 +565,28 @@
 
 - (void)setCheckedTextColor:(UIColor *)newValue {
   _checkedTextColor = newValue;
+- (void)setDividerColor:(UIColor *)newValue {
+  _dividerColor = newValue;
+}
+
+- (void)setDividerHeight:(CGFloat)newValue {
+  _dividerHeight = newValue;
+}
+
+-(void)setDividerThickness:(CGFloat)newValue {
+  _dividerThickness = newValue;
+}
+
+- (UIColor *)dividerColor {
+  return _dividerColor;
+}
+
+- (CGFloat)dividerHeight {
+  return _dividerHeight;
+}
+
+- (CGFloat)dividerThickness {
+  return _dividerThickness;
 }
 
 @end
