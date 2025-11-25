@@ -12,6 +12,8 @@ static NSString *const placeholder = @"\uFFFC";
 
 + (StyleType)getStyleType { return Divider; }
 
++ (BOOL)isParagraphStyle { return YES; }
+
 - (instancetype)initWithInput:(id)input {
     if (self = [super init]) {
         _input = (EnrichedTextInputView *)input;
@@ -182,33 +184,6 @@ static NSString *const placeholder = @"\uFFFC";
     NSUInteger index = lineRange.location + lineRange.length;
 
     [self insertDividerAt:index setSelection:YES];
-}
-
-- (void)handleConflictingStylesInParagraph {
-    UITextView *textView = _input->textView;
-    NSString *string = textView.textStorage.string;
-    
-    NSRange selection = textView.selectedRange;
-    NSRange paragraphRange = [string paragraphRangeForRange:selection];
-
-    // Check if there are any styles other than Divider in this paragraph
-    BOOL hasOtherStyles = [OccurenceUtils any:nil // nil to check all attributes
-                                     withInput:_input
-                                       inRange:paragraphRange
-                                 withCondition:^BOOL(id value, NSRange range) {
-        if ([value isKindOfClass:[DividerAttachment class]]) {
-            return NO;
-        }
-        return YES;
-    }];
-
-    if (hasOtherStyles) {
-        NSArray<StylePair *> *dividerPairs = [self findAllOccurences:paragraphRange];
-        for (StylePair *pair in dividerPairs) {
-            NSRange range = [pair.rangeValue rangeValue];
-            [self removeAttributes:range];
-        }
-    }
 }
 
 @end

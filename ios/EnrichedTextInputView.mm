@@ -153,31 +153,44 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
            @([OrderedListStyle getStyleType]),
            @([BlockQuoteStyle getStyleType]),
            @([CodeBlockStyle getStyleType]),
-       ]
+           @([DividerStyle getStyleType])
+       ],
+    @([DividerStyle getStyleType]) : @[
+           @([H1Style getStyleType]),
+           @([H2Style getStyleType]),
+           @([H3Style getStyleType]),
+           @([H4Style getStyleType]),
+           @([H5Style getStyleType]),
+           @([H6Style getStyleType]),
+           @([UnorderedListStyle getStyleType]),
+           @([OrderedListStyle getStyleType]),
+           @([BlockQuoteStyle getStyleType]),
+           @([CodeBlockStyle getStyleType]),
+       ],
   };
 
   blockingStyles = @{
-    @([BoldStyle getStyleType]) : @[@([CodeBlockStyle getStyleType])],
-    @([ItalicStyle getStyleType]) : @[@([CodeBlockStyle getStyleType])],
-    @([UnderlineStyle getStyleType]) : @[@([CodeBlockStyle getStyleType])],
-    @([StrikethroughStyle getStyleType]) : @[@([CodeBlockStyle getStyleType])],
-    @([ColorStyle getStyleType]): @[@([CodeBlockStyle getStyleType])],
-    @([InlineCodeStyle getStyleType]) : @[@([CodeBlockStyle getStyleType])],
-    @([LinkStyle getStyleType]): @[@([CodeBlockStyle getStyleType])],
-    @([MentionStyle getStyleType]): @[@([CodeBlockStyle getStyleType])],
-    @([H1Style getStyleType]): @[],
-    @([H2Style getStyleType]): @[],
-    @([H3Style getStyleType]): @[],
-    @([H4Style getStyleType]): @[],
-    @([H5Style getStyleType]): @[],
-    @([H6Style getStyleType]): @[],
-    @([UnorderedListStyle getStyleType]): @[],
-    @([OrderedListStyle getStyleType]): @[],
-    @([BlockQuoteStyle getStyleType]): @[],
-    @([CodeBlockStyle getStyleType]): @[],
-    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType])],
-    @([CheckBoxStyle getStyleType]): @[],
-    @([DividerStyle getStyleType]): @[]
+    @([BoldStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([ItalicStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([UnderlineStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([StrikethroughStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([ColorStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([InlineCodeStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([LinkStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([MentionStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H1Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H2Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H3Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H4Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H5Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H6Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([UnorderedListStyle getStyleType]): @[@([DividerStyle getStyleType])],
+    @([OrderedListStyle getStyleType]): @[@([DividerStyle getStyleType])],
+    @([BlockQuoteStyle getStyleType]): @[@([DividerStyle getStyleType])],
+    @([CodeBlockStyle getStyleType]): @[@([DividerStyle getStyleType])],
+    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([CheckBoxStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
+    @([DividerStyle getStyleType]): @[@([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
   };
 
   parser = [[InputParser alloc] initWithInput:self];
@@ -1684,10 +1697,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 // link or starting mention with indicator doesn't fire it) so all the logic is
 // in anyTextMayHaveBeenModified
 - (void)textViewDidChange:(UITextView *)textView {
-  DividerStyle *dividerStyle = stylesDict[@([DividerStyle getStyleType])];
-  
-  [dividerStyle handleConflictingStylesInParagraph];
-  
   [self anyTextMayHaveBeenModified];
 }
 
