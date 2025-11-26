@@ -130,19 +130,16 @@
         }
 
         // append closing paragraph tag
-        if ([previousActiveStyles
-                containsObject:@([UnorderedListStyle getStyleType])] ||
-            [previousActiveStyles
-                containsObject:@([OrderedListStyle getStyleType])] ||
-            [previousActiveStyles containsObject:@([H1Style getStyleType])] ||
-            [previousActiveStyles containsObject:@([H2Style getStyleType])] ||
-            [previousActiveStyles containsObject:@([H3Style getStyleType])] ||
-            [previousActiveStyles
-                containsObject:@([BlockQuoteStyle getStyleType])] ||
-            [previousActiveStyles
-                containsObject:@([CodeBlockStyle getStyleType])]) {
-          // do nothing, proper closing paragraph tags have been already
-          // appended
+        if([previousActiveStyles containsObject:@([UnorderedListStyle getStyleType])] ||
+           [previousActiveStyles containsObject:@([OrderedListStyle getStyleType])] ||
+           [previousActiveStyles containsObject:@([H1Style getStyleType])] ||
+           [previousActiveStyles containsObject:@([H2Style getStyleType])] ||
+           [previousActiveStyles containsObject:@([H3Style getStyleType])] ||
+           [previousActiveStyles containsObject:@([BlockQuoteStyle getStyleType])] ||
+           [previousActiveStyles containsObject:@([CodeBlockStyle getStyleType])] ||
+           [previousActiveStyles containsObject:@([CheckBoxStyle getStyleType])]
+        ) {
+          // do nothing, proper closing paragraph tags have been already appended
         } else {
           [result appendString:@"</p>"];
         }
@@ -217,17 +214,15 @@
         }
 
         // don't add the <p> tag if some paragraph styles are present
-        if ([currentActiveStyles
-                containsObject:@([UnorderedListStyle getStyleType])] ||
-            [currentActiveStyles
-                containsObject:@([OrderedListStyle getStyleType])] ||
-            [currentActiveStyles containsObject:@([H1Style getStyleType])] ||
-            [currentActiveStyles containsObject:@([H2Style getStyleType])] ||
-            [currentActiveStyles containsObject:@([H3Style getStyleType])] ||
-            [currentActiveStyles
-                containsObject:@([BlockQuoteStyle getStyleType])] ||
-            [currentActiveStyles
-                containsObject:@([CodeBlockStyle getStyleType])]) {
+        if([currentActiveStyles containsObject:@([UnorderedListStyle getStyleType])] ||
+           [currentActiveStyles containsObject:@([OrderedListStyle getStyleType])] ||
+           [currentActiveStyles containsObject:@([H1Style getStyleType])] ||
+           [currentActiveStyles containsObject:@([H2Style getStyleType])] ||
+           [currentActiveStyles containsObject:@([H3Style getStyleType])] ||
+           [currentActiveStyles containsObject:@([BlockQuoteStyle getStyleType])] ||
+           [currentActiveStyles containsObject:@([CodeBlockStyle getStyleType])] ||
+           [currentActiveStyles containsObject:@([CheckBoxStyle getStyleType])]
+        ) {
           [result appendString:@"\n"];
         } else {
           [result appendString:@"\n<p>"];
@@ -373,12 +368,12 @@
     } else if ([previousActiveStyles
                    containsObject:@([CodeBlockStyle getStyleType])]) {
       [result appendString:@"\n</codeblock>"];
-    } else if ([previousActiveStyles
-                   containsObject:@([H1Style getStyleType])] ||
-               [previousActiveStyles
-                   containsObject:@([H2Style getStyleType])] ||
-               [previousActiveStyles
-                   containsObject:@([H3Style getStyleType])]) {
+    } else if(
+      [previousActiveStyles containsObject:@([H1Style getStyleType])] ||
+      [previousActiveStyles containsObject:@([H2Style getStyleType])] ||
+      [previousActiveStyles containsObject:@([H3Style getStyleType])] ||
+      [previousActiveStyles containsObject:@([CheckBoxStyle getStyleType])]
+    ) {
       // do nothing, heading closing tag has already ben appended
     } else {
       [result appendString:@"</p>"];
@@ -520,6 +515,17 @@
              [style isEqualToNumber:@([CodeBlockStyle getStyleType])]) {
     // blockquotes and codeblock use <p> tags the same way lists use <li>
     return @"p";
+  } else if ([style isEqualToNumber:@([CheckBoxStyle getStyleType])]) {
+    if(openingTag) {
+      CheckBoxStyle *checkBoxStyle = _input->stylesDict[@([CheckBoxStyle getStyleType])];
+      if(checkBoxStyle) {
+        BOOL isChecked = [checkBoxStyle isCheckedAt:location];
+        NSString *checkedStr = isChecked ? @"true" : @"false";
+        return [NSString stringWithFormat:@"checklist checked=\"%@\"", checkedStr];
+      }
+    }
+    
+    return @"checklist";
   }
   return @"";
 }
@@ -611,9 +617,10 @@
                                                 params:params];
       } else if ([styleType isEqualToNumber:@([ImageStyle getStyleType])]) {
         ImageData *imgData = (ImageData *)stylePair.styleValue;
-        [((ImageStyle *)baseStyle) addImageAtRange:styleRange
-                                         imageData:imgData
-                                     withSelection:NO];
+        [((ImageStyle *)baseStyle) addImageAtRange:styleRange imageData:imgData withSelection:NO];
+      } else if([styleType isEqualToNumber:@([CheckBoxStyle getStyleType])]) {
+        BOOL isChecked = [stylePair.styleValue boolValue];
+        [((CheckBoxStyle *)baseStyle) addCheckBoxAtRange:styleRange isChecked: isChecked];
       } else {
         BOOL shouldAddTypingAttr =
             styleRange.location + styleRange.length == plainTextLength;
@@ -724,27 +731,13 @@
                                          trailing:YES];
 
     // line opening tags
-    fixedHtml = [self stringByAddingNewlinesToTag:@"<p>"
-                                         inString:fixedHtml
-                                          leading:YES
-                                         trailing:NO];
-    fixedHtml = [self stringByAddingNewlinesToTag:@"<li>"
-                                         inString:fixedHtml
-                                          leading:YES
-                                         trailing:NO];
-    fixedHtml = [self stringByAddingNewlinesToTag:@"<h1>"
-                                         inString:fixedHtml
-                                          leading:YES
-                                         trailing:NO];
-    fixedHtml = [self stringByAddingNewlinesToTag:@"<h2>"
-                                         inString:fixedHtml
-                                          leading:YES
-                                         trailing:NO];
-    fixedHtml = [self stringByAddingNewlinesToTag:@"<h3>"
-                                         inString:fixedHtml
-                                          leading:YES
-                                         trailing:NO];
-
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<p>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<li>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<h1>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<h2>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<h3>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<checklist>" inString:fixedHtml leading:YES trailing:NO];
+    
     // line closing tags
     fixedHtml = [self stringByAddingNewlinesToTag:@"</p>"
                                          inString:fixedHtml
@@ -1207,6 +1200,33 @@
       [styleArr addObject:@([BlockQuoteStyle getStyleType])];
     } else if ([tagName isEqualToString:@"codeblock"]) {
       [styleArr addObject:@([CodeBlockStyle getStyleType])];
+    } else if ([tagName isEqualToString:@"checklist"]) {
+      [styleArr addObject:@([CheckBoxStyle getStyleType])];
+
+      BOOL checked = NO;
+
+      if (params.length > 0) {
+          NSRegularExpression *checkedRegex =
+              [NSRegularExpression regularExpressionWithPattern:@"checked\\s*=\\s*(['\"])(.*?)\\1"
+                                                        options:NSRegularExpressionCaseInsensitive
+                                                          error:nil];
+
+          NSTextCheckingResult *match =
+              [checkedRegex firstMatchInString:params
+                                        options:0
+                                          range:NSMakeRange(0, params.length)];
+
+          if (match && match.numberOfRanges >= 3) {
+              NSString *valueStr = [params substringWithRange:[match rangeAtIndex:2]];
+              valueStr = valueStr.lowercaseString;
+
+              checked = [valueStr isEqualToString:@"true"] ||
+                        [valueStr isEqualToString:@"yes"] ||
+                        [valueStr isEqualToString:@"1"];
+          }
+      }
+
+      stylePair.styleValue = @(checked);
     } else {
       // some other external tags like span just don't get put into the
       // processed styles
@@ -1222,3 +1242,4 @@
 }
 
 @end
+
