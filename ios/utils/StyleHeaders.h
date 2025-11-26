@@ -86,3 +86,11 @@
 - (void)addImageAtRange:(NSRange)range imageData:(ImageData *)imageData withSelection:(BOOL)withSelection;
 - (ImageData *)getImageDataAt:(NSUInteger)location;
 @end
+
+@interface CheckBoxStyle : NSObject<BaseStyleProtocol>
+- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
+- (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
+- (BOOL)isCheckedAt:(NSUInteger)location;
+- (void)toggleCheckedAt:(NSUInteger)location;
+- (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked;
+@end

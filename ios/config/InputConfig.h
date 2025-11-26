@@ -2,6 +2,7 @@
 #import <UIKit/UIKit.h>
 #import "TextDecorationLineEnum.h"
 #import "MentionStyleProps.h"
+#import <React/RCTImageSource.h>
 
 @interface InputConfig: NSObject<NSCopying>
 - (instancetype) init;
@@ -70,4 +71,22 @@
 - (void)setCodeBlockBgColor:(UIColor *)newValue;
 - (CGFloat)codeBlockBorderRadius;
 - (void)setCodeBlockBorderRadius:(CGFloat)newValue;
+- (void)setImageWidth:(CGFloat)newValue;
+- (CGFloat)imageWidth;
+- (void)setImageHeight:(CGFloat)newValue;
+- (CGFloat)imageHeight;
+- (void)setUncheckedmage:(UIImage *)newValue;
+- (UIImage *)uncheckedImage;
+- (UIImage *)checkedImage;
+- (void)setCheckedImage:(UIImage *)newValue;
+- (CGFloat)checkBoxWidth;
+- (void)setCheckBoxWidth:(CGFloat)newValue;
+- (CGFloat)checkBoxHeight;
+- (void)setCheckBoxHeight:(CGFloat)newValue;
+- (CGFloat)checkboxListMarginLeft;
+- (void)setCheckBoxListMarginLeft:(CGFloat)newValue;
+- (CGFloat)checkboxListGapWidth;
+- (void)setCheckBoxListGapWidth:(CGFloat)newValue;
+- (UIColor *)checkedTextColor;
+- (void)setCheckedTextColor:(UIColor *)newValue;
 @end

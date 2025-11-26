@@ -58,6 +58,7 @@ static void const *kInputKey = &kInputKey;
   [self drawBlockQuotes:typedInput origin:origin inputRange:inputRange];
   [self drawLists:typedInput origin:origin inputRange:inputRange];
   [self drawCodeBlocks:typedInput origin:origin inputRange:inputRange];
+  [self drawChecklists:typedInput origin:origin inputRange:inputRange];
 }
 
 - (void)drawCodeBlocks:(EnrichedTextInputView *)typedInput origin:(CGPoint)origin inputRange:(NSRange)inputRange
@@ -281,6 +282,70 @@ static void const *kInputKey = &kInputKey;
   } else {
     return @"•";
   }
+}
+
+- (void)drawChecklists:(EnrichedTextInputView *)typedInput
+               origin:(CGPoint)origin
+           inputRange:(NSRange)inputRange
+{
+    CheckBoxStyle *cStyle = typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
+    if (cStyle == nil) return;
+
+    NSArray<StylePair *> *allCheckBoxes = [cStyle findAllOccurences:inputRange];
+    if (allCheckBoxes.count == 0) return;
+
+    CGFloat iconWidth   = [typedInput->config checkBoxWidth];
+    CGFloat iconHeight  = [typedInput->config checkBoxHeight];
+    CGFloat marginLeft  = [typedInput->config checkboxListMarginLeft];
+
+    UIImage *uncheckedImg = typedInput->config.uncheckedImage;
+    UIImage *checkedImg   = typedInput->config.checkedImage;
+
+    for (StylePair *pair in allCheckBoxes) {
+        NSArray *paragraphs =
+            [ParagraphsUtils getSeparateParagraphsRangesIn:typedInput->textView
+                                                     range:[pair.rangeValue rangeValue]];
+
+        for (NSValue *p in paragraphs) {
+            NSRange paragraphRange = [p rangeValue];
+            NSRange paragraphGlyphRange =
+                [self glyphRangeForCharacterRange:paragraphRange
+                           actualCharacterRange:nil];
+
+            BOOL isChecked = [cStyle isCheckedAt:paragraphRange.location];
+
+            [self enumerateLineFragmentsForGlyphRange:paragraphGlyphRange
+                usingBlock:^(CGRect rect,
+                             CGRect usedRect,
+                             NSTextContainer * _Nonnull textContainer,
+                             NSRange lineGlyphRange,
+                             BOOL * _Nonnull stop)
+             {
+                 CGFloat drawX = origin.x + marginLeft;
+                 CGFloat drawY = origin.y + rect.origin.y +
+                                 (rect.size.height - iconHeight) / 2.0;
+
+                 CGRect iconRect = CGRectMake(drawX, drawY, iconWidth, iconHeight);
+
+                 UIImage *img = isChecked ? checkedImg : uncheckedImg;
+                 if (img == nil) {
+                     // Fallback to SF Symbols if React images not provided
+                     NSString *name = isChecked ? @"checkmark.square.fill" : @"square";
+                     img = [UIImage systemImageNamed:name];
+                     img = [img imageWithTintColor:[UIColor blueColor]];
+                 }
+                 UIGraphicsBeginImageContextWithOptions(iconRect.size, NO, 0);
+                 [img drawInRect:CGRectMake(0, 0, iconRect.size.width, iconRect.size.height)];
+                 UIImage *scaled = UIGraphicsGetImageFromCurrentImageContext();
+                 UIGraphicsEndImageContext();
+
+                 [scaled drawInRect:iconRect];
+
+                 // Stop after first line of the paragraph
+                 *stop = YES;
+             }];
+        }
+    }
 }
 
 @end

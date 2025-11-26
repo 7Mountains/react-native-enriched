@@ -4,6 +4,8 @@
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/EventEmitters.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/Props.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/RCTComponentViewHelpers.h>
+#import <React/RCTImageSource.h>
+#import "RCTImagePrimitivesConversions.h"
 #import <react/utils/ManagedObjectWrapper.h>
 #import <folly/dynamic.h>
 #import "UIView+React.h"
@@ -36,6 +38,7 @@ using namespace facebook::react;
   UILabel *_placeholderLabel;
   UIColor *_placeholderColor;
   BOOL _emitFocusBlur;
+  UITapGestureRecognizer *tapRecognizer;
 }
 
 // MARK: - Component utils
@@ -96,6 +99,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([BlockQuoteStyle getStyleType]): [[BlockQuoteStyle alloc] initWithInput:self],
     @([CodeBlockStyle getStyleType]): [[CodeBlockStyle alloc] initWithInput:self],
     @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self]
+    @([CheckBoxStyle getStyleType]): [[CheckBoxStyle alloc] initWithInput:self]
   };
   
   conflictingStyles = @{
@@ -106,15 +110,24 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([InlineCodeStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
     @([LinkStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
     @([MentionStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType])],
-    @([H1Style getStyleType]): @[@([H2Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType])],
-    @([H2Style getStyleType]): @[@([H1Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType])],
-    @([H3Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType])],
-    @([UnorderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType])],
-    @([OrderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType])],
-    @([BlockQuoteStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([CodeBlockStyle getStyleType])],
+    @([H1Style getStyleType]): @[@([H2Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
+    @([H2Style getStyleType]): @[@([H1Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
+    @([H3Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
+    @([UnorderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
+    @([OrderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
+    @([BlockQuoteStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
     @([CodeBlockStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]),
         @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]), @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([MentionStyle getStyleType]), @([LinkStyle getStyleType])],
-    @([ImageStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])]
+    @([ImageStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
+    @([CheckBoxStyle getStyleType]) : @[
+           @([H1Style getStyleType]),
+           @([H2Style getStyleType]),
+           @([H3Style getStyleType]),
+           @([UnorderedListStyle getStyleType]),
+           @([OrderedListStyle getStyleType]),
+           @([BlockQuoteStyle getStyleType]),
+           @([CodeBlockStyle getStyleType]),
+       ]
   };
   
   blockingStyles = @{
@@ -133,6 +146,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([BlockQuoteStyle getStyleType]): @[],
     @([CodeBlockStyle getStyleType]): @[],
     @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType])]
+    @([CheckBoxStyle getStyleType]): @[],
   };
   
   parser = [[InputParser alloc] initWithInput:self];
@@ -146,6 +160,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   textView.delegate = self;
   textView.input = self;
   textView.layoutManager.input = self;
+  tapRecognizer = [[UITapGestureRecognizer alloc] init];
+  tapRecognizer.numberOfTapsRequired = 1;
+  tapRecognizer.cancelsTouchesInView = YES;
+  [tapRecognizer addTarget:self action:@selector(handleTap:)];
+  [self addGestureRecognizer:tapRecognizer];
 }
 
 - (void)setupPlaceholderLabel {
@@ -257,6 +276,41 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       [newConfig setBlockquoteBorderColor:RCTUIColorFromSharedColor(newViewProps.htmlStyle.blockquote.borderColor)];
       stylePropChanged = YES;
     }
+  }
+  
+  if(newViewProps.htmlStyle.checkbox.uncheckedImage != oldViewProps.htmlStyle.checkbox.uncheckedImage) {
+//    auto source = newViewProps.htmlStyle.checkbox.uncheckedImage;
+//    stylePropChanged = YES;
+  }
+  
+  if (newViewProps.htmlStyle.checkbox.checkedImage != oldViewProps.htmlStyle.checkbox.checkedImage) {
+//      auto source = newViewProps.htmlStyle.checkbox.checkedImage;
+//      stylePropChanged = YES;
+  }
+  
+  if(newViewProps.htmlStyle.checkbox.gapWidth != oldViewProps.htmlStyle.checkbox.gapWidth) {
+    [newConfig setCheckBoxListGapWidth: newViewProps.htmlStyle.checkbox.gapWidth];
+    stylePropChanged = YES;
+  }
+  
+  if(newViewProps.htmlStyle.checkbox.marginLeft != oldViewProps.htmlStyle.checkbox.marginLeft) {
+    [newConfig setCheckBoxListMarginLeft: newViewProps.htmlStyle.checkbox.marginLeft];
+    stylePropChanged = YES;
+  }
+  
+  if(newViewProps.htmlStyle.checkbox.imageWidth != oldViewProps.htmlStyle.checkbox.imageWidth) {
+    [newConfig setCheckBoxWidth:newViewProps.htmlStyle.checkbox.imageWidth];
+    stylePropChanged = YES;
+  }
+  
+  if(newViewProps.htmlStyle.checkbox.imageHeight != oldViewProps.htmlStyle.checkbox.imageHeight) {
+    [newConfig setCheckBoxHeight:newViewProps.htmlStyle.checkbox.imageHeight];
+    stylePropChanged = YES;
+  }
+  
+  if(newViewProps.htmlStyle.checkbox.checkedTextColor != oldViewProps.htmlStyle.checkbox.checkedTextColor) {
+    [newConfig setCheckedTextColor: RCTUIColorFromSharedColor(newViewProps.htmlStyle.checkbox.checkedTextColor)];
+    stylePropChanged = YES;
   }
   
   if(newViewProps.htmlStyle.blockquote.borderWidth != oldViewProps.htmlStyle.blockquote.borderWidth) {
@@ -727,6 +781,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
         .isBlockQuote = [_activeStyles containsObject: @([BlockQuoteStyle getStyleType])],
         .isCodeBlock = [_activeStyles containsObject: @([CodeBlockStyle getStyleType])],
         .isImage = [_activeStyles containsObject: @([ImageStyle getStyleType])],
+        .isCheckList = [_activeStyles containsObject: @([CheckBoxStyle getStyleType])]
       });
     }
   }
@@ -802,6 +857,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     CGFloat imgHeight = [(NSNumber*)args[2] floatValue];
     
     [self addImage:uri width:imgWidth height:imgHeight];
+  } else if([commandName isEqualToString:@"toggleCheckList"]) {
+    [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
   }
 }
 
@@ -1238,6 +1295,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   H1Style *h1Style = stylesDict[@([H1Style getStyleType])];
   H2Style *h2Style = stylesDict[@([H2Style getStyleType])];
   H3Style *h3Style = stylesDict[@([H3Style getStyleType])];
+  CheckBoxStyle *checkBoxStyle = stylesDict[@([CheckBoxStyle getStyleType])];
   
   // some of the changes these checks do could interfere with later checks and cause a crash
   // so here I rely on short circuiting evaluation of the logical expression
@@ -1247,6 +1305,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [uStyle tryHandlingListShorcutInRange:range replacementText:text] ||
     [oStyle handleBackspaceInRange:range replacementText:text] ||
     [oStyle tryHandlingListShorcutInRange:range replacementText:text] ||
+    [checkBoxStyle handleBackspaceInRange:range replacementText:text] ||
+    [checkBoxStyle handleNewlinesInRange:range replacementText:text] ||
     [bqStyle handleBackspaceInRange:range replacementText:text] ||
     [cbStyle handleBackspaceInRange:range replacementText:text] ||
     [linkStyle handleLeadingLinkReplacement:range replacementText:text] ||
@@ -1293,5 +1353,113 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)textViewDidChange:(UITextView *)textView {
   [self anyTextMayHaveBeenModified];
 }
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+  return YES;
+}
+
+#pragma mark - Checkbox Helpers
+
+- (CGPoint)adjustedPointForViewPoint:(CGPoint)pt {
+    CGPoint tvPoint = [self convertPoint:pt toView:textView];
+    tvPoint.x -= textView.textContainerInset.left;
+    tvPoint.y -= textView.textContainerInset.top;
+    return tvPoint;
+}
+
+- (BOOL)getCharIndex:(NSUInteger *)charIndex
+        forAdjustedPoint:(CGPoint)pt
+{
+    NSUInteger glyphIndex =
+        [textView.layoutManager glyphIndexForPoint:pt
+                                    inTextContainer:textView.textContainer
+                     fractionOfDistanceThroughGlyph:nil];
+
+    if (glyphIndex == NSNotFound)
+        return NO;
+
+    *charIndex =
+        [textView.layoutManager characterIndexForGlyphAtIndex:glyphIndex];
+    return YES;
+}
+
+- (CGRect)checkboxRectForGlyphIndex:(NSUInteger)glyphIndex {
+    NSRange effective = {0,0};
+    CGRect lineRect =
+        [textView.layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex
+                                                 effectiveRange:&effective];
+
+    CGFloat w = [config checkBoxWidth];
+    CGFloat h = [config checkBoxHeight];
+    CGFloat ml = [config checkboxListMarginLeft];
+    CGFloat gap = [config checkboxListGapWidth];
+
+    return CGRectMake(
+        ml + gap,
+        lineRect.origin.y + (lineRect.size.height - h) / 2.0,
+        w,
+        h
+    );
+}
+
+- (CheckBoxStyle *)checkboxStyleForCharIndex:(NSUInteger)charIndex {
+    CheckBoxStyle *check = stylesDict[@([CheckBoxStyle getStyleType])];
+    if (check && [check detectStyle:NSMakeRange(charIndex, 0)]) {
+        return check;
+    }
+    return nil;
+}
+
+- (void)handleTap:(UITapGestureRecognizer *)gr {
+    if (gr.state != UIGestureRecognizerStateEnded) return;
+
+    CGPoint adjusted = [self adjustedPointForViewPoint:[gr locationInView:self]];
+
+    NSUInteger charIndex;
+    if (![self getCharIndex:&charIndex forAdjustedPoint:adjusted]) return;
+
+    CheckBoxStyle *check = [self checkboxStyleForCharIndex:charIndex];
+    if (!check) return;
+
+    // Get glyphIndex separately for the rectangle
+    NSUInteger glyphIndex =
+        [textView.layoutManager glyphIndexForPoint:adjusted
+                                    inTextContainer:textView.textContainer
+                     fractionOfDistanceThroughGlyph:nil];
+
+    CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex];
+    if (!CGRectContainsPoint(checkboxRect, adjusted)) return;
+
+    [check toggleCheckedAt:charIndex];
+    [self anyTextMayHaveBeenModified];
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIView *hit = [super hitTest:point withEvent:event];
+    if (!hit) return nil;
+
+    CGPoint adjusted = [self adjustedPointForViewPoint:point];
+
+    NSUInteger charIndex;
+    if (![self getCharIndex:&charIndex forAdjustedPoint:adjusted])
+        return hit;
+
+    CheckBoxStyle *check = [self checkboxStyleForCharIndex:charIndex];
+    if (!check) return hit;
+
+    NSUInteger glyphIndex =
+        [textView.layoutManager glyphIndexForPoint:adjusted
+                                    inTextContainer:textView.textContainer
+                     fractionOfDistanceThroughGlyph:nil];
+
+    CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex];
+
+    if (CGRectContainsPoint(checkboxRect, adjusted)) {
+        return self;  // intercept touch
+    }
+
+    return hit;
+}
+
 
 @end

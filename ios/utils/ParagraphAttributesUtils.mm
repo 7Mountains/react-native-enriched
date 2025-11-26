@@ -15,6 +15,7 @@
   OrderedListStyle *olStyle = typedInput->stylesDict[@([OrderedListStyle getStyleType])];
   BlockQuoteStyle *bqStyle = typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
   CodeBlockStyle *cbStyle = typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
+  CheckBoxStyle *checkBoxStyle = typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
   
   if(typedInput == nullptr) {
     return NO;
@@ -37,12 +38,11 @@
   
   // the backspace removes the whole content of a paragraph (possibly more but has to start where the paragraph starts)
   if(range.location == nonNewlineRange.location && range.length >= nonNewlineRange.length) {
-    
     // for lists, quotes and codeblocks present we do the following:
     // - manually do the removing
     // - reset typing attribtues so that the previous line styles don't get applied
     // - reapply the paragraph style that was present so that a zero width space appears here
-    NSArray *handledStyles = @[ulStyle, olStyle, bqStyle, cbStyle];
+    NSArray *handledStyles = @[ulStyle, olStyle, bqStyle, cbStyle, checkBoxStyle];
     for(id<BaseStyleProtocol> style in handledStyles) {
       if([style detectStyle:nonNewlineRange]) {
         [TextInsertionUtils replaceText:text at:range additionalAttributes:nullptr input:typedInput withSelection:YES];

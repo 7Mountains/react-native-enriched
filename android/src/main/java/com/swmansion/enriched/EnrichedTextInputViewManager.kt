@@ -268,6 +268,10 @@ class EnrichedTextInputViewManager : SimpleViewManager<EnrichedTextInputView>(),
     view?.addMention(text, indicator, attributes)
   }
 
+  override fun toggleCheckList(view: EnrichedTextInputView?) {
+    // no-op
+  }
+
   override fun measure(
     context: Context,
     localData: ReadableMap?,

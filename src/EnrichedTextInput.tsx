@@ -21,6 +21,7 @@ import EnrichedTextInputNativeComponent, {
 import type {
   ColorValue,
   HostInstance,
+  ImageSource,
   MeasureInWindowOnSuccessCallback,
   MeasureLayoutOnSuccessCallback,
   MeasureOnSuccessCallback,
@@ -59,6 +60,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     text: string,
     attributes?: Record<string, string>
   ) => void;
+  toggleCheckList: () => void;
 }
 
 export interface OnChangeMentionEvent {
@@ -110,6 +112,15 @@ export interface HtmlStyle {
     bulletSize?: number;
     marginLeft?: number;
     gapWidth?: number;
+  };
+  checkbox?: {
+    imageWidth?: number;
+    imageHeight?: number;
+    checkedImage?: ImageSource;
+    uncheckedImage?: ImageSource;
+    marginLeft?: number;
+    gapWidth?: number;
+    checkedTextColor?: ColorValue;
   };
 }
 
@@ -292,6 +303,9 @@ export const EnrichedTextInput = ({
       }
 
       Commands.startMention(nullthrows(nativeRef.current), indicator);
+    },
+    toggleCheckList: () => {
+      Commands.toggleCheckList(nullthrows(nativeRef.current));
     },
   }));
 

@@ -41,6 +41,13 @@
   UIColor *_codeBlockBgColor;
   CGFloat _imageWidth;
   CGFloat _imageHeight;
+  UIImage *_uncheckedImage;
+  UIImage *_checkedImage;
+  CGFloat _checkboxListGapWidth;
+  CGFloat _checkboxListMarginLeft;
+  CGFloat _checkBoxWidth;
+  CGFloat _checkBoxHeight;
+  UIColor *_checkedTextColor;
 }
 
 - (instancetype) init {
@@ -87,6 +94,15 @@
   copy->_codeBlockFgColor = [_codeBlockFgColor copy];
   copy->_codeBlockBgColor = [_codeBlockBgColor copy];
   copy->_codeBlockBorderRadius = _codeBlockBorderRadius;
+  copy->_imageWidth = _imageWidth;
+  copy->_imageHeight = _imageHeight;
+  copy->_uncheckedImage = _uncheckedImage;
+  copy->_checkedImage = _checkedImage;
+  copy->_checkboxListGapWidth = _checkboxListGapWidth;
+  copy->_checkboxListMarginLeft = _checkboxListMarginLeft;
+  copy->_checkBoxWidth = _checkBoxWidth;
+  copy->_checkBoxHeight = _checkBoxHeight;
+  copy->_checkedTextColor = _checkedTextColor;
   return copy;
 }
 
@@ -409,6 +425,74 @@
 
 - (void)setCodeBlockBorderRadius:(CGFloat)newValue {
   _codeBlockBorderRadius = newValue;
+}
+
+- (CGFloat)imageWidth {
+  return _imageWidth;
+}
+
+- (void)setImageWidth:(CGFloat)newValue {
+  _imageWidth = newValue;
+}
+
+- (CGFloat)imageHeight {
+  return _imageHeight;
+}
+
+- (void)setImageHeight:(CGFloat)newValue {
+  _imageHeight = newValue;
+}
+
+- (void)setUncheckedmage:(UIImage *)newValue {
+  _uncheckedImage = newValue;
+}
+
+- (void)setCheckedImage:(UIImage *)newValue {
+  _checkedImage = newValue;
+}
+
+- (UIImage *)uncheckedImage {
+  return _uncheckedImage;
+}
+
+- (CGFloat)checkboxListGapWidth {
+  return _checkboxListGapWidth;
+}
+
+- (CGFloat)checkboxListMarginLeft {
+  return _checkboxListMarginLeft;
+}
+
+- (CGFloat)checkBoxWidth {
+  return _checkBoxWidth;
+}
+
+- (UIImage *)checkedImage {
+  return _checkedImage;
+}
+
+- (void)setCheckBoxHeight:(CGFloat)newValue {
+  _checkBoxHeight = newValue;
+}
+
+- (void)setCheckBoxListGapWidth:(CGFloat)newValue {
+  _checkboxListGapWidth = newValue;
+}
+
+- (void)setCheckBoxListMarginLeft:(CGFloat)newValue {
+  _checkboxListMarginLeft = newValue;
+}
+
+- (void)setCheckBoxWidth:(CGFloat)newValue {
+  _checkBoxWidth = newValue;
+}
+
+- (CGFloat)checkBoxHeight {
+  return _checkBoxHeight;
+}
+
+- (void)setCheckedTextColor:(UIColor *)newValue {
+  _checkedTextColor = newValue;
 }
 
 @end

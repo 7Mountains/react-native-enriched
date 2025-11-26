@@ -1,4 +1,5 @@
 import { codegenNativeComponent, codegenNativeCommands } from 'react-native';
+import type { ImageSource } from 'react-native';
 import type {
   DirectEventHandler,
   Float,
@@ -32,6 +33,7 @@ export interface OnChangeStateEvent {
   isLink: boolean;
   isImage: boolean;
   isMention: boolean;
+  isCheckList: boolean;
 }
 
 export interface OnLinkDetected {
@@ -116,6 +118,15 @@ export interface HtmlStyleInternal {
     bulletSize?: Float;
     marginLeft?: Float;
     gapWidth?: Float;
+  };
+  checkbox?: {
+    imageWidth?: Float;
+    imageHeight?: Float;
+    checkedImage?: ImageSource;
+    uncheckedImage?: ImageSource;
+    marginLeft?: Float;
+    gapWidth?: Float;
+    checkedTextColor?: ColorValue;
   };
 }
 
@@ -203,6 +214,7 @@ interface NativeCommands {
     text: string,
     payload: string
   ) => void;
+  toggleCheckList: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -229,6 +241,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'addImage',
     'startMention',
     'addMention',
+    'toggleCheckList',
   ],
 });
 
