@@ -42,22 +42,15 @@
         [indexesToBeRemoved addObject:@(characterRange.location)];
         continue;
       }
-
-      UnorderedListStyle *ulStyle =
-          input->stylesDict[@([UnorderedListStyle getStyleType])];
-      OrderedListStyle *olStyle =
-          input->stylesDict[@([OrderedListStyle getStyleType])];
-      BlockQuoteStyle *bqStyle =
-          input->stylesDict[@([BlockQuoteStyle getStyleType])];
-      CodeBlockStyle *cbStyle =
-          input->stylesDict[@([CodeBlockStyle getStyleType])];
-
-      // zero width spaces with no lists/blockquotes/codeblocks on them get
-      // removed
-      if (![ulStyle detectStyle:characterRange] &&
-          ![olStyle detectStyle:characterRange] &&
-          ![bqStyle detectStyle:characterRange] &&
-          ![cbStyle detectStyle:characterRange]) {
+      
+      UnorderedListStyle *ulStyle = input->stylesDict[@([UnorderedListStyle getStyleType])];
+      OrderedListStyle *olStyle = input->stylesDict[@([OrderedListStyle getStyleType])];
+      BlockQuoteStyle *bqStyle = input->stylesDict[@([BlockQuoteStyle getStyleType])];
+      CodeBlockStyle *cbStyle = input->stylesDict[@([CodeBlockStyle getStyleType])];
+      CheckBoxStyle *checkBoxStyle = input->stylesDict[@([CheckBoxStyle getStyleType])];
+      
+      // zero width spaces with no lists/blockquotes/codeblocks/checkboxes on them get removed
+      if(![ulStyle detectStyle:characterRange] && ![olStyle detectStyle:characterRange] && ![bqStyle detectStyle:characterRange] && ![cbStyle detectStyle:characterRange] && ![checkBoxStyle detectStyle:characterRange]) {
         [indexesToBeRemoved addObject:@(characterRange.location)];
       }
     }
@@ -100,6 +93,7 @@
   BlockQuoteStyle *bqStyle =
       input->stylesDict[@([BlockQuoteStyle getStyleType])];
   CodeBlockStyle *cbStyle = input->stylesDict[@([CodeBlockStyle getStyleType])];
+  CheckBoxStyle *checkBoxStyle = input->stylesDict[@([CheckBoxStyle getStyleType])];
   NSMutableArray *indexesToBeInserted = [[NSMutableArray alloc] init];
   NSRange preAddSelection = input->textView.selectedRange;
 
@@ -108,14 +102,10 @@
 
     if ([[NSCharacterSet newlineCharacterSet] characterIsMember:character]) {
       NSRange characterRange = NSMakeRange(i, 1);
-      NSRange paragraphRange = [input->textView.textStorage.string
-          paragraphRangeForRange:characterRange];
-
-      if (paragraphRange.length == 1) {
-        if ([ulStyle detectStyle:characterRange] ||
-            [olStyle detectStyle:characterRange] ||
-            [bqStyle detectStyle:characterRange] ||
-            [cbStyle detectStyle:characterRange]) {
+      NSRange paragraphRange = [input->textView.textStorage.string paragraphRangeForRange:characterRange];
+      
+      if(paragraphRange.length == 1) {
+        if([ulStyle detectStyle:characterRange] || [olStyle detectStyle:characterRange] || [bqStyle detectStyle:characterRange] || [cbStyle detectStyle:characterRange] || [checkBoxStyle detectStyle:characterRange]) {
           // we have an empty list or quote item with no space: add it!
           [indexesToBeInserted addObject:@(paragraphRange.location)];
         }
@@ -146,16 +136,9 @@
 
   // additional check for last index of the input
   NSRange lastRange = NSMakeRange(input->textView.textStorage.string.length, 0);
-  NSRange lastParagraphRange =
-      [input->textView.textStorage.string paragraphRangeForRange:lastRange];
-  if (lastParagraphRange.length == 0 &&
-      ([ulStyle detectStyle:lastRange] || [olStyle detectStyle:lastRange] ||
-       [bqStyle detectStyle:lastRange] || [cbStyle detectStyle:lastRange])) {
-    [TextInsertionUtils insertText:@"\u200B"
-                                at:lastRange.location
-              additionalAttributes:nullptr
-                             input:input
-                     withSelection:NO];
+  NSRange lastParagraphRange = [input->textView.textStorage.string paragraphRangeForRange:lastRange];
+  if(lastParagraphRange.length == 0 && ([ulStyle detectStyle:lastRange] || [olStyle detectStyle:lastRange] || [bqStyle detectStyle:lastRange] || [cbStyle detectStyle:lastRange] || [checkBoxStyle detectStyle:lastRange])) {
+    [TextInsertionUtils insertText:@"\u200B" at:lastRange.location additionalAttributes:nullptr input:input withSelection:NO];
   }
 
   // fix the selection if needed
@@ -201,22 +184,17 @@
     }
 
     // and then remove associated styling
-
-    UnorderedListStyle *ulStyle =
-        typedInput->stylesDict[@([UnorderedListStyle getStyleType])];
-    OrderedListStyle *olStyle =
-        typedInput->stylesDict[@([OrderedListStyle getStyleType])];
-    BlockQuoteStyle *bqStyle =
-        typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
-    CodeBlockStyle *cbStyle =
-        typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
-
-    if ([cbStyle detectStyle:removalRange]) {
-      // code blocks are being handled differently; we want to remove previous
-      // newline if there is a one
-      if (range.location > 0) {
-        removalRange =
-            NSMakeRange(removalRange.location - 1, removalRange.length + 1);
+    
+    UnorderedListStyle *ulStyle = typedInput->stylesDict[@([UnorderedListStyle getStyleType])];
+    OrderedListStyle *olStyle = typedInput->stylesDict[@([OrderedListStyle getStyleType])];
+    BlockQuoteStyle *bqStyle = typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
+    CodeBlockStyle *cbStyle = typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
+    CheckBoxStyle *checkBoxStyle = typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
+    
+    if([cbStyle detectStyle:removalRange]) {
+      // code blocks are being handled differently; we want to remove previous newline if there is a one
+      if(range.location > 0) {
+        removalRange = NSMakeRange(removalRange.location - 1, removalRange.length + 1);
       }
       [TextInsertionUtils replaceText:@""
                                    at:removalRange
@@ -238,6 +216,8 @@
       [olStyle removeAttributes:styleRemovalRange];
     } else if ([bqStyle detectStyle:styleRemovalRange]) {
       [bqStyle removeAttributes:styleRemovalRange];
+    } else if ([checkBoxStyle detectStyle:styleRemovalRange]) {
+      [checkBoxStyle removeAttributes:styleRemovalRange];
     }
 
     return YES;

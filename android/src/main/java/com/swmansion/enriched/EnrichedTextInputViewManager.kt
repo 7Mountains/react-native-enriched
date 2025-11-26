@@ -274,6 +274,10 @@ class EnrichedTextInputViewManager : SimpleViewManager<EnrichedTextInputView>(),
     view?.requestHTML(requestId)
   }
 
+  override fun toggleCheckList(view: EnrichedTextInputView?) {
+    // no-op
+  }
+
   override fun measure(
     context: Context,
     localData: ReadableMap?,

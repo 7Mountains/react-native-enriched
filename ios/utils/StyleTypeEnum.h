@@ -10,6 +10,7 @@ typedef NS_ENUM(NSInteger, StyleType) {
   H1,
   H2,
   H3,
+  Checkbox,
   Link,
   Mention,
   Image,
