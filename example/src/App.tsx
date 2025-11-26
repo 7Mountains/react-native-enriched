@@ -53,6 +53,7 @@ const DEFAULT_STYLE: StylesState = {
   isLink: false,
   isImage: false,
   isMention: false,
+  isCheckList: false,
 };
 
 const DEFAULT_LINK_STATE = {
@@ -330,6 +331,11 @@ export default function App() {
           onPress={openValueModal}
           style={styles.valueButton}
         />
+        <Button
+          title="toggle check list"
+          onPress={() => ref.current?.toggleCheckList()}
+        />
+        <Text>is Check list {stylesState.isCheckList ? 'true' : 'false'}</Text>
         <HtmlSection currentHtml={currentHtml} />
         {DEBUG_SCROLLABLE && <View style={styles.scrollPlaceholder} />}
       </ScrollView>
@@ -423,6 +429,23 @@ const htmlStyle: HtmlStyle = {
     bulletSize: 8,
     marginLeft: 24,
     gapWidth: 16,
+  },
+  checkbox: {
+    imageWidth: 32,
+    imageHeight: 32,
+    checkedImage: {
+      width: 32,
+      height: 32,
+      uri: require('../assets/images/checkbox_checked.png'),
+    },
+    uncheckedImage: {
+      width: 32,
+      height: 32,
+      uri: require('../assets/images/checkbox_unchecked.png'),
+    },
+    marginLeft: 0,
+    gapWidth: 6,
+    checkedTextColor: 'gray',
   },
 };
 

@@ -54,6 +54,15 @@ const defaultStyle: Required<HtmlStyle> = {
     marginLeft: 16,
     gapWidth: 16,
   },
+  checkbox: {
+    imageWidth: 24,
+    imageHeight: 24,
+    checkedImage: undefined,
+    uncheckedImage: undefined,
+    marginLeft: 8,
+    gapWidth: 8,
+    checkedTextColor: 'gray',
+  },
 };
 
 const isMentionStyleRecord = (
