@@ -14,10 +14,11 @@
   },
   "files": [
     "src",
-    "lib",
     "android",
     "ios",
     "cpp",
+    "tsconfig.build.json",
+    "tsconfig.json",
     "*.podspec",
     "react-native.config.js",
     "!ios/build",
