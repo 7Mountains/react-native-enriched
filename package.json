@@ -162,10 +162,6 @@
     "name": "RNEnrichedTextInputViewSpec",
     "type": "components",
     "jsSrcsDir": "src",
-    "outputDir": {
-      "ios": "ios/generated",
-      "android": "android/generated"
-    },
     "android": {
       "javaPackageName": "com.swmansion.enriched"
     },
@@ -173,8 +169,7 @@
       "componentProvider": {
         "EnrichedTextInputView": "EnrichedTextInputView"
       }
-    },
-    "includesGeneratedCode": true
+    }
   },
   "create-react-native-library": {
     "languages": "kotlin-objc",
