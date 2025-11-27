@@ -10,6 +10,10 @@ module.exports = {
   dependencies: {
     [pkg.name]: {
       root: path.join(__dirname, '..'),
+      platforms: {
+        android: {},
+        ios: {},
+      },
     },
   },
   assets: ['./assets/icons', './assets/fonts'],
