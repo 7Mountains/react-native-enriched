@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "react-native-enriched",
   "version": "0.1.6",
   "description": "Rich Text Editor component for React Native",
