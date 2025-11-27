@@ -98,7 +98,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([OrderedListStyle getStyleType]): [[OrderedListStyle alloc] initWithInput:self],
     @([BlockQuoteStyle getStyleType]): [[BlockQuoteStyle alloc] initWithInput:self],
     @([CodeBlockStyle getStyleType]): [[CodeBlockStyle alloc] initWithInput:self],
-    @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self]
+    @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self],
     @([CheckBoxStyle getStyleType]): [[CheckBoxStyle alloc] initWithInput:self]
   };
   
@@ -145,7 +145,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([OrderedListStyle getStyleType]): @[],
     @([BlockQuoteStyle getStyleType]): @[],
     @([CodeBlockStyle getStyleType]): @[],
-    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType])]
+    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType])],
     @([CheckBoxStyle getStyleType]): @[],
   };
   
