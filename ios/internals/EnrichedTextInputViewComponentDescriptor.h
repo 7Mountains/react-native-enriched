@@ -1,6 +1,6 @@
 #pragma once
 #include <react/debug/react_native_assert.h>
-#include <ReactNativeEnriched/Props.h>
+#include <react/renderer/components/RNEnrichedTextInputViewSpec/Props.h>
 #include <react/renderer/core/ConcreteComponentDescriptor.h>
 #include <ReactNativeEnriched/EnrichedTextInputViewShadowNode.h>
 
