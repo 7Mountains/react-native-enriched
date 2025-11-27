@@ -1,8 +1,8 @@
 #pragma once
-#include <ReactNativeEnriched/EnrichedTextInputViewState.h>
-#include <ReactNativeEnriched/EventEmitters.h>
-#include <ReactNativeEnriched/Props.h>
 #include <jsi/jsi.h>
+#include <react/renderer/components/RNEnrichedTextInputViewSpec/EventEmitters.h>
+#include <react/renderer/components/RNEnrichedTextInputViewSpec/Props.h>
+#include <ReactNativeEnriched/EnrichedTextInputViewState.h>
 #include <react/renderer/components/view/ConcreteViewShadowNode.h>
 #include <react/renderer/core/LayoutConstraints.h>
 
