@@ -202,6 +202,10 @@ interface NativeCommands {
     text: string,
     payload: string
   ) => void;
+  setParagraphAlignment: (
+    viewRef: React.ElementRef<ComponentType>,
+    alignment: string
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -228,6 +232,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'addImage',
     'startMention',
     'addMention',
+    'setParagraphAlignment',
   ],
 });
 

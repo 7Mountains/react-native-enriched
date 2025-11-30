@@ -85,3 +85,8 @@
 - (void)addImage:(NSString *)uri;
 - (ImageData *)getImageDataAt:(NSUInteger)location;
 @end
+
+@interface ParagraphAlignmentStyle : NSObject<BaseStyleProtocol>
+- (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment;
+- (BOOL)handleEnterPressInRange:(NSRange)range;
+@end

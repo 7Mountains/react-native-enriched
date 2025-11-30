@@ -15,6 +15,7 @@
 #import "LayoutManagerExtension.h"
 #import "ZeroWidthSpaceUtils.h"
 #import "ParagraphAttributesUtils.h"
+#import "AlignmentConverter.h"
 
 using namespace facebook::react;
 
@@ -95,7 +96,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([OrderedListStyle getStyleType]): [[OrderedListStyle alloc] initWithInput:self],
     @([BlockQuoteStyle getStyleType]): [[BlockQuoteStyle alloc] initWithInput:self],
     @([CodeBlockStyle getStyleType]): [[CodeBlockStyle alloc] initWithInput:self],
-    @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self]
+    @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self],
+    @([ParagraphAlignmentStyle getStyleType]): [[ParagraphAlignmentStyle alloc] initWithInput:self]
   };
   
   conflictingStyles = @{
@@ -114,7 +116,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([BlockQuoteStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([CodeBlockStyle getStyleType])],
     @([CodeBlockStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]),
         @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]), @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([MentionStyle getStyleType]), @([LinkStyle getStyleType])],
-    @([ImageStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])]
+    @([ImageStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
+    @([ParagraphAlignmentStyle getStyleType]): @[]
   };
   
   blockingStyles = @{
@@ -132,7 +135,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([OrderedListStyle getStyleType]): @[],
     @([BlockQuoteStyle getStyleType]): @[],
     @([CodeBlockStyle getStyleType]): @[],
-    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType])]
+    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType])],
+    @([ParagraphAlignmentStyle getStyleType]): @[]
   };
   
   parser = [[InputParser alloc] initWithInput:self];
@@ -809,6 +813,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   } else if([commandName isEqualToString:@"addImage"]) {
     NSString *uri = (NSString *)args[0];
     [self addImage:uri];
+  } else if([commandName isEqualToString:@"setParagraphAlignment"]) {
+    NSString *alignment = (NSString *)args[0];
+    [self setParagraphAllignment:alignment];
   }
 }
 
@@ -974,6 +981,15 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [mentionStyleClass startMentionWithIndicator:indicator];
     [self anyTextMayHaveBeenModified];
   }
+}
+
+- (void)setParagraphAllignment:(NSString*)alignment {
+  ParagraphAlignmentStyle *paragraphAlignmentStyle = (ParagraphAlignmentStyle *)stylesDict[@([ParagraphAlignmentStyle getStyleType])];
+  if(paragraphAlignmentStyle == nullptr) return;
+  
+  NSTextAlignment convertedAlignment = [AlignmentConverter alignmentFromString: alignment];
+  
+  [paragraphAlignmentStyle applyStyle:textView.selectedRange alignment:convertedAlignment];
 }
 
 // returns false when style shouldn't be applied and true when it can be
@@ -1233,6 +1249,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   H1Style *h1Style = stylesDict[@([H1Style getStyleType])];
   H2Style *h2Style = stylesDict[@([H2Style getStyleType])];
   H3Style *h3Style = stylesDict[@([H3Style getStyleType])];
+  ParagraphAlignmentStyle *paragraphAlignmentStyle = stylesDict[@([ParagraphAlignmentStyle getStyleType])];
   
   // some of the changes these checks do could interfere with later checks and cause a crash
   // so here I rely on short circuiting evaluation of the logical expression
@@ -1249,6 +1266,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [h1Style handleNewlinesInRange:range replacementText:text] ||
     [h2Style handleNewlinesInRange:range replacementText:text] ||
     [h3Style handleNewlinesInRange:range replacementText:text] ||
+    [paragraphAlignmentStyle handleEnterPressInRange:range] ||
     [ZeroWidthSpaceUtils handleBackspaceInRange:range replacementText:text input:self] ||
     [ParagraphAttributesUtils handleBackspaceInRange:range replacementText:text input:self] ||
     // CRITICAL: This callback HAS TO be always evaluated last.

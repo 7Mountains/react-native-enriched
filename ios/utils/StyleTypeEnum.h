@@ -18,5 +18,6 @@ typedef NS_ENUM(NSInteger, StyleType) {
   Italic,
   Underline,
   Strikethrough,
+  ParagraphAlignment,
   None,
 };

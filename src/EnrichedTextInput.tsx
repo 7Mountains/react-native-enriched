@@ -59,6 +59,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     text: string,
     attributes?: Record<string, string>
   ) => void;
+  setParagraphAlignment: (alignment: string) => void;
 }
 
 export interface OnChangeMentionEvent {
@@ -296,6 +297,9 @@ export const EnrichedTextInput = ({
       }
 
       Commands.startMention(nullthrows(nativeRef.current), indicator);
+    },
+    setParagraphAlignment: (alignment: string) => {
+      Commands.setParagraphAlignment(nullthrows(nativeRef.current), alignment);
     },
   }));
 

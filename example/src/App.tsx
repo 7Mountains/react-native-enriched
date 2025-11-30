@@ -257,6 +257,8 @@ export default function App() {
     setSelection(e.nativeEvent);
   };
 
+  const test = '\n';
+
   return (
     <>
       <ScrollView
@@ -274,6 +276,7 @@ export default function App() {
             placeholderTextColor="rgb(0, 26, 114)"
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
+            defaultValue={`<html><blockquote>Test${test}test${test}test</blockquote></html>`}
             autoCapitalize="sentences"
             onChangeText={handleChangeText}
             onChangeHtml={handleChangeHtml}
@@ -300,6 +303,38 @@ export default function App() {
         <View style={styles.buttonStack}>
           <Button title="Focus" onPress={handleFocus} style={styles.button} />
           <Button title="Blur" onPress={handleBlur} style={styles.button} />
+        </View>
+        <View style={styles.buttonStack}>
+          <Button
+            title="Center"
+            onPress={() => {
+              ref.current?.setParagraphAlignment('center');
+            }}
+            style={styles.button}
+          />
+          <Button
+            title="Right"
+            onPress={() => {
+              ref.current?.setParagraphAlignment('right');
+            }}
+            style={styles.button}
+          />
+        </View>
+        <View style={styles.buttonStack}>
+          <Button
+            title="Left"
+            onPress={() => {
+              ref.current?.setParagraphAlignment('left');
+            }}
+            style={styles.button}
+          />
+          <Button
+            title="Default"
+            onPress={() => {
+              ref.current?.setParagraphAlignment('default');
+            }}
+            style={styles.button}
+          />
         </View>
         <Button
           title="Set input's value"
