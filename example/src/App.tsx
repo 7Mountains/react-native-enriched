@@ -17,16 +17,6 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const contentHtml = Array(1)
-  .fill(
-    `<p><u>Test</u></p><checklist checked="false">This is a checklist item</checklist>`
-  )
-  .join('');
-
-const html = '<html>' + contentHtml + '</html>';
-
-console.log(html);
-
 export default function App() {
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>

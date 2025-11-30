@@ -141,3 +141,8 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (void)addContentAtRange:(NSRange)range params:(ContentParams *)params;
 - (ContentParams *)getContentParams:(NSUInteger)location;
 @end
+
+@interface ParagraphAlignmentStyle : NSObject<BaseStyleProtocol>
+- (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment;
+- (BOOL)handleEnterPressInRange:(NSRange)range;
+@end

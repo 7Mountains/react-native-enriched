@@ -288,6 +288,10 @@ interface NativeCommands {
   setColor: (viewRef: React.ElementRef<ComponentType>, color: string) => void;
   removeColor: (viewRef: React.ElementRef<ComponentType>) => void;
   addDividerAtNewLine: (viewRef: React.ElementRef<ComponentType>) => void;
+  setParagraphAlignment: (
+    viewRef: React.ElementRef<ComponentType>,
+    alignment: string
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -322,6 +326,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'setColor',
     'removeColor',
     'addDividerAtNewLine',
+    'setParagraphAlignment',
   ],
 });
 

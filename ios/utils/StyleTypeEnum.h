@@ -25,5 +25,6 @@ typedef NS_ENUM(NSInteger, StyleType) {
   Underline,
   Strikethrough,
   Colored,
+  ParagraphAlignment,
   None,
 };

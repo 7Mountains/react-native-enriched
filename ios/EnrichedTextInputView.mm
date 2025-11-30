@@ -21,6 +21,7 @@
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/Props.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/RCTComponentViewHelpers.h>
 #import <react/utils/ManagedObjectWrapper.h>
+#import "AlignmentConverter.h"
 
 using namespace facebook::react;
 
@@ -1248,7 +1249,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     NSString *uri = (NSString *)args[0];
     CGFloat imgWidth = [(NSNumber *)args[1] floatValue];
     CGFloat imgHeight = [(NSNumber *)args[2] floatValue];
-
     [self addImage:uri width:imgWidth height:imgHeight];
   } else if ([commandName isEqualToString:@"requestHTML"]) {
     NSInteger requestId = [((NSNumber *)args[0]) integerValue];
@@ -1257,6 +1257,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
   } else if ([commandName isEqualToString:@"addDividerAtNewLine"]) {
     [self addDividerAtNewLine];
+    [self addImage:uri];
+  } else if([commandName isEqualToString:@"setParagraphAlignment"]) {
+    NSString *alignment = (NSString *)args[0];
+    [self setParagraphAllignment:alignment];
   }
 }
 
@@ -1529,6 +1533,15 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [mentionStyleClass startMentionWithIndicator:indicator];
     [self anyTextMayHaveBeenModified];
   }
+}
+
+- (void)setParagraphAllignment:(NSString*)alignment {
+  ParagraphAlignmentStyle *paragraphAlignmentStyle = (ParagraphAlignmentStyle *)stylesDict[@([ParagraphAlignmentStyle getStyleType])];
+  if(paragraphAlignmentStyle == nullptr) return;
+  
+  NSTextAlignment convertedAlignment = [AlignmentConverter alignmentFromString: alignment];
+  
+  [paragraphAlignmentStyle applyStyle:textView.selectedRange alignment:convertedAlignment];
 }
 
 // returns false when style shouldn't be applied and true when it can be
