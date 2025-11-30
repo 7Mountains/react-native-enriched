@@ -73,6 +73,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   setColor: (color: string) => void;
   removeColor: () => void;
   addDividerAtNewLine: () => void;
+  setParagraphAlignment: (alignment: string) => void;
 }
 
 export interface OnChangeMentionEvent {
@@ -377,6 +378,9 @@ export const EnrichedTextInput = ({
     },
     addDividerAtNewLine: () =>
       Commands.addDividerAtNewLine(nullthrows(nativeRef.current)),
+    setParagraphAlignment: (alignment: string) => {
+      Commands.setParagraphAlignment(nullthrows(nativeRef.current), alignment);
+    },
   }));
 
   const handleMentionEvent = (e: NativeSyntheticEvent<OnMentionEvent>) => {
