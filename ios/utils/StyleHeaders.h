@@ -125,5 +125,4 @@
 
 @interface DividerStyle : NSObject<BaseStyleProtocol>
 - (void)insertDividerAtNewLine;
-- (void)handleConflictingStylesInParagraph;
 @end
