@@ -120,6 +120,7 @@ export interface ContentStyleProperties {
     | 'center'
     | 'none'
     | 'scale-down';
+  fontSize?: number;
 }
 
 export interface HtmlStyleInternal {
