@@ -70,6 +70,13 @@ const defaultStyle: Required<HtmlStyle> = {
     paddingBottom: 8,
     marginTop: 0,
     marginBottom: 0,
+    imageBorderRadiusBottomLeft: 0,
+    imageBorderRadiusBottomRight: 0,
+    imageBorderRadiusTopLeft: 0,
+    imageBorderRadiusTopRight: 0,
+    imageHeight: 0,
+    imageWidth: 0,
+    imageResizeMode: 'stretch',
   },
   img: {
     width: 80,

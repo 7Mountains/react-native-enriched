@@ -5,7 +5,9 @@
 #import "WordsUtils.h"
 #import "UIView+React.h"
 #import "ColorExtension.h"
-#import "LabelAttachment.h"
+#import "ImageLabelAttachment.h"
+#import "TextOnlyLabelAttachment.h"
+#import "EnrichedImageLoader.h"
 
 static NSString *const ContentAttributeName = @"ContentAttributeName";
 static NSString *const placeholder = @"\uFFFC";
@@ -105,7 +107,7 @@ static NSString *const placeholder = @"\uFFFC";
     return ^BOOL(id _Nullable value, NSRange range) {
         NSString *substr =
         [self->_input->textView.textStorage.string substringWithRange:range];
-        return ([value isKindOfClass:LabelAttachment.class] && [substr isEqualToString:placeholder]);
+        return ([value isKindOfClass:BaseLabelAttachment.class] && [substr isEqualToString:placeholder]);
     };
 }
 
@@ -167,12 +169,21 @@ static NSString *const placeholder = @"\uFFFC";
     return [_input->config contentStylePropsForType:params.type];
 }
 
-- (LabelAttachment *)prepareAttachment:(ContentParams *)params {
+- (BaseLabelAttachment *)prepareAttachment:(ContentParams *)params {
     ContentStyleProps *styles = [self stylePropsWithParams:params];
 
-    LabelAttachment *attachment = [[LabelAttachment alloc] init];
+    BaseLabelAttachment *attachment;
+
+    BOOL hasImageURL = params.url != nil && params.url.length > 0;
+
+    if (hasImageURL) {
+        attachment = [[ImageLabelAttachment alloc] init];
+    } else {
+        attachment = [[TextOnlyLabelAttachment alloc] init];
+    }
+
     attachment.labelText    = params.text;
-    attachment.font         = _input->config.primaryFont;
+    attachment.font         = [_input->config.primaryFont fontWithSize:14];
     attachment.bgColor      = styles.backgroundColor;
     attachment.textColor    = styles.textColor;
     attachment.inset        = UIEdgeInsetsMake(styles.paddingTop, styles.paddingLeft,
@@ -184,7 +195,49 @@ static NSString *const placeholder = @"\uFFFC";
     attachment.borderColor  = styles.borderColor;
     attachment.borderStyle  = styles.borderStyle;
 
+    if ([attachment isKindOfClass:[ImageLabelAttachment class]]) {
+        ImageLabelAttachment *imgAtt = (ImageLabelAttachment *)attachment;
+
+        imgAtt.imageWidth   = styles.imageWidth;
+        imgAtt.imageHeight  = styles.imageHeight;
+
+        imgAtt.imageCornerRadiusTopLeft     = styles.imageBorderRadiusTopLeft;
+        imgAtt.imageCornerRadiusTopRight    = styles.imageBorderRadiusTopRight;
+        imgAtt.imageCornerRadiusBottomLeft  = styles.imageBorderRadiusBottomLeft;
+        imgAtt.imageCornerRadiusBottomRight = styles.imageBorderRadiusBottomRight;
+        imgAtt.imageResizeMode = styles.imageResizeMode;
+
+        imgAtt.isLoading = YES;
+
+        NSURL *url = [NSURL URLWithString:params.url];
+        [[EnrichedImageLoader shared] loadImage:url completion:^(UIImage *image) {
+
+            imgAtt.contentImage = image ?: [UIImage systemImageNamed:@"photo"];
+            imgAtt.isLoading = NO;
+            [self refreshAttachment:imgAtt];
+        }];
+    }
+
     return attachment;
+}
+
+
+- (void)refreshAttachment:(BaseLabelAttachment *)attachment {
+    UITextView *tv = _input->textView;
+    NSTextStorage *storage = tv.textStorage;
+    for (NSUInteger i = 0; i < storage.length; i++) {
+        id att = [storage attribute:NSAttachmentAttributeName atIndex:i effectiveRange:nil];
+        if (att == attachment) {
+            NSRange r = NSMakeRange(i, 1);
+
+            [tv.layoutManager invalidateDisplayForCharacterRange:r];
+            [tv.layoutManager invalidateLayoutForCharacterRange:r actualCharacterRange:nil];
+            [tv setNeedsLayout];
+            [tv layoutIfNeeded];
+
+            break;
+        }
+    }
 }
 
 - (NSDictionary *)prepareAttributes:(ContentParams *)params {
