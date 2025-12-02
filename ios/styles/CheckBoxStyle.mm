@@ -72,7 +72,8 @@
 #pragma mark - Add Attributes
 
 - (void)addAttributes:(NSRange)range {
-    [self addCheckBoxAtRange:range isChecked:NO];
+    BOOL wasChecked = [self isCheckedAt: range.location];
+    [self addCheckBoxAtRange:range isChecked:wasChecked];
 }
 
 - (void)addTypingAttributes {
