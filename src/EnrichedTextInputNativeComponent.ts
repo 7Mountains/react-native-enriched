@@ -106,6 +106,20 @@ export interface ContentStyleProperties {
   marginRight?: number;
   marginTop?: number;
   marginBottom?: number;
+  imageBorderRadiusTopLeft?: number;
+  imageBorderRadiusTopRight?: number;
+  imageBorderRadiusBottomRight?: number;
+  imageBorderRadiusBottomLeft?: number;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageResizeMode?:
+    | 'contain'
+    | 'fill'
+    | 'cover'
+    | 'stretch'
+    | 'center'
+    | 'none'
+    | 'scale-down';
 }
 
 export interface HtmlStyleInternal {
