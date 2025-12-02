@@ -24,4 +24,6 @@ else
   s.dependency "React-Core"
 end
 
+s.dependency "SDWebImage"
+
 end

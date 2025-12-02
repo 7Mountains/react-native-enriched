@@ -93,7 +93,55 @@
     } else {
       props.paddingLeft = 0;
     }
+  
+    if(folly["imageWidth"].isNumber()) {
+      props.imageWidth = folly["imageWidth"].asDouble();
+    } else {
+      props.imageWidth = 0;
+    }
+      
+    if(folly["imageHeight"].isNumber()) {
+      props.imageHeight = folly["imageHeight"].asDouble();
+    } else {
+      props.imageHeight = 0;
+    }
+    
+    if(folly["imageBorderRadiusTopLeft"].isNumber()) {
+      props.imageBorderRadiusTopLeft = folly["imageBorderRadiusTopLeft"].asDouble();
+    } else {
+      props.imageBorderRadiusTopLeft = 0.0;
+    }
 
+    if(folly["imageBorderRadiusTopRight"].isNumber()) {
+      props.imageBorderRadiusTopRight = folly["imageBorderRadiusTopRight"].asDouble();
+    } else {
+      props.imageBorderRadiusTopRight = 0.0;
+    }
+  
+    if(folly["imageBorderRadiusBottomLeft"].isNumber()) {
+      props.imageBorderRadiusBottomLeft = folly["imageBorderRadiusBottomLeft"].asDouble();
+    } else {
+      props.imageBorderRadiusBottomLeft = 0.0;
+    }
+    
+    if(folly["imageBorderRadiusTopRight"].isNumber()) {
+      props.imageBorderRadiusBottomRight = folly["imageBorderRadiusBottomRight"].asDouble();
+    } else {
+      props.imageBorderRadiusBottomRight = 0.0;
+    }
+    
+    if(folly["placeholderImageURI"].isString()) {
+      props.placeholderImageURI = [NSString fromCppString: folly["placeholderImageURI"].asString()];
+    } else {
+      props.placeholderImageURI = nil;
+    }
+  
+    if(folly["imageResizeMode"].isString()) {
+      props.imageResizeMode = [NSString fromCppString: folly["imageResizeMode"].asString()];
+    } else {
+      props.imageResizeMode = @"cover";
+    }
+  
     return props;
 }
 

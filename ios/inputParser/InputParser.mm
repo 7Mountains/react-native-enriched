@@ -1149,8 +1149,9 @@
       ];
       
       ContentParams *contentParams = [[ContentParams alloc] init];
-      contentParams.text = paramsDict[@"text"];
-      contentParams.type = paramsDict[@"type"];
+      contentParams.text = paramsDict[@"text"] ?: @"";
+      contentParams.type = paramsDict[@"type"] ?: @"";
+      contentParams.url = paramsDict[@"src"] ?: @"";
       
       [paramsDict removeObjectsForKeys:@[@"text", @"type"]];
       NSError *error;

@@ -2375,8 +2375,12 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
+    - SDWebImage
     - SocketRocket
     - Yoga
+  - SDWebImage (5.21.3):
+    - SDWebImage/Core (= 5.21.3)
+  - SDWebImage/Core (5.21.3)
   - SocketRocket (0.7.1)
   - Yoga (0.0.0)
 
@@ -2461,6 +2465,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - SDWebImage
     - SocketRocket
 
 EXTERNAL SOURCES:
