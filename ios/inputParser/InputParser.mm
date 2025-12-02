@@ -978,7 +978,6 @@
       stylePair.styleValue = mentionParams;
     } else if([tagName isEqualToString:@"hr"]) {
       [styleArr addObject:@([DividerStyle getStyleType])];
-      stylePair.styleValue = @YES;
     } else if([[tagName substringWithRange:NSMakeRange(0, 1)] isEqualToString: @"h"]) {
       if([tagName isEqualToString:@"h1"]) {
         [styleArr addObject:@([H1Style getStyleType])];
