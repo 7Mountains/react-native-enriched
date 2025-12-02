@@ -118,7 +118,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([CodeBlockStyle getStyleType]): [[CodeBlockStyle alloc] initWithInput:self],
     @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self],
     @([CheckBoxStyle getStyleType]): [[CheckBoxStyle alloc] initWithInput:self],
-    @([DividerStyle getStyleType]): [[DividerStyle alloc] initWithInput:self]
+    @([DividerStyle getStyleType]): [[DividerStyle alloc] initWithInput:self],
+    @([ContentStyle getStyleType]): [[ContentStyle alloc] initWithInput:self]
   };
 
   conflictingStyles = @{
@@ -167,30 +168,32 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
            @([BlockQuoteStyle getStyleType]),
            @([CodeBlockStyle getStyleType]),
        ],
+    @([ContentStyle getStyleType]) : @[],
   };
 
   blockingStyles = @{
-    @([BoldStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([ItalicStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([UnderlineStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([StrikethroughStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([ColorStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([InlineCodeStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([LinkStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([MentionStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H1Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H2Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H3Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H4Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H5Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H6Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([UnorderedListStyle getStyleType]): @[@([DividerStyle getStyleType])],
-    @([OrderedListStyle getStyleType]): @[@([DividerStyle getStyleType])],
-    @([BlockQuoteStyle getStyleType]): @[@([DividerStyle getStyleType])],
-    @([CodeBlockStyle getStyleType]): @[@([DividerStyle getStyleType])],
-    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([CheckBoxStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
-    @([DividerStyle getStyleType]): @[@([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
+    @([BoldStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([ItalicStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([UnderlineStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([StrikethroughStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([ColorStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([InlineCodeStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([LinkStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([MentionStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([H1Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([H2Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([H3Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([H4Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([H5Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([H6Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([UnorderedListStyle getStyleType]): @[@([DividerStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([OrderedListStyle getStyleType]): @[@([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([BlockQuoteStyle getStyleType]): @[@([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([CodeBlockStyle getStyleType]): @[@([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([CheckBoxStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([DividerStyle getStyleType]): @[@([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType]), @([ContentStyle getStyleType])],
+    @([@contentStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType], @([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType]), @([ImageStyle getStyleType]), ]
   };
 
   parser = [[InputParser alloc] initWithInput:self];
@@ -614,8 +617,36 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
     stylePropChanged = YES;
   }
-
-  if (stylePropChanged) {
+  
+  folly::dynamic oldContentStyle = oldViewProps.htmlStyle.content;
+  folly::dynamic newContentStyle = newViewProps.htmlStyle.content;
+  
+  if(oldContentStyle != newContentStyle) {
+    bool newSingleProps = NO;
+    
+    for(const auto& obj : newContentStyle.items()) {
+      if(obj.second.isInt() || obj.second.isString()) {
+        // we are in just a single MentionStyleProps object
+        newSingleProps = YES;
+        break;
+      } else if(obj.second.isObject()) {
+        // we are in map of indicators to MentionStyleProps
+        newSingleProps = NO;
+        break;
+      }
+    }
+    
+    if(newSingleProps) {
+      [newConfig setContentStyleProps:[ContentStyleProps getSinglePropsFromFollyDynamic:newContentStyle]];
+    } else {
+      [newConfig setContentStyleProps:[ContentStyleProps getComplexPropsFromFollyDynamic:newContentStyle]];
+    }
+    
+    stylePropChanged = YES;
+  }
+  
+  
+  if(stylePropChanged) {
     // all the text needs to be rebuilt
     // we get the current html using old config, then switch to new config and
     // replace text using the html this way, the newest config attributes are
@@ -974,6 +1005,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
         .isCodeBlock = [_activeStyles containsObject: @([CodeBlockStyle getStyleType])],
         .isImage = [_activeStyles containsObject: @([ImageStyle getStyleType])],
         .isCheckList = [_activeStyles containsObject: @([CheckBoxStyle getStyleType])]
+        .isContent = [_activeStyles containsObject: @([ContentStyle getStyleType])]
       });
     }
   }

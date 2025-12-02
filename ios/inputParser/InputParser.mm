@@ -132,7 +132,8 @@
 
         // append closing tags
         for(NSNumber *style in sortedEndedStyles) {
-          if ([style isEqualToNumber: @([ImageStyle getStyleType])] || [style isEqualToNumber: @([DividerStyle getStyleType])]) {
+          if ([style isEqualToNumber: @([ImageStyle getStyleType])] || [style isEqualToNumber: @([DividerStyle getStyleType])] ||
+              [style isEqualToNumber: @([ContentStyle getStyleType])]) {
             continue;
           }
           NSString *tagContent =
@@ -250,6 +251,7 @@
            [currentActiveStyles containsObject:@([BlockQuoteStyle getStyleType])] ||
            [currentActiveStyles containsObject:@([CodeBlockStyle getStyleType])] ||
            [currentActiveStyles containsObject:@([CheckBoxStyle getStyleType])]
+           [currentActiveStyles containsObject:@([ContentStyle getStyleType])]
         ) {
           [result appendString:@"\n"];
         } else if([currentActiveStyles containsObject:@([DividerStyle getStyleType])]) {
@@ -309,7 +311,8 @@
 
       // append closing tags
       for(NSNumber *style in sortedEndedStyles) {
-        if ([style isEqualToNumber: @([ImageStyle getStyleType])] || [style isEqualToNumber: @([DividerStyle getStyleType])]) {
+        if ([style isEqualToNumber: @([ImageStyle getStyleType])] || [style isEqualToNumber: @([DividerStyle getStyleType])] ||
+            [style isEqualToNumber: @([ContentStyle getStyleType])]) {
           continue;
         }
         NSString *tagContent = [self tagContentForStyle:style
@@ -380,6 +383,63 @@
       }
 
       // Now append remaining opening tags (except divider which we already handled)
+      if ([currentCharacterStr isEqualToString:@"\uFFFC"]) {
+          ContentStyle *contentStyle = _input->stylesDict[@([ContentStyle getStyleType])];
+          if (contentStyle != nil && [currentActiveStyles containsObject:@([ContentStyle getStyleType])] ) {
+            // Close lists/blockquote/heading if currently open - content should be outside them
+              if(inUnorderedList) {
+                  inUnorderedList = NO;
+                  [result appendString:@"\n</ul>"];
+              }
+              if(inOrderedList) {
+                  inOrderedList = NO;
+                  [result appendString:@"\n</ol>"];
+              }
+              if(inBlockQuote) {
+                  inBlockQuote = NO;
+                  [result appendString:@"\n</blockquote>"];
+              }
+
+              // Close any open headings
+              if([previousActiveStyles containsObject:@([H1Style getStyleType])]) {
+                  [result appendString:@"</h1>"];
+              }
+              if([previousActiveStyles containsObject:@([H2Style getStyleType])]) {
+                  [result appendString:@"</h2>"];
+              }
+              if([previousActiveStyles containsObject:@([H3Style getStyleType])]) {
+                  [result appendString:@"</h3>"];
+              }
+
+              // Close paragraph if inside a normal paragraph
+              BOOL insideParagraphBlock = previousActiveStyles.count != 0 && !(
+                  [previousActiveStyles containsObject:@([UnorderedListStyle getStyleType])] ||
+                  [previousActiveStyles containsObject:@([OrderedListStyle getStyleType])] ||
+                  [previousActiveStyles containsObject:@([H1Style getStyleType])] ||
+                  [previousActiveStyles containsObject:@([H2Style getStyleType])] ||
+                  [previousActiveStyles containsObject:@([H3Style getStyleType])] ||
+                  [previousActiveStyles containsObject:@([BlockQuoteStyle getStyleType])]
+              );
+
+              if(insideParagraphBlock) {
+                  [result appendString:@"</p>"];
+              }
+            
+              ContentParams *cParams = [contentStyle getContentParams:currentRange.location];
+              if (cParams != nil) {
+                  NSString *tag = [self tagContentForStyle:@([ContentStyle getStyleType])
+                                               openingTag:YES
+                                                 location:currentRange.location];
+
+                  [result appendFormat:@"<%@/>", tag];
+                  newLine = YES;
+                  previousActiveStyles = [[NSSet alloc] init];
+                  continue;
+              }
+          }
+      }
+
+      // Now append remaining opening tags
       NSArray<NSNumber*> *sortedNewStyles = [newStyles sortedArrayUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"intValue" ascending:YES]]];
       
       // append opening tags
@@ -419,7 +479,8 @@
 
     // append closing tags
     for(NSNumber *style in sortedEndedStyles) {
-      if ([style isEqualToNumber: @([ImageStyle getStyleType])] || [style isEqualToNumber: @([DividerStyle getStyleType])]) {
+      if ([style isEqualToNumber: @([ImageStyle getStyleType])] || [style isEqualToNumber: @([DividerStyle getStyleType])] ||
+          [style isEqualToNumber: @([ContentStyle getStyleType])]) {
         continue;
       }
       NSString *tagContent = [self
@@ -454,6 +515,8 @@
     ) {
       // do nothing, heading closing tag has already been appended
     } else if ([previousActiveStyles containsObject:@([DividerStyle getStyleType])]) {
+      // do nothing, heading closing tag has already ben appended
+    } else if ([previousActiveStyles containsObject:@([ContentStyle getStyleType])]) {
       // do nothing
     } else {
       [result appendString:@"</p>"];
@@ -595,6 +658,30 @@
     }
   } else if ([style isEqualToNumber:@([DividerStyle getStyleType])]) {
     return @"hr";
+  } else if ([style isEqualToNumber:@([ContentStyle getStyleType])]) {
+    ContentStyle *contentStyle = (ContentStyle *)_input->stylesDict[@([ContentStyle getStyleType])];
+    if (openingTag) {
+      if (contentStyle != nil) {
+        ContentParams *params = [contentStyle getContentParams:location];
+        NSMutableString *attrsStr = [[NSMutableString alloc] initWithString: @""];
+        if (params != nil) {
+          NSData *attrsData = [params.attributes dataUsingEncoding:NSUTF8StringEncoding];
+          NSError *jsonError;
+          NSDictionary *json = [NSJSONSerialization JSONObjectWithData:attrsData
+            options:0
+            error:&jsonError
+          ];
+          [json enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            [attrsStr appendString: [NSString stringWithFormat:@" %@=\"%@\"", (NSString *)key, (NSString *)obj]];
+          }];
+        }
+        return [NSString stringWithFormat:@"content text=\"%@\" type=\"%@\"%@", params.text, params.type, attrsStr];
+      }
+      return @"content";
+    } else {
+      // self-closing: no trailing tag name needed
+      return @"";
+    }
   } else if([style isEqualToNumber:@([H1Style getStyleType])]) {
     return @"h1";
   } else if ([style isEqualToNumber:@([H2Style getStyleType])]) {
@@ -720,6 +807,9 @@
       } else if([styleType isEqualToNumber: @([ColorStyle getStyleType])]) {
         UIColor *color = (UIColor *)stylePair.styleValue;
         [((ColorStyle *)baseStyle) applyStyle:styleRange color: color];
+      } else if([styleType isEqualToNumber: @([ContentStyle getStyleType])]) {
+        ContentParams *cparams = (ContentParams *)stylePair.styleValue;
+        [((ContentStyle *)baseStyle) addContentAtRange:styleRange params:cparams];
       } else {
         BOOL shouldAddTypingAttr =
             styleRange.location + styleRange.length == plainTextLength;
@@ -803,6 +893,8 @@
     fixedHtml = [self stringByAddingNewlinesToTag:@"</codeblock>" inString:fixedHtml leading:YES trailing:YES];
     fixedHtml = [self stringByAddingNewlinesToTag:@"<hr>" inString:fixedHtml leading:YES trailing:YES];
     fixedHtml = [self stringByAddingNewlinesToTag:@"<hr/>" inString:fixedHtml leading:YES trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<content>" inString:fixedHtml leading:YES trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<content/>" inString:fixedHtml leading:YES trailing:YES];
     
     // line opening tags
     fixedHtml = [self stringByAddingNewlinesToTag:@"<p>" inString:fixedHtml leading:YES trailing:NO];
@@ -996,6 +1088,27 @@
       gettingTagName = NO;
       gettingTagParams = NO;
 
+      if([currentTagName isEqualToString:@"content"]) {
+          [plainText appendFormat:@"%C", 0xFFFC];
+          NSMutableArray *tagEntry = [[NSMutableArray alloc] init];
+          NSRange tagRange = NSMakeRange(plainText.length - 1, 1);
+          [tagEntry addObject:@"content"];
+          [tagEntry addObject:[NSValue valueWithRange:tagRange]];
+          if (currentTagParams.length > 0) {
+              [tagEntry addObject:[currentTagParams copy]];
+          }
+          [initiallyProcessedTags addObject:tagEntry];
+
+          // reset
+          closingTag = NO;
+          insideTag = NO;
+          gettingTagName = NO;
+          gettingTagParams = NO;
+          currentTagName = [[NSMutableString alloc] initWithString:@""];
+          currentTagParams = [[NSMutableString alloc] initWithString:@""];
+          continue;
+      }
+      
       BOOL isSelfClosing = NO;
 
       // Check if params ended with '/' (e.g. <img src="" />)
@@ -1324,6 +1437,33 @@
       }
 
       stylePair.styleValue = @(checked);
+    } else if([tagName isEqualToString:@"content"]) {
+      [styleArr addObject:@([ContentStyle getStyleType])];
+
+      NSMutableDictionary *paramsDict = [[NSMutableDictionary alloc] init];
+      NSString *pattern = @"(\\w+)=\"([^\"]*)\"";
+      NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:nil];
+      
+      [regex enumerateMatchesInString:params options:0 range:NSMakeRange(0,params.length)
+        usingBlock:^(NSTextCheckingResult * _Nullable result, NSMatchingFlags flags, BOOL * _Nonnull stop) {
+          if(result.numberOfRanges == 3) {
+            NSString *key = [params substringWithRange:[result rangeAtIndex:1]];
+            NSString *value = [params substringWithRange:[result rangeAtIndex:2]];
+            paramsDict[key] = value;
+          }
+        }
+      ];
+      
+      ContentParams *contentParams = [[ContentParams alloc] init];
+      contentParams.text = paramsDict[@"text"];
+      contentParams.type = paramsDict[@"type"];
+      
+      [paramsDict removeObjectsForKeys:@[@"text", @"type"]];
+      NSError *error;
+      NSData *attrsData = [NSJSONSerialization dataWithJSONObject:paramsDict options:0 error:&error];
+      NSString *formattedAttrsString = [[NSString alloc] initWithData:attrsData encoding:NSUTF8StringEncoding];
+      contentParams.attributes = formattedAttrsString;
+      stylePair.styleValue = contentParams;
     } else {
       // some other external tags like span just don't get put into the
       // processed styles
