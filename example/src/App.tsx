@@ -64,6 +64,7 @@ const DEFAULT_STYLE: StylesState = {
   isMention: false,
   isCheckList: false,
   isColored: false,
+  isContent: false,
 };
 
 const DEFAULT_LINK_STATE = {
@@ -444,6 +445,45 @@ const htmlStyle: HtmlStyle = {
       textDecorationLine: 'none',
     },
   },
+  content: {
+    image: {
+      borderWidth: 1,
+      borderColor: 'gray',
+      textColor: 'gray',
+      borderStyle: 'dashed',
+      borderRadius: 4,
+      paddingTop: 8,
+      paddingBottom: 8,
+      marginTop: 8,
+      marginBottom: 8,
+    },
+    video: {
+      borderWidth: 1,
+      borderColor: 'blue',
+      textColor: 'blue',
+      borderStyle: 'dotted',
+      borderRadius: 4,
+      paddingTop: 8,
+      paddingBottom: 8,
+      marginTop: 8,
+      marginBottom: 8,
+    },
+    placeholder: {
+      borderWidth: 1,
+      borderColor: 'green',
+      textColor: 'green',
+      borderStyle: 'dotted',
+      borderRadius: 4,
+      paddingTop: 8,
+      paddingBottom: 8,
+      marginTop: 8,
+      marginBottom: 8,
+    },
+  },
+  img: {
+    width: 50,
+    height: 50,
+  },
   ol: {
     gapWidth: 16,
     marginLeft: 24,
@@ -515,7 +555,7 @@ const styles = StyleSheet.create({
   editorInput: {
     marginTop: 24,
     width: '100%',
-    maxHeight: 180,
+    maxHeight: 300,
     backgroundColor: 'gainsboro',
     fontSize: 18,
     fontFamily: 'Nunito-Regular',
