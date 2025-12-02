@@ -148,6 +148,12 @@
       props.fontSize = 14.0;
     }
   
+    if(folly["fontWeight"].isString()) {
+      props.fontWeight = [NSString fromCppString:folly["fontWeight"].asString()];
+    } else {
+      props.fontWeight = @"500";
+    }
+  
     return props;
 }
 
