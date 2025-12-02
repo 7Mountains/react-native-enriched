@@ -483,6 +483,7 @@ const htmlStyle: HtmlStyle = {
       imageBorderRadiusBottomLeft: 4,
       imageResizeMode: 'stretch',
       imageWidth: 50,
+      fontSize: 12,
     },
     video: {
       borderWidth: 1,
@@ -506,6 +507,9 @@ const htmlStyle: HtmlStyle = {
       marginTop: 8,
       marginBottom: 8,
       imageWidth: 50,
+      imageBorderRadiusTopLeft: 4,
+      imageBorderRadiusBottomLeft: 4,
+      imageResizeMode: 'cover',
     },
     test: {
       borderColor: 'red',

@@ -142,6 +142,12 @@
       props.imageResizeMode = @"cover";
     }
   
+    if(folly["fontSize"].isNumber()) {
+      props.fontSize =  folly["fontSize"].asDouble();
+    } else {
+      props.fontSize = 14.0;
+    }
+  
     return props;
 }
 

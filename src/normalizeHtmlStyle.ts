@@ -77,6 +77,7 @@ const defaultStyle: Required<HtmlStyle> = {
     imageHeight: 0,
     imageWidth: 0,
     imageResizeMode: 'stretch',
+    fontSize: 14,
   },
   img: {
     width: 80,
