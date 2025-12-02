@@ -57,6 +57,7 @@
   CGFloat _dividerHeight;
   CGFloat _dividerThickness;
   UIColor *_dividerColor;
+  NSDictionary *_contentProperties;
 }
 
 - (instancetype)init {
@@ -121,6 +122,7 @@
   copy->_dividerColor = [_dividerColor copy];
   copy->_dividerHeight = _dividerHeight;
   copy-> _dividerThickness = _dividerThickness;
+  copy->_contentProperties = [_contentProperties copy];
   return copy;
 }
 
@@ -473,6 +475,35 @@
   fallbackProps.backgroundColor = [UIColor yellowColor];
   fallbackProps.decorationLine = DecorationUnderline;
   return fallbackProps;
+}
+
+- (void)setContentStyleProps:(NSDictionary *)newValue {
+  _contentProperties = [newValue mutableCopy];
+}
+
+- (ContentStyleProps *)contentStylePropsForType:(NSString *)type {
+  if(_contentProperties.count == 1 && _contentProperties[@"all"] != nullptr) {
+    return _contentProperties[@"all"];
+  } else if(_contentProperties[type] != nullptr) {
+    return _contentProperties[type];
+  }
+
+  ContentStyleProps *fallback = [ContentStyleProps new];
+  fallback.backgroundColor = [UIColor clearColor];
+  fallback.textColor = self.primaryColor ?: [UIColor blackColor];
+  fallback.borderColor = nil;
+  fallback.borderWidth = 0;
+  fallback.borderStyle = @"solid";
+  fallback.borderRadius = 8.0;
+  fallback.marginTop = 0.0;
+  fallback.marginBottom = 0.0;
+  fallback.marginLeft = 0.0;
+  fallback.marginRight = 0.0;
+  fallback.paddingTop = 8.0;
+  fallback.paddingBottom = 8.0;
+  fallback.paddingLeft = 0.0;
+  fallback.paddingRight = 0.0;
+  return fallback;
 }
 
 - (UIColor *)codeBlockFgColor {

@@ -3,6 +3,7 @@
 #import "TextDecorationLineEnum.h"
 #import <UIKit/UIKit.h>
 #import <React/RCTImageSource.h>
+#import "ContentStyleProps.h"
 
 @interface InputConfig : NSObject <NSCopying>
 - (instancetype)init;
@@ -108,4 +109,6 @@
 - (void)setDividerHeight:(CGFloat)newValue;
 - (void)setDividerColor:(UIColor *)newValue;
 - (void)setDividerThickness:(CGFloat)newValue;
+- (void)setContentStyleProps:(NSDictionary *)newValue;
+- (ContentStyleProps *)contentStylePropsForType:(NSString *)type;
 @end
