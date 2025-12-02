@@ -6,7 +6,12 @@ import type {
   Int32,
   UnsafeMixed,
 } from 'react-native/Libraries/Types/CodegenTypes';
-import type { ColorValue, HostComponent, ViewProps } from 'react-native';
+import type {
+  ColorValue,
+  HostComponent,
+  TextStyle,
+  ViewProps,
+} from 'react-native';
 import React from 'react';
 
 export interface OnChangeTextEvent {
@@ -116,6 +121,7 @@ export interface ContentStyleProperties {
     | 'none'
     | 'scale-down';
   fontSize?: number;
+  fontWeight?: TextStyle['fontWeight'];
 }
 
 export interface HtmlStyleInternal {
