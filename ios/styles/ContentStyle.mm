@@ -183,7 +183,7 @@ static NSString *const placeholder = @"\uFFFC";
     }
 
     attachment.labelText    = params.text;
-    attachment.font         = [_input->config.primaryFont fontWithSize:14];
+    attachment.font         = [_input->config.primaryFont fontWithSize:styles.fontSize];
     attachment.bgColor      = styles.backgroundColor;
     attachment.textColor    = styles.textColor;
     attachment.inset        = UIEdgeInsetsMake(styles.paddingTop, styles.paddingLeft,
