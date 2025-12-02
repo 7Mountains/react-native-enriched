@@ -18,6 +18,7 @@ import EnrichedTextInputNativeComponent, {
   type OnMentionDetectedInternal,
   type MentionStyleProperties,
   type OnChangeColorEvent,
+  type ContentStyleProperties,
 } from './EnrichedTextInputNativeComponent';
 import type {
   ColorValue,
@@ -106,6 +107,11 @@ export interface HtmlStyle {
     textDecorationLine?: 'underline' | 'none';
   };
   mention?: Record<string, MentionStyleProperties> | MentionStyleProperties;
+  content?: Record<string, ContentStyleProperties> | ContentStyleProperties;
+  img?: {
+    width?: number;
+    height?: number;
+  };
   ol?: {
     gapWidth?: number;
     marginLeft?: number;

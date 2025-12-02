@@ -3,6 +3,7 @@ import { type ColorValue, processColor } from 'react-native';
 import type {
   MentionStyleProperties,
   HtmlStyleInternal,
+  ContentStyleProperties,
 } from './EnrichedTextInputNativeComponent';
 
 const defaultStyle: Required<HtmlStyle> = {
@@ -53,6 +54,26 @@ const defaultStyle: Required<HtmlStyle> = {
     color: 'blue',
     backgroundColor: 'yellow',
     textDecorationLine: 'underline',
+  },
+  content: {
+    backgroundColor: 'transparent',
+    textColor: 'black',
+    borderColor: 'darkgray',
+    borderRadius: 8,
+    borderStyle: 'solid',
+    borderWidth: 1,
+    marginRight: 0,
+    marginLeft: 0,
+    paddingRight: 0,
+    paddingLeft: 0,
+    paddingTop: 8,
+    paddingBottom: 8,
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  img: {
+    width: 80,
+    height: 80,
   },
   ol: {
     gapWidth: 16,
@@ -183,6 +204,21 @@ const parseColors = (style: HtmlStyleInternal): HtmlStyleInternal => {
           mentionStyle as MentionStyleProperties
         )) {
           tagStyles[indicator][styleName] = parseStyle(styleName, styleValue);
+        }
+      }
+
+      finalStyle[tagName] = tagStyles;
+      continue;
+    }
+
+    if (tagName === 'content') {
+      for (const [type, mentionStyle] of Object.entries(tagStyle)) {
+        tagStyles[type] = {};
+
+        for (const [styleName, styleValue] of Object.entries(
+          mentionStyle as ContentStyleProperties
+        )) {
+          tagStyles[type][styleName] = parseStyle(styleName, styleValue);
         }
       }
 
