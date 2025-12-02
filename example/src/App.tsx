@@ -460,7 +460,7 @@ const htmlStyle: HtmlStyle = {
       imageBorderRadiusBottomLeft: 4,
       imageResizeMode: 'stretch',
       imageWidth: 50,
-      fontSize: 12,
+      fontSize: 14,
     },
     video: {
       borderWidth: 1,
