@@ -9,6 +9,7 @@
 @property NSString *borderStyle;
 @property CGFloat borderRadius;
 @property CGFloat fontSize;
+@property NSString *fontWeight;
 
 @property UIColor *textColor;
 @property UIColor *backgroundColor;

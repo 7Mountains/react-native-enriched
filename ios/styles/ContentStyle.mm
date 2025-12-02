@@ -8,6 +8,7 @@
 #import "ImageLabelAttachment.h"
 #import "TextOnlyLabelAttachment.h"
 #import "EnrichedImageLoader.h"
+#import <React/RCTFont.h>
 
 static NSString *const ContentAttributeName = @"ContentAttributeName";
 static NSString *const placeholder = @"\uFFFC";
@@ -181,9 +182,16 @@ static NSString *const placeholder = @"\uFFFC";
     } else {
         attachment = [[TextOnlyLabelAttachment alloc] init];
     }
-
+    UIFont *font = [RCTFont updateFont:nullptr
+                                       withFamily:[_input->config primaryFontFamily]
+                                       size: @(styles.fontSize)
+                                       weight: styles.fontWeight
+                                       style:nullptr
+                                       variant:nullptr
+                                       scaleMultiplier: 1];
+    
     attachment.labelText    = params.text;
-    attachment.font         = [_input->config.primaryFont fontWithSize:styles.fontSize];
+    attachment.font         = font;
     attachment.bgColor      = styles.backgroundColor;
     attachment.textColor    = styles.textColor;
     attachment.inset        = UIEdgeInsetsMake(styles.paddingTop, styles.paddingLeft,
