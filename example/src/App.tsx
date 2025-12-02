@@ -473,6 +473,7 @@ const htmlStyle: HtmlStyle = {
       imageResizeMode: 'stretch',
       imageWidth: 50,
       fontSize: 14,
+      fontWeight: '900',
     },
     video: {
       borderWidth: 1,
