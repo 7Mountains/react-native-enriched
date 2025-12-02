@@ -5,6 +5,7 @@
 
 @property NSString *type;
 @property NSString *text;
+@property NSString *url;
 @property NSString *attributes;
 
 @end
