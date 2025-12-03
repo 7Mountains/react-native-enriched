@@ -230,7 +230,7 @@
            [currentActiveStyles containsObject:@([H6Style getStyleType])] ||
            [currentActiveStyles containsObject:@([BlockQuoteStyle getStyleType])] ||
            [currentActiveStyles containsObject:@([CodeBlockStyle getStyleType])] ||
-           [currentActiveStyles containsObject:@([CheckBoxStyle getStyleType])]
+           [currentActiveStyles containsObject:@([CheckBoxStyle getStyleType])] ||
            [currentActiveStyles containsObject:@([ContentStyle getStyleType])]
         ) {
           [result appendString:@"\n"];
@@ -1251,21 +1251,19 @@
       stylePair.styleValue = mentionParams;
     } else if([tagName isEqualToString:@"hr"]) {
       [styleArr addObject:@([DividerStyle getStyleType])];
-    } else if([[tagName substringWithRange:NSMakeRange(0, 1)] isEqualToString: @"h"]) {
-      if([tagName isEqualToString:@"h1"]) {
-        [styleArr addObject:@([H1Style getStyleType])];
-      } else if ([tagName isEqualToString:@"h2"]) {
-        [styleArr addObject:@([H2Style getStyleType])];
-      } else if ([tagName isEqualToString:@"h3"]) {
-        [styleArr addObject:@([H3Style getStyleType])];
-      } else if([tagName isEqualToString:@"h4"]) {
-        [styleArr addObject:@([H4Style getStyleType])];
-      } else if([tagName isEqualToString:@"h5"]) {
-        [styleArr addObject:@([H5Style getStyleType])];
-      } else if([tagName isEqualToString:@"h6"]) {
-        [styleArr addObject:@([H6Style getStyleType])];
-      }
-    } else if ([tagName isEqualToString:@"ul"]) {
+    } else if([tagName isEqualToString:@"h1"]) {
+      [styleArr addObject:@([H1Style getStyleType])];
+    } else if([tagName isEqualToString:@"h2"]) {
+      [styleArr addObject:@([H2Style getStyleType])];
+    } else if([tagName isEqualToString:@"h3"]) {
+      [styleArr addObject:@([H3Style getStyleType])];
+    } else if([tagName isEqualToString:@"h4"]) {
+      [styleArr addObject:@([H4Style getStyleType])];
+    } else if([tagName isEqualToString:@"h5"]) {
+      [styleArr addObject:@([H5Style getStyleType])];
+    } else if([tagName isEqualToString:@"h6"]) {
+      [styleArr addObject:@([H6Style getStyleType])];
+    } else if([tagName isEqualToString:@"ul"]) {
       [styleArr addObject:@([UnorderedListStyle getStyleType])];
     } else if ([tagName isEqualToString:@"ol"]) {
       [styleArr addObject:@([OrderedListStyle getStyleType])];
