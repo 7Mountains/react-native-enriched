@@ -64,6 +64,7 @@ const DEFAULT_STYLE: StylesState = {
   isMention: false,
   isCheckList: false,
   isColored: false,
+  isContent: false,
 };
 
 const DEFAULT_LINK_STATE = {
@@ -80,6 +81,17 @@ const DEBUG_SCROLLABLE = false;
 // Disabled for now, as it's causing some strange issues.
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
+
+const html = `<html>
+<h1>Heading 1</h1>
+<p><font color="#EF5757">Test</font></p>
+<p><font color="#74DB63">Test</font></p>
+<p><font color="#E459CE">Test</font></p>
+<p><font color="#89B6F9">Test</font></p>
+<content type="image" text="Test" />
+<checklist checked="true"><font color="#FFBE55">Test test</font></checklist>
+<checklist checked="false"><font color="#FFBE55">Test</font> Test</checklist>
+</html>`;
 
 export default function App() {
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);
@@ -305,7 +317,7 @@ export default function App() {
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
             autoCapitalize="sentences"
-            defaultValue="<html><h1>Test</h1><ul><li>Test</li></ul></html>"
+            defaultValue={html}
             onColorChangeInSelection={handleSelectionColorChange}
             onChangeText={handleChangeText}
             onChangeHtml={handleChangeHtml}
@@ -444,6 +456,64 @@ const htmlStyle: HtmlStyle = {
       textDecorationLine: 'none',
     },
   },
+  content: {
+    image: {
+      textColor: 'black',
+      backgroundColor: 'lightgray',
+      borderRadius: 4,
+      paddingTop: 20,
+      paddingBottom: 20,
+      marginTop: 4,
+      marginBottom: 4,
+      paddingLeft: 0,
+      paddingRight: 0,
+      imageBorderRadiusTopLeft: 4,
+      imageBorderRadiusBottomLeft: 4,
+      imageResizeMode: 'stretch',
+      imageWidth: 50,
+      fontSize: 14,
+      fontWeight: '900',
+    },
+    video: {
+      borderWidth: 1,
+      borderColor: 'blue',
+      textColor: 'blue',
+      borderStyle: 'dotted',
+      borderRadius: 4,
+      paddingTop: 16,
+      paddingBottom: 16,
+      marginTop: 4,
+      marginBottom: 4,
+    },
+    placeholder: {
+      borderWidth: 1,
+      borderColor: 'blue',
+      textColor: 'blue',
+      borderStyle: 'dotted',
+      borderRadius: 4,
+      paddingTop: 14,
+      paddingBottom: 14,
+      marginTop: 8,
+      marginBottom: 8,
+      imageWidth: 50,
+      imageBorderRadiusTopLeft: 4,
+      imageBorderRadiusBottomLeft: 4,
+      imageResizeMode: 'cover',
+    },
+    test: {
+      borderColor: 'red',
+      borderWidth: 1,
+      paddingTop: 10,
+      paddingBottom: 10,
+      borderRadius: 8,
+      borderStyle: 'dashed',
+      textColor: 'blue',
+    },
+  },
+  img: {
+    width: 50,
+    height: 50,
+  },
   ol: {
     gapWidth: 16,
     marginLeft: 24,
@@ -515,7 +585,7 @@ const styles = StyleSheet.create({
   editorInput: {
     marginTop: 24,
     width: '100%',
-    maxHeight: 180,
+    maxHeight: 300,
     backgroundColor: 'gainsboro',
     fontSize: 18,
     fontFamily: 'Nunito-Regular',

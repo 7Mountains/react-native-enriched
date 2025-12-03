@@ -6,7 +6,12 @@ import type {
   Int32,
   UnsafeMixed,
 } from 'react-native/Libraries/Types/CodegenTypes';
-import type { ColorValue, HostComponent, ViewProps } from 'react-native';
+import type {
+  ColorValue,
+  HostComponent,
+  TextStyle,
+  ViewProps,
+} from 'react-native';
 import React from 'react';
 
 export interface OnChangeTextEvent {
@@ -38,6 +43,7 @@ export interface OnChangeStateEvent {
   isMention: boolean;
   isCheckList: boolean;
   isColored: boolean;
+  isContent: boolean;
 }
 
 export interface OnLinkDetected {
@@ -85,6 +91,39 @@ type Heading = {
   bold?: boolean;
 };
 
+export interface ContentStyleProperties {
+  textColor?: ColorValue;
+  borderStyle?: 'solid' | 'dashed' | 'dotted';
+  borderRadius?: number;
+  backgroundColor?: ColorValue;
+  borderWidth?: number;
+  borderColor?: ColorValue;
+  paddingTop?: number;
+  paddingBottom?: number;
+  paddingRight?: number;
+  paddingLeft?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  marginTop?: number;
+  marginBottom?: number;
+  imageBorderRadiusTopLeft?: number;
+  imageBorderRadiusTopRight?: number;
+  imageBorderRadiusBottomRight?: number;
+  imageBorderRadiusBottomLeft?: number;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageResizeMode?:
+    | 'contain'
+    | 'fill'
+    | 'cover'
+    | 'stretch'
+    | 'center'
+    | 'none'
+    | 'scale-down';
+  fontSize?: number;
+  fontWeight?: TextStyle['fontWeight'];
+}
+
 export interface HtmlStyleInternal {
   h1?: Heading;
   h2?: Heading;
@@ -114,6 +153,11 @@ export interface HtmlStyleInternal {
   // This is a workaround for the fact that codegen does not support Records.
   // On native Android side this will become a ReadableMap, on native iOS we can work with a folly::dynamic object.
   mention?: UnsafeMixed;
+  content?: UnsafeMixed;
+  img?: {
+    width?: Float;
+    height?: Float;
+  };
   ol?: {
     gapWidth?: Float;
     marginLeft?: Float;

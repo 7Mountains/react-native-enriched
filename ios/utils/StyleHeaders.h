@@ -4,6 +4,7 @@
 #import "MentionParams.h"
 #import "ImageData.h"
 #import "DividerAttachment.h"
+#import "ContentParams.h"
 
 @interface BoldStyle : NSObject <BaseStyleProtocol>
 @end
@@ -114,4 +115,9 @@
 
 @interface DividerStyle : NSObject<BaseStyleProtocol>
 - (void)insertDividerAtNewLine;
+@end
+
+@interface ContentStyle : NSObject<BaseStyleProtocol>
+- (void)addContentAtRange:(NSRange)range params:(ContentParams *)params;
+- (ContentParams *)getContentParams:(NSUInteger)location;
 @end
