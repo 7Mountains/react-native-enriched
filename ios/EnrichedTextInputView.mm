@@ -182,7 +182,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
     @([CheckBoxStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType])],
     @([DividerStyle getStyleType]): @[@([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([@contentStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType], @([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType]), @([ImageStyle getStyleType]), ]
+    @([ContentStyle getStyleType]): @[@([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType]), @([DividerStyle getStyleType])]
   };
 
   
@@ -895,7 +895,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
         .isBlockQuote = [_activeStyles containsObject: @([BlockQuoteStyle getStyleType])],
         .isCodeBlock = [_activeStyles containsObject: @([CodeBlockStyle getStyleType])],
         .isImage = [_activeStyles containsObject: @([ImageStyle getStyleType])],
-        .isCheckList = [_activeStyles containsObject: @([CheckBoxStyle getStyleType])]
+        .isCheckList = [_activeStyles containsObject: @([CheckBoxStyle getStyleType])],
         .isContent = [_activeStyles containsObject: @([ContentStyle getStyleType])]
       });
     }
