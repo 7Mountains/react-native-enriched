@@ -1069,20 +1069,6 @@
         }
         
         [self finalizeTagEntry:currentTagName ongoingTags:ongoingTags initiallyProcessedTags:initiallyProcessedTags plainText:plainText];
-        NSMutableArray *tagEntry = [[NSMutableArray alloc] init];
-        
-        NSArray *tagData = ongoingTags[currentTagName];
-        NSInteger tagLocation = [((NSNumber *)tagData[0]) intValue];
-        NSRange tagRange = NSMakeRange(tagLocation, plainText.length - tagLocation);
-        
-        [tagEntry addObject:[currentTagName copy]];
-        [tagEntry addObject:[NSValue valueWithRange:tagRange]];
-        if(tagData.count > 1) {
-          [tagEntry addObject:[(NSString *)tagData[1] copy]];
-        }
-        
-        [initiallyProcessedTags addObject:tagEntry];
-        [ongoingTags removeObjectForKey:currentTagName];
       }
       // post-tag cleanup
       closingTag = NO;
