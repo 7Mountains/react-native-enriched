@@ -83,10 +83,12 @@ const DEBUG_SCROLLABLE = false;
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
 const html = `<html>
+<h1>Heading 1</h1>
 <p><font color="#EF5757">Test</font></p>
 <p><font color="#74DB63">Test</font></p>
 <p><font color="#E459CE">Test</font></p>
 <p><font color="#89B6F9">Test</font></p>
+<content type="image" text="Test" />
 <checklist checked="true"><font color="#FFBE55">Test test</font></checklist>
 <checklist checked="false"><font color="#FFBE55">Test</font> Test</checklist>
 </html>`;
