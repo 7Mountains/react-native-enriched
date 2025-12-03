@@ -80,6 +80,15 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
+const html = `<html>
+<p><font color="#EF5757">Test</font></p>
+<p><font color="#74DB63">Test</font></p>
+<p><font color="#E459CE">Test</font></p>
+<p><font color="#89B6F9">Test</font></p>
+<checklist checked="true"><font color="#FFBE55">Test test</font></checklist>
+<checklist checked="false"><font color="#FFBE55">Test</font> Test</checklist>
+</html>`;
+
 export default function App() {
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);
   const [isUserPopupOpen, setIsUserPopupOpen] = useState(false);

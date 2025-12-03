@@ -3,6 +3,7 @@
 
 @implementation H6Style
 + (StyleType)getStyleType { return H6; }
++ (BOOL)isParagraphStyle { return YES; }
 - (CGFloat)getHeadingFontSize { return [((EnrichedTextInputView *)input)->config h6FontSize]; }
 - (BOOL)isHeadingBold {
   return [((EnrichedTextInputView *)input)->config h6Bold];
