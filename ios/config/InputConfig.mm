@@ -559,6 +559,8 @@
 
 - (void)setCheckedTextColor:(UIColor *)newValue {
   _checkedTextColor = newValue;
+}
+
 - (void)setDividerColor:(UIColor *)newValue {
   _dividerColor = newValue;
 }
@@ -581,6 +583,10 @@
 
 - (CGFloat)dividerThickness {
   return _dividerThickness;
+}
+
+- (void)dividerThickness:(CGFloat)newValue {
+  _dividerThickness = newValue;
 }
 
 @end

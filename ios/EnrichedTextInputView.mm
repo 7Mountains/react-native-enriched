@@ -106,8 +106,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([BlockQuoteStyle getStyleType]): [[BlockQuoteStyle alloc] initWithInput:self],
     @([CodeBlockStyle getStyleType]): [[CodeBlockStyle alloc] initWithInput:self],
     @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self],
-    @([CheckBoxStyle getStyleType]): [[CheckBoxStyle alloc] initWithInput:self]
-    @([DividerStyle getStyleType]): [[DividerStyle alloc] initWithInput:self],
+    @([CheckBoxStyle getStyleType]): [[CheckBoxStyle alloc] initWithInput:self],
+    @([DividerStyle getStyleType]): [[DividerStyle alloc] initWithInput:self]
   };
   
   conflictingStyles = @{
@@ -373,6 +373,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   
   if(newViewProps.htmlStyle.checkbox.checkedTextColor != oldViewProps.htmlStyle.checkbox.checkedTextColor) {
     [newConfig setCheckedTextColor: RCTUIColorFromSharedColor(newViewProps.htmlStyle.checkbox.checkedTextColor)];
+    stylePropChanged = YES;
+  }
+
   if(newViewProps.htmlStyle.divider.color != oldViewProps.htmlStyle.divider.color) {
     [newConfig setDividerColor: RCTUIColorFromSharedColor(newViewProps.htmlStyle.divider.color)];
     stylePropChanged = YES;
