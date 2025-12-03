@@ -356,6 +356,9 @@
               [previousActiveStyles containsObject:@([H1Style getStyleType])] ||
               [previousActiveStyles containsObject:@([H2Style getStyleType])] ||
               [previousActiveStyles containsObject:@([H3Style getStyleType])] ||
+              [previousActiveStyles containsObject:@([H4Style getStyleType])] ||
+              [previousActiveStyles containsObject:@([H5Style getStyleType])] ||
+              [previousActiveStyles containsObject:@([H6Style getStyleType])] ||
               [previousActiveStyles containsObject:@([BlockQuoteStyle getStyleType])] ||
               [previousActiveStyles containsObject:dividerType]
           );
@@ -811,6 +814,7 @@
     fixedHtml = [self stringByAddingNewlinesToTag:@"<h5>" inString:fixedHtml leading:YES trailing:NO];
     fixedHtml = [self stringByAddingNewlinesToTag:@"<h6>" inString:fixedHtml leading:YES trailing:NO];
     fixedHtml = [self stringByAddingNewlinesToTag:@"<checklist>" inString:fixedHtml leading:YES trailing:NO];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<content>" inString:fixedHtml leading:YES trailing:NO];
     
     // line closing tags
     fixedHtml = [self stringByAddingNewlinesToTag:@"</p>" inString:fixedHtml leading:NO trailing:YES];
@@ -822,6 +826,7 @@
     fixedHtml = [self stringByAddingNewlinesToTag:@"</h5>" inString:fixedHtml leading:NO trailing:YES];
     fixedHtml = [self stringByAddingNewlinesToTag:@"</h6>" inString:fixedHtml leading:NO trailing:YES];
     fixedHtml = [self stringByAddingNewlinesToTag:@"</checklist>" inString:fixedHtml leading:NO trailing:YES];
+    fixedHtml = [self stringByAddingNewlinesToTag:@"<content>" inString:fixedHtml leading:NO trailing:NO];
   }
 
   return fixedHtml;
