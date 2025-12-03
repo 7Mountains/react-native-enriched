@@ -305,7 +305,7 @@ export default function App() {
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
             autoCapitalize="sentences"
-            defaultValue="<html><checklist checked='false'>test</checklist></html>"
+            defaultValue="<html><h1>Test</h1><ul><li>Test</li></ul></html>"
             onColorChangeInSelection={handleSelectionColorChange}
             onChangeText={handleChangeText}
             onChangeHtml={handleChangeHtml}
