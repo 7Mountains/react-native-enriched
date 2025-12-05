@@ -73,7 +73,11 @@
 
 - (void)addAttributes:(NSRange)range {
     BOOL wasChecked = [self isCheckedAt: range.location];
-    [self addCheckBoxAtRange:range isChecked:wasChecked];
+    [self addAttributes:range isChecked:wasChecked];
+}
+
+- (void)addAttributes:(NSRange)range isChecked:(BOOL)isChecked {
+  [self addCheckBoxAtRange:range isChecked:isChecked];
 }
 
 - (void)addTypingAttributes {
@@ -155,7 +159,7 @@
                                   input:_input
                            withSelection:YES];
 
-        [self addAttributes:_input->textView.selectedRange];
+        [self addAttributes:_input->textView.selectedRange isChecked:NO];
         return YES;
     }
 
@@ -228,6 +232,7 @@
 
 - (void)toggleCheckedAt:(NSUInteger)location {
 
+    // determine the full paragraph range
     NSRange pRange =
         [_input->textView.textStorage.string paragraphRangeForRange:NSMakeRange(location, 0)];
 
@@ -255,12 +260,20 @@
     // update typing attributes
     NSMutableParagraphStyle *pStyle = [self currentTypingParagraphStyle];
     [self saveTypingParagraphStyle:pStyle];
+    NSUInteger lineEnd = pRange.location + pRange.length;
+
+    // If paragraph ends with a newline, put cursor before newline
+    if (lineEnd > 0 &&
+        [_input->textView.textStorage.string characterAtIndex:lineEnd - 1] == '\n') {
+        lineEnd -= 1;
+    }
+
+    _input->textView.selectedRange = NSMakeRange(lineEnd, 0);
 }
 
 #pragma mark - Adding Checkboxes
 
 - (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked {
-
     NSTextList *list = [self listForChecked:isChecked];
     CGFloat checBoxHeight = [_input->config checkBoxHeight];
 
@@ -306,7 +319,7 @@
 
             paragraphStyle.headIndent = [self getHeadIndent];
             paragraphStyle.firstLineHeadIndent = [self getHeadIndent];
-            UIFont *font = _input->textView.font ?: [UIFont systemFontOfSize:14];
+            UIFont *font = [_input->config primaryFont];
             CGFloat baselineShift = (checBoxHeight - font.lineHeight) / 2.0;
 
             [_input->textView.textStorage addAttribute:NSParagraphStyleAttributeName
@@ -335,7 +348,7 @@
     paragraphStyle.headIndent = [self getHeadIndent];
     paragraphStyle.firstLineHeadIndent = [self getHeadIndent];
 
-    UIFont *font = _input->textView.font ?: [UIFont systemFontOfSize:14];
+    UIFont *font = [_input->config primaryFont];
     CGFloat baselineShift = (checBoxHeight - font.lineHeight) / 2.0;
 
     NSMutableDictionary *typingAttrs = [_input->textView.typingAttributes mutableCopy];
