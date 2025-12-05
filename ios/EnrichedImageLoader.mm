@@ -16,7 +16,7 @@
     if (!url) { completion(nil); return; }
   
     if (RCTIsLocalAssetURL(url)) {
-        completion(RCTImageFromLocalBundleAssetURL(url));
+        completion(RCTImageFromLocalAssetURL(url));
         return;
     }
 
@@ -38,11 +38,6 @@
        completion:(void (^)(UIImage *image))completion
 {
     if (!url) { completion(nil); return; }
-
-    if (RCTIsLocalAssetURL(url)) {
-        completion(RCTImageFromLocalBundleAssetURL(url));
-        return;
-    }
 
     SDWebImageDownloaderRequestModifier *requestModifier =
       [SDWebImageDownloaderRequestModifier requestModifierWithBlock:^NSURLRequest * _Nullable(NSURLRequest * _Nonnull request) {
