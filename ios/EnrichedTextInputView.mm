@@ -25,6 +25,8 @@
 #import "LayoutManagerExtension.h"
 #import "ZeroWidthSpaceUtils.h"
 #import "ParagraphAttributesUtils.h"
+#import "ColorExtension.h"
+#import "EnrichedImageLoader.h"
 
 using namespace facebook::react;
 
@@ -369,13 +371,25 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
   
   if(newViewProps.htmlStyle.checkbox.uncheckedImage != oldViewProps.htmlStyle.checkbox.uncheckedImage) {
-//    auto source = newViewProps.htmlStyle.checkbox.uncheckedImage;
-//    stylePropChanged = YES;
+    auto uri = newViewProps.htmlStyle.checkbox.uncheckedImage;
+    NSURL *url = [NSURL URLWithString:[NSString fromCppString: uri]];
+    [[EnrichedImageLoader shared] loadImage:url completion:^(UIImage *image) {
+      if(image != nullptr) {
+        [newConfig setUncheckedmage:image];
+      }
+    }];
+    stylePropChanged = YES;
   }
   
   if (newViewProps.htmlStyle.checkbox.checkedImage != oldViewProps.htmlStyle.checkbox.checkedImage) {
-//      auto source = newViewProps.htmlStyle.checkbox.checkedImage;
-//      stylePropChanged = YES;
+      auto uri = newViewProps.htmlStyle.checkbox.checkedImage;
+      NSURL *url = [NSURL URLWithString:[NSString fromCppString: uri]];
+      [[EnrichedImageLoader shared] loadImage:url completion:^(UIImage *image) {
+        if(image != nullptr) {
+          [newConfig setCheckedImage:image];
+        }
+      }];
+      stylePropChanged = YES;
   }
   
   if(newViewProps.htmlStyle.checkbox.gapWidth != oldViewProps.htmlStyle.checkbox.gapWidth) {

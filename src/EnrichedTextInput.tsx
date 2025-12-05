@@ -25,7 +25,7 @@ import EnrichedTextInputNativeComponent, {
 import type {
   ColorValue,
   HostInstance,
-  ImageSource,
+  ImageRequireSource,
   MeasureInWindowOnSuccessCallback,
   MeasureLayoutOnSuccessCallback,
   MeasureOnSuccessCallback,
@@ -131,8 +131,8 @@ export interface HtmlStyle {
   checkbox?: {
     imageWidth?: number;
     imageHeight?: number;
-    checkedImage?: ImageSource;
-    uncheckedImage?: ImageSource;
+    checkedImage?: ImageRequireSource;
+    uncheckedImage?: ImageRequireSource;
     marginLeft?: number;
     gapWidth?: number;
     checkedTextColor?: ColorValue;
