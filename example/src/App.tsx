@@ -5,6 +5,7 @@ import {
   type NativeSyntheticEvent,
   ScrollView,
   Platform,
+  Image,
 } from 'react-native';
 import {
   EnrichedTextInput,
@@ -86,6 +87,8 @@ const html = `<html>
 <h1>Test</h1>
 <checklist checked="false">Test</checklist>
 <checklist checked="false">Test</checklist>
+<content type="image" src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" headers="test: test" text="Test" />
+<content type="image" src="https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U" headers="test: test" text="Test" />
 </html>`;
 
 export default function App() {
@@ -468,6 +471,9 @@ const htmlStyle: HtmlStyle = {
       imageWidth: 50,
       fontSize: 14,
       fontWeight: '900',
+      fallbackImageURI: Image.resolveAssetSource(
+        require('../assets/placeholder.png')
+      ).uri,
     },
     video: {
       borderWidth: 1,
