@@ -218,15 +218,32 @@ static NSString *const placeholder = @"\uFFFC";
         imgAtt.isLoading = YES;
 
         NSURL *url = [NSURL URLWithString:params.url];
-        [[EnrichedImageLoader shared] loadImage:url completion:^(UIImage *image) {
-
-            imgAtt.contentImage = image ?: [UIImage systemImageNamed:@"photo"];
+        NSURL *fallbackUrl = [NSURL URLWithString: styles.fallbackImageURI];
+        if(params.headers.count == 0) {
+          [[EnrichedImageLoader shared] loadImage:url completion:^(UIImage *image) {
+            imgAtt.contentImage = image ?: [self loadFallbackImage: fallbackUrl];
             imgAtt.isLoading = NO;
             [self refreshAttachment:imgAtt];
-        }];
+          }];
+        } else {
+          [[EnrichedImageLoader shared] loadImage:url headers:params.headers completion:^(UIImage *image) {
+            imgAtt.contentImage = image ?: [self loadFallbackImage: fallbackUrl];
+            imgAtt.isLoading = NO;
+            [self refreshAttachment:imgAtt];
+          }];
+        }
     }
 
     return attachment;
+}
+
+-(UIImage *)loadFallbackImage:(NSURL *)url {
+  __block UIImage *image;
+  [[EnrichedImageLoader shared] loadImage:url completion:^(UIImage *loadedImage) {
+    image = loadedImage;
+  }];
+  
+  return image;
 }
 
 

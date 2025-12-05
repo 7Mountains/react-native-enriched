@@ -33,7 +33,7 @@
 @property (nonatomic) CGFloat imageHeight;
 @property (nonatomic) NSString* imageResizeMode;
 
-@property (nonatomic, strong) NSString *placeholderImageURI;
+@property (nonatomic, strong) NSString *fallbackImageURI;
 
 + (ContentStyleProps *)fromFolly:(folly::dynamic)folly;
 + (NSDictionary *)getSinglePropsFromFollyDynamic:(folly::dynamic)folly;

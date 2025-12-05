@@ -129,12 +129,6 @@
     } else {
       props.imageBorderRadiusBottomRight = 0.0;
     }
-    
-    if(folly["placeholderImageURI"].isString()) {
-      props.placeholderImageURI = [NSString fromCppString: folly["placeholderImageURI"].asString()];
-    } else {
-      props.placeholderImageURI = nil;
-    }
   
     if(folly["imageResizeMode"].isString()) {
       props.imageResizeMode = [NSString fromCppString: folly["imageResizeMode"].asString()];
@@ -152,6 +146,12 @@
       props.fontWeight = [NSString fromCppString:folly["fontWeight"].asString()];
     } else {
       props.fontWeight = @"500";
+    }
+  
+    if(folly["fallbackImageURI"].isString()) {
+      props.fallbackImageURI = [NSString fromCppString: folly["fallbackImageURI"].asString()];
+    } else {
+      props.fallbackImageURI = nil;
     }
   
     return props;
