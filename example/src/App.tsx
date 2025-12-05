@@ -83,14 +83,9 @@ const DEBUG_SCROLLABLE = false;
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
 const html = `<html>
-<h1>Heading 1</h1>
-<p><font color="#EF5757">Test</font></p>
-<p><font color="#74DB63">Test</font></p>
-<p><font color="#E459CE">Test</font></p>
-<p><font color="#89B6F9">Test</font></p>
-<content type="image" text="Test" />
-<checklist checked="true"><font color="#FFBE55">Test test</font></checklist>
-<checklist checked="false"><font color="#FFBE55">Test</font> Test</checklist>
+<h1>Test</h1>
+<checklist checked="false">Test</checklist>
+<checklist checked="false">Test</checklist>
 </html>`;
 
 export default function App() {
@@ -527,18 +522,10 @@ const htmlStyle: HtmlStyle = {
     gapWidth: 16,
   },
   checkbox: {
-    imageWidth: 32,
-    imageHeight: 32,
-    checkedImage: {
-      width: 32,
-      height: 32,
-      uri: require('../assets/images/checkbox_checked.png'),
-    },
-    uncheckedImage: {
-      width: 32,
-      height: 32,
-      uri: require('../assets/images/checkbox_unchecked.png'),
-    },
+    imageWidth: 24,
+    imageHeight: 24,
+    checkedImage: require('../assets/images/checkbox_checked.png'),
+    uncheckedImage: require('../assets/images/checkbox.png'),
     marginLeft: 0,
     gapWidth: 6,
     checkedTextColor: 'gray',

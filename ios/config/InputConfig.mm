@@ -112,8 +112,8 @@
   copy->_codeBlockBorderRadius = _codeBlockBorderRadius;
   copy->_imageWidth = _imageWidth;
   copy->_imageHeight = _imageHeight;
-  copy->_uncheckedImage = _uncheckedImage;
-  copy->_checkedImage = _checkedImage;
+  copy->_uncheckedImage = [_uncheckedImage copy];
+  copy->_checkedImage = [_checkedImage copy];
   copy->_checkboxListGapWidth = _checkboxListGapWidth;
   copy->_checkboxListMarginLeft = _checkboxListMarginLeft;
   copy->_checkBoxWidth = _checkBoxWidth;

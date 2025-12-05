@@ -1,5 +1,4 @@
 import { codegenNativeComponent, codegenNativeCommands } from 'react-native';
-import type { ImageSource } from 'react-native';
 import type {
   DirectEventHandler,
   Float,
@@ -173,8 +172,8 @@ export interface HtmlStyleInternal {
   checkbox?: {
     imageWidth?: Float;
     imageHeight?: Float;
-    checkedImage?: ImageSource;
-    uncheckedImage?: ImageSource;
+    checkedImage?: string;
+    uncheckedImage?: string;
     marginLeft?: Float;
     gapWidth?: Float;
     checkedTextColor?: ColorValue;
