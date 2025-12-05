@@ -1319,6 +1319,8 @@
       contentParams.text = paramsDict[@"text"] ?: @"";
       contentParams.type = paramsDict[@"type"] ?: @"";
       contentParams.url = paramsDict[@"src"] ?: @"";
+      NSDictionary<NSString *, NSString* > *headers = [ContentParams parseHeaderFromString: paramsDict[@"headers"]];
+      contentParams.headers = headers;
       
       [paramsDict removeObjectsForKeys:@[@"text", @"type"]];
       NSError *error;
