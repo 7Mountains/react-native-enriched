@@ -89,11 +89,7 @@ const DEBUG_SCROLLABLE = false;
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
 const html = `<html>
-<h1>Test</h1>
-<checklist checked="false">Test</checklist>
-<checklist checked="false">Test</checklist>
-<content type="image" src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" headers="test: test" text="Test" />
-<content type="image" src="https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U" headers="test: test" text="Test" />
+<p><u><font color="#FF0000">Test </font><font color="#E6FF5C">te</font></u><font color="#E6FF5C">st</font></p>
 </html>`;
 
 export default function App() {

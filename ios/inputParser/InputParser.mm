@@ -33,8 +33,6 @@
   BOOL inCodeBlock = NO;
   BOOL isDivider = NO;
   unichar lastCharacter = 0;
-  
-  // Track current values for valued styles
   UIColor *previousColor = nil;
 
   for(int i = 0; i < text.length; i++) {
@@ -55,17 +53,26 @@
         [currentActiveStylesBeginning removeObjectForKey:type];
       }
     }
-    
-    // Handle valued styles changes
+
     UIColor *currentColor = nil;
     
     if([currentActiveStyles containsObject:@(Colored)]) {
       ColorStyle *colorStyle = _input->stylesDict[@(Colored)];
       currentColor = [colorStyle getColorAt:currentRange.location];
-      if(previousColor && ![currentColor isEqual:previousColor]) {
-        // Treat as end of previous color and start of new
-        [currentActiveStyles removeObject:@(Colored)];
-        currentActiveStylesBeginning[@(Colored)] = [NSNumber numberWithInt:i];
+      if (previousColor && ![currentColor isEqual:previousColor]) {
+          NSString *closeTag = [self tagContentForStyle:@(Colored)
+                                             openingTag:NO
+                                               location:currentRange.location];
+          [result appendFormat:@"</%@>", closeTag];
+          NSString *openTag = [self tagContentForStyle:@(Colored)
+                                            openingTag:YES
+                                              location:currentRange.location];
+          [result appendFormat:@"<%@>", openTag];
+          NSString *currentCharacterStr = [_input->textView.textStorage.string substringWithRange:currentRange];
+          [result appendString: currentCharacterStr];
+          previousColor = currentColor;
+          [currentActiveStyles addObject:@(Colored)];
+          continue;
       }
     }
     
