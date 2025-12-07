@@ -125,14 +125,14 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   };
 
   conflictingStyles = @{
-    @([BoldStyle getStyleType]) : @[],
-    @([ItalicStyle getStyleType]) : @[],
-    @([UnderlineStyle getStyleType]) : @[],
-    @([StrikethroughStyle getStyleType]) : @[],
-    @([ColorStyle getStyleType]): @[],
+    @([BoldStyle getStyleType]) : @[@([MentionStyle getStyleType])],
+    @([ItalicStyle getStyleType]) : @[@([MentionStyle getStyleType])],
+    @([UnderlineStyle getStyleType]) : @[@([MentionStyle getStyleType])],
+    @([StrikethroughStyle getStyleType]) : @[@([MentionStyle getStyleType])],
+    @([ColorStyle getStyleType]): @[@([MentionStyle getStyleType])],
     @([InlineCodeStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
     @([LinkStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
-    @([MentionStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType])],
+    @([MentionStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]), @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType])],
     @([H1Style getStyleType]): @[@([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
     @([H2Style getStyleType]): @[@([H1Style getStyleType]),  @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
     @([H3Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
