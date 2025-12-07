@@ -285,10 +285,8 @@ interface NativeCommands {
     requestId: Int32
   ) => void;
   toggleCheckList: (viewRef: React.ElementRef<ComponentType>) => void;
-  toggleColor: (
-    viewRef: React.ElementRef<ComponentType>,
-    color: string
-  ) => void;
+  setColor: (viewRef: React.ElementRef<ComponentType>, color: string) => void;
+  removeColor: (viewRef: React.ElementRef<ComponentType>) => void;
   addDividerAtNewLine: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 
@@ -321,7 +319,8 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'addMention',
     'requestHTML',
     'toggleCheckList',
-    'toggleColor',
+    'setColor',
+    'removeColor',
     'addDividerAtNewLine',
   ],
 });
