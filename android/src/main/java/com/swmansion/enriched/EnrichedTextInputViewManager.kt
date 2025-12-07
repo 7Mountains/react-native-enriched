@@ -332,7 +332,11 @@ class EnrichedTextInputViewManager :
     view?.addLink(start, end, text, url)
   }
 
-  override fun toggleColor(view: EnrichedTextInputView?, color: String) {
+  override fun setColor(view: EnrichedTextInputView?, color: String) {
+    // no-op for now
+  }
+
+  override fun removeColor(view: EnrichedTextInputView?) {
     // no-op for now
   }
 

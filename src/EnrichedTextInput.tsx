@@ -70,7 +70,8 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     attributes?: Record<string, string>
   ) => void;
   toggleCheckList: () => void;
-  toggleColor: (color: string) => void;
+  setColor: (color: string) => void;
+  removeColor: () => void;
   addDividerAtNewLine: () => void;
 }
 
@@ -368,8 +369,11 @@ export const EnrichedTextInput = ({
     toggleCheckList: () => {
       Commands.toggleCheckList(nullthrows(nativeRef.current));
     },
-    toggleColor: (color: string) => {
-      Commands.toggleColor(nullthrows(nativeRef.current), color);
+    setColor: (color: string) => {
+      Commands.setColor(nullthrows(nativeRef.current), color);
+    },
+    removeColor: () => {
+      Commands.removeColor(nullthrows(nativeRef.current));
     },
     addDividerAtNewLine: () =>
       Commands.addDividerAtNewLine(nullthrows(nativeRef.current)),
