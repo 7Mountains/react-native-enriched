@@ -30,10 +30,11 @@ static NSString *const placeholder = @"\uFFFC";
 - (void)addAttributes:(NSRange)range {
     NSTextStorage *textStorage = _input->textView.textStorage;
     NSDictionary *attrs = [self prepareAttributes];
-
+    _input->blockEmitting = YES;
     [textStorage beginEditing];
-    [textStorage addAttributes:attrs range:range];
+    [TextInsertionUtils replaceText:placeholder at:range additionalAttributes:attrs input:_input withSelection:NO];
     [textStorage endEditing];
+    _input->blockEmitting = NO;
 }
 
 - (void)addTypingAttributes {
@@ -123,12 +124,14 @@ static NSString *const placeholder = @"\uFFFC";
     NSString *string = textStorage.string;
 
     NSDictionary *dividerAttrs = [self prepareAttributes];
-
+    
+    _input->blockEmitting = YES;
     BOOL needsNewlineBefore = (index > 0 && [string characterAtIndex:index - 1] != '\n');
     BOOL needsNewlineAfter  = (index < string.length && [string characterAtIndex:index] != '\n');
 
     NSInteger insertIndex = index;
     input->textView.typingAttributes = input->defaultTypingAttributes;
+    [textStorage beginEditing];
     if(needsNewlineBefore) {
       [TextInsertionUtils insertText:@"\n"
                                 at:insertIndex
@@ -142,13 +145,11 @@ static NSString *const placeholder = @"\uFFFC";
                                at:insertIndex
              additionalAttributes:input->defaultTypingAttributes
                              input:input
-                     withSelection:setSelection];
+                     withSelection:NO];
 
     NSRange placeholderRange = NSMakeRange(insertIndex, 1);
 
-    [textStorage beginEditing];
-    [textStorage addAttributes:dividerAttrs range:placeholderRange];
-    [textStorage endEditing];
+    [TextInsertionUtils replaceText: placeholder at:placeholderRange additionalAttributes:dividerAttrs input:_input withSelection:setSelection];
     if (needsNewlineAfter) {
         [TextInsertionUtils insertText:@"\n"
                                    at:insertIndex
@@ -157,11 +158,12 @@ static NSString *const placeholder = @"\uFFFC";
                          withSelection:NO];
         insertIndex += 1;
     }
+  [textStorage endEditing];
 
   if (setSelection) {
     _input->textView.selectedRange = NSMakeRange(insertIndex + 1, 0);
   }
-
+  _input->blockEmitting = NO;
 }
 
 - (void)insertDividerAtline:(NSRange *)at withSelection:(BOOL)withSelection {

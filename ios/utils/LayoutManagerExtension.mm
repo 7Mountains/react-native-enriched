@@ -263,83 +263,40 @@ static void const *kInputKey = &kInputKey;
       NSForegroundColorAttributeName :
           [typedInput->config orderedListMarkerColor]
     };
-
-    NSArray *paragraphs = [ParagraphsUtils
-        getSeparateParagraphsRangesIn:typedInput->textView
-                                range:[pair.rangeValue rangeValue]];
-
-    for (NSValue *paragraph in paragraphs) {
-      NSRange paragraphGlyphRange =
-          [self glyphRangeForCharacterRange:[paragraph rangeValue]
-                       actualCharacterRange:nullptr];
-
-      [self
-          enumerateLineFragmentsForGlyphRange:paragraphGlyphRange
-                                   usingBlock:^(CGRect rect, CGRect usedRect,
-                                                NSTextContainer *container,
-                                                NSRange lineGlyphRange,
-                                                BOOL *stop) {
-                                     NSString *marker = [self
-                                         markerForList:pStyle.textLists
-                                                           .firstObject
-                                             charIndex:
-                                                 [self
-                                                     characterIndexForGlyphAtIndex:
-                                                         lineGlyphRange
-                                                             .location]
-                                                 input:typedInput];
-
-                                     if (pStyle.textLists.firstObject
-                                             .markerFormat ==
-                                         NSTextListMarkerDecimal) {
-                                       CGFloat gapWidth =
-                                           [typedInput->config
-                                                   orderedListGapWidth];
-                                       CGFloat markerWidth =
-                                           [marker sizeWithAttributes:
-                                                       markerAttributes]
-                                               .width;
-                                       CGFloat markerX = usedRect.origin.x -
-                                                         gapWidth -
-                                                         markerWidth / 2;
-
-                                       [marker drawAtPoint:CGPointMake(
-                                                               markerX,
-                                                               usedRect.origin
-                                                                       .y +
-                                                                   origin.y)
-                                            withAttributes:markerAttributes];
-                                     } else {
-                                       CGFloat gapWidth =
-                                           [typedInput->config
-                                                   unorderedListGapWidth];
-                                       CGFloat bulletSize =
-                                           [typedInput->config
-                                                   unorderedListBulletSize];
-                                       CGFloat bulletX = usedRect.origin.x -
-                                                         gapWidth -
-                                                         bulletSize / 2;
-                                       CGFloat centerY =
-                                           CGRectGetMidY(usedRect);
-
-                                       CGContextRef context =
-                                           UIGraphicsGetCurrentContext();
-                                       CGContextSaveGState(context);
-                                       {
-                                         [[typedInput->config
-                                                 unorderedListBulletColor]
-                                             setFill];
-                                         CGContextAddArc(
-                                             context, bulletX, centerY,
-                                             bulletSize / 2, 0, 2 * M_PI, YES);
-                                         CGContextFillPath(context);
-                                       }
-                                       CGContextRestoreGState(context);
-                                     }
-                                     // only first line of a list gets its
-                                     // marker drawn
-                                     *stop = YES;
-                                   }];
+    
+    NSArray *paragraphs = [ParagraphsUtils getSeparateParagraphsRangesIn:typedInput->textView range:[pair.rangeValue rangeValue]];
+    
+    for(NSValue *paragraph in paragraphs) {
+      NSRange paragraphGlyphRange = [self glyphRangeForCharacterRange:[paragraph rangeValue] actualCharacterRange:nullptr];
+      
+      [self enumerateLineFragmentsForGlyphRange:paragraphGlyphRange
+        usingBlock:^(CGRect rect, CGRect usedRect, NSTextContainer *container, NSRange lineGlyphRange, BOOL *stop) {
+          NSString *marker = [self markerForList:pStyle.textLists.firstObject charIndex:[self characterIndexForGlyphAtIndex:lineGlyphRange.location] input:typedInput];
+          
+          if(pStyle.textLists.firstObject.markerFormat == NSTextListMarkerDecimal) {
+            CGFloat gapWidth = [typedInput->config orderedListGapWidth];
+            CGFloat markerWidth = [marker sizeWithAttributes:markerAttributes].width;
+            CGFloat markerX = usedRect.origin.x - gapWidth - markerWidth/2;
+            
+            [marker drawAtPoint:CGPointMake(markerX, usedRect.origin.y + origin.y) withAttributes:markerAttributes];
+          } else if(pStyle.textLists.firstObject.markerFormat == NSTextListMarkerDisc) {
+            CGFloat gapWidth = [typedInput->config unorderedListGapWidth];
+            CGFloat bulletSize = [typedInput->config unorderedListBulletSize];
+            CGFloat bulletX = usedRect.origin.x - gapWidth - bulletSize/2;
+            CGFloat centerY = CGRectGetMidY(usedRect);
+            
+            CGContextRef context = UIGraphicsGetCurrentContext();
+            CGContextSaveGState(context); {
+              [[typedInput->config unorderedListBulletColor] setFill];
+              CGContextAddArc(context, bulletX, centerY, bulletSize/2, 0, 2 * M_PI, YES);
+              CGContextFillPath(context);
+            }
+            CGContextRestoreGState(context);
+          }
+          // only first line of a list gets its marker drawn
+          *stop = YES;
+        }
+      ];
     }
   }
 }
