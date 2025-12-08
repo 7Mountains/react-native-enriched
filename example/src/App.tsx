@@ -88,7 +88,17 @@ const DEBUG_SCROLLABLE = false;
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
 const html = `<html>
+<h1>Title H1</h1>
+<hr />
 <p><u><font color="#FF0000">Test </font><font color="#E6FF5C">te</font></u><font color="#E6FF5C">st</font></p>
+<checklist checked="false">First item</checklist>
+<checklist checked="true">Second item</checklist>
+<checklist checked="true">Third item</checklist>
+<content src="https://picsum.photos/id/237/200/300" text="Some picture" type="image" />
+<content type="placeholder" text="Some content/or comment" />
+<p><b>Bold text</b></p>
+<p><i>Italic text</i></p>
+<p><u>Underline text</u></p>
 </html>`;
 
 export default function App() {
@@ -371,6 +381,10 @@ export default function App() {
         <Button
           title="toggle check list"
           onPress={() => ref.current?.toggleCheckList()}
+        />
+        <Button
+          title="remove color"
+          onPress={() => ref.current?.removeColor()}
         />
         <Text>is Check list {stylesState.isCheckList ? 'true' : 'false'}</Text>
         <HtmlSection currentHtml={currentHtml} />
