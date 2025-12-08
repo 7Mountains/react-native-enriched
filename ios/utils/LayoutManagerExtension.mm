@@ -226,7 +226,7 @@ static void const *kInputKey = &kInputKey;
             CGFloat markerX = usedRect.origin.x - gapWidth - markerWidth/2;
             
             [marker drawAtPoint:CGPointMake(markerX, usedRect.origin.y + origin.y) withAttributes:markerAttributes];
-          } else {
+          } else if(pStyle.textLists.firstObject.markerFormat == NSTextListMarkerDisc) {
             CGFloat gapWidth = [typedInput->config unorderedListGapWidth];
             CGFloat bulletSize = [typedInput->config unorderedListBulletSize];
             CGFloat bulletX = usedRect.origin.x - gapWidth - bulletSize/2;

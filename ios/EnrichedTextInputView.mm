@@ -121,17 +121,17 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([InlineCodeStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
     @([LinkStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
     @([MentionStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]), @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType])],
-    @([H1Style getStyleType]): @[@([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
-    @([H2Style getStyleType]): @[@([H1Style getStyleType]),  @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
-    @([H3Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
-    @([H4Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
-    @([H5Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]),  @([H3Style getStyleType]), @([H4Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
-    @([H6Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
-    @([UnorderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
-    @([OrderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
-    @([BlockQuoteStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType])],
+    @([H1Style getStyleType]): @[@([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H2Style getStyleType]): @[@([H1Style getStyleType]),  @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H3Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H4Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H5Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]),  @([H3Style getStyleType]), @([H4Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([H6Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([UnorderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([OrderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
+    @([BlockQuoteStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
     @([CodeBlockStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]),
-        @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]), @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([MentionStyle getStyleType]), @([LinkStyle getStyleType])],
+        @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]), @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([MentionStyle getStyleType]), @([LinkStyle getStyleType]), @([DividerStyle getStyleType])],
     @([ImageStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
     @([CheckBoxStyle getStyleType]) : @[
            @([H1Style getStyleType]),
@@ -155,6 +155,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
            @([H6Style getStyleType]),
            @([UnorderedListStyle getStyleType]),
            @([OrderedListStyle getStyleType]),
+           @([CheckBoxStyle getStyleType]),
            @([BlockQuoteStyle getStyleType]),
            @([CodeBlockStyle getStyleType]),
        ],
@@ -203,6 +204,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   tapRecognizer.cancelsTouchesInView = YES;
   [tapRecognizer addTarget:self action:@selector(handleTap:)];
   [self addGestureRecognizer:tapRecognizer];
+  for (UIDragInteraction *interaction in textView.interactions) {
+        if ([interaction isKindOfClass:[UIDragInteraction class]] ||
+            [interaction isKindOfClass:[UIDropInteraction class]]) {
+            [textView removeInteraction:interaction];
+        }
+    }
 }
 
 - (void)setupPlaceholderLabel {
