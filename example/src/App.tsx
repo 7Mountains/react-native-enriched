@@ -331,6 +331,7 @@ export default function App() {
         style={styles.container}
         contentContainerStyle={styles.content}
       >
+        <Button title="Set visible" onPress={() => setVisible(!visible)} />
         <Text style={styles.label}>Enriched Text Input</Text>
         <View style={styles.editor}>
           <EnrichedTextInput

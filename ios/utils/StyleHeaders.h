@@ -43,8 +43,12 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (void)manageLinkTypingAttributes;
 - (void)handleAutomaticLinks:(NSString *)word inRange:(NSRange)wordRange;
 - (void)handleManualLinks:(NSString *)word inRange:(NSRange)wordRange;
-- (BOOL)handleLeadingLinkReplacement:(NSRange)range
-                     replacementText:(NSString *)text;
+- (BOOL)handleLeadingLinkReplacement:(NSRange)range replacementText:(NSString *)text;
+- (void)addLinkInAttributedString:(NSMutableAttributedString *)attr
+                            range:(NSRange)range
+                             text:(NSString *)text
+                              url:(NSString *)url
+                           manual:(BOOL) manual;
 @end
 
 @interface MentionStyle
@@ -62,6 +66,9 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (MentionParams *)getMentionParamsAt:(NSUInteger)location;
 - (NSRange)getFullMentionRangeAt:(NSUInteger)location;
 - (NSValue *)getActiveMentionRange;
+- (void)addMentionInAttributedString:(NSMutableAttributedString *)string
+                               range:(NSRange)range
+                              params:(MentionParams *)params;
 @end
 
 @interface HeadingStyleBase : NSObject <BaseStyleProtocol> {
@@ -119,6 +126,9 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
               imageData:(ImageData *)imageData
           withSelection:(BOOL)withSelection;
 - (ImageData *)getImageDataAt:(NSUInteger)location;
+- (void)addImageInAttributedString:(NSMutableAttributedString *)attributedString
+                             range:(NSRange)range
+                         imageData:(ImageData *)imageData;
 @end
 
 @interface CheckBoxStyle

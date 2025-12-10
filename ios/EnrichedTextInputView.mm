@@ -45,6 +45,7 @@ using namespace facebook::react;
   UIColor *_placeholderColor;
   BOOL _emitFocusBlur;
   UITapGestureRecognizer *tapRecognizer;
+  BOOL _initialMount;
 }
 
 // MARK: - Component utils
@@ -387,6 +388,33 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _placeholderLabel.lineBreakMode = NSLineBreakByTruncatingTail;
   _placeholderLabel.text = @"";
   _placeholderLabel.hidden = YES;
+}
+
+- (void)mediaAttachmentDidUpdate:(NSTextAttachment *)attachment
+{
+  NSTextStorage *storage = textView.textStorage;
+      NSRange fullRange = NSMakeRange(0, storage.length);
+
+      __block NSRange foundRange = NSMakeRange(NSNotFound, 0);
+
+      [storage enumerateAttribute:NSAttachmentAttributeName
+                          inRange:fullRange
+                          options:0
+                       usingBlock:^(id value, NSRange range, BOOL *stop)
+      {
+          if (value == attachment) {
+              foundRange = range;
+              *stop = YES;
+          }
+      }];
+
+      if (foundRange.location == NSNotFound) {
+          return;
+      }
+
+      [storage edited:NSTextStorageEditedAttributes
+               range:foundRange
+    changeInLength:0];
 }
 
 // MARK: - Props
@@ -1859,10 +1887,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   });
 }
 
+
 - (void)didMoveToWindow {
   [super didMoveToWindow];
-  // used to run all lifecycle callbacks
-  [self anyTextMayHaveBeenModified];
+  [self layoutIfNeeded];
 }
 
 // MARK: - UITextView delegate methods
