@@ -123,7 +123,9 @@
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)isCheckedAt:(NSUInteger)location;
 - (void)toggleCheckedAt:(NSUInteger)location;
-- (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked;
+- (void)addCheckBoxAtRange:(NSRange)range
+                 isChecked:(BOOL)isChecked
+            withTypingAttr:(BOOL)withTypingAttr;
 @end
 
 @interface DividerStyle : NSObject <BaseStyleProtocol>

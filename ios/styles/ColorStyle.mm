@@ -40,7 +40,7 @@
 
 #pragma mark - Add attributes
 
-- (void)addAttributes:(NSRange)range {
+- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
 }
 
 - (void)addAttributes:(NSRange)range color:(UIColor *)color {

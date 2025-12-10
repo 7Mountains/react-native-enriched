@@ -69,7 +69,8 @@
   BOOL present = [self detectStyle:range];
 
   if (range.length > 0) {
-    present ? [self removeAttributes:range] : [self addAttributes:range];
+    present ? [self removeAttributes:range]
+            : [self addAttributes:range withTypingAttr:YES];
   } else {
     present ? [self removeTypingAttributes] : [self addTypingAttributes];
   }
@@ -77,17 +78,21 @@
 
 #pragma mark - Add Attributes
 
-- (void)addAttributes:(NSRange)range {
+- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
   BOOL wasChecked = [self isCheckedAt:range.location];
-  [self addAttributes:range isChecked:wasChecked];
+  [self addAttributes:range isChecked:wasChecked withTypingAttr:withTypingAttr];
 }
 
-- (void)addAttributes:(NSRange)range isChecked:(BOOL)isChecked {
-  [self addCheckBoxAtRange:range isChecked:isChecked];
+- (void)addAttributes:(NSRange)range
+            isChecked:(BOOL)isChecked
+       withTypingAttr:(BOOL)withTypingAttr {
+  [self addCheckBoxAtRange:range
+                 isChecked:isChecked
+            withTypingAttr:withTypingAttr];
 }
 
 - (void)addTypingAttributes {
-  [self addAttributes:_input->textView.selectedRange];
+  [self addAttributes:_input->textView.selectedRange withTypingAttr:YES];
 }
 
 #pragma mark - Remove Attributes
@@ -170,7 +175,9 @@
                               input:_input
                       withSelection:YES];
 
-    [self addAttributes:_input->textView.selectedRange isChecked:NO];
+    [self addAttributes:_input->textView.selectedRange
+              isChecked:NO
+         withTypingAttr:YES];
     return YES;
   }
 
@@ -293,7 +300,9 @@
 
 #pragma mark - Adding Checkboxes
 
-- (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked {
+- (void)addCheckBoxAtRange:(NSRange)range
+                 isChecked:(BOOL)isChecked
+            withTypingAttr:(BOOL)withTypingAttr {
   NSTextList *list = [self listForChecked:isChecked];
   CGFloat checBoxHeight = [_input->config checkBoxHeight];
 
@@ -376,12 +385,13 @@
 
   UIFont *font = [_input->config primaryFont];
   CGFloat baselineShift = (checBoxHeight - font.lineHeight) / 2.0;
-
-  NSMutableDictionary *typingAttrs =
-      [_input->textView.typingAttributes mutableCopy];
-  typingAttrs[NSParagraphStyleAttributeName] = paragraphStyle;
-  typingAttrs[NSBaselineOffsetAttributeName] = @(baselineShift);
-  _input->textView.typingAttributes = typingAttrs;
+  if (withTypingAttr) {
+    NSMutableDictionary *typingAttrs =
+        [_input->textView.typingAttributes mutableCopy];
+    typingAttrs[NSParagraphStyleAttributeName] = paragraphStyle;
+    typingAttrs[NSBaselineOffsetAttributeName] = @(baselineShift);
+    _input->textView.typingAttributes = typingAttrs;
+  }
 }
 
 @end

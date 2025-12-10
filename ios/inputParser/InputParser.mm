@@ -835,7 +835,8 @@
 }
 
 - (void)applyProcessedStyles:(NSArray *)processedStyles
-         offsetFromBeginning:(NSInteger)offset {
+         offsetFromBeginning:(NSInteger)offset
+             plainTextLength:(NSInteger)plainTextLength {
   for (NSArray *processedStyle in processedStyles) {
     // unwrap all info from processed style
     NSNumber *styleType = (NSNumber *)processedStyle[0];
@@ -874,7 +875,8 @@
       } else if ([styleType isEqualToNumber:@([CheckBoxStyle getStyleType])]) {
         BOOL isChecked = [stylePair.styleValue boolValue];
         [((CheckBoxStyle *)baseStyle) addCheckBoxAtRange:styleRange
-                                               isChecked:isChecked];
+                                               isChecked:isChecked
+                                          withTypingAttr:NO];
       } else if ([styleType isEqualToNumber:@([ColorStyle getStyleType])]) {
         UIColor *color = (UIColor *)stylePair.styleValue;
         [((ColorStyle *)baseStyle) applyStyle:styleRange color:color];
