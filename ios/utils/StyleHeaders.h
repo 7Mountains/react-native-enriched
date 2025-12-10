@@ -1,10 +1,10 @@
 #pragma once
 #import "BaseStyleProtocol.h"
+#import "ContentParams.h"
+#import "DividerAttachment.h"
 #import "ImageData.h"
 #import "LinkData.h"
 #import "MentionParams.h"
-#import "DividerAttachment.h"
-#import "ContentParams.h"
 
 @interface BoldStyle : NSObject <BaseStyleProtocol>
 @end
@@ -23,7 +23,7 @@
 @end
 
 @interface ColorStyle : NSObject <BaseStyleProtocol>
-@property (nonatomic, strong) UIColor *color;
+@property(nonatomic, strong) UIColor *color;
 - (UIColor *)getColorAt:(NSUInteger)location;
 - (void)applyStyle:(NSRange)range color:(UIColor *)color;
 - (BOOL)detectExcludingColor:(UIColor *)excludedColor inRange:(NSRange)range;
@@ -87,7 +87,7 @@
 @interface H6Style : HeadingStyleBase
 @end
 
-@interface UnorderedListStyle : NSObject<BaseStyleProtocol>
+@interface UnorderedListStyle : NSObject <BaseStyleProtocol>
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)tryHandlingListShorcutInRange:(NSRange)range
                       replacementText:(NSString *)text;
@@ -117,7 +117,7 @@
 - (ImageData *)getImageDataAt:(NSUInteger)location;
 @end
 
-@interface CheckBoxStyle : NSObject<BaseStyleProtocol>
+@interface CheckBoxStyle : NSObject <BaseStyleProtocol>
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)isCheckedAt:(NSUInteger)location;
@@ -125,11 +125,11 @@
 - (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked;
 @end
 
-@interface DividerStyle : NSObject<BaseStyleProtocol>
+@interface DividerStyle : NSObject <BaseStyleProtocol>
 - (void)insertDividerAtNewLine;
 @end
 
-@interface ContentStyle : NSObject<BaseStyleProtocol>
+@interface ContentStyle : NSObject <BaseStyleProtocol>
 - (void)addContentAtRange:(NSRange)range params:(ContentParams *)params;
 - (ContentParams *)getContentParams:(NSUInteger)location;
 @end

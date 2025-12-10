@@ -7,9 +7,15 @@
 @implementation HeadingStyleBase
 
 // mock values since H1/2/3/4/5/6Style classes anyway are used
-+ (StyleType)getStyleType { return None; }
-- (CGFloat)getHeadingFontSize { return 0; }
-- (BOOL)isHeadingBold { return false; }
++ (StyleType)getStyleType {
+  return None;
+}
+- (CGFloat)getHeadingFontSize {
+  return 0;
+}
+- (BOOL)isHeadingBold {
+  return false;
+}
 
 - (EnrichedTextInputView *)typedInput {
   return (EnrichedTextInputView *)input;

@@ -6,9 +6,10 @@
 @property NSString *type;
 @property NSString *text;
 @property NSString *url;
-@property NSDictionary<NSString*, NSString *> *headers;
+@property NSDictionary<NSString *, NSString *> *headers;
 @property NSString *attributes;
 
-+ (NSDictionary<NSString*, NSString*> *)parseHeaderFromString:(NSString *)headerString;
++ (NSDictionary<NSString *, NSString *> *)parseHeaderFromString:
+    (NSString *)headerString;
 
 @end
