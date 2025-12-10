@@ -31,7 +31,7 @@ static NSString *const placeholder = @"\uFFFC";
   // no-op for dividers
 }
 
-- (void)addAttributes:(NSRange)range {
+- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
   NSTextStorage *textStorage = _input->textView.textStorage;
   NSDictionary *attrs = [self prepareAttributes];
   _input->blockEmitting = YES;
