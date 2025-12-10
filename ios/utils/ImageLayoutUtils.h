@@ -1,12 +1,12 @@
 #import <UIKit/UIKit.h>
 
 typedef NS_ENUM(NSInteger, ImageResizeMode) {
-    ImageResizeModeCover = 0,
-    ImageResizeModeContain,
-    ImageResizeModeFill,
-    ImageResizeModeNone,
-    ImageResizeModeScaleDown,
-    ImageResizeModeInvalid
+  ImageResizeModeCover = 0,
+  ImageResizeModeContain,
+  ImageResizeModeFill,
+  ImageResizeModeNone,
+  ImageResizeModeScaleDown,
+  ImageResizeModeInvalid
 };
 
 @interface ImageLayoutUtils : NSObject
@@ -18,4 +18,3 @@ typedef NS_ENUM(NSInteger, ImageResizeMode) {
             resizeMode:(ImageResizeMode)mode;
 
 @end
-

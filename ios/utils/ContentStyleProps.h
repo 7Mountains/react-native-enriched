@@ -24,16 +24,16 @@
 @property CGFloat marginRight;
 @property CGFloat marginLeft;
 
-@property (nonatomic) CGFloat imageBorderRadius;
-@property (nonatomic) CGFloat imageBorderRadiusTopLeft;
-@property (nonatomic) CGFloat imageBorderRadiusTopRight;
-@property (nonatomic) CGFloat imageBorderRadiusBottomLeft;
-@property (nonatomic) CGFloat imageBorderRadiusBottomRight;
-@property (nonatomic) CGFloat imageWidth;
-@property (nonatomic) CGFloat imageHeight;
-@property (nonatomic) NSString* imageResizeMode;
+@property(nonatomic) CGFloat imageBorderRadius;
+@property(nonatomic) CGFloat imageBorderRadiusTopLeft;
+@property(nonatomic) CGFloat imageBorderRadiusTopRight;
+@property(nonatomic) CGFloat imageBorderRadiusBottomLeft;
+@property(nonatomic) CGFloat imageBorderRadiusBottomRight;
+@property(nonatomic) CGFloat imageWidth;
+@property(nonatomic) CGFloat imageHeight;
+@property(nonatomic) NSString *imageResizeMode;
 
-@property (nonatomic, strong) NSString *fallbackImageURI;
+@property(nonatomic, strong) NSString *fallbackImageURI;
 
 + (ContentStyleProps *)fromFolly:(folly::dynamic)folly;
 + (NSDictionary *)getSinglePropsFromFollyDynamic:(folly::dynamic)folly;

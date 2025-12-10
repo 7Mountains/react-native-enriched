@@ -1,9 +1,9 @@
 #pragma once
+#import "ContentStyleProps.h"
 #import "MentionStyleProps.h"
 #import "TextDecorationLineEnum.h"
-#import <UIKit/UIKit.h>
 #import <React/RCTImageSource.h>
-#import "ContentStyleProps.h"
+#import <UIKit/UIKit.h>
 
 @interface InputConfig : NSObject <NSCopying>
 - (instancetype)init;
