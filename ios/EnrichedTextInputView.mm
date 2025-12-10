@@ -1,8 +1,11 @@
 #import "EnrichedTextInputView.h"
+#import "ColorExtension.h"
 #import "CoreText/CoreText.h"
+#import "EnrichedImageLoader.h"
 #import "LayoutManagerExtension.h"
 #import "ParagraphAttributesUtils.h"
 #import "RCTFabricComponentsPlugins.h"
+#import "RCTImagePrimitivesConversions.h"
 #import "StringExtension.h"
 #import "StyleHeaders.h"
 #import "UIView+React.h"
@@ -10,23 +13,11 @@
 #import "ZeroWidthSpaceUtils.h"
 #import <React/RCTConversions.h>
 #import <ReactNativeEnriched/EnrichedTextInputViewComponentDescriptor.h>
+#import <folly/dynamic.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/EventEmitters.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/Props.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/RCTComponentViewHelpers.h>
-#import <React/RCTImageSource.h>
-#import "RCTImagePrimitivesConversions.h"
-#import <folly/dynamic.h>
-#import "UIView+React.h"
-#import "StringExtension.h"
-#import "CoreText/CoreText.h"
-#import <React/RCTConversions.h>
-#import "StyleHeaders.h"
-#import "WordsUtils.h"
-#import "LayoutManagerExtension.h"
-#import "ZeroWidthSpaceUtils.h"
-#import "ParagraphAttributesUtils.h"
-#import "ColorExtension.h"
-#import "EnrichedImageLoader.h"
+#import <react/utils/ManagedObjectWrapper.h>
 
 using namespace facebook::react;
 
@@ -101,102 +92,256 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   stylesDict = @{
     @([BoldStyle getStyleType]) : [[BoldStyle alloc] initWithInput:self],
-    @([ItalicStyle getStyleType]): [[ItalicStyle alloc] initWithInput:self],
-    @([UnderlineStyle getStyleType]): [[UnderlineStyle alloc] initWithInput:self],
-    @([StrikethroughStyle getStyleType]): [[StrikethroughStyle alloc] initWithInput:self],
-    @([ColorStyle getStyleType]): [[ColorStyle alloc] initWithInput:self],
-    @([InlineCodeStyle getStyleType]): [[InlineCodeStyle alloc] initWithInput:self],
-    @([LinkStyle getStyleType]): [[LinkStyle alloc] initWithInput:self],
-    @([MentionStyle getStyleType]): [[MentionStyle alloc] initWithInput:self],
-    @([H1Style getStyleType]): [[H1Style alloc] initWithInput:self],
-    @([H2Style getStyleType]): [[H2Style alloc] initWithInput:self],
-    @([H3Style getStyleType]): [[H3Style alloc] initWithInput:self],
-    @([H4Style getStyleType]): [[H4Style alloc] initWithInput:self],
-    @([H5Style getStyleType]): [[H5Style alloc] initWithInput:self],
-    @([H6Style getStyleType]): [[H6Style alloc] initWithInput:self],
-    @([UnorderedListStyle getStyleType]): [[UnorderedListStyle alloc] initWithInput:self],
-    @([OrderedListStyle getStyleType]): [[OrderedListStyle alloc] initWithInput:self],
-    @([BlockQuoteStyle getStyleType]): [[BlockQuoteStyle alloc] initWithInput:self],
-    @([CodeBlockStyle getStyleType]): [[CodeBlockStyle alloc] initWithInput:self],
-    @([ImageStyle getStyleType]): [[ImageStyle alloc] initWithInput:self],
-    @([CheckBoxStyle getStyleType]): [[CheckBoxStyle alloc] initWithInput:self],
-    @([DividerStyle getStyleType]): [[DividerStyle alloc] initWithInput:self],
-    @([ContentStyle getStyleType]): [[ContentStyle alloc] initWithInput:self]
+    @([ItalicStyle getStyleType]) : [[ItalicStyle alloc] initWithInput:self],
+    @([UnderlineStyle getStyleType]) :
+        [[UnderlineStyle alloc] initWithInput:self],
+    @([StrikethroughStyle getStyleType]) :
+        [[StrikethroughStyle alloc] initWithInput:self],
+    @([ColorStyle getStyleType]) : [[ColorStyle alloc] initWithInput:self],
+    @([InlineCodeStyle getStyleType]) :
+        [[InlineCodeStyle alloc] initWithInput:self],
+    @([LinkStyle getStyleType]) : [[LinkStyle alloc] initWithInput:self],
+    @([MentionStyle getStyleType]) : [[MentionStyle alloc] initWithInput:self],
+    @([H1Style getStyleType]) : [[H1Style alloc] initWithInput:self],
+    @([H2Style getStyleType]) : [[H2Style alloc] initWithInput:self],
+    @([H3Style getStyleType]) : [[H3Style alloc] initWithInput:self],
+    @([H4Style getStyleType]) : [[H4Style alloc] initWithInput:self],
+    @([H5Style getStyleType]) : [[H5Style alloc] initWithInput:self],
+    @([H6Style getStyleType]) : [[H6Style alloc] initWithInput:self],
+    @([UnorderedListStyle getStyleType]) :
+        [[UnorderedListStyle alloc] initWithInput:self],
+    @([OrderedListStyle getStyleType]) :
+        [[OrderedListStyle alloc] initWithInput:self],
+    @([BlockQuoteStyle getStyleType]) :
+        [[BlockQuoteStyle alloc] initWithInput:self],
+    @([CodeBlockStyle getStyleType]) :
+        [[CodeBlockStyle alloc] initWithInput:self],
+    @([ImageStyle getStyleType]) : [[ImageStyle alloc] initWithInput:self],
+    @([CheckBoxStyle getStyleType]) :
+        [[CheckBoxStyle alloc] initWithInput:self],
+    @([DividerStyle getStyleType]) : [[DividerStyle alloc] initWithInput:self],
+    @([ContentStyle getStyleType]) : [[ContentStyle alloc] initWithInput:self]
   };
 
   conflictingStyles = @{
-    @([BoldStyle getStyleType]) : @[@([MentionStyle getStyleType])],
-    @([ItalicStyle getStyleType]) : @[@([MentionStyle getStyleType])],
-    @([UnderlineStyle getStyleType]) : @[@([MentionStyle getStyleType])],
-    @([StrikethroughStyle getStyleType]) : @[@([MentionStyle getStyleType])],
-    @([ColorStyle getStyleType]): @[@([MentionStyle getStyleType])],
-    @([InlineCodeStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
-    @([LinkStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
-    @([MentionStyle getStyleType]): @[@([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]), @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType])],
-    @([H1Style getStyleType]): @[@([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H2Style getStyleType]): @[@([H1Style getStyleType]),  @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H3Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H4Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H5Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]),  @([H3Style getStyleType]), @([H4Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([H6Style getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([UnorderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([OrderedListStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([BlockQuoteStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([CodeBlockStyle getStyleType]): @[@([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]),
-        @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]), @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([MentionStyle getStyleType]), @([LinkStyle getStyleType]), @([DividerStyle getStyleType])],
-    @([ImageStyle getStyleType]) : @[@([LinkStyle getStyleType]), @([MentionStyle getStyleType])],
+    @([BoldStyle getStyleType]) : @[ @([MentionStyle getStyleType]) ],
+    @([ItalicStyle getStyleType]) : @[ @([MentionStyle getStyleType]) ],
+    @([UnderlineStyle getStyleType]) : @[ @([MentionStyle getStyleType]) ],
+    @([StrikethroughStyle getStyleType]) : @[ @([MentionStyle getStyleType]) ],
+    @([ColorStyle getStyleType]) : @[ @([MentionStyle getStyleType]) ],
+    @([InlineCodeStyle getStyleType]) :
+        @[ @([LinkStyle getStyleType]), @([MentionStyle getStyleType]) ],
+    @([LinkStyle getStyleType]) : @[
+      @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]),
+      @([MentionStyle getStyleType])
+    ],
+    @([MentionStyle getStyleType]) : @[
+      @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]),
+      @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]),
+      @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType])
+    ],
+    @([H1Style getStyleType]) : @[
+      @([H2Style getStyleType]), @([H3Style getStyleType]),
+      @([H4Style getStyleType]), @([H5Style getStyleType]),
+      @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([H2Style getStyleType]) : @[
+      @([H1Style getStyleType]), @([H3Style getStyleType]),
+      @([H4Style getStyleType]), @([H5Style getStyleType]),
+      @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([H3Style getStyleType]) : @[
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H4Style getStyleType]), @([H5Style getStyleType]),
+      @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([H4Style getStyleType]) : @[
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H3Style getStyleType]), @([H5Style getStyleType]),
+      @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([H5Style getStyleType]) : @[
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H3Style getStyleType]), @([H4Style getStyleType]),
+      @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([H6Style getStyleType]) : @[
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H3Style getStyleType]), @([H4Style getStyleType]),
+      @([H5Style getStyleType]), @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([UnorderedListStyle getStyleType]) : @[
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H3Style getStyleType]), @([H4Style getStyleType]),
+      @([H5Style getStyleType]), @([H6Style getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([OrderedListStyle getStyleType]) : @[
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H3Style getStyleType]), @([H4Style getStyleType]),
+      @([H5Style getStyleType]), @([H6Style getStyleType]),
+      @([UnorderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([BlockQuoteStyle getStyleType]) : @[
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H3Style getStyleType]), @([H4Style getStyleType]),
+      @([H5Style getStyleType]), @([H6Style getStyleType]),
+      @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([CheckBoxStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([CodeBlockStyle getStyleType]) : @[
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H3Style getStyleType]), @([H4Style getStyleType]),
+      @([H5Style getStyleType]), @([H6Style getStyleType]),
+      @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]),
+      @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType]),
+      @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]),
+      @([BlockQuoteStyle getStyleType]), @([InlineCodeStyle getStyleType]),
+      @([MentionStyle getStyleType]), @([LinkStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
+    @([ImageStyle getStyleType]) :
+        @[ @([LinkStyle getStyleType]), @([MentionStyle getStyleType]) ],
     @([CheckBoxStyle getStyleType]) : @[
-           @([H1Style getStyleType]),
-           @([H2Style getStyleType]),
-           @([H3Style getStyleType]),
-           @([H4Style getStyleType]),
-           @([H5Style getStyleType]),
-           @([H6Style getStyleType]),
-           @([UnorderedListStyle getStyleType]),
-           @([OrderedListStyle getStyleType]),
-           @([BlockQuoteStyle getStyleType]),
-           @([CodeBlockStyle getStyleType]),
-           @([DividerStyle getStyleType])
-       ],
+      @([H1Style getStyleType]), @([H2Style getStyleType]),
+      @([H3Style getStyleType]), @([H4Style getStyleType]),
+      @([H5Style getStyleType]), @([H6Style getStyleType]),
+      @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]),
+      @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ],
     @([DividerStyle getStyleType]) : @[
-           @([H1Style getStyleType]),
-           @([H2Style getStyleType]),
-           @([H3Style getStyleType]),
-           @([H4Style getStyleType]),
-           @([H5Style getStyleType]),
-           @([H6Style getStyleType]),
-           @([UnorderedListStyle getStyleType]),
-           @([OrderedListStyle getStyleType]),
-           @([CheckBoxStyle getStyleType]),
-           @([BlockQuoteStyle getStyleType]),
-           @([CodeBlockStyle getStyleType]),
-       ],
+      @([H1Style getStyleType]),
+      @([H2Style getStyleType]),
+      @([H3Style getStyleType]),
+      @([H4Style getStyleType]),
+      @([H5Style getStyleType]),
+      @([H6Style getStyleType]),
+      @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]),
+      @([CheckBoxStyle getStyleType]),
+      @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]),
+    ],
     @([ContentStyle getStyleType]) : @[],
   };
 
   blockingStyles = @{
-    @([BoldStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([ItalicStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([UnderlineStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([StrikethroughStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([ColorStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([InlineCodeStyle getStyleType]) : @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([LinkStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([MentionStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([H1Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([H2Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([H3Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([H4Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([H5Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([H6Style getStyleType]): @[@([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([UnorderedListStyle getStyleType]): @[@([DividerStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([OrderedListStyle getStyleType]): @[@([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([BlockQuoteStyle getStyleType]): @[@([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([CodeBlockStyle getStyleType]): @[@([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([ImageStyle getStyleType]) : @[@([InlineCodeStyle getStyleType]), @([DividerStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([CheckBoxStyle getStyleType]): @[@([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([DividerStyle getStyleType]): @[@([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType]), @([ContentStyle getStyleType])],
-    @([ContentStyle getStyleType]): @[@([CheckBoxStyle getStyleType]), @([H1Style getStyleType]), @([H2Style getStyleType]), @([H3Style getStyleType]), @([H4Style getStyleType]), @([H5Style getStyleType]), @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]), @([MentionStyle getStyleType]), @([DividerStyle getStyleType])]
+    @([BoldStyle getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([ItalicStyle getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([UnderlineStyle getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([StrikethroughStyle getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([ColorStyle getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([InlineCodeStyle getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([LinkStyle getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([MentionStyle getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([H1Style getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([H2Style getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([H3Style getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([H4Style getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([H5Style getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([H6Style getStyleType]) : @[
+      @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([UnorderedListStyle getStyleType]) : @[
+      @([DividerStyle getStyleType]), @([CodeBlockStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([OrderedListStyle getStyleType]) :
+        @[ @([DividerStyle getStyleType]), @([ContentStyle getStyleType]) ],
+    @([BlockQuoteStyle getStyleType]) :
+        @[ @([DividerStyle getStyleType]), @([ContentStyle getStyleType]) ],
+    @([CodeBlockStyle getStyleType]) :
+        @[ @([DividerStyle getStyleType]), @([ContentStyle getStyleType]) ],
+    @([ImageStyle getStyleType]) : @[
+      @([InlineCodeStyle getStyleType]), @([DividerStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([CheckBoxStyle getStyleType]) :
+        @[ @([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType]) ],
+    @([DividerStyle getStyleType]) : @[
+      @([CheckBoxStyle getStyleType]), @([H1Style getStyleType]),
+      @([H2Style getStyleType]), @([H3Style getStyleType]),
+      @([H4Style getStyleType]), @([H5Style getStyleType]),
+      @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]),
+      @([LinkStyle getStyleType]), @([MentionStyle getStyleType]),
+      @([ContentStyle getStyleType])
+    ],
+    @([ContentStyle getStyleType]) : @[
+      @([CheckBoxStyle getStyleType]), @([H1Style getStyleType]),
+      @([H2Style getStyleType]), @([H3Style getStyleType]),
+      @([H4Style getStyleType]), @([H5Style getStyleType]),
+      @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]),
+      @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+      @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]),
+      @([LinkStyle getStyleType]), @([MentionStyle getStyleType]),
+      @([DividerStyle getStyleType])
+    ]
   };
 
   parser = [[InputParser alloc] initWithInput:self];
@@ -216,11 +361,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [tapRecognizer addTarget:self action:@selector(handleTap:)];
   [self addGestureRecognizer:tapRecognizer];
   for (UIDragInteraction *interaction in textView.interactions) {
-        if ([interaction isKindOfClass:[UIDragInteraction class]] ||
-            [interaction isKindOfClass:[UIDropInteraction class]]) {
-            [textView removeInteraction:interaction];
-        }
+    if ([interaction isKindOfClass:[UIDragInteraction class]] ||
+        [interaction isKindOfClass:[UIDropInteraction class]]) {
+      [textView removeInteraction:interaction];
     }
+  }
 }
 
 - (void)setupPlaceholderLabel {
@@ -339,108 +484,133 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [newConfig setH3Bold:newViewProps.htmlStyle.h3.bold];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.h4.fontSize != oldViewProps.htmlStyle.h4.fontSize) {
+
+  if (newViewProps.htmlStyle.h4.fontSize !=
+      oldViewProps.htmlStyle.h4.fontSize) {
     [newConfig setH4FontSize:newViewProps.htmlStyle.h4.fontSize];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.h4.bold != oldViewProps.htmlStyle.h4.bold) {
+
+  if (newViewProps.htmlStyle.h4.bold != oldViewProps.htmlStyle.h4.bold) {
     [newConfig setH4Bold:newViewProps.htmlStyle.h4.bold];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.h5.fontSize != oldViewProps.htmlStyle.h5.fontSize) {
+
+  if (newViewProps.htmlStyle.h5.fontSize !=
+      oldViewProps.htmlStyle.h5.fontSize) {
     [newConfig setH5FontSize:newViewProps.htmlStyle.h5.fontSize];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.h5.bold != oldViewProps.htmlStyle.h5.bold) {
+
+  if (newViewProps.htmlStyle.h5.bold != oldViewProps.htmlStyle.h5.bold) {
     [newConfig setH5Bold:newViewProps.htmlStyle.h5.bold];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.h6.fontSize != oldViewProps.htmlStyle.h6.fontSize) {
+
+  if (newViewProps.htmlStyle.h6.fontSize !=
+      oldViewProps.htmlStyle.h6.fontSize) {
     [newConfig setH6FontSize:newViewProps.htmlStyle.h6.fontSize];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.h6.bold != oldViewProps.htmlStyle.h6.bold) {
+
+  if (newViewProps.htmlStyle.h6.bold != oldViewProps.htmlStyle.h6.bold) {
     [newConfig setH6Bold:newViewProps.htmlStyle.h6.bold];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.blockquote.borderColor != oldViewProps.htmlStyle.blockquote.borderColor) {
-    if(isColorMeaningful(newViewProps.htmlStyle.blockquote.borderColor)) {
-      [newConfig setBlockquoteBorderColor:RCTUIColorFromSharedColor(newViewProps.htmlStyle.blockquote.borderColor)];
+
+  if (newViewProps.htmlStyle.blockquote.borderColor !=
+      oldViewProps.htmlStyle.blockquote.borderColor) {
+    if (isColorMeaningful(newViewProps.htmlStyle.blockquote.borderColor)) {
+      [newConfig setBlockquoteBorderColor:RCTUIColorFromSharedColor(
+                                              newViewProps.htmlStyle.blockquote
+                                                  .borderColor)];
       stylePropChanged = YES;
     }
   }
-  
-  if(newViewProps.htmlStyle.checkbox.uncheckedImage != oldViewProps.htmlStyle.checkbox.uncheckedImage) {
+
+  if (newViewProps.htmlStyle.checkbox.uncheckedImage !=
+      oldViewProps.htmlStyle.checkbox.uncheckedImage) {
     auto uri = newViewProps.htmlStyle.checkbox.uncheckedImage;
-    NSURL *url = [NSURL URLWithString:[NSString fromCppString: uri]];
-    [[EnrichedImageLoader shared] loadImage:url completion:^(UIImage *image) {
-      if(image != nullptr) {
-        [newConfig setUncheckedmage:image];
-      }
-    }];
+    NSURL *url = [NSURL URLWithString:[NSString fromCppString:uri]];
+    [[EnrichedImageLoader shared] loadImage:url
+                                 completion:^(UIImage *image) {
+                                   if (image != nullptr) {
+                                     [newConfig setUncheckedmage:image];
+                                   }
+                                 }];
     stylePropChanged = YES;
   }
-  
-  if (newViewProps.htmlStyle.checkbox.checkedImage != oldViewProps.htmlStyle.checkbox.checkedImage) {
-      auto uri = newViewProps.htmlStyle.checkbox.checkedImage;
-      NSURL *url = [NSURL URLWithString:[NSString fromCppString: uri]];
-      [[EnrichedImageLoader shared] loadImage:url completion:^(UIImage *image) {
-        if(image != nullptr) {
-          [newConfig setCheckedImage:image];
-        }
-      }];
-      stylePropChanged = YES;
-  }
-  
-  if(newViewProps.htmlStyle.checkbox.gapWidth != oldViewProps.htmlStyle.checkbox.gapWidth) {
-    [newConfig setCheckBoxListGapWidth: newViewProps.htmlStyle.checkbox.gapWidth];
+
+  if (newViewProps.htmlStyle.checkbox.checkedImage !=
+      oldViewProps.htmlStyle.checkbox.checkedImage) {
+    auto uri = newViewProps.htmlStyle.checkbox.checkedImage;
+    NSURL *url = [NSURL URLWithString:[NSString fromCppString:uri]];
+    [[EnrichedImageLoader shared] loadImage:url
+                                 completion:^(UIImage *image) {
+                                   if (image != nullptr) {
+                                     [newConfig setCheckedImage:image];
+                                   }
+                                 }];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.checkbox.marginLeft != oldViewProps.htmlStyle.checkbox.marginLeft) {
-    [newConfig setCheckBoxListMarginLeft: newViewProps.htmlStyle.checkbox.marginLeft];
+
+  if (newViewProps.htmlStyle.checkbox.gapWidth !=
+      oldViewProps.htmlStyle.checkbox.gapWidth) {
+    [newConfig
+        setCheckBoxListGapWidth:newViewProps.htmlStyle.checkbox.gapWidth];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.checkbox.imageWidth != oldViewProps.htmlStyle.checkbox.imageWidth) {
+
+  if (newViewProps.htmlStyle.checkbox.marginLeft !=
+      oldViewProps.htmlStyle.checkbox.marginLeft) {
+    [newConfig
+        setCheckBoxListMarginLeft:newViewProps.htmlStyle.checkbox.marginLeft];
+    stylePropChanged = YES;
+  }
+
+  if (newViewProps.htmlStyle.checkbox.imageWidth !=
+      oldViewProps.htmlStyle.checkbox.imageWidth) {
     [newConfig setCheckBoxWidth:newViewProps.htmlStyle.checkbox.imageWidth];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.checkbox.imageHeight != oldViewProps.htmlStyle.checkbox.imageHeight) {
+
+  if (newViewProps.htmlStyle.checkbox.imageHeight !=
+      oldViewProps.htmlStyle.checkbox.imageHeight) {
     [newConfig setCheckBoxHeight:newViewProps.htmlStyle.checkbox.imageHeight];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.checkbox.checkedTextColor != oldViewProps.htmlStyle.checkbox.checkedTextColor) {
-    [newConfig setCheckedTextColor: RCTUIColorFromSharedColor(newViewProps.htmlStyle.checkbox.checkedTextColor)];
+
+  if (newViewProps.htmlStyle.checkbox.checkedTextColor !=
+      oldViewProps.htmlStyle.checkbox.checkedTextColor) {
+    [newConfig setCheckedTextColor:RCTUIColorFromSharedColor(
+                                       newViewProps.htmlStyle.checkbox
+                                           .checkedTextColor)];
     stylePropChanged = YES;
   }
 
-  if(newViewProps.htmlStyle.divider.color != oldViewProps.htmlStyle.divider.color) {
-    [newConfig setDividerColor: RCTUIColorFromSharedColor(newViewProps.htmlStyle.divider.color)];
-    stylePropChanged = YES;
-  }
-  
-  if(newViewProps.htmlStyle.divider.thickness != oldViewProps.htmlStyle.divider.thickness) {
-    [newConfig setDividerThickness: newViewProps.htmlStyle.divider.thickness];
+  if (newViewProps.htmlStyle.divider.color !=
+      oldViewProps.htmlStyle.divider.color) {
+    [newConfig setDividerColor:RCTUIColorFromSharedColor(
+                                   newViewProps.htmlStyle.divider.color)];
     stylePropChanged = YES;
   }
 
-  if(newViewProps.htmlStyle.divider.height != oldViewProps.htmlStyle.divider.height) {
-    [newConfig setDividerHeight: newViewProps.htmlStyle.divider.height];
+  if (newViewProps.htmlStyle.divider.thickness !=
+      oldViewProps.htmlStyle.divider.thickness) {
+    [newConfig setDividerThickness:newViewProps.htmlStyle.divider.thickness];
     stylePropChanged = YES;
   }
-  
-  if(newViewProps.htmlStyle.blockquote.borderWidth != oldViewProps.htmlStyle.blockquote.borderWidth) {
-    [newConfig setBlockquoteBorderWidth:newViewProps.htmlStyle.blockquote.borderWidth];
+
+  if (newViewProps.htmlStyle.divider.height !=
+      oldViewProps.htmlStyle.divider.height) {
+    [newConfig setDividerHeight:newViewProps.htmlStyle.divider.height];
+    stylePropChanged = YES;
+  }
+
+  if (newViewProps.htmlStyle.blockquote.borderWidth !=
+      oldViewProps.htmlStyle.blockquote.borderWidth) {
+    [newConfig
+        setBlockquoteBorderWidth:newViewProps.htmlStyle.blockquote.borderWidth];
     stylePropChanged = YES;
   }
 
@@ -638,36 +808,39 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
     stylePropChanged = YES;
   }
-  
+
   folly::dynamic oldContentStyle = oldViewProps.htmlStyle.content;
   folly::dynamic newContentStyle = newViewProps.htmlStyle.content;
-  
-  if(oldContentStyle != newContentStyle) {
+
+  if (oldContentStyle != newContentStyle) {
     bool newSingleProps = NO;
-    
-    for(const auto& obj : newContentStyle.items()) {
-      if(obj.second.isInt() || obj.second.isString()) {
+
+    for (const auto &obj : newContentStyle.items()) {
+      if (obj.second.isInt() || obj.second.isString()) {
         // we are in just a single MentionStyleProps object
         newSingleProps = YES;
         break;
-      } else if(obj.second.isObject()) {
+      } else if (obj.second.isObject()) {
         // we are in map of indicators to MentionStyleProps
         newSingleProps = NO;
         break;
       }
     }
-    
-    if(newSingleProps) {
-      [newConfig setContentStyleProps:[ContentStyleProps getSinglePropsFromFollyDynamic:newContentStyle]];
+
+    if (newSingleProps) {
+      [newConfig setContentStyleProps:
+                     [ContentStyleProps
+                         getSinglePropsFromFollyDynamic:newContentStyle]];
     } else {
-      [newConfig setContentStyleProps:[ContentStyleProps getComplexPropsFromFollyDynamic:newContentStyle]];
+      [newConfig setContentStyleProps:
+                     [ContentStyleProps
+                         getComplexPropsFromFollyDynamic:newContentStyle]];
     }
-    
+
     stylePropChanged = YES;
   }
-  
-  
-  if(stylePropChanged) {
+
+  if (stylePropChanged) {
     // all the text needs to be rebuilt
     // we get the current html using old config, then switch to new config and
     // replace text using the html this way, the newest config attributes are
@@ -840,20 +1013,27 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (CGSize)measureSize:(CGFloat)maxWidth {
   // copy the the whole attributed string
-  NSMutableAttributedString *currentStr = [[NSMutableAttributedString alloc] initWithAttributedString:textView.textStorage];
-  
-  // edge case: empty input should still be of a height of a single line, so we add a mock "I" character
-  if([currentStr length] == 0 ) {
-    [currentStr appendAttributedString:
-      [[NSAttributedString alloc] initWithString:@"I" attributes:textView.typingAttributes]
-    ];
+  NSMutableAttributedString *currentStr = [[NSMutableAttributedString alloc]
+      initWithAttributedString:textView.textStorage];
+
+  // edge case: empty input should still be of a height of a single line, so we
+  // add a mock "I" character
+  if ([currentStr length] == 0) {
+    [currentStr
+        appendAttributedString:[[NSAttributedString alloc]
+                                   initWithString:@"I"
+                                       attributes:textView.typingAttributes]];
   }
-  
-  // edge case: input with only a zero width space should still be of a height of a single line, so we add a mock "I" character
-  if([currentStr length] == 1 && [[currentStr.string substringWithRange:NSMakeRange(0, 1)] isEqualToString:@"\u200B"]) {
-    [currentStr appendAttributedString:
-      [[NSAttributedString alloc] initWithString:@"I" attributes:textView.typingAttributes]
-    ];
+
+  // edge case: input with only a zero width space should still be of a height
+  // of a single line, so we add a mock "I" character
+  if ([currentStr length] == 1 &&
+      [[currentStr.string substringWithRange:NSMakeRange(0, 1)]
+          isEqualToString:@"\u200B"]) {
+    [currentStr
+        appendAttributedString:[[NSAttributedString alloc]
+                                   initWithString:@"I"
+                                       attributes:textView.typingAttributes]];
   }
 
   // edge case: trailing newlines aren't counted towards height calculations, so
@@ -1002,27 +1182,39 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       _activeStyles = newActiveStyles;
 
       emitter->onChangeState({
-        .isBold = [_activeStyles containsObject: @([BoldStyle getStyleType])],
-        .isItalic = [_activeStyles containsObject: @([ItalicStyle getStyleType])],
-        .isUnderline = [_activeStyles containsObject: @([UnderlineStyle getStyleType])],
-        .isStrikeThrough = [_activeStyles containsObject: @([StrikethroughStyle getStyleType])],
-        .isColored = [_activeStyles containsObject: @([ColorStyle getStyleType])],
-        .isInlineCode = [_activeStyles containsObject: @([InlineCodeStyle getStyleType])],
-        .isLink = [_activeStyles containsObject: @([LinkStyle getStyleType])],
-        .isMention = [_activeStyles containsObject: @([MentionStyle getStyleType])],
-        .isH1 = [_activeStyles containsObject: @([H1Style getStyleType])],
-        .isH2 = [_activeStyles containsObject: @([H2Style getStyleType])],
-        .isH3 = [_activeStyles containsObject: @([H3Style getStyleType])],
-        .isH4 = [_activeStyles containsObject: @([H4Style getStyleType])],
-        .isH5 = [_activeStyles containsObject: @([H5Style getStyleType])],
-        .isH6 = [_activeStyles containsObject: @([H6Style getStyleType])],
-        .isUnorderedList = [_activeStyles containsObject: @([UnorderedListStyle getStyleType])],
-        .isOrderedList = [_activeStyles containsObject: @([OrderedListStyle getStyleType])],
-        .isBlockQuote = [_activeStyles containsObject: @([BlockQuoteStyle getStyleType])],
-        .isCodeBlock = [_activeStyles containsObject: @([CodeBlockStyle getStyleType])],
-        .isImage = [_activeStyles containsObject: @([ImageStyle getStyleType])],
-        .isCheckList = [_activeStyles containsObject: @([CheckBoxStyle getStyleType])],
-        .isContent = [_activeStyles containsObject: @([ContentStyle getStyleType])]
+        .isBold = [_activeStyles containsObject:@([BoldStyle getStyleType])],
+        .isItalic =
+            [_activeStyles containsObject:@([ItalicStyle getStyleType])],
+        .isUnderline =
+            [_activeStyles containsObject:@([UnderlineStyle getStyleType])],
+        .isStrikeThrough =
+            [_activeStyles containsObject:@([StrikethroughStyle getStyleType])],
+        .isColored =
+            [_activeStyles containsObject:@([ColorStyle getStyleType])],
+        .isInlineCode =
+            [_activeStyles containsObject:@([InlineCodeStyle getStyleType])],
+        .isLink = [_activeStyles containsObject:@([LinkStyle getStyleType])],
+        .isMention =
+            [_activeStyles containsObject:@([MentionStyle getStyleType])],
+        .isH1 = [_activeStyles containsObject:@([H1Style getStyleType])],
+        .isH2 = [_activeStyles containsObject:@([H2Style getStyleType])],
+        .isH3 = [_activeStyles containsObject:@([H3Style getStyleType])],
+        .isH4 = [_activeStyles containsObject:@([H4Style getStyleType])],
+        .isH5 = [_activeStyles containsObject:@([H5Style getStyleType])],
+        .isH6 = [_activeStyles containsObject:@([H6Style getStyleType])],
+        .isUnorderedList =
+            [_activeStyles containsObject:@([UnorderedListStyle getStyleType])],
+        .isOrderedList =
+            [_activeStyles containsObject:@([OrderedListStyle getStyleType])],
+        .isBlockQuote =
+            [_activeStyles containsObject:@([BlockQuoteStyle getStyleType])],
+        .isCodeBlock =
+            [_activeStyles containsObject:@([CodeBlockStyle getStyleType])],
+        .isImage = [_activeStyles containsObject:@([ImageStyle getStyleType])],
+        .isCheckList =
+            [_activeStyles containsObject:@([CheckBoxStyle getStyleType])],
+        .isContent =
+            [_activeStyles containsObject:@([ContentStyle getStyleType])]
       });
     }
   }
@@ -1058,24 +1250,24 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   } else if ([commandName isEqualToString:@"setValue"]) {
     NSString *value = (NSString *)args[0];
     [self setValue:value];
-  } else if([commandName isEqualToString:@"toggleBold"]) {
-    [self toggleRegularStyle: [BoldStyle getStyleType]];
-  } else if([commandName isEqualToString:@"toggleItalic"]) {
-    [self toggleRegularStyle: [ItalicStyle getStyleType]];
-  } else if([commandName isEqualToString:@"toggleUnderline"]) {
-    [self toggleRegularStyle: [UnderlineStyle getStyleType]];
-  } else if([commandName isEqualToString:@"toggleStrikeThrough"]) {
-    [self toggleRegularStyle: [StrikethroughStyle getStyleType]];
-  } else if([commandName isEqualToString:@"setColor"]) {
+  } else if ([commandName isEqualToString:@"toggleBold"]) {
+    [self toggleRegularStyle:[BoldStyle getStyleType]];
+  } else if ([commandName isEqualToString:@"toggleItalic"]) {
+    [self toggleRegularStyle:[ItalicStyle getStyleType]];
+  } else if ([commandName isEqualToString:@"toggleUnderline"]) {
+    [self toggleRegularStyle:[UnderlineStyle getStyleType]];
+  } else if ([commandName isEqualToString:@"toggleStrikeThrough"]) {
+    [self toggleRegularStyle:[StrikethroughStyle getStyleType]];
+  } else if ([commandName isEqualToString:@"setColor"]) {
     NSString *colorText = (NSString *)args[0];
-    [self setColor: colorText];
+    [self setColor:colorText];
   } else if ([commandName isEqualToString:@"removeColor"]) {
     [self removeColor];
-  } else if([commandName isEqualToString:@"toggleInlineCode"]) {
-    [self toggleRegularStyle: [InlineCodeStyle getStyleType]];
-  } else if([commandName isEqualToString:@"addLink"]) {
-    NSInteger start = [((NSNumber*)args[0]) integerValue];
-    NSInteger end = [((NSNumber*)args[1]) integerValue];
+  } else if ([commandName isEqualToString:@"toggleInlineCode"]) {
+    [self toggleRegularStyle:[InlineCodeStyle getStyleType]];
+  } else if ([commandName isEqualToString:@"addLink"]) {
+    NSInteger start = [((NSNumber *)args[0]) integerValue];
+    NSInteger end = [((NSNumber *)args[1]) integerValue];
     NSString *text = (NSString *)args[2];
     NSString *url = (NSString *)args[3];
     [self addLinkAt:start end:end text:text url:url];
@@ -1093,13 +1285,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self toggleParagraphStyle:[H2Style getStyleType]];
   } else if ([commandName isEqualToString:@"toggleH3"]) {
     [self toggleParagraphStyle:[H3Style getStyleType]];
-  } else if([commandName isEqualToString:@"toggleH4"]) {
+  } else if ([commandName isEqualToString:@"toggleH4"]) {
     [self toggleParagraphStyle:[H4Style getStyleType]];
-  } else if([commandName isEqualToString:@"toggleH5"]) {
+  } else if ([commandName isEqualToString:@"toggleH5"]) {
     [self toggleParagraphStyle:[H5Style getStyleType]];
-  } else if([commandName isEqualToString:@"toggleH6"]) {
+  } else if ([commandName isEqualToString:@"toggleH6"]) {
     [self toggleParagraphStyle:[H6Style getStyleType]];
-  } else if([commandName isEqualToString:@"toggleUnorderedList"]) {
+  } else if ([commandName isEqualToString:@"toggleUnorderedList"]) {
     [self toggleParagraphStyle:[UnorderedListStyle getStyleType]];
   } else if ([commandName isEqualToString:@"toggleOrderedList"]) {
     [self toggleParagraphStyle:[OrderedListStyle getStyleType]];
@@ -1116,9 +1308,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   } else if ([commandName isEqualToString:@"requestHTML"]) {
     NSInteger requestId = [((NSNumber *)args[0]) integerValue];
     [self requestHTML:requestId];
-  } else if([commandName isEqualToString:@"toggleCheckList"]) {
+  } else if ([commandName isEqualToString:@"toggleCheckList"]) {
     [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
-  } else if([commandName isEqualToString:@"addDividerAtNewLine"]) {
+  } else if ([commandName isEqualToString:@"addDividerAtNewLine"]) {
     [self addDividerAtNewLine];
   }
 }
@@ -1180,7 +1372,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)emitCurrentSelectionColorIfChanged {
   NSRange selRange = textView.selectedRange;
   UIColor *uniformColor = nil;
-  
+
   if (selRange.length == 0) {
     id colorAttr = textView.typingAttributes[NSForegroundColorAttributeName];
     uniformColor = colorAttr ? (UIColor *)colorAttr : [config primaryColor];
@@ -1188,33 +1380,35 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     // Selection range: check for uniform color
     __block UIColor *firstColor = nil;
     __block BOOL hasMultiple = NO;
-    
-    [textView.textStorage enumerateAttribute:NSForegroundColorAttributeName
-                                    inRange:selRange
-                                    options:0
-                                 usingBlock:^(id _Nullable value, NSRange range, BOOL *_Nonnull stop) {
-      UIColor *thisColor = value ? (UIColor *)value : [config primaryColor];
-      if (firstColor == nil) {
-        firstColor = thisColor;
-      } else if (![firstColor isEqual:thisColor]) {
-        hasMultiple = YES;
-        *stop = YES;
-      }
-    }];
-    
+
+    [textView.textStorage
+        enumerateAttribute:NSForegroundColorAttributeName
+                   inRange:selRange
+                   options:0
+                usingBlock:^(id _Nullable value, NSRange range,
+                             BOOL *_Nonnull stop) {
+                  UIColor *thisColor =
+                      value ? (UIColor *)value : [config primaryColor];
+                  if (firstColor == nil) {
+                    firstColor = thisColor;
+                  } else if (![firstColor isEqual:thisColor]) {
+                    hasMultiple = YES;
+                    *stop = YES;
+                  }
+                }];
+
     if (!hasMultiple && firstColor != nil) {
       uniformColor = firstColor;
     }
   }
-  
-  NSString *hexColor = uniformColor ? [uniformColor hexString] : [config.primaryColor hexString];
-  
-  if(![_recentlyEmittedColor isEqual: hexColor]) {
+
+  NSString *hexColor =
+      uniformColor ? [uniformColor hexString] : [config.primaryColor hexString];
+
+  if (![_recentlyEmittedColor isEqual:hexColor]) {
     auto emitter = [self getEventEmitter];
-    if(emitter != nullptr) {
-      emitter->onColorChangeInSelection({
-        .color = [hexColor toCppString]
-      });
+    if (emitter != nullptr) {
+      emitter->onColorChangeInSelection({.color = [hexColor toCppString]});
     }
     _recentlyEmittedColor = hexColor;
   }
@@ -1280,10 +1474,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 // MARK: - Styles manipulation
 
 - (void)setColor:(NSString *)colorText {
-  UIColor *color = [UIColor colorFromString: colorText];
+  UIColor *color = [UIColor colorFromString:colorText];
   ColorStyle *colorStyle = stylesDict[@(Colored)];
-  
-  [colorStyle applyStyle:textView.selectedRange color: color];
+
+  [colorStyle applyStyle:textView.selectedRange color:color];
   [self anyTextMayHaveBeenModified];
 }
 
@@ -1337,18 +1531,28 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
--(void)addDividerAtNewLine {
+- (void)addDividerAtNewLine {
   DividerStyle *dividerStyle = stylesDict[(@([DividerStyle getStyleType]))];
   [dividerStyle insertDividerAtNewLine];
   [self anyTextMayHaveBeenModified];
 }
 
-- (void)addMention:(NSString *)indicator text:(NSString *)text attributes:(NSString *)attributes {
-  MentionStyle *mentionStyleClass = (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
-  if(mentionStyleClass == nullptr) { return; }
-  if([mentionStyleClass getActiveMentionRange] == nullptr) { return; }
-  
-  if([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType] range:[[mentionStyleClass getActiveMentionRange] rangeValue]]) {
+- (void)addMention:(NSString *)indicator
+              text:(NSString *)text
+        attributes:(NSString *)attributes {
+  MentionStyle *mentionStyleClass =
+      (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
+  if (mentionStyleClass == nullptr) {
+    return;
+  }
+  if ([mentionStyleClass getActiveMentionRange] == nullptr) {
+    return;
+  }
+
+  if ([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType]
+                                    range:[[mentionStyleClass
+                                              getActiveMentionRange]
+                                              rangeValue]]) {
     [mentionStyleClass addMention:indicator text:text attributes:attributes];
     [self anyTextMayHaveBeenModified];
   }
@@ -1536,12 +1740,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   H4Style *h4Style = stylesDict[@([H4Style getStyleType])];
   H5Style *h5Style = stylesDict[@([H5Style getStyleType])];
   H6Style *h6Style = stylesDict[@([H6Style getStyleType])];
-  
-  bool hasImproperHeadingStyles =
-    h1Style != nullptr && h2Style != nullptr && h3Style != nullptr &&
-    h4Style != nullptr && h5Style != nullptr && h6Style != nullptr;
 
-  if(hasImproperHeadingStyles) {
+  bool hasImproperHeadingStyles = h1Style != nullptr && h2Style != nullptr &&
+                                  h3Style != nullptr && h4Style != nullptr &&
+                                  h5Style != nullptr && h6Style != nullptr;
+
+  if (hasImproperHeadingStyles) {
     [h1Style handleImproperHeadings];
     [h2Style handleImproperHeadings];
     [h3Style handleImproperHeadings];
@@ -1661,13 +1865,16 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     if (_emitFocusBlur) {
       emitter->onInputFocus({});
     }
-    
-    NSString *textAtSelection = [[[NSMutableString alloc] initWithString:textView.textStorage.string] substringWithRange: textView.selectedRange];
-    emitter->onChangeSelection({
-      .start = static_cast<int>(textView.selectedRange.location),
-      .end = static_cast<int>(textView.selectedRange.location + textView.selectedRange.length),
-      .text = [textAtSelection toCppString]
-    });
+
+    NSString *textAtSelection =
+        [[[NSMutableString alloc] initWithString:textView.textStorage.string]
+            substringWithRange:textView.selectedRange];
+    emitter->onChangeSelection(
+        {.start = static_cast<int>(textView.selectedRange.location),
+         .end = static_cast<int>(textView.selectedRange.location +
+                                 textView.selectedRange.length),
+         .text = [textAtSelection toCppString]});
+    [self emitCurrentSelectionColorIfChanged];
   }
   // manage selection changes since textViewDidChangeSelection sometimes doesn't
   // run on focus
@@ -1700,38 +1907,42 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   H5Style *h5Style = stylesDict[@([H5Style getStyleType])];
   H6Style *h6Style = stylesDict[@([H6Style getStyleType])];
   CheckBoxStyle *checkBoxStyle = stylesDict[@([CheckBoxStyle getStyleType])];
-  
-  // some of the changes these checks do could interfere with later checks and cause a crash
-  // so here I rely on short circuiting evaluation of the logical expression
-  // either way it's not possible to have two of them come off at the same time
-  if(
-    [uStyle handleBackspaceInRange:range replacementText:text] ||
-    [uStyle tryHandlingListShorcutInRange:range replacementText:text] ||
-    [oStyle handleBackspaceInRange:range replacementText:text] ||
-    [oStyle tryHandlingListShorcutInRange:range replacementText:text] ||
-    [checkBoxStyle handleBackspaceInRange:range replacementText:text] ||
-    [checkBoxStyle handleNewlinesInRange:range replacementText:text] ||
-    [bqStyle handleBackspaceInRange:range replacementText:text] ||
-    [cbStyle handleBackspaceInRange:range replacementText:text] ||
-    [linkStyle handleLeadingLinkReplacement:range replacementText:text] ||
-    [mentionStyle handleLeadingMentionReplacement:range replacementText:text] ||
-    [h1Style handleNewlinesInRange:range replacementText:text] ||
-    [h2Style handleNewlinesInRange:range replacementText:text] ||
-    [h3Style handleNewlinesInRange:range replacementText:text] ||
-    [h4Style handleNewlinesInRange:range replacementText:text] ||
-    [h5Style handleNewlinesInRange:range replacementText:text] ||
-    [h6Style handleNewlinesInRange:range replacementText:text] ||
-    [ZeroWidthSpaceUtils handleBackspaceInRange:range replacementText:text input:self] ||
-    [ParagraphAttributesUtils handleBackspaceInRange:range replacementText:text input:self] ||
-    // CRITICAL: This callback HAS TO be always evaluated last.
-    //
-    // This function is the "Generic Fallback": if no specific style claims
-    // the backspace action to change its state, only then do we proceed to
-    // physically delete the newline and merge paragraphs.
-    [ParagraphAttributesUtils handleParagraphStylesMergeOnBackspace:range
+
+  // some of the changes these checks do could interfere with later checks and
+  // cause a crash so here I rely on short circuiting evaluation of the logical
+  // expression either way it's not possible to have two of them come off at the
+  // same time
+  if ([uStyle handleBackspaceInRange:range replacementText:text] ||
+      [uStyle tryHandlingListShorcutInRange:range replacementText:text] ||
+      [oStyle handleBackspaceInRange:range replacementText:text] ||
+      [oStyle tryHandlingListShorcutInRange:range replacementText:text] ||
+      [checkBoxStyle handleBackspaceInRange:range replacementText:text] ||
+      [checkBoxStyle handleNewlinesInRange:range replacementText:text] ||
+      [bqStyle handleBackspaceInRange:range replacementText:text] ||
+      [cbStyle handleBackspaceInRange:range replacementText:text] ||
+      [linkStyle handleLeadingLinkReplacement:range replacementText:text] ||
+      [mentionStyle handleLeadingMentionReplacement:range
+                                    replacementText:text] ||
+      [h1Style handleNewlinesInRange:range replacementText:text] ||
+      [h2Style handleNewlinesInRange:range replacementText:text] ||
+      [h3Style handleNewlinesInRange:range replacementText:text] ||
+      [h4Style handleNewlinesInRange:range replacementText:text] ||
+      [h5Style handleNewlinesInRange:range replacementText:text] ||
+      [h6Style handleNewlinesInRange:range replacementText:text] ||
+      [ZeroWidthSpaceUtils handleBackspaceInRange:range
+                                  replacementText:text
+                                            input:self] ||
+      [ParagraphAttributesUtils handleBackspaceInRange:range
+                                       replacementText:text
+                                                 input:self] ||
+      // CRITICAL: This callback HAS TO be always evaluated last.
+      //
+      // This function is the "Generic Fallback": if no specific style claims
+      // the backspace action to change its state, only then do we proceed to
+      // physically delete the newline and merge paragraphs.
+      [ParagraphAttributesUtils handleParagraphStylesMergeOnBackspace:range
                                                     replacementText:text
-                                                              input:self]
-  ) {
+                                                              input:self]) {
     [self anyTextMayHaveBeenModified];
     return NO;
   }
@@ -1795,112 +2006,113 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       changeInLength:0];
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
+    shouldRecognizeSimultaneouslyWithGestureRecognizer:
+        (UIGestureRecognizer *)otherGestureRecognizer {
   return YES;
 }
 
 #pragma mark - Checkbox Helpers
 
 - (CGPoint)adjustedPointForViewPoint:(CGPoint)pt {
-    CGPoint tvPoint = [self convertPoint:pt toView:textView];
-    tvPoint.x -= textView.textContainerInset.left;
-    tvPoint.y -= textView.textContainerInset.top;
-    return tvPoint;
+  CGPoint tvPoint = [self convertPoint:pt toView:textView];
+  tvPoint.x -= textView.textContainerInset.left;
+  tvPoint.y -= textView.textContainerInset.top;
+  return tvPoint;
 }
 
-- (BOOL)getCharIndex:(NSUInteger *)charIndex
-        forAdjustedPoint:(CGPoint)pt
-{
-    NSUInteger glyphIndex =
-        [textView.layoutManager glyphIndexForPoint:pt
-                                    inTextContainer:textView.textContainer
-                     fractionOfDistanceThroughGlyph:nil];
+- (BOOL)getCharIndex:(NSUInteger *)charIndex forAdjustedPoint:(CGPoint)pt {
+  NSUInteger glyphIndex =
+      [textView.layoutManager glyphIndexForPoint:pt
+                                 inTextContainer:textView.textContainer
+                  fractionOfDistanceThroughGlyph:nil];
 
-    if (glyphIndex == NSNotFound)
-        return NO;
+  if (glyphIndex == NSNotFound)
+    return NO;
 
-    *charIndex =
-        [textView.layoutManager characterIndexForGlyphAtIndex:glyphIndex];
-    return YES;
+  *charIndex =
+      [textView.layoutManager characterIndexForGlyphAtIndex:glyphIndex];
+  return YES;
 }
 
 - (CGRect)checkboxRectForGlyphIndex:(NSUInteger)glyphIndex {
-    NSRange effective = {0,0};
-    CGRect lineRect =
-        [textView.layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex
-                                                 effectiveRange:&effective];
+  NSRange effective = {0, 0};
+  CGRect lineRect =
+      [textView.layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex
+                                               effectiveRange:&effective];
 
-    CGFloat w = [config checkBoxWidth];
-    CGFloat h = [config checkBoxHeight];
-    CGFloat ml = [config checkboxListMarginLeft];
-    CGFloat gap = [config checkboxListGapWidth];
+  CGFloat w = [config checkBoxWidth];
+  CGFloat h = [config checkBoxHeight];
+  CGFloat ml = [config checkboxListMarginLeft];
+  CGFloat gap = [config checkboxListGapWidth];
 
-    return CGRectMake(
-        ml + gap,
-        lineRect.origin.y + (lineRect.size.height - h) / 2.0,
-        w,
-        h
-    );
+  return CGRectMake(ml + gap,
+                    lineRect.origin.y + (lineRect.size.height - h) / 2.0, w, h);
 }
 
 - (CheckBoxStyle *)checkboxStyleForCharIndex:(NSUInteger)charIndex {
-    CheckBoxStyle *check = stylesDict[@([CheckBoxStyle getStyleType])];
-    if (check && [check detectStyle:NSMakeRange(charIndex, 0)]) {
-        return check;
-    }
-    return nil;
+  CheckBoxStyle *check = stylesDict[@([CheckBoxStyle getStyleType])];
+  if (check && [check detectStyle:NSMakeRange(charIndex, 0)]) {
+    return check;
+  }
+  return nil;
 }
 
 - (void)handleTap:(UITapGestureRecognizer *)gr {
-    if (gr.state != UIGestureRecognizerStateEnded) return;
+  if (gr.state != UIGestureRecognizerStateEnded)
+    return;
 
-    CGPoint adjusted = [self adjustedPointForViewPoint:[gr locationInView:self]];
+  CGPoint adjusted = [self adjustedPointForViewPoint:[gr locationInView:self]];
 
-    NSUInteger charIndex;
-    if (![self getCharIndex:&charIndex forAdjustedPoint:adjusted]) return;
+  NSUInteger charIndex;
+  if (![self getCharIndex:&charIndex forAdjustedPoint:adjusted])
+    return;
 
-    CheckBoxStyle *check = [self checkboxStyleForCharIndex:charIndex];
-    if (!check) return;
+  CheckBoxStyle *check = [self checkboxStyleForCharIndex:charIndex];
+  if (!check)
+    return;
 
-    // Get glyphIndex separately for the rectangle
-    NSUInteger glyphIndex =
-        [textView.layoutManager glyphIndexForPoint:adjusted
-                                    inTextContainer:textView.textContainer
-                     fractionOfDistanceThroughGlyph:nil];
+  // Get glyphIndex separately for the rectangle
+  NSUInteger glyphIndex =
+      [textView.layoutManager glyphIndexForPoint:adjusted
+                                 inTextContainer:textView.textContainer
+                  fractionOfDistanceThroughGlyph:nil];
 
-    CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex];
-    if (!CGRectContainsPoint(checkboxRect, adjusted)) return;
+  CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex];
+  if (!CGRectContainsPoint(checkboxRect, adjusted))
+    return;
 
-    [check toggleCheckedAt:charIndex];
-    [self anyTextMayHaveBeenModified];
+  [check toggleCheckedAt:charIndex];
+  [self anyTextMayHaveBeenModified];
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    UIView *hit = [super hitTest:point withEvent:event];
-    if (!hit) return nil;
+  UIView *hit = [super hitTest:point withEvent:event];
+  if (!hit)
+    return nil;
 
-    CGPoint adjusted = [self adjustedPointForViewPoint:point];
+  CGPoint adjusted = [self adjustedPointForViewPoint:point];
 
-    NSUInteger charIndex;
-    if (![self getCharIndex:&charIndex forAdjustedPoint:adjusted])
-        return hit;
-
-    CheckBoxStyle *check = [self checkboxStyleForCharIndex:charIndex];
-    if (!check) return hit;
-
-    NSUInteger glyphIndex =
-        [textView.layoutManager glyphIndexForPoint:adjusted
-                                    inTextContainer:textView.textContainer
-                     fractionOfDistanceThroughGlyph:nil];
-
-    CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex];
-
-    if (CGRectContainsPoint(checkboxRect, adjusted)) {
-        return self;  // intercept touch
-    }
-
+  NSUInteger charIndex;
+  if (![self getCharIndex:&charIndex forAdjustedPoint:adjusted])
     return hit;
-}
 
+  CheckBoxStyle *check = [self checkboxStyleForCharIndex:charIndex];
+  if (!check)
+    return hit;
+
+  NSUInteger glyphIndex =
+      [textView.layoutManager glyphIndexForPoint:adjusted
+                                 inTextContainer:textView.textContainer
+                  fractionOfDistanceThroughGlyph:nil];
+
+  CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex];
+
+  if (CGRectContainsPoint(checkboxRect, adjusted)) {
+    return self; // intercept touch
+  }
+
+  return hit;
+}
 
 @end

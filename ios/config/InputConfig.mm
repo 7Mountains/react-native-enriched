@@ -121,7 +121,7 @@
   copy->_checkedTextColor = _checkedTextColor;
   copy->_dividerColor = [_dividerColor copy];
   copy->_dividerHeight = _dividerHeight;
-  copy-> _dividerThickness = _dividerThickness;
+  copy->_dividerThickness = _dividerThickness;
   copy->_contentProperties = [_contentProperties copy];
   return copy;
 }
@@ -482,9 +482,9 @@
 }
 
 - (ContentStyleProps *)contentStylePropsForType:(NSString *)type {
-  if(_contentProperties.count == 1 && _contentProperties[@"all"] != nullptr) {
+  if (_contentProperties.count == 1 && _contentProperties[@"all"] != nullptr) {
     return _contentProperties[@"all"];
-  } else if(_contentProperties[type] != nullptr) {
+  } else if (_contentProperties[type] != nullptr) {
     return _contentProperties[type];
   }
 
@@ -606,7 +606,7 @@
   _dividerHeight = newValue;
 }
 
--(void)setDividerThickness:(CGFloat)newValue {
+- (void)setDividerThickness:(CGFloat)newValue {
   _dividerThickness = newValue;
 }
 
