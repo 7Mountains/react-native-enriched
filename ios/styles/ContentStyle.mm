@@ -43,7 +43,7 @@ static NSString *const placeholder = @"\uFFFC";
 - (void)applyStyle:(NSRange)range {
   CONTENTSTYLE_NOOP();
 }
-- (void)addAttributes:(NSRange)range {
+- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
   CONTENTSTYLE_NOOP();
 }
 - (void)addTypingAttributes {
