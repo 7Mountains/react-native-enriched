@@ -4,6 +4,6 @@
 
 /// Set YES if you want the text **horizontally centered**.
 /// Default = YES.
-@property (nonatomic) BOOL centerText;
+@property(nonatomic) BOOL centerText;
 
 @end

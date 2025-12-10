@@ -1,12 +1,12 @@
 #pragma once
-#import <UIKit/UIKit.h>
-#import "TextDecorationLineEnum.h"
-#import "MentionStyleProps.h"
-#import <React/RCTImageSource.h>
 #import "ContentStyleProps.h"
+#import "MentionStyleProps.h"
+#import "TextDecorationLineEnum.h"
+#import <React/RCTImageSource.h>
+#import <UIKit/UIKit.h>
 
-@interface InputConfig: NSObject<NSCopying>
-- (instancetype) init;
+@interface InputConfig : NSObject <NSCopying>
+- (instancetype)init;
 - (UIColor *)primaryColor;
 - (void)setPrimaryColor:(UIColor *)newValue;
 - (NSNumber *)primaryFontSize;
@@ -17,8 +17,8 @@
 - (void)setPrimaryFontFamily:(NSString *)newValue;
 - (UIFont *)primaryFont;
 - (UIFont *)monospacedFont;
-- (NSSet<NSNumber*>*)mentionIndicators;
-- (void)setMentionIndicators:(NSSet<NSNumber*>*)newValue;
+- (NSSet<NSNumber *> *)mentionIndicators;
+- (void)setMentionIndicators:(NSSet<NSNumber *> *)newValue;
 - (CGFloat)h1FontSize;
 - (void)setH1FontSize:(CGFloat)newValue;
 - (BOOL)h1Bold;
