@@ -46,6 +46,7 @@ using namespace facebook::react;
   BOOL _emitFocusBlur;
   UITapGestureRecognizer *tapRecognizer;
   BOOL _initialMount;
+  BOOL _didRunInitialMount;
 }
 
 // MARK: - Component utils
@@ -1900,8 +1901,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)didMoveToWindow {
   [super didMoveToWindow];
-  [self layoutIfNeeded];
-  [self anyTextMayHaveBeenModified];
+
+  if (self.window && !_didRunInitialMount) {
+    _didRunInitialMount = YES;
+
+    [self layoutIfNeeded];
+    [self anyTextMayHaveBeenModified];
+  }
 }
 
 // MARK: - UITextView delegate methods

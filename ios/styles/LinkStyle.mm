@@ -224,6 +224,18 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
       }];
 }
 
+- (NSArray<StylePair *> *_Nullable)
+    findAllOccurencesInAttributedString:(NSAttributedString *)attributedString
+                                  range:(NSRange)range {
+  return [OccurenceUtils
+        allMultiple:@[ ManualLinkAttributeName, AutomaticLinkAttributeName ]
+           inString:attributedString
+            inRange:range
+      withCondition:^BOOL(id _Nullable value, NSRange range) {
+        return [self styleCondition:value:range];
+      }];
+}
+
 // MARK: - Public non-standard methods
 
 - (void)addLink:(NSString *)text
