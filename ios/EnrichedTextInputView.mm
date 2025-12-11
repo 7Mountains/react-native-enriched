@@ -1904,8 +1904,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   if (self.window && !_didRunInitialMount) {
     _didRunInitialMount = YES;
-
     [self layoutIfNeeded];
+    // Ideally we should remove this to match RN's uncontrolled inputs behaviour
     [self anyTextMayHaveBeenModified];
   }
 }
