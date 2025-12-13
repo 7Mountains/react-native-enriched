@@ -5,6 +5,7 @@
 #import "ImageData.h"
 #import "LinkData.h"
 #import "MentionParams.h"
+#import "ParameterizedStyleProtocol.h"
 
 @interface BoldStyle : NSObject <BaseStyleProtocol>
 @end
@@ -22,7 +23,7 @@
 - (void)handleNewlines;
 @end
 
-@interface ColorStyle : NSObject <BaseStyleProtocol>
+@interface ColorStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 @property(nonatomic, strong) UIColor *color;
 - (UIColor *)getColorAt:(NSUInteger)location;
 - (void)applyStyle:(NSRange)range color:(UIColor *)color;
@@ -30,7 +31,7 @@
 - (void)removeColorInSelectedRange;
 @end
 
-@interface LinkStyle : NSObject <BaseStyleProtocol>
+@interface LinkStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (void)addLink:(NSString *)text
             url:(NSString *)url
           range:(NSRange)range
@@ -44,7 +45,8 @@
                      replacementText:(NSString *)text;
 @end
 
-@interface MentionStyle : NSObject <BaseStyleProtocol>
+@interface MentionStyle
+    : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (void)addMention:(NSString *)indicator
               text:(NSString *)text
         attributes:(NSString *)attributes;
@@ -109,7 +111,7 @@
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 @end
 
-@interface ImageStyle : NSObject <BaseStyleProtocol>
+@interface ImageStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (void)addImage:(NSString *)uri width:(CGFloat)width height:(CGFloat)height;
 - (void)addImageAtRange:(NSRange)range
               imageData:(ImageData *)imageData
@@ -117,7 +119,7 @@
 - (ImageData *)getImageDataAt:(NSUInteger)location;
 @end
 
-@interface CheckBoxStyle : NSObject <BaseStyleProtocol>
+@interface CheckBoxStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)isCheckedAt:(NSUInteger)location;
@@ -131,7 +133,7 @@
 - (void)insertDividerAtNewLine;
 @end
 
-@interface ContentStyle : NSObject <BaseStyleProtocol>
+@interface ContentStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (void)addContentAtRange:(NSRange)range params:(ContentParams *)params;
 - (ContentParams *)getContentParams:(NSUInteger)location;
 @end
