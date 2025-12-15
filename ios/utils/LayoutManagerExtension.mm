@@ -53,10 +53,16 @@ static void const *kInputKey = &kInputKey;
   NSRange visibleCharRange = [self characterRangeForGlyphRange:glyphRange
                                               actualGlyphRange:NULL];
 
-  [self drawBlockQuotes:typedInput origin:origin inputRange:inputRange];
-  [self drawLists:typedInput origin:origin inputRange:inputRange];
-  [self drawCodeBlocks:typedInput origin:origin inputRange:inputRange];
-  [self drawChecklists:typedInput origin:origin inputRange:inputRange];
+  [self drawBlockQuotes:typedInput
+                 origin:origin
+       visibleCharRange:visibleCharRange];
+  [self drawLists:typedInput origin:origin visibleCharRange:visibleCharRange];
+  [self drawCodeBlocks:typedInput
+                origin:origin
+      visibleCharRange:visibleCharRange];
+  [self drawChecklists:typedInput
+                origin:origin
+      visibleCharRange:visibleCharRange];
 }
 
 - (void)drawCodeBlocks:(EnrichedTextInputView *)typedInput
@@ -207,6 +213,8 @@ static void const *kInputKey = &kInputKey;
     return;
   }
 
+  // it isn't the most performant but we have to check for all the blockquotes
+  // each time and redraw them
   NSArray *allBlockquotes = [bqStyle findAllOccurences:visibleCharRange];
 
   for (StylePair *pair in allBlockquotes) {
@@ -394,13 +402,14 @@ static void const *kInputKey = &kInputKey;
 
 - (void)drawChecklists:(EnrichedTextInputView *)typedInput
                 origin:(CGPoint)origin
-            inputRange:(NSRange)inputRange {
+      visibleCharRange:(NSRange)visibleCharRange {
   CheckBoxStyle *cStyle =
       typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
   if (cStyle == nil)
     return;
 
-  NSArray<StylePair *> *allCheckBoxes = [cStyle findAllOccurences:inputRange];
+  NSArray<StylePair *> *allCheckBoxes =
+      [cStyle findAllOccurences:visibleCharRange];
   if (allCheckBoxes.count == 0)
     return;
 
