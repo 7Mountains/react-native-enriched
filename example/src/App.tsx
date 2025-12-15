@@ -87,7 +87,9 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const html = `<html>
+const contentHtml = Array(1)
+  .fill(
+    `
 <h1>Title H1</h1>
 <hr />
 <p><u><font color="#FF0000">Test </font><font color="#E6FF5C">te</font></u><font color="#E6FF5C">st</font></p>
@@ -99,7 +101,11 @@ const html = `<html>
 <p><b>Bold text</b></p>
 <p><i>Italic text</i></p>
 <p><u>Underline text</u></p>
-</html>`;
+`
+  )
+  .join('');
+
+const html = '<html>' + contentHtml + '</html>';
 
 export default function App() {
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);

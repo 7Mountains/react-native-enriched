@@ -1,6 +1,9 @@
 #import "EnrichedTextInputView.h"
+#import "CheckboxHitTestUtils.h"
 #import "ColorExtension.h"
+#import "ContentHitTestUtils.h"
 #import "CoreText/CoreText.h"
+#import "DividerHitTestUtils.h"
 #import "EnrichedImageLoader.h"
 #import "LayoutManagerExtension.h"
 #import "ParagraphAttributesUtils.h"
@@ -1262,7 +1265,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self toggleRegularStyle:[StrikethroughStyle getStyleType]];
   } else if ([commandName isEqualToString:@"setColor"]) {
     NSString *colorText = (NSString *)args[0];
-    [self setColor:colorText];
+    UIColor *color = [UIColor colorFromString:colorText];
+    id<BaseStyleProtocol> baseStyle = stylesDict[@(Colored)];
+    if ([baseStyle isKindOfClass:[ColorStyle class]]) {
+      ColorStyle *colorStyle = (ColorStyle *)baseStyle;
+      [colorStyle applyStyle:textView.selectedRange color:color];
+    }
+    [self anyTextMayHaveBeenModified];
   } else if ([commandName isEqualToString:@"removeColor"]) {
     [self removeColor];
     [self anyTextMayHaveBeenModified];
@@ -1478,14 +1487,14 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)setColor:(NSString *)colorText {
   UIColor *color = [UIColor colorFromString:colorText];
-  ColorStyle *colorStyle = stylesDict[@(Colored)];
+  ColorStyle *colorStyle = (ColorStyle *)stylesDict[@(Colored)];
 
   [colorStyle applyStyle:textView.selectedRange color:color];
   [self anyTextMayHaveBeenModified];
 }
 
 - (void)removeColor {
-  ColorStyle *colorStyle = stylesDict[@(Colored)];
+  ColorStyle *colorStyle = (ColorStyle *)stylesDict[@(Colored)];
   [colorStyle removeColorInSelectedRange];
   [self anyTextMayHaveBeenModified];
 }
@@ -1692,7 +1701,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)handleWordModificationBasedChanges:(NSString *)word
                                    inRange:(NSRange)range {
   // manual links refreshing and automatic links detection handling
-  LinkStyle *linkStyle = [stylesDict objectForKey:@([LinkStyle getStyleType])];
+  LinkStyle *linkStyle =
+      (LinkStyle *)[stylesDict objectForKey:@([LinkStyle getStyleType])];
 
   if (linkStyle != nullptr) {
     // manual links need to be handled first because they can block automatic
@@ -1891,24 +1901,62 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
+- (BOOL)isReadOnlyParagraphAtLocation:(NSUInteger)location {
+  NSTextStorage *storage = textView.textStorage;
+  NSUInteger length = storage.length;
+
+  if (length == 0) {
+    return NO;
+  }
+  if (location >= length) {
+    location = length - 1;
+  }
+
+  id currentValue = [storage attribute:ReadOnlyParagraphKey
+                               atIndex:location
+                        effectiveRange:nil];
+  if (currentValue) {
+    return YES;
+  }
+
+  if (location > 0) {
+    id previousValue = [storage attribute:ReadOnlyParagraphKey
+                                  atIndex:location - 1
+                           effectiveRange:nil];
+    if (previousValue) {
+      return YES;
+    }
+  }
+
+  return NO;
+}
+
 - (bool)textView:(UITextView *)textView
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text {
+  if (![text isEqualToString:@"\n"] &&
+      [self isReadOnlyParagraphAtLocation:range.location]) {
+    if (text.length == 0)
+      return YES;
+    return NO;
+  }
   recentlyChangedRange = NSMakeRange(range.location, text.length);
 
   UnorderedListStyle *uStyle = stylesDict[@([UnorderedListStyle getStyleType])];
   OrderedListStyle *oStyle = stylesDict[@([OrderedListStyle getStyleType])];
   BlockQuoteStyle *bqStyle = stylesDict[@([BlockQuoteStyle getStyleType])];
   CodeBlockStyle *cbStyle = stylesDict[@([CodeBlockStyle getStyleType])];
-  LinkStyle *linkStyle = stylesDict[@([LinkStyle getStyleType])];
-  MentionStyle *mentionStyle = stylesDict[@([MentionStyle getStyleType])];
+  LinkStyle *linkStyle = (LinkStyle *)stylesDict[@([LinkStyle getStyleType])];
+  MentionStyle *mentionStyle =
+      (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
   H1Style *h1Style = stylesDict[@([H1Style getStyleType])];
   H2Style *h2Style = stylesDict[@([H2Style getStyleType])];
   H3Style *h3Style = stylesDict[@([H3Style getStyleType])];
   H4Style *h4Style = stylesDict[@([H4Style getStyleType])];
   H5Style *h5Style = stylesDict[@([H5Style getStyleType])];
   H6Style *h6Style = stylesDict[@([H6Style getStyleType])];
-  CheckBoxStyle *checkBoxStyle = stylesDict[@([CheckBoxStyle getStyleType])];
+  CheckBoxStyle *checkBoxStyle =
+      (CheckBoxStyle *)stylesDict[@([CheckBoxStyle getStyleType])];
 
   // some of the changes these checks do could interfere with later checks and
   // cause a crash so here I rely on short circuiting evaluation of the logical
@@ -2014,8 +2062,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   return YES;
 }
 
-#pragma mark - Checkbox Helpers
-
 - (CGPoint)adjustedPointForViewPoint:(CGPoint)pt {
   CGPoint tvPoint = [self convertPoint:pt toView:textView];
   tvPoint.x -= textView.textContainerInset.left;
@@ -2037,55 +2083,45 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   return YES;
 }
 
-- (CGRect)checkboxRectForGlyphIndex:(NSUInteger)glyphIndex {
-  NSRange effective = {0, 0};
-  CGRect lineRect =
-      [textView.layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex
-                                               effectiveRange:&effective];
-
-  CGFloat w = [config checkBoxWidth];
-  CGFloat h = [config checkBoxHeight];
-  CGFloat ml = [config checkboxListMarginLeft];
-  CGFloat gap = [config checkboxListGapWidth];
-
-  return CGRectMake(ml + gap,
-                    lineRect.origin.y + (lineRect.size.height - h) / 2.0, w, h);
-}
-
-- (CheckBoxStyle *)checkboxStyleForCharIndex:(NSUInteger)charIndex {
-  CheckBoxStyle *check = stylesDict[@([CheckBoxStyle getStyleType])];
-  if (check && [check detectStyle:NSMakeRange(charIndex, 0)]) {
-    return check;
-  }
-  return nil;
-}
-
 - (void)handleTap:(UITapGestureRecognizer *)gr {
   if (gr.state != UIGestureRecognizerStateEnded)
     return;
 
   CGPoint adjusted = [self adjustedPointForViewPoint:[gr locationInView:self]];
+  NSInteger dividerCharIndex =
+      [DividerHitTestUtils hitTestDividerAtPoint:adjusted inInput:self];
+  if (dividerCharIndex >= 0) {
+    NSUInteger newLocation = (NSUInteger)dividerCharIndex + 1;
+    if (newLocation > textView.textStorage.length) {
+      newLocation = textView.textStorage.length;
+    }
 
-  NSUInteger charIndex;
-  if (![self getCharIndex:&charIndex forAdjustedPoint:adjusted])
+    textView.selectedRange = NSMakeRange(newLocation, 0);
     return;
+  }
 
-  CheckBoxStyle *check = [self checkboxStyleForCharIndex:charIndex];
-  if (!check)
+  NSInteger contentCharIndex =
+      [ContentHitTestUtils hitTestContentAtPoint:adjusted inInput:self];
+  if (contentCharIndex >= 0) {
+    NSUInteger newLocation = (NSUInteger)contentCharIndex + 1;
+    if (newLocation > textView.textStorage.length) {
+      newLocation = textView.textStorage.length;
+    }
+    textView.selectedRange = NSMakeRange(newLocation, 0);
     return;
+  }
 
-  // Get glyphIndex separately for the rectangle
-  NSUInteger glyphIndex =
-      [textView.layoutManager glyphIndexForPoint:adjusted
-                                 inTextContainer:textView.textContainer
-                  fractionOfDistanceThroughGlyph:nil];
-
-  CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex];
-  if (!CGRectContainsPoint(checkboxRect, adjusted))
+  NSInteger checkboxCharIndex =
+      [CheckboxHitTestUtils hitTestCheckboxAtPoint:adjusted inInput:self];
+  if (checkboxCharIndex >= 0) {
+    CheckBoxStyle *check =
+        (CheckBoxStyle *)stylesDict[@([CheckBoxStyle getStyleType])];
+    if (check) {
+      [check toggleCheckedAt:(NSUInteger)checkboxCharIndex];
+      [self anyTextMayHaveBeenModified];
+    }
     return;
-
-  [check toggleCheckedAt:charIndex];
-  [self anyTextMayHaveBeenModified];
+  }
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
@@ -2095,23 +2131,17 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   CGPoint adjusted = [self adjustedPointForViewPoint:point];
 
-  NSUInteger charIndex;
-  if (![self getCharIndex:&charIndex forAdjustedPoint:adjusted])
-    return hit;
+  if ([DividerHitTestUtils hitTestDividerAtPoint:adjusted inInput:self] >= 0) {
+    return self;
+  }
 
-  CheckBoxStyle *check = [self checkboxStyleForCharIndex:charIndex];
-  if (!check)
-    return hit;
+  if ([ContentHitTestUtils hitTestContentAtPoint:adjusted inInput:self] >= 0) {
+    return self;
+  }
 
-  NSUInteger glyphIndex =
-      [textView.layoutManager glyphIndexForPoint:adjusted
-                                 inTextContainer:textView.textContainer
-                  fractionOfDistanceThroughGlyph:nil];
-
-  CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex];
-
-  if (CGRectContainsPoint(checkboxRect, adjusted)) {
-    return self; // intercept touch
+  if ([CheckboxHitTestUtils hitTestCheckboxAtPoint:adjusted
+                                           inInput:self] >= 0) {
+    return self;
   }
 
   return hit;
