@@ -25,6 +25,45 @@ static NSString *const placeholder = @"\uFFFC";
   return YES;
 }
 
++ (BOOL)isSelfClosing {
+  return YES;
+}
+
++ (const char *)tagName {
+  return "content";
+}
+
++ (const char *)subTagName {
+  return nil;
+}
+
++ (NSAttributedStringKey)attributeKey {
+  return ContentAttributeName;
+}
+
++ (NSDictionary *)getParametersFromValue:(id)value {
+  ContentParams *contentParams = value;
+
+  NSMutableDictionary *params = [@{
+    @"type" : contentParams.type,
+    @"src" : contentParams.url,
+    @"text" : contentParams.text,
+  } mutableCopy];
+
+  if (contentParams.attributes) {
+    NSData *data =
+        [contentParams.attributes dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *extraAttrs = [NSJSONSerialization JSONObjectWithData:data
+                                                               options:0
+                                                                 error:nil];
+    if ([extraAttrs isKindOfClass:[NSDictionary class]]) {
+      [params addEntriesFromDictionary:extraAttrs];
+    }
+  }
+
+  return params;
+}
+
 #pragma mark - Init
 
 - (instancetype)initWithInput:(id)input {
@@ -81,6 +120,7 @@ static NSString *const placeholder = @"\uFFFC";
   NSMutableDictionary *attrs = [_input->defaultTypingAttributes mutableCopy];
   attrs[NSAttachmentAttributeName] = [self prepareAttachment:params];
   attrs[ContentAttributeName] = params;
+  attrs[ReadOnlyParagraphKey] = @(YES);
 
   [TextInsertionUtils replaceText:placeholder
                                at:range
@@ -118,15 +158,12 @@ static NSString *const placeholder = @"\uFFFC";
 
 - (BOOL (^)(id _Nullable, NSRange))contentCondition {
   return ^BOOL(id _Nullable value, NSRange range) {
-    NSString *substr =
-        [self->_input->textView.textStorage.string substringWithRange:range];
-    return ([value isKindOfClass:BaseLabelAttachment.class] &&
-            [substr isEqualToString:placeholder]);
+    return [self styleCondition:value range:range];
   };
 }
 
 - (BOOL)styleCondition:(id)value range:(NSRange)range {
-  return self.contentCondition(value, range);
+  return value != nullptr;
 }
 
 - (BOOL)detectStyle:(NSRange)range {
