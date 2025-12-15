@@ -340,10 +340,10 @@ export default function App() {
             onChangeText={(e) => handleChangeText(e.nativeEvent)}
             onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
-            defaultValue="<html><checklist checked='false'>test</checklist></html>"
-            onColorChangeInSelection={(e) =>
-              handleSelectionColorChange(e.nativeEvent)
-            }
+            defaultValue={html}
+            onColorChangeInSelection={(e) => {
+              handleSelectionColorChange(e.nativeEvent);
+            }}
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}

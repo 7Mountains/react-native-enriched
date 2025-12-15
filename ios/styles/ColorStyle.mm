@@ -231,9 +231,19 @@
 }
 
 - (BOOL)detectStyle:(NSRange)range {
-  UIColor *color = [self getColorInRange:range];
-
-  return [self detectStyle:range color:color];
+  if (range.length >= 1) {
+    UIColor *color = [self getColorInRange:range];
+    return [OccurenceUtils detect:NSForegroundColorAttributeName
+                        withInput:_input
+                          inRange:range
+                    withCondition:^BOOL(id _Nullable value, NSRange range) {
+                      return [self styleCondition:value:range];
+                    }];
+  } else {
+    id value =
+        _input->textView.typingAttributes[NSForegroundColorAttributeName];
+    return [self styleCondition:value:range];
+  }
 }
 
 - (BOOL)detectStyle:(NSRange)range color:(UIColor *)color {
@@ -249,7 +259,7 @@
     return [OccurenceUtils detect:NSForegroundColorAttributeName
                         withInput:_input
                           atIndex:range.location
-                    checkPrevious:YES
+                    checkPrevious:NO
                     withCondition:^BOOL(id _Nullable value, NSRange range) {
                       return [(UIColor *)value isEqualToColor:color] &&
                              [self styleCondition:value:range];
