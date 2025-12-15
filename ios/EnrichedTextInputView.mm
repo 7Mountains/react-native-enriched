@@ -1235,7 +1235,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     _recentlyActiveMentionParams = detectedMentionParams;
     _recentlyActiveMentionRange = detectedMentionRange;
   }
-  
+
+  [self emitCurrentSelectionColorIfChanged];
+
   // emit onChangeHtml event if needed
   [self tryEmittingOnChangeHtmlEvent];
 }
@@ -1263,6 +1265,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self setColor:colorText];
   } else if ([commandName isEqualToString:@"removeColor"]) {
     [self removeColor];
+    [self anyTextMayHaveBeenModified];
   } else if ([commandName isEqualToString:@"toggleInlineCode"]) {
     [self toggleRegularStyle:[InlineCodeStyle getStyleType]];
   } else if ([commandName isEqualToString:@"addLink"]) {
@@ -1370,10 +1373,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)emitCurrentSelectionColorIfChanged {
-  NSRange selRange = textView.selectedRange;
+  NSRange selectedRange = textView.selectedRange;
   UIColor *uniformColor = nil;
 
-  if (selRange.length == 0) {
+  if (selectedRange.length == 0) {
     id colorAttr = textView.typingAttributes[NSForegroundColorAttributeName];
     uniformColor = colorAttr ? (UIColor *)colorAttr : [config primaryColor];
   } else {
@@ -1383,7 +1386,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
     [textView.textStorage
         enumerateAttribute:NSForegroundColorAttributeName
-                   inRange:selRange
+                   inRange:selectedRange
                    options:0
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
@@ -1874,7 +1877,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
          .end = static_cast<int>(textView.selectedRange.location +
                                  textView.selectedRange.length),
          .text = [textAtSelection toCppString]});
-    [self emitCurrentSelectionColorIfChanged];
   }
   // manage selection changes since textViewDidChangeSelection sometimes doesn't
   // run on focus
