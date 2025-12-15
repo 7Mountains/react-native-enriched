@@ -6,6 +6,9 @@
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
+static NSString *const CheckedValueString = @"true";
+static NSString *const UnckedValueString = @"false";
+
 @implementation CheckBoxStyle {
   EnrichedTextInputView *_input;
 }
@@ -15,8 +18,34 @@
 + (StyleType)getStyleType {
   return Checkbox;
 }
+
 + (BOOL)isParagraphStyle {
   return YES;
+}
+
++ (const char *)tagName {
+  return "checklist";
+}
+
++ (const char *)subTagName {
+  return nil;
+}
+
++ (NSAttributedStringKey)attributeKey {
+  return NSParagraphStyleAttributeName;
+}
+
++ (BOOL)isSelfClosing {
+  return NO;
+}
+
++ (NSDictionary *)getParametersFromValue:(id)value {
+  NSParagraphStyle *paragraphStyle = (NSParagraphStyle *)value;
+  NSString *marker = paragraphStyle.textLists.firstObject.markerFormat;
+  return @{
+    @"checked" : marker == NSTextListMarkerCheck ? CheckedValueString
+                                                 : UnckedValueString
+  };
 }
 
 #pragma mark - Init
@@ -186,14 +215,13 @@
 
 #pragma mark - Detection
 
-- (BOOL)styleCondition:(id)value {
+- (BOOL)styleCondition:(id)value range:(NSRange)range {
   NSParagraphStyle *paragraphStyle = (NSParagraphStyle *)value;
   if (!paragraphStyle || paragraphStyle.textLists.count != 1)
     return NO;
 
   NSString *marker = paragraphStyle.textLists.firstObject.markerFormat;
-  return [marker isEqualToString:NSTextListMarkerBox] ||
-         [marker isEqualToString:NSTextListMarkerCheck];
+  return marker == NSTextListMarkerBox || marker == NSTextListMarkerCheck;
 }
 
 - (BOOL)detectStyle:(NSRange)range {
@@ -203,7 +231,7 @@
                         withInput:_input
                           inRange:range
                     withCondition:^BOOL(id value, NSRange r) {
-                      return [self styleCondition:value];
+                      return [self styleCondition:value range:r];
                     }];
   }
 
@@ -212,7 +240,7 @@
                         atIndex:range.location
                   checkPrevious:YES
                   withCondition:^BOOL(id value, NSRange r) {
-                    return [self styleCondition:value];
+                    return [self styleCondition:value range:r];
                   }];
 }
 
@@ -221,7 +249,7 @@
                    withInput:_input
                      inRange:range
                withCondition:^BOOL(id value, NSRange r) {
-                 return [self styleCondition:value];
+                 return [self styleCondition:value range:r];
                }];
 }
 
@@ -230,7 +258,7 @@
                    withInput:_input
                      inRange:range
                withCondition:^BOOL(id value, NSRange r) {
-                 return [self styleCondition:value];
+                 return [self styleCondition:value range:r];
                }];
 }
 
