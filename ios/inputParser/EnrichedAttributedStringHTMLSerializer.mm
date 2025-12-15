@@ -81,16 +81,21 @@
                           previousNode = nil;
                           return;
                         }
+                        NSDictionary *attrsAtStart =
+                            [text attributesAtIndex:paragraphRange.location
+                                     effectiveRange:nil];
 
                         id<BaseStyleProtocol> paragraphStyle =
                             [self detectParagraphStyle:text
-                                        paragraphRange:paragraphRange];
+                                        paragraphRange:paragraphRange
+                                          attrsAtStart:attrsAtStart];
 
                         HTMLElement *container = [self
                             containerForParagraphStyle:paragraphStyle
                                 previousParagraphStyle:previousParagraphStyle
                                           previousNode:previousNode
-                                              rootNode:root];
+                                              rootNode:root
+                                          attrsAtStart:attrsAtStart];
 
                         previousParagraphStyle = paragraphStyle;
                         previousNode = container;
@@ -136,9 +141,8 @@
 
 - (id<BaseStyleProtocol> _Nullable)
     detectParagraphStyle:(NSAttributedString *)text
-          paragraphRange:(NSRange)paragraphRange {
-  NSDictionary *attrsAtStart = [text attributesAtIndex:paragraphRange.location
-                                        effectiveRange:nil];
+          paragraphRange:(NSRange)paragraphRange
+            attrsAtStart:(NSDictionary *)attrsAtStart {
   id<BaseStyleProtocol> _Nullable foundParagraphStyle = nil;
   for (NSInteger i = 0; i < _paragraphStyles.count; i++) {
     id<BaseStyleProtocol> paragraphStyle = _paragraphStyles[i];
@@ -174,7 +178,6 @@
 
   if (isTheSameParagraph && hasSubTags)
     return previousNode;
-
   HTMLElement *outer = [HTMLElement new];
 
   outer.tag = [styleClass tagName];
@@ -187,7 +190,8 @@
     containerForParagraphStyle:(id<BaseStyleProtocol> _Nullable)currentStyle
         previousParagraphStyle:(id<BaseStyleProtocol> _Nullable)previousStyle
                   previousNode:(HTMLElement *)previousNode
-                      rootNode:(HTMLElement *)rootNode {
+                      rootNode:(HTMLElement *)rootNode
+                  attrsAtStart:(NSDictionary *)attrsAtStart {
   if (!currentStyle) {
     HTMLElement *outer = [HTMLElement new];
     outer.tag = "p";
@@ -204,6 +208,14 @@
 
   HTMLElement *outer = [HTMLElement new];
   outer.tag = [styleClass tagName];
+  outer.selfClosing = [styleClass isSelfClosing];
+  NSAttributedStringKey attributeKey = [styleClass attributeKey];
+  id value = attrsAtStart[attributeKey];
+  if (value &&
+      [styleClass respondsToSelector:@selector(getParametersFromValue:)]) {
+    outer.attributes = [styleClass getParametersFromValue:value];
+  }
+
   [rootNode.children addObject:outer];
   return outer;
 }

@@ -1,4 +1,5 @@
 #import "InputParser.h"
+#import "ColorExtension.h"
 #import "EnrichedAttributedStringHTMLSerializer.h"
 #import "EnrichedTextInputView.h"
 #import "StringExtension.h"

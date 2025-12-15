@@ -18,6 +18,22 @@ static NSString *const placeholder = @"\uFFFC";
   return YES;
 }
 
++ (const char *)tagName {
+  return "hr";
+}
+
++ (const char *)subTagName {
+  return nil;
+}
+
++ (BOOL)isSelfClosing {
+  return YES;
+}
+
++ (NSAttributedStringKey)attributeKey {
+  return NSAttachmentAttributeName;
+}
+
 - (instancetype)initWithInput:(id)input {
   if (self = [super init]) {
     _input = (EnrichedTextInputView *)input;
@@ -126,6 +142,7 @@ static NSString *const placeholder = @"\uFFFC";
     NSFontAttributeName : config.primaryFont,
     NSForegroundColorAttributeName : config.primaryColor,
     NSFontAttributeName : config.primaryFont,
+    ReadOnlyParagraphKey : @(YES),
   };
 }
 
@@ -137,16 +154,86 @@ static NSString *const placeholder = @"\uFFFC";
   NSString *string = textStorage.string;
 
   NSDictionary *dividerAttrs = [self prepareAttributes];
-
   _input->blockEmitting = YES;
-  BOOL needsNewlineBefore =
-      (index > 0 && [string characterAtIndex:index - 1] != '\n');
-  BOOL needsNewlineAfter =
-      (index < string.length && [string characterAtIndex:index] != '\n');
+
+  // empty paragraph
+  NSRange paragraphRange =
+      [string paragraphRangeForRange:NSMakeRange(index, 0)];
+
+  NSString *paragraphText = [string substringWithRange:paragraphRange];
+  BOOL isEmptyParagraph =
+      (paragraphRange.length <= 1 || [paragraphText isEqualToString:@"\n"]);
+
+  if (isEmptyParagraph) {
+    [textStorage beginEditing];
+
+    if (paragraphRange.length > 0) {
+      [textStorage replaceCharactersInRange:paragraphRange withString:@""];
+    }
+    NSUInteger insertPos = paragraphRange.location;
+    [TextInsertionUtils insertText:placeholder
+                                at:insertPos
+              additionalAttributes:input->defaultTypingAttributes
+                             input:input
+                     withSelection:NO];
+
+    NSRange phRange = NSMakeRange(insertPos, 1);
+    [TextInsertionUtils replaceText:placeholder
+                                 at:phRange
+               additionalAttributes:dividerAttrs
+                              input:_input
+                      withSelection:setSelection];
+
+    [TextInsertionUtils insertText:@"\n"
+                                at:insertPos + 1
+              additionalAttributes:input->defaultTypingAttributes
+                             input:input
+                     withSelection:NO];
+
+    [textStorage endEditing];
+
+    if (setSelection) {
+      _input->textView.selectedRange = NSMakeRange(insertPos + 2, 0);
+    }
+
+    _input->blockEmitting = NO;
+    return;
+  }
+
+  BOOL beforeIsNewline =
+      (index > 0 && [string characterAtIndex:index - 1] == '\n');
+
+  BOOL afterIsNewline =
+      (index < string.length && [string characterAtIndex:index] == '\n');
+
+  BOOL isPrevDivider = NO;
+  if (index > 0) {
+    id prevAttr = [textStorage attribute:NSAttachmentAttributeName
+                                 atIndex:index - 1
+                          effectiveRange:nil];
+    if ([prevAttr isKindOfClass:[DividerAttachment class]]) {
+      isPrevDivider = YES;
+    }
+  }
+
+  BOOL isNextDivider = NO;
+  if (index < string.length) {
+    id nextAttr = [textStorage attribute:NSAttachmentAttributeName
+                                 atIndex:index
+                          effectiveRange:nil];
+    if ([nextAttr isKindOfClass:[DividerAttachment class]]) {
+      isNextDivider = YES;
+    }
+  }
+
+  BOOL needsNewlineBefore = !beforeIsNewline && !isPrevDivider;
+  BOOL needsNewlineAfter = !afterIsNewline && !isNextDivider;
 
   NSInteger insertIndex = index;
   input->textView.typingAttributes = input->defaultTypingAttributes;
+
   [textStorage beginEditing];
+
   if (needsNewlineBefore) {
     [TextInsertionUtils insertText:@"\n"
                                 at:insertIndex
@@ -162,13 +249,14 @@ static NSString *const placeholder = @"\uFFFC";
                            input:input
                    withSelection:NO];
 
-  NSRange placeholderRange = NSMakeRange(insertIndex, 1);
+  NSRange phRange = NSMakeRange(insertIndex, 1);
 
   [TextInsertionUtils replaceText:placeholder
-                               at:placeholderRange
+                               at:phRange
              additionalAttributes:dividerAttrs
                             input:_input
                     withSelection:setSelection];
+
   if (needsNewlineAfter) {
     [TextInsertionUtils insertText:@"\n"
                                 at:insertIndex
@@ -177,11 +265,13 @@ static NSString *const placeholder = @"\uFFFC";
                      withSelection:NO];
     insertIndex += 1;
   }
+
   [textStorage endEditing];
 
   if (setSelection) {
     _input->textView.selectedRange = NSMakeRange(insertIndex + 1, 0);
   }
+
   _input->blockEmitting = NO;
 }
 

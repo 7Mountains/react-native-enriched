@@ -7,6 +7,8 @@
 #import "MentionParams.h"
 #import "ParameterizedStyleProtocol.h"
 
+static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
+
 @interface BoldStyle : NSObject <BaseStyleProtocol>
 @end
 
@@ -119,7 +121,8 @@
 - (ImageData *)getImageDataAt:(NSUInteger)location;
 @end
 
-@interface CheckBoxStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
+@interface CheckBoxStyle
+    : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)isCheckedAt:(NSUInteger)location;
@@ -133,7 +136,8 @@
 - (void)insertDividerAtNewLine;
 @end
 
-@interface ContentStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
+@interface ContentStyle
+    : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (void)addContentAtRange:(NSRange)range params:(ContentParams *)params;
 - (ContentParams *)getContentParams:(NSUInteger)location;
 @end
