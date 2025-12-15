@@ -53,10 +53,16 @@ static void const *kInputKey = &kInputKey;
   NSRange visibleCharRange = [self characterRangeForGlyphRange:glyphRange
                                               actualGlyphRange:NULL];
 
-  [self drawBlockQuotes:typedInput origin:origin visibleCharRange:visibleCharRange];
+  [self drawBlockQuotes:typedInput
+                 origin:origin
+       visibleCharRange:visibleCharRange];
   [self drawLists:typedInput origin:origin visibleCharRange:visibleCharRange];
-  [self drawCodeBlocks:typedInput origin:origin visibleCharRange:visibleCharRange];
-  [self drawChecklists:typedInput origin:origin visibleCharRange:visibleCharRange];
+  [self drawCodeBlocks:typedInput
+                origin:origin
+      visibleCharRange:visibleCharRange];
+  [self drawChecklists:typedInput
+                origin:origin
+      visibleCharRange:visibleCharRange];
 }
 
 - (void)drawCodeBlocks:(EnrichedTextInputView *)typedInput
@@ -200,7 +206,7 @@ static void const *kInputKey = &kInputKey;
 
 - (void)drawBlockQuotes:(EnrichedTextInputView *)typedInput
                  origin:(CGPoint)origin
-             visibleCharRange:(NSRange)visibleCharRange {
+       visibleCharRange:(NSRange)visibleCharRange {
   BlockQuoteStyle *bqStyle =
       typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
   if (bqStyle == nullptr) {
@@ -242,8 +248,8 @@ static void const *kInputKey = &kInputKey;
 }
 
 - (void)drawLists:(EnrichedTextInputView *)typedInput
-           origin:(CGPoint)origin
-       visibleCharRange:(NSRange)visibleCharRange {
+              origin:(CGPoint)origin
+    visibleCharRange:(NSRange)visibleCharRange {
   UnorderedListStyle *ulStyle =
       typedInput->stylesDict[@([UnorderedListStyle getStyleType])];
   OrderedListStyle *olStyle =
@@ -397,13 +403,14 @@ static void const *kInputKey = &kInputKey;
 
 - (void)drawChecklists:(EnrichedTextInputView *)typedInput
                 origin:(CGPoint)origin
-            visibleCharRange:(NSRange)visibleCharRange {
+      visibleCharRange:(NSRange)visibleCharRange {
   CheckBoxStyle *cStyle =
       typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
   if (cStyle == nil)
     return;
 
-  NSArray<StylePair *> *allCheckBoxes = [cStyle findAllOccurences:visibleCharRange];
+  NSArray<StylePair *> *allCheckBoxes =
+      [cStyle findAllOccurences:visibleCharRange];
   if (allCheckBoxes.count == 0)
     return;
 
