@@ -104,20 +104,21 @@
   _input->textView.typingAttributes = newTypingAttrs;
 }
 
-- (void)removeAttributesInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                     range:(NSRange)range {
-  [attributedString removeAttribute:NSBackgroundColorAttributeName range:range];
-  [attributedString addAttribute:NSForegroundColorAttributeName
-                           value:[_input->config primaryColor]
-                           range:range];
-  [attributedString addAttribute:NSUnderlineColorAttributeName
-                           value:[_input->config primaryColor]
-                           range:range];
-  [attributedString addAttribute:NSStrikethroughColorAttributeName
-                           value:[_input->config primaryColor]
-                           range:range];
-  [attributedString
+- (void)removeAttributes:(NSRange)range {
+  [_input->textView.textStorage beginEditing];
+
+  [_input->textView.textStorage removeAttribute:NSBackgroundColorAttributeName
+                                          range:range];
+  [_input->textView.textStorage addAttribute:NSForegroundColorAttributeName
+                                       value:[_input->config primaryColor]
+                                       range:range];
+  [_input->textView.textStorage addAttribute:NSUnderlineColorAttributeName
+                                       value:[_input->config primaryColor]
+                                       range:range];
+  [_input->textView.textStorage addAttribute:NSStrikethroughColorAttributeName
+                                       value:[_input->config primaryColor]
+                                       range:range];
+  [_input->textView.textStorage
       enumerateAttribute:NSFontAttributeName
                  inRange:range
                  options:0
@@ -127,17 +128,12 @@
                 if (font != nullptr) {
                   UIFont *newFont = [[[_input->config primaryFont]
                       withFontTraits:font] setSize:font.pointSize];
-                  [attributedString addAttribute:NSFontAttributeName
-                                           value:newFont
-                                           range:range];
+                  [_input->textView.textStorage addAttribute:NSFontAttributeName
+                                                       value:newFont
+                                                       range:range];
                 }
               }];
-}
 
-- (void)removeAttributes:(NSRange)range {
-  [_input->textView.textStorage beginEditing];
-  [self removeAttributesInAttributedString:_input->textView.textStorage
-                                     range:range];
   [_input->textView.textStorage endEditing];
 }
 

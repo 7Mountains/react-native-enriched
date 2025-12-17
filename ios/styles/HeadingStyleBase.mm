@@ -110,31 +110,6 @@
   }
 }
 
-- (void)removeAttributesInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                     range:(NSRange)range {
-  NSRange paragraphRange =
-      [attributedString.string paragraphRangeForRange:range];
-  [attributedString
-      enumerateAttribute:NSFontAttributeName
-                 inRange:paragraphRange
-                 options:0
-              usingBlock:^(id _Nullable value, NSRange range,
-                           BOOL *_Nonnull stop) {
-                if ([self styleCondition:value range:range]) {
-                  UIFont *newFont = [(UIFont *)value
-                      setSize:[[[self typedInput]->config primaryFontSize]
-                                  floatValue]];
-                  if ([self isHeadingBold]) {
-                    newFont = [newFont removeBold];
-                  }
-                  [attributedString addAttribute:NSFontAttributeName
-                                           value:newFont
-                                           range:range];
-                }
-              }];
-}
-
 // we need to remove the style from the whole paragraph
 - (void)removeAttributes:(NSRange)range {
   NSRange paragraphRange = [[self typedInput]->textView.textStorage.string
@@ -147,7 +122,7 @@
                  options:0
               usingBlock:^(id _Nullable value, NSRange range,
                            BOOL *_Nonnull stop) {
-                if ([self styleCondition:value range:range]) {
+                if ([self styleCondition:value:range]) {
                   UIFont *newFont = [(UIFont *)value
                       setSize:[[[self typedInput]->config primaryFontSize]
                                   floatValue]];

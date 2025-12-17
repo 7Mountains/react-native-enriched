@@ -124,41 +124,6 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   // no-op for mentions
 }
 
-- (void)removeAttributesInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                     range:(NSRange)range {
-  NSArray<StylePair *> *mentions = [self findAllOccurences:range];
-
-  for (StylePair *pair in mentions) {
-    NSRange fullRange =
-        [self getFullMentionRangeInAttributedString:attributedString
-                                            atIndex:[pair.rangeValue rangeValue]
-                                                        .location];
-
-    [attributedString removeAttribute:MentionAttributeName range:fullRange];
-
-    // restore normal coloring
-    UIColor *primary = [_input->config primaryColor];
-    [attributedString addAttribute:NSForegroundColorAttributeName
-                             value:primary
-                             range:fullRange];
-    [attributedString addAttribute:NSUnderlineColorAttributeName
-                             value:primary
-                             range:fullRange];
-    [attributedString addAttribute:NSStrikethroughColorAttributeName
-                             value:primary
-                             range:fullRange];
-    [attributedString removeAttribute:NSBackgroundColorAttributeName
-                                range:fullRange];
-
-    MentionStyleProps *props = [self stylePropsWithParams:pair.styleValue];
-    if (props.decorationLine == DecorationUnderline) {
-      [attributedString removeAttribute:NSUnderlineStyleAttributeName
-                                  range:fullRange];
-    }
-  }
-}
-
 // we have to make sure all mentions get removed properly
 - (void)removeAttributes:(NSRange)range {
   BOOL someMentionHadUnderline = NO;

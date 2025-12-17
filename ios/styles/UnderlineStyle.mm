@@ -68,15 +68,9 @@
   _input->textView.typingAttributes = newTypingAttrs;
 }
 
-- (void)removeAttributesInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                     range:(NSRange)range {
-  [attributedString removeAttribute:NSUnderlineStyleAttributeName range:range];
-}
-
 - (void)removeAttributes:(NSRange)range {
-  [self removeAttributesInAttributedString:_input->textView.textStorage
-                                     range:range];
+  [_input->textView.textStorage removeAttribute:NSUnderlineStyleAttributeName
+                                          range:range];
 }
 
 - (void)removeTypingAttributes {

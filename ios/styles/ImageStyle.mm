@@ -98,17 +98,11 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   // no-op for image
 }
 
-- (void)removeAttributesInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                     range:(NSRange)range {
-  [attributedString removeAttribute:ImageAttributeName range:range];
-  [attributedString removeAttribute:NSAttachmentAttributeName range:range];
-}
-
 - (void)removeAttributes:(NSRange)range {
   [_input->textView.textStorage beginEditing];
-  [self removeAttributesInAttributedString:_input->textView.textStorage
-                                     range:range];
+  [_input->textView.textStorage removeAttribute:ImageAttributeName range:range];
+  [_input->textView.textStorage removeAttribute:NSAttachmentAttributeName
+                                          range:range];
   [_input->textView.textStorage endEditing];
 }
 

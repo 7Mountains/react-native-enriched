@@ -151,36 +151,29 @@
   [self addAttributes:_input->textView.selectedRange];
 }
 
-- (void)removeAttributesInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                     range:(NSRange)range {
+- (void)removeAttributes:(NSRange)range {
   NSArray *paragraphs =
-      [ParagraphsUtils getNonNewlineRangesInAttributedString:attributedString
-                                                       range:range];
+      [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
+                                               range:range];
 
   for (NSValue *value in paragraphs) {
     NSRange pRange = [value rangeValue];
-    [attributedString
+    [_input->textView.textStorage
         enumerateAttribute:NSParagraphStyleAttributeName
                    inRange:pRange
                    options:0
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      value ? [(NSParagraphStyle *)value mutableCopy]
-                            : [NSMutableParagraphStyle new];
+                      [(NSParagraphStyle *)value mutableCopy];
                   pStyle.headIndent = 0;
                   pStyle.firstLineHeadIndent = 0;
-                  [attributedString addAttribute:NSParagraphStyleAttributeName
-                                           value:pStyle
-                                           range:range];
+                  [_input->textView.textStorage
+                      addAttribute:NSParagraphStyleAttributeName
+                             value:pStyle
+                             range:range];
                 }];
   }
-}
-
-- (void)removeAttributes:(NSRange)range {
-  [self removeAttributesInAttributedString:_input->textView.textStorage
-                                     range:range];
 
   // also remove typing attributes
   NSMutableDictionary *typingAttrs =

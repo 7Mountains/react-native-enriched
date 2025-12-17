@@ -163,38 +163,32 @@
   [self addAttributes:_input->textView.selectedRange];
 }
 
-- (void)removeAttributesInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                     range:(NSRange)range {
-  NSArray *paragraphs = [ParagraphsUtils
-      getSeparateParagraphsRangesInAttributedString:attributedString
-                                              range:range];
+- (void)removeAttributes:(NSRange)range {
+  NSArray *paragraphs =
+      [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
+                                               range:range];
+
+  [_input->textView.textStorage beginEditing];
 
   for (NSValue *value in paragraphs) {
     NSRange range = [value rangeValue];
-    [attributedString enumerateAttribute:NSParagraphStyleAttributeName
-                                 inRange:range
-                                 options:0
-                              usingBlock:^(id _Nullable value, NSRange range,
-                                           BOOL *_Nonnull stop) {
-                                NSMutableParagraphStyle *pStyle =
-                                    [(NSParagraphStyle *)value mutableCopy];
-                                pStyle.textLists = @[];
-                                pStyle.headIndent = 0;
-                                pStyle.firstLineHeadIndent = 0;
-                                [attributedString
-                                    addAttribute:NSParagraphStyleAttributeName
-                                           value:pStyle
-                                           range:range];
-                              }];
+    [_input->textView.textStorage
+        enumerateAttribute:NSParagraphStyleAttributeName
+                   inRange:range
+                   options:0
+                usingBlock:^(id _Nullable value, NSRange range,
+                             BOOL *_Nonnull stop) {
+                  NSMutableParagraphStyle *pStyle =
+                      [(NSParagraphStyle *)value mutableCopy];
+                  pStyle.textLists = @[];
+                  pStyle.headIndent = 0;
+                  pStyle.firstLineHeadIndent = 0;
+                  [_input->textView.textStorage
+                      addAttribute:NSParagraphStyleAttributeName
+                             value:pStyle
+                             range:range];
+                }];
   }
-}
-
-- (void)removeAttributes:(NSRange)range {
-  [_input->textView.textStorage beginEditing];
-
-  [self removeAttributesInAttributedString:_input->textView.textStorage
-                                     range:range];
 
   [_input->textView.textStorage endEditing];
 

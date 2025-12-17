@@ -108,15 +108,31 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   // no-op for links
 }
 
-- (void)removeAttributesInAttributedString:(NSMutableAttributedString *)attr
-                                     range:(NSRange)range {
-}
-
-// we have to make sure all links in the range get fully removed here
 - (void)removeAttributes:(NSRange)range {
+  NSArray<StylePair *> *links = [self findAllOccurences:range];
   [_input->textView.textStorage beginEditing];
-  [self removeAttributesInAttributedString:_input->textView.textStorage
-                                     range:range];
+  for (StylePair *pair in links) {
+    NSRange linkRange =
+        [self getFullLinkRangeAt:[pair.rangeValue rangeValue].location];
+    [_input->textView.textStorage removeAttribute:ManualLinkAttributeName
+                                            range:linkRange];
+    [_input->textView.textStorage removeAttribute:AutomaticLinkAttributeName
+                                            range:linkRange];
+    [_input->textView.textStorage addAttribute:NSForegroundColorAttributeName
+                                         value:[_input->config primaryColor]
+                                         range:linkRange];
+    [_input->textView.textStorage addAttribute:NSUnderlineColorAttributeName
+                                         value:[_input->config primaryColor]
+                                         range:linkRange];
+    [_input->textView.textStorage addAttribute:NSStrikethroughColorAttributeName
+                                         value:[_input->config primaryColor]
+                                         range:linkRange];
+    if ([_input->config linkDecorationLine] == DecorationUnderline) {
+      [_input->textView.textStorage
+          removeAttribute:NSUnderlineStyleAttributeName
+                    range:linkRange];
+    }
+  }
   [_input->textView.textStorage endEditing];
 
   // adjust typing attributes as well
