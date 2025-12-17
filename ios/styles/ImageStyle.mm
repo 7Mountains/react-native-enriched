@@ -195,13 +195,13 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   if (range.length == 0) {
     [TextInsertionUtils insertText:placeholderChar
                                 at:range.location
-              additionalAttributes:attrs
+              additionalAttributes:attributes
                              input:_input
                      withSelection:withSelection];
   } else {
     [TextInsertionUtils replaceText:placeholderChar
                                  at:range
-               additionalAttributes:attrs
+               additionalAttributes:attributes
                               input:_input
                       withSelection:withSelection];
   }
