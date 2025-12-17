@@ -363,6 +363,7 @@ static NSString *const placeholder = @"\uFFFC";
   InputConfig *config = _input->config;
 
   return @{
+    NSParagraphStyleAttributeName : [NSParagraphStyle new],
     NSAttachmentAttributeName : [self prepareAttachment:params],
     NSFontAttributeName : config.primaryFont,
     NSForegroundColorAttributeName : config.primaryColor

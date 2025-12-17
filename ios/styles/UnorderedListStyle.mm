@@ -119,7 +119,8 @@
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
+                      value == nil ? [NSMutableParagraphStyle new]
+                                   : [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[ bullet ];
                   pStyle.headIndent = [self getHeadIndent];
                   pStyle.firstLineHeadIndent = [self getHeadIndent];

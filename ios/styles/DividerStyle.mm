@@ -145,7 +145,10 @@ static NSString *const placeholder = @"\uFFFC";
 - (NSDictionary *)prepareAttributes {
   InputConfig *config = _input->config;
 
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+
   return @{
+    NSParagraphStyleAttributeName : pStyle,
     NSAttachmentAttributeName : [self prepareAttachment],
     NSFontAttributeName : config.primaryFont,
     NSForegroundColorAttributeName : config.primaryColor,

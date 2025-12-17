@@ -398,7 +398,8 @@ static NSString *const UnckedValueString = @"false";
                    options:0
                 usingBlock:^(id value, NSRange sub, BOOL *stop) {
                   NSMutableParagraphStyle *paragraphStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
+                      value == nil ? [NSMutableParagraphStyle new]
+                                   : [(NSParagraphStyle *)value mutableCopy];
                   paragraphStyle.textLists = @[ list ];
                   paragraphStyle.minimumLineHeight = checBoxHeight;
                   paragraphStyle.maximumLineHeight = checBoxHeight;

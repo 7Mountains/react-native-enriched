@@ -116,7 +116,8 @@ static NSString *const CodeBlockMarker = @"codeblock";
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
+                      value == nil ? [NSMutableParagraphStyle new]
+                                   : [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[ codeBlockList ];
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
