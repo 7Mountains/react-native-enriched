@@ -57,56 +57,22 @@
 
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
-                                  range:(NSRange)range {
-  NSTextList *bullet =
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  NSTextList *numberBullet =
       [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDisc options:0];
-  NSArray *paragraphs = [ParagraphsUtils
-      getSeparateParagraphsRangesInAttributedString:attributedString
-                                              range:range];
-  // if we fill empty lines with zero width spaces, we need to offset later
-  // ranges
-  NSInteger offset = 0;
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
 
-  for (NSValue *value in paragraphs) {
-    // take previous offsets into consideration
-    NSRange fixedRange = NSMakeRange([value rangeValue].location + offset,
-                                     [value rangeValue].length);
-
-    // length 0 with first line, length 1 and newline with some empty lines in
-    // the middle
-    if (fixedRange.length == 0 ||
-        (fixedRange.length == 1 &&
-         [[NSCharacterSet newlineCharacterSet]
-             characterIsMember:[attributedString.string
-                                   characterAtIndex:fixedRange.location]])) {
-      [TextInsertionUtils insertTextInAttributedString:@"\u200B"
-                                                    at:fixedRange.location
-                                  additionalAttributes:nullptr
-                                      attributedString:attributedString];
-      fixedRange = NSMakeRange(fixedRange.location, fixedRange.length + 1);
-      offset += 1;
-    }
-
-    [attributedString
-        enumerateAttribute:NSParagraphStyleAttributeName
-                   inRange:fixedRange
-                   options:0
-                usingBlock:^(id _Nullable value, NSRange range,
-                             BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
-                      value ? [(NSParagraphStyle *)value mutableCopy]
-                            : [NSMutableParagraphStyle new];
-                  pStyle.textLists = @[ bullet ];
-                  pStyle.headIndent = [self getHeadIndent];
-                  pStyle.firstLineHeadIndent = [self getHeadIndent];
-                  NSMutableDictionary *typingAttrs =
-                      [_input->textView.typingAttributes mutableCopy];
-                  typingAttrs[NSParagraphStyleAttributeName] = pStyle;
-                  [attributedString addAttribute:NSParagraphStyleAttributeName
-                                           value:pStyle
-                                           range:range];
-                }];
-  }
+  pStyle.textLists = @[ numberBullet ];
+  pStyle.headIndent = [self getHeadIndent];
+  pStyle.firstLineHeadIndent = [self getHeadIndent];
+  NSMutableDictionary *typingAttrs =
+      [_input->defaultTypingAttributes mutableCopy];
+  typingAttrs[NSParagraphStyleAttributeName] = pStyle;
+  [attributedString addAttribute:NSParagraphStyleAttributeName
+                           value:pStyle
+                           range:range];
 }
 
 // we assume correct paragraph range is already given
@@ -310,21 +276,14 @@
          paragraph.textLists.firstObject.markerFormat == NSTextListMarkerDisc;
 }
 
-- (BOOL)detectStyleInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                range:(NSRange)range {
-  return [OccurenceUtils detect:NSParagraphStyleAttributeName
-                       inString:attributedString
-                        inRange:range
-                  withCondition:^BOOL(id _Nullable value, NSRange range) {
-                    return [self styleCondition:value:range];
-                  }];
-}
-
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    return [self detectStyleInAttributedString:_input->textView.textStorage
-                                         range:range];
+    return [OccurenceUtils detect:NSParagraphStyleAttributeName
+                        withInput:_input
+                          inRange:range
+                    withCondition:^BOOL(id _Nullable value, NSRange range) {
+                      return [self styleCondition:value range:range];
+                    }];
   } else {
     return [OccurenceUtils detect:NSParagraphStyleAttributeName
                         withInput:_input
@@ -351,17 +310,6 @@
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];
-               }];
-}
-
-- (NSArray<StylePair *> *_Nullable)
-    findAllOccurencesInAttributedString:(NSAttributedString *)attributedString
-                                  range:(NSRange)range {
-  return [OccurenceUtils all:NSParagraphStyleAttributeName
-                    inString:attributedString
-                     inRange:range
-               withCondition:^BOOL(id _Nullable value, NSRange range) {
-                 return [self styleCondition:value:range];
                }];
 }
 

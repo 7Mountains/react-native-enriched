@@ -41,24 +41,32 @@ static NSString *const placeholder = @"\uFFFC";
   return self;
 }
 
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (range.length == 0)
+    return;
+
+  NSDictionary *attrs = [self prepareAttributes];
+
+  NSString *ph = placeholder;
+  NSAttributedString *replacement =
+      [[NSAttributedString alloc] initWithString:ph attributes:attrs];
+
+  [attributedString replaceCharactersInRange:range
+                        withAttributedString:replacement];
+}
+
 #pragma mark - Style Application
 
 - (void)applyStyle:(NSRange)range {
   // no-op for dividers
 }
 
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
-  NSTextStorage *textStorage = _input->textView.textStorage;
-  NSDictionary *attrs = [self prepareAttributes];
-  _input->blockEmitting = YES;
-  [textStorage beginEditing];
-  [TextInsertionUtils replaceText:placeholder
-                               at:range
-             additionalAttributes:attrs
-                            input:_input
-                    withSelection:NO];
-  [textStorage endEditing];
-  _input->blockEmitting = NO;
+- (void)addAttributes:(NSRange)range {
+  // no-op for dividers
 }
 
 - (void)addTypingAttributes {
@@ -146,133 +154,91 @@ static NSString *const placeholder = @"\uFFFC";
   };
 }
 
-#pragma mark - Divider Insertion
+- (BOOL)isParagraphEmpty:(NSRange)paragraphRange
+             textStorage:(NSTextStorage *)textStorage {
+  if (paragraphRange.length == 0)
+    return YES;
 
+  NSString *text = [[textStorage string] substringWithRange:paragraphRange];
+
+  // Trim whitespace & newlines
+  NSString *trimmed = [text
+      stringByTrimmingCharactersInSet:NSCharacterSet
+                                          .whitespaceAndNewlineCharacterSet];
+
+  if (trimmed.length > 0)
+    return NO;
+
+  // Check attachments inside paragraph
+  __block BOOL hasAttachment = NO;
+  [textStorage enumerateAttribute:NSAttachmentAttributeName
+                          inRange:paragraphRange
+                          options:0
+                       usingBlock:^(id value, NSRange range, BOOL *stop) {
+                         if (value) {
+                           hasAttachment = YES;
+                           *stop = YES;
+                         }
+                       }];
+
+  return !hasAttachment;
+}
+
+#pragma mark - Divider Insertion
 - (void)insertDividerAt:(NSUInteger)index setSelection:(BOOL)setSelection {
+
   EnrichedTextInputView *input = _input;
-  NSTextStorage *textStorage = input->textView.textStorage;
+  UITextView *textView = input->textView;
+  NSTextStorage *textStorage = textView.textStorage;
   NSString *string = textStorage.string;
 
   NSDictionary *dividerAttrs = [self prepareAttributes];
-  _input->blockEmitting = YES;
+  input->blockEmitting = YES;
 
-  // empty paragraph
   NSRange paragraphRange =
       [string paragraphRangeForRange:NSMakeRange(index, 0)];
 
-  NSString *paragraphText = [string substringWithRange:paragraphRange];
-  BOOL isEmptyParagraph =
-      (paragraphRange.length <= 1 || [paragraphText isEqualToString:@"\n"]);
-
-  if (isEmptyParagraph) {
-    [textStorage beginEditing];
-
-    if (paragraphRange.length > 0) {
-      [textStorage replaceCharactersInRange:paragraphRange withString:@""];
-    }
-    NSUInteger insertPos = paragraphRange.location;
-    [TextInsertionUtils insertText:placeholder
-                                at:insertPos
-              additionalAttributes:input->defaultTypingAttributes
-                             input:input
-                     withSelection:NO];
-
-    NSRange phRange = NSMakeRange(insertPos, 1);
-    [TextInsertionUtils replaceText:placeholder
-                                 at:phRange
-               additionalAttributes:dividerAttrs
-                              input:_input
-                      withSelection:setSelection];
-
-    [TextInsertionUtils insertText:@"\n"
-                                at:insertPos + 1
-              additionalAttributes:input->defaultTypingAttributes
-                             input:input
-                     withSelection:NO];
-
-    [textStorage endEditing];
-
-    if (setSelection) {
-      _input->textView.selectedRange = NSMakeRange(insertPos + 2, 0);
-    }
-
-    _input->blockEmitting = NO;
+  if (![self isParagraphEmpty:paragraphRange textStorage:textStorage]) {
+    input->blockEmitting = NO;
     return;
   }
 
-  BOOL beforeIsNewline =
-      (index > 0 && [string characterAtIndex:index - 1] == '\n');
-
-  BOOL afterIsNewline =
-      (index < string.length && [string characterAtIndex:index] == '\n');
-
-  BOOL isPrevDivider = NO;
-  if (index > 0) {
-    id prevAttr = [textStorage attribute:NSAttachmentAttributeName
-                                 atIndex:index - 1
-                          effectiveRange:nil];
-    if ([prevAttr isKindOfClass:[DividerAttachment class]]) {
-      isPrevDivider = YES;
-    }
-  }
-
-  BOOL isNextDivider = NO;
-  if (index < string.length) {
-    id nextAttr = [textStorage attribute:NSAttachmentAttributeName
-                                 atIndex:index
-                          effectiveRange:nil];
-    if ([nextAttr isKindOfClass:[DividerAttachment class]]) {
-      isNextDivider = YES;
-    }
-  }
-
-  BOOL needsNewlineBefore = !beforeIsNewline && !isPrevDivider;
-  BOOL needsNewlineAfter = !afterIsNewline && !isNextDivider;
-
-  NSInteger insertIndex = index;
-  input->textView.typingAttributes = input->defaultTypingAttributes;
-
   [textStorage beginEditing];
 
-  if (needsNewlineBefore) {
-    [TextInsertionUtils insertText:@"\n"
-                                at:insertIndex
-              additionalAttributes:input->defaultTypingAttributes
-                             input:input
-                     withSelection:NO];
-    insertIndex += 1;
+  // Remove paragraph contents (only whitespace/newlines)
+  if (paragraphRange.length > 0) {
+    [textStorage replaceCharactersInRange:paragraphRange withString:@""];
   }
 
+  NSUInteger dividerIndex = paragraphRange.location;
+
+  // Insert divider placeholder
   [TextInsertionUtils insertText:placeholder
-                              at:insertIndex
+                              at:dividerIndex
             additionalAttributes:input->defaultTypingAttributes
                            input:input
                    withSelection:NO];
 
-  NSRange phRange = NSMakeRange(insertIndex, 1);
-
+  NSRange dividerRange = NSMakeRange(dividerIndex, 1);
   [TextInsertionUtils replaceText:placeholder
-                               at:phRange
+                               at:dividerRange
              additionalAttributes:dividerAttrs
-                            input:_input
-                    withSelection:setSelection];
+                            input:input
+                    withSelection:NO];
 
-  if (needsNewlineAfter) {
-    [TextInsertionUtils insertText:@"\n"
-                                at:insertIndex
-              additionalAttributes:input->defaultTypingAttributes
-                             input:input
-                     withSelection:NO];
-    insertIndex += 1;
-  }
+  [TextInsertionUtils insertText:@"\n"
+                              at:dividerIndex + 1
+            additionalAttributes:input->defaultTypingAttributes
+                           input:input
+                   withSelection:NO];
 
   [textStorage endEditing];
 
   if (setSelection) {
-    _input->textView.selectedRange = NSMakeRange(insertIndex + 1, 0);
+    textView.selectedRange = NSMakeRange(dividerIndex + 2, 0);
   }
 
-  _input->blockEmitting = NO;
+  input->blockEmitting = NO;
 }
 
 - (void)insertDividerAtline:(NSRange *)at withSelection:(BOOL)withSelection {

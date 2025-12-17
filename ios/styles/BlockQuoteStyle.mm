@@ -59,52 +59,18 @@
 
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
-                                  range:(NSRange)range {
-  NSArray *paragraphs = [ParagraphsUtils
-      getSeparateParagraphsRangesInAttributedString:attributedString
-                                              range:range];
-  // if we fill empty lines with zero width spaces, we need to offset later
-  // ranges
-  NSInteger offset = 0;
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)_ {
 
-  for (NSValue *value in paragraphs) {
-    NSRange pRange = NSMakeRange([value rangeValue].location + offset,
-                                 [value rangeValue].length);
-
-    // length 0 with first line, length 1 and newline with some empty lines in
-    // the middle
-    if (pRange.length == 0 ||
-        (pRange.length == 1 &&
-         [[NSCharacterSet newlineCharacterSet]
-             characterIsMember:[attributedString.string
-                                   characterAtIndex:pRange.location]])) {
-      [TextInsertionUtils insertTextInAttributedString:@"\u200B"
-                                                    at:pRange.location
-                                  additionalAttributes:nullptr
-                                      attributedString:attributedString];
-      pRange = NSMakeRange(pRange.location, pRange.length + 1);
-      offset += 1;
-    }
-
-    [attributedString
-        enumerateAttribute:NSParagraphStyleAttributeName
-                   inRange:pRange
-                   options:0
-                usingBlock:^(id _Nullable value, NSRange range,
-                             BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
-                      value ? [(NSParagraphStyle *)value mutableCopy]
-                            : [NSMutableParagraphStyle new];
-                  pStyle.headIndent = [self getHeadIndent];
-                  pStyle.firstLineHeadIndent = [self getHeadIndent];
-                  NSMutableDictionary *typingAttrs =
-                      [_input->textView.typingAttributes mutableCopy];
-                  typingAttrs[NSParagraphStyleAttributeName] = pStyle;
-                  [attributedString addAttribute:NSParagraphStyleAttributeName
-                                           value:pStyle
-                                           range:range];
-                }];
-  }
+  NSMutableDictionary *attributes =
+      [_input->defaultTypingAttributes mutableCopy];
+  attributes[NSForegroundColorAttributeName] = _input->config.blockquoteColor;
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  pStyle.headIndent = [self getHeadIndent];
+  pStyle.firstLineHeadIndent = [self getHeadIndent];
+  attributes[NSParagraphStyleAttributeName] = pStyle;
+  [attributedString addAttributes:attributes range:range];
 }
 
 - (void)addAttributes:(NSRange)range {
@@ -263,21 +229,14 @@
          pStyle.textLists.count == 0;
 }
 
-- (BOOL)detectStyleInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                range:(NSRange)range {
-  return [OccurenceUtils detect:NSParagraphStyleAttributeName
-                       inString:attributedString
-                        inRange:range
-                  withCondition:^BOOL(id _Nullable value, NSRange range) {
-                    return [self styleCondition:value:range];
-                  }];
-}
-
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    return [self detectStyleInAttributedString:_input->textView.textStorage
-                                         range:range];
+    return [OccurenceUtils detect:NSParagraphStyleAttributeName
+                        withInput:_input
+                          inRange:range
+                    withCondition:^BOOL(id _Nullable value, NSRange range) {
+                      return [self styleCondition:value range:range];
+                    }];
   } else {
     return [OccurenceUtils detect:NSParagraphStyleAttributeName
                         withInput:_input
@@ -304,17 +263,6 @@
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];
-               }];
-}
-
-- (NSArray<StylePair *> *_Nullable)
-    findAllOccurencesInAttributedString:(NSAttributedString *)attributedString
-                                  range:(NSRange)range {
-  return [OccurenceUtils all:NSParagraphStyleAttributeName
-                    inString:attributedString
-                     inRange:range
-               withCondition:^BOOL(id _Nullable value, NSRange range) {
-                 return [self styleCondition:value:range];
                }];
 }
 

@@ -27,7 +27,7 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   return "img";
 }
 
-+ (NSString *)subTagName {
++ (const char *)subTagName {
   return nil;
 }
 
@@ -63,8 +63,35 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
 
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
-                                  range:(NSRange)range {
-  // no-op for image
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (attributes.count == 0) {
+    return;
+  }
+
+  NSString *src = attributes[@"src"] ?: @"";
+  NSString *width = attributes[@"width"] ?: @"";
+  NSString *height = attributes[@"height"] ?: @"";
+
+  ImageData *imageData = [[ImageData alloc] init];
+  imageData.uri = src;
+  imageData.width = [width floatValue];
+  imageData.height = [height floatValue];
+
+  ImageAttachment *attachment =
+      [[ImageAttachment alloc] initWithImageData:imageData];
+  attachment.delegate = _input;
+
+  NSDictionary *attrs =
+      @{NSAttachmentAttributeName : attachment, ImageAttributeName : imageData};
+
+  NSString *placeholderChar = @"\uFFFC";
+  NSAttributedString *replacement =
+      [[NSAttributedString alloc] initWithString:placeholderChar
+                                      attributes:attrs];
+  [attributedString replaceCharactersInRange:range
+                        withAttributedString:replacement];
 }
 
 - (void)addTypingAttributes {
@@ -106,21 +133,14 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
                }];
 }
 
-- (BOOL)detectStyleInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                range:(NSRange)range {
-  return [OccurenceUtils detect:ImageAttributeName
-                       inString:attributedString
-                        inRange:range
-                  withCondition:^BOOL(id _Nullable value, NSRange range) {
-                    return [self styleCondition:value:range];
-                  }];
-}
-
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    return [self detectStyleInAttributedString:_input->textView.textStorage
-                                         range:range];
+    return [OccurenceUtils detect:ImageAttributeName
+                        withInput:_input
+                          inRange:range
+                    withCondition:^BOOL(id _Nullable value, NSRange range) {
+                      return [self styleCondition:value range:range];
+                    }];
   } else {
     return [OccurenceUtils detect:ImageAttributeName
                         withInput:_input
@@ -138,17 +158,6 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];
-               }];
-}
-
-- (NSArray<StylePair *> *_Nullable)
-    findAllOccurencesInAttributedString:(NSAttributedString *)attributedString
-                                  range:(NSRange)range {
-  return [OccurenceUtils all:ImageAttributeName
-                    inString:attributedString
-                     inRange:range
-               withCondition:^BOOL(id _Nullable value, NSRange range) {
-                 return [self styleCondition:value:range];
                }];
 }
 

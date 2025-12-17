@@ -891,11 +891,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       // no emitting during styles reload
       blockEmitting = YES;
 
-      // make sure everything is sound in the html
-      NSString *initiallyProcessedHtml =
-          [parser initiallyProcessHtml:currentHtml];
-      if (initiallyProcessedHtml != nullptr) {
-        [parser replaceWholeFromHtml:initiallyProcessedHtml
+      if (currentHtml != nullptr) {
+        [parser replaceWholeFromHtml:currentHtml
             notifyAnyTextMayHaveBeenModified:!isFirstMount];
       }
 
@@ -929,14 +926,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     NSString *newDefaultValue =
         [NSString fromCppString:newViewProps.defaultValue];
 
-    NSString *initiallyProcessedHtml =
-        [parser initiallyProcessHtml:newDefaultValue];
-    if (initiallyProcessedHtml == nullptr) {
+    if (newDefaultValue == nullptr) {
       // just plain text
       textView.text = newDefaultValue;
     } else {
       // we've got some seemingly proper html
-      [parser replaceWholeFromHtml:initiallyProcessedHtml
+      [parser replaceWholeFromHtml:newDefaultValue
           notifyAnyTextMayHaveBeenModified:!isFirstMount];
     }
   }
@@ -1385,14 +1380,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)setValue:(NSString *)value {
-  NSString *initiallyProcessedHtml = [parser initiallyProcessHtml:value];
-  if (initiallyProcessedHtml == nullptr) {
+  if (value == nullptr) {
     // just plain text
     textView.text = value;
   } else {
     // we've got some seemingly proper html
-    [parser replaceWholeFromHtml:initiallyProcessedHtml
-        notifyAnyTextMayHaveBeenModified:YES];
+    [parser replaceWholeFromHtml:value notifyAnyTextMayHaveBeenModified:YES];
   }
 
   // set recentlyChangedRange and check for changes
@@ -1901,13 +1894,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)didMoveToWindow {
   [super didMoveToWindow];
-
-  if (self.window && !_didRunInitialMount) {
-    _didRunInitialMount = YES;
-    [self layoutIfNeeded];
-    // Ideally we should remove this to match RN's uncontrolled inputs behaviour
-    [self anyTextMayHaveBeenModified];
-  }
+  [self layoutIfNeeded];
 }
 
 // MARK: - UITextView delegate methods
@@ -1946,27 +1933,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   NSTextStorage *storage = textView.textStorage;
   NSUInteger length = storage.length;
 
-  if (length == 0) {
+  if (length == 0)
     return NO;
-  }
-  if (location >= length) {
-    location = length - 1;
-  }
-
-  id currentValue = [storage attribute:ReadOnlyParagraphKey
-                               atIndex:location
-                        effectiveRange:nil];
-  if (currentValue) {
-    return YES;
-  }
 
   if (location > 0) {
-    id previousValue = [storage attribute:ReadOnlyParagraphKey
-                                  atIndex:location - 1
-                           effectiveRange:nil];
-    if (previousValue) {
+    id left = [storage attribute:ReadOnlyParagraphKey
+                         atIndex:location - 1
+                  effectiveRange:nil];
+    if (left)
       return YES;
-    }
+  }
+
+  if (location < length) {
+    id right = [storage attribute:ReadOnlyParagraphKey
+                          atIndex:location
+                   effectiveRange:nil];
+    if (right)
+      return YES;
   }
 
   return NO;

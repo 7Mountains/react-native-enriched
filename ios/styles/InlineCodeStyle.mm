@@ -21,7 +21,7 @@
   return "code";
 }
 
-+ (NSString *)subTagName {
++ (const char *)subTagName {
   return nil;
 }
 
@@ -50,35 +50,24 @@
 
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
-                                  range:(NSRange)currentRange {
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
   [attributedString addAttribute:NSBackgroundColorAttributeName
                            value:[[_input->config inlineCodeBgColor]
                                      colorWithAlphaIfNotTransparent:0.4]
-                           range:currentRange];
+                           range:range];
   [attributedString addAttribute:NSForegroundColorAttributeName
                            value:[_input->config inlineCodeFgColor]
-                           range:currentRange];
+                           range:range];
   [attributedString addAttribute:NSUnderlineColorAttributeName
                            value:[_input->config inlineCodeFgColor]
-                           range:currentRange];
+                           range:range];
   [attributedString addAttribute:NSStrikethroughColorAttributeName
                            value:[_input->config inlineCodeFgColor]
-                           range:currentRange];
-  [attributedString
-      enumerateAttribute:NSFontAttributeName
-                 inRange:currentRange
-                 options:0
-              usingBlock:^(id _Nullable value, NSRange range,
-                           BOOL *_Nonnull stop) {
-                UIFont *font = (UIFont *)value;
-                if (font != nullptr) {
-                  UIFont *newFont = [[[_input->config monospacedFont]
-                      withFontTraits:font] setSize:font.pointSize];
-                  [attributedString addAttribute:NSFontAttributeName
-                                           value:newFont
-                                           range:range];
-                }
-              }];
+                           range:range];
+  UIFont *font = [_input->config monospacedFont];
+  [attributedString addAttribute:NSFontAttributeName value:font range:range];
 }
 
 - (void)addAttributes:(NSRange)range {
@@ -90,7 +79,8 @@
     NSRange currentRange = [value rangeValue];
     [_input->textView.textStorage beginEditing];
     [self addAttributesInAttributedString:_input->textView.textStorage
-                                    range:currentRange];
+                                    range:currentRange
+                               attributes:nullptr];
     [_input->textView.textStorage endEditing];
   }
 }
@@ -196,36 +186,28 @@
   return bgColor != nullptr && mStyle != nullptr && ![mStyle detectStyle:range];
 }
 
-- (BOOL)detectStyleInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                range:(NSRange)range {
-  // detect only in non-newline characters
-  NSArray *nonNewlineRanges =
-      [ParagraphsUtils getNonNewlineRangesIn:_input->textView range:range];
-  if (nonNewlineRanges.count == 0) {
-    return NO;
-  }
-
-  BOOL detected = YES;
-  for (NSValue *value in nonNewlineRanges) {
-    NSRange currentRange = [value rangeValue];
-    BOOL currentDetected =
-        [OccurenceUtils detect:NSBackgroundColorAttributeName
-                      inString:attributedString
-                       inRange:currentRange
-                 withCondition:^BOOL(id _Nullable value, NSRange range) {
-                   return [self styleCondition:value:range];
-                 }];
-    detected = detected && currentDetected;
-  }
-
-  return detected;
-}
-
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    return [self detectStyleInAttributedString:_input->textView.textStorage
-                                         range:range];
+    NSArray *nonNewlineRanges =
+        [ParagraphsUtils getNonNewlineRangesIn:_input->textView range:range];
+    if (nonNewlineRanges.count == 0) {
+      return NO;
+    }
+
+    BOOL detected = YES;
+    for (NSValue *value in nonNewlineRanges) {
+      NSRange currentRange = [value rangeValue];
+      BOOL currentDetected =
+          [OccurenceUtils detect:NSBackgroundColorAttributeName
+                       withInput:_input
+                         inRange:currentRange
+                   withCondition:^BOOL(id _Nullable value, NSRange range) {
+                     return [self styleCondition:value range:range];
+                   }];
+      detected = detected && currentDetected;
+    }
+
+    return detected;
   } else {
     return [OccurenceUtils detect:NSBackgroundColorAttributeName
                         withInput:_input
@@ -252,17 +234,6 @@
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];
-               }];
-}
-
-- (NSArray<StylePair *> *_Nullable)
-    findAllOccurencesInAttributedString:(NSAttributedString *)attributedString
-                                  range:(NSRange)range {
-  return [OccurenceUtils all:NSBackgroundColorAttributeName
-                    inString:attributedString
-                     inRange:range
-               withCondition:^BOOL(id _Nullable value, NSRange range) {
-                 return [self styleCondition:value:range];
                }];
 }
 

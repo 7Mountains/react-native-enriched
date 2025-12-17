@@ -41,7 +41,8 @@ static NSString *const placeholder = @"\uFFFC";
   return ContentAttributeName;
 }
 
-+ (NSDictionary *)getParametersFromValue:(id)value {
++ (NSDictionary<NSString *, NSString *> *_Nullable)getParametersFromValue:
+    (id)value {
   ContentParams *contentParams = value;
 
   NSMutableDictionary *params = [@{
@@ -64,6 +65,38 @@ static NSString *const placeholder = @"\uFFFC";
   return params;
 }
 
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (range.length == 0)
+    return;
+  if (!attributes.count)
+    return;
+
+  ContentParams *params = [ContentParams new];
+  params.text = attributes[@"text"] ?: @"";
+  params.type = attributes[@"type"] ?: @"";
+  params.url = attributes[@"src"] ?: @"";
+  params.headers = [ContentParams parseHeaderFromString:attributes[@"headers"]];
+
+  BaseLabelAttachment *attachment = [self prepareAttachment:params];
+
+  NSMutableDictionary *attrs = [[self prepareAttributes:params] mutableCopy];
+
+  attrs[NSAttachmentAttributeName] = attachment;
+  attrs[ContentAttributeName] = params;
+  attrs[ReadOnlyParagraphKey] = @(YES);
+
+  NSString *ph = placeholder;
+  NSAttributedString *replacement =
+      [[NSAttributedString alloc] initWithString:ph attributes:attrs];
+
+  [attributedString replaceCharactersInRange:range
+                        withAttributedString:replacement];
+}
+
 #pragma mark - Init
 
 - (instancetype)initWithInput:(id)input {
@@ -82,7 +115,7 @@ static NSString *const placeholder = @"\uFFFC";
 - (void)applyStyle:(NSRange)range {
   CONTENTSTYLE_NOOP();
 }
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
+- (void)addAttributes:(NSRange)range {
   CONTENTSTYLE_NOOP();
 }
 - (void)addTypingAttributes {

@@ -37,7 +37,8 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   return LinkAttributeName;
 }
 
-+ (NSDictionary *)getParametersFromValue:(id)value {
++ (NSDictionary<NSString *, NSString *> *_Nullable)getParametersFromValue:
+    (id)value {
   NSString *url = value;
   if (!url)
     return nil;
@@ -64,8 +65,43 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
-                                  range:(NSRange)range {
-  // no-op for links
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (range.length == 0)
+    return;
+  NSString *href = attributes[@"href"];
+  if (href == nullptr || href.length == 0)
+    return;
+  UIColor *linkColor = [_input->config linkColor];
+
+  [attributedString addAttribute:NSForegroundColorAttributeName
+                           value:linkColor
+                           range:range];
+
+  [attributedString addAttribute:NSUnderlineColorAttributeName
+                           value:linkColor
+                           range:range];
+
+  [attributedString addAttribute:NSStrikethroughColorAttributeName
+                           value:linkColor
+                           range:range];
+
+  if ([_input->config linkDecorationLine] == DecorationUnderline) {
+    [attributedString addAttribute:NSUnderlineStyleAttributeName
+                             value:@(NSUnderlineStyleSingle)
+                             range:range];
+  }
+
+  NSString *subscrting =
+      [attributedString.string substringFromIndex:range.location];
+
+  NSAttributedStringKey attributeName = [subscrting isEqualToString:href]
+                                            ? AutomaticLinkAttributeName
+                                            : ManualLinkAttributeName;
+
+  [attributedString addAttribute:LinkAttributeName value:href range:range];
+  [attributedString addAttribute:attributeName value:href range:range];
 }
 
 - (void)addTypingAttributes {
@@ -74,38 +110,6 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 
 - (void)removeAttributesInAttributedString:(NSMutableAttributedString *)attr
                                      range:(NSRange)range {
-  NSArray<StylePair *> *links = [OccurenceUtils
-        allMultiple:@[ ManualLinkAttributeName, AutomaticLinkAttributeName ]
-           inString:attr
-            inRange:range
-      withCondition:^BOOL(id value, NSRange r) {
-        return [self styleCondition:value:r];
-      }];
-
-  for (StylePair *pair in links) {
-    NSRange fullRange = [self
-        offline_fullLinkRangeInAttributedString:attr
-                                        atIndex:[pair.rangeValue rangeValue]
-                                                    .location];
-
-    [attr removeAttribute:ManualLinkAttributeName range:fullRange];
-    [attr removeAttribute:AutomaticLinkAttributeName range:fullRange];
-
-    UIColor *primary = [_input->config primaryColor];
-    [attr addAttribute:NSForegroundColorAttributeName
-                 value:primary
-                 range:fullRange];
-    [attr addAttribute:NSUnderlineColorAttributeName
-                 value:primary
-                 range:fullRange];
-    [attr addAttribute:NSStrikethroughColorAttributeName
-                 value:primary
-                 range:fullRange];
-
-    if ([_input->config linkDecorationLine] == DecorationUnderline) {
-      [attr removeAttribute:NSUnderlineStyleAttributeName range:fullRange];
-    }
-  }
 }
 
 // we have to make sure all links in the range get fully removed here
@@ -174,21 +178,6 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   return linkValue != nullptr;
 }
 
-- (BOOL)detectStyleInAttributedString:(NSAttributedString *)attrString
-                                range:(NSRange)range {
-  BOOL onlyLinks = [OccurenceUtils
-      detectMultiple:@[ ManualLinkAttributeName, AutomaticLinkAttributeName ]
-            inString:attrString
-             inRange:range
-       withCondition:^BOOL(id value, NSRange r) {
-         return [self styleCondition:value:r];
-       }];
-
-  if (!onlyLinks)
-    return NO;
-  return [self offline_isSingleLinkIn:attrString range:range];
-}
-
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
     BOOL onlyLinks = [OccurenceUtils
@@ -221,18 +210,6 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
             inRange:range
       withCondition:^BOOL(id _Nullable value, NSRange range) {
         return [self styleCondition:value range:range];
-      }];
-}
-
-- (NSArray<StylePair *> *_Nullable)
-    findAllOccurencesInAttributedString:(NSAttributedString *)attributedString
-                                  range:(NSRange)range {
-  return [OccurenceUtils
-        allMultiple:@[ ManualLinkAttributeName, AutomaticLinkAttributeName ]
-           inString:attributedString
-            inRange:range
-      withCondition:^BOOL(id _Nullable value, NSRange range) {
-        return [self styleCondition:value:range];
       }];
 }
 
@@ -423,8 +400,8 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 - (void)handleAutomaticLinks:(NSString *)word inRange:(NSRange)wordRange {
   InlineCodeStyle *inlineCodeStyle =
       [_input->stylesDict objectForKey:@([InlineCodeStyle getStyleType])];
-  MentionStyle *mentionStyle =
-      [_input->stylesDict objectForKey:@([MentionStyle getStyleType])];
+  MentionStyle *mentionStyle = (MentionStyle *)[_input->stylesDict
+      objectForKey:@([MentionStyle getStyleType])];
   CodeBlockStyle *codeBlockStyle =
       [_input->stylesDict objectForKey:@([CodeBlockStyle getStyleType])];
 
@@ -661,79 +638,6 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
     [self removeAttributes:wordRange];
     [self manageLinkTypingAttributes];
   }
-}
-
-- (void)addLinkInAttributedString:(NSMutableAttributedString *)attr
-                            range:(NSRange)range
-                             text:(NSString *)text
-                              url:(NSString *)url
-                           manual:(BOOL)manual {
-  if (!text || !url)
-    return;
-
-  NSDictionary *attrs = [self offline_linkAttributesForURL:url manual:manual];
-  [attr addAttributes:attrs range:range];
-}
-
-- (NSMutableDictionary *)offline_linkAttributesForURL:(NSString *)url
-                                               manual:(BOOL)manual {
-  NSMutableDictionary *attrs = [_input->defaultTypingAttributes mutableCopy];
-
-  attrs[NSForegroundColorAttributeName] = [_input->config linkColor];
-  attrs[NSUnderlineColorAttributeName] = [_input->config linkColor];
-  attrs[NSStrikethroughColorAttributeName] = [_input->config linkColor];
-
-  if ([_input->config linkDecorationLine] == DecorationUnderline) {
-    attrs[NSUnderlineStyleAttributeName] = @(NSUnderlineStyleSingle);
-  }
-  if (manual) {
-    attrs[ManualLinkAttributeName] = url;
-  } else {
-    attrs[AutomaticLinkAttributeName] = url;
-  }
-
-  return attrs;
-}
-
-- (NSRange)offline_fullLinkRangeInAttributedString:(NSAttributedString *)attr
-                                           atIndex:(NSUInteger)location {
-  NSRange fullManual = NSMakeRange(0, 0);
-  NSRange fullAuto = NSMakeRange(0, 0);
-
-  NSRange bounds = NSMakeRange(0, attr.length);
-
-  if (location >= attr.length && attr.length > 0) {
-    location = attr.length - 1;
-  }
-
-  NSString *manual = [attr attribute:ManualLinkAttributeName
-                             atIndex:location
-               longestEffectiveRange:&fullManual
-                             inRange:bounds];
-
-  NSString *autoUrl = [attr attribute:AutomaticLinkAttributeName
-                              atIndex:location
-                longestEffectiveRange:&fullAuto
-                              inRange:bounds];
-
-  if (manual != nil)
-    return fullManual;
-  if (autoUrl != nil)
-    return fullAuto;
-
-  return NSMakeRange(0, 0);
-}
-
-- (BOOL)offline_isSingleLinkIn:(NSAttributedString *)attr range:(NSRange)range {
-  NSArray<StylePair *> *pairs = [OccurenceUtils
-        allMultiple:@[ ManualLinkAttributeName, AutomaticLinkAttributeName ]
-           inString:attr
-            inRange:range
-      withCondition:^BOOL(id value, NSRange r) {
-        return [self styleCondition:value:r];
-      }];
-
-  return pairs.count == 1;
 }
 
 @end

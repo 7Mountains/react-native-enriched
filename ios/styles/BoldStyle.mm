@@ -47,7 +47,9 @@
 }
 
 - (void)addAttributesInAttributedString:(NSMutableAttributedString *)attr
-                                  range:(NSRange)range {
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
   [attr enumerateAttribute:NSFontAttributeName
                    inRange:range
                    options:0
@@ -65,7 +67,8 @@
 - (void)addAttributes:(NSRange)range {
   [_input->textView.textStorage beginEditing];
   [self addAttributesInAttributedString:_input->textView.textStorage
-                                  range:range];
+                                  range:range
+                             attributes:nullptr];
   [_input->textView.textStorage endEditing];
 }
 
@@ -159,21 +162,14 @@
          ![self boldHeadingConflictsInRange:range type:H6];
 }
 
-- (BOOL)detectStyleInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                range:(NSRange)range {
-  return [OccurenceUtils detect:NSFontAttributeName
-                       inString:attributedString
-                        inRange:range
-                  withCondition:^BOOL(id _Nullable value, NSRange range) {
-                    return [self styleCondition:value:range];
-                  }];
-}
-
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    return [self detectStyleInAttributedString:_input->textView.textStorage
-                                         range:range];
+    return [OccurenceUtils detect:NSFontAttributeName
+                        withInput:_input
+                          inRange:range
+                    withCondition:^BOOL(id _Nullable value, NSRange range) {
+                      return [self styleCondition:value range:range];
+                    }];
   } else {
     return [OccurenceUtils detect:NSFontAttributeName
                         withInput:_input
@@ -200,17 +196,6 @@
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];
-               }];
-}
-
-- (NSArray<StylePair *> *_Nullable)
-    findAllOccurencesInAttributedString:(NSAttributedString *)attributedString
-                                  range:(NSRange)range {
-  return [OccurenceUtils all:NSFontAttributeName
-                    inString:attributedString
-                     inRange:range
-               withCondition:^BOOL(id _Nullable value, NSRange range) {
-                 return [self styleCondition:value:range];
                }];
 }
 

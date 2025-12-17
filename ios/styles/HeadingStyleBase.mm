@@ -52,18 +52,27 @@
 
 // the range will already be the proper full paragraph/s range
 - (void)addAttributes:(NSRange)range {
+  [self addAttributes:range withTypingAttributes:YES];
+}
+
+- (void)addAttributes:(NSRange)range
+    withTypingAttributes:(BOOL)withTypingAttributes {
   [[self typedInput]->textView.textStorage beginEditing];
   [self addAttributesInAttributedString:[self typedInput]->textView.textStorage
-                                  range:range];
+                                  range:range
+                             attributes:nullptr];
   [[self typedInput]->textView.textStorage endEditing];
-
-  // also toggle typing attributes
-  [self addTypingAttributes];
+  if (withTypingAttributes) {
+    // also toggle typing attributes
+    [self addTypingAttributes];
+  }
 }
 
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
-                                  range:(NSRange)range {
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
   [attributedString
       enumerateAttribute:NSFontAttributeName
                  inRange:range
@@ -112,7 +121,7 @@
                  options:0
               usingBlock:^(id _Nullable value, NSRange range,
                            BOOL *_Nonnull stop) {
-                if ([self styleCondition:value:range]) {
+                if ([self styleCondition:value range:range]) {
                   UIFont *newFont = [(UIFont *)value
                       setSize:[[[self typedInput]->config primaryFontSize]
                                   floatValue]];
@@ -182,22 +191,14 @@
   return font != nullptr && font.pointSize == [self getHeadingFontSize];
 }
 
-- (BOOL)detectStyleInAttributedString:
-            (NSMutableAttributedString *)attributedString
-                                range:(NSRange)range {
-  return [OccurenceUtils detect:NSFontAttributeName
-                       inString:attributedString
-                        inRange:range
-                  withCondition:^BOOL(id _Nullable value, NSRange range) {
-                    return [self styleCondition:value:range];
-                  }];
-}
-
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    return [self
-        detectStyleInAttributedString:[self typedInput]->textView.textStorage
-                                range:range];
+    return [OccurenceUtils detect:NSFontAttributeName
+                        withInput:input
+                          inRange:range
+                    withCondition:^BOOL(id _Nullable value, NSRange range) {
+                      return [self styleCondition:value range:range];
+                    }];
   } else {
     return [OccurenceUtils detect:NSFontAttributeName
                         withInput:[self typedInput]
@@ -224,17 +225,6 @@
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];
-               }];
-}
-
-- (NSArray<StylePair *> *_Nullable)
-    findAllOccurencesInAttributedString:(NSAttributedString *)attributedString
-                                  range:(NSRange)range {
-  return [OccurenceUtils all:NSFontAttributeName
-                    inString:attributedString
-                     inRange:range
-               withCondition:^BOOL(id _Nullable value, NSRange range) {
-                 return [self styleCondition:value:range];
                }];
 }
 
@@ -272,7 +262,7 @@
     if (!NSEqualRanges(occurenceRange, paragraphRange)) {
       // we have a heading but it does not span its whole paragraph - let's fix
       // it
-      [self addAttributes:paragraphRange];
+      [self addAttributes:paragraphRange withTypingAttributes:NO];
     }
   }
 }
