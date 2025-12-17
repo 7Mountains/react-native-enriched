@@ -94,6 +94,7 @@ const contentHtml = Array(100)
     <p><b>Bold</b> <i>Italic</i> <u>Underline</u> <s>Strikethrough</s> <u><s><b><i>Combined</i></b></s></u></p>
     <p><a href="https://www.google.com">https://www.google.com</a></p>
     <content type="image" src="https://picsum.photos/200/300" text="test" />
+    <content type="placeholder" text="Placeholder for image or video" />
     <p><code>Inline code example</code></p>` +
       `<blockquote>
     <p>Test</p>

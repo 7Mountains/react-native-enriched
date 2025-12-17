@@ -302,42 +302,13 @@ static NSString *const placeholder = @"\uFFFC";
     imgAtt.imageResizeMode = styles.imageResizeMode;
 
     imgAtt.isLoading = YES;
-
-    NSURL *url = [NSURL URLWithString:params.url];
-    NSURL *fallbackUrl = [NSURL URLWithString:styles.fallbackImageURI];
-    if (params.headers.count == 0) {
-      [[EnrichedImageLoader shared]
-           loadImage:url
-          completion:^(UIImage *image) {
-            imgAtt.contentImage = image ?: [self loadFallbackImage:fallbackUrl];
-            imgAtt.isLoading = NO;
-            [self refreshAttachment:imgAtt];
-          }];
-    } else {
-      [[EnrichedImageLoader shared]
-           loadImage:url
-             headers:params.headers
-          completion:^(UIImage *image) {
-            imgAtt.contentImage = image ?: [self loadFallbackImage:fallbackUrl];
-            imgAtt.isLoading = NO;
-            [self refreshAttachment:imgAtt];
-          }];
-    }
+    imgAtt.uri = params.url;
+    imgAtt.fallbackUri = styles.fallbackImageURI ?: @"";
+    [imgAtt loadAsync];
   }
 
   return attachment;
 }
-
-- (UIImage *)loadFallbackImage:(NSURL *)url {
-  __block UIImage *image;
-  [[EnrichedImageLoader shared] loadImage:url
-                               completion:^(UIImage *loadedImage) {
-                                 image = loadedImage;
-                               }];
-
-  return image;
-}
-
 - (void)refreshAttachment:(BaseLabelAttachment *)attachment {
   UITextView *tv = _input->textView;
   NSTextStorage *storage = tv.textStorage;

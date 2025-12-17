@@ -72,13 +72,6 @@
   CGContextRestoreGState(ctx);
 }
 
-#pragma mark - Rendering trigger
-
-- (void)refreshAttachmentImage {
-  // TextKit needs image property updated to force layout
-  self.image = [self renderAttachmentInSize:CGSizeZero];
-}
-
 #pragma mark - NSTextAttachment overrides
 
 - (UIImage *)imageForBounds:(CGRect)bounds
@@ -105,6 +98,11 @@
 
 - (UIImage *)renderAttachmentInSize:(CGSize)containerSize {
   return nil;
+}
+
+- (void)loadAsync {
+  self.image = [self renderAttachmentInSize:CGSizeZero];
+  [self notifyUpdate];
 }
 
 @end

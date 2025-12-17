@@ -1,6 +1,7 @@
 #import <UIKit/UIKit.h>
+#import "MediaAttachment.h"
 
-@interface BaseLabelAttachment : NSTextAttachment
+@interface BaseLabelAttachment : MediaAttachment
 
 @property(nonatomic, copy) NSString *labelText;
 @property(nonatomic, strong) UIFont *font;
@@ -17,8 +18,6 @@
 @property(nonatomic, copy) NSString *borderStyle;
 @property(nonatomic) CGFloat cornerRadius;
 
-// core
-- (void)refreshAttachmentImage;
 - (CGSize)textSize;
 - (CGRect)contentRectForContainer:(CGSize)containerSize;
 - (void)drawBackgroundInRect:(CGRect)rect context:(CGContextRef)ctx;
