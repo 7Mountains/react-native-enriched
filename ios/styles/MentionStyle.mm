@@ -785,40 +785,4 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   return full;
 }
 
-- (void)addMentionInAttributedString:(NSMutableAttributedString *)string
-                               range:(NSRange)range
-                              params:(MentionParams *)params {
-  if (!string || !params)
-    return;
-
-  MentionStyleProps *props =
-      [_input->config mentionStylePropsForIndicator:params.indicator];
-
-  NSMutableDictionary<NSAttributedStringKey, id> *attrs =
-      [_input->textView.typingAttributes mutableCopy];
-
-  attrs[MentionAttributeName] = params;
-  attrs[NSForegroundColorAttributeName] = props.color;
-  attrs[NSUnderlineColorAttributeName] = props.color;
-  attrs[NSStrikethroughColorAttributeName] = props.color;
-  attrs[NSBackgroundColorAttributeName] =
-      [props.backgroundColor colorWithAlphaIfNotTransparent:0.4];
-
-  if (props.decorationLine == DecorationUnderline) {
-    attrs[NSUnderlineStyleAttributeName] = @(NSUnderlineStyleSingle);
-  } else {
-    [attrs removeObjectForKey:NSUnderlineStyleAttributeName];
-  }
-
-  NSString *mentionText = params.text ?: @"";
-  NSAttributedString *mention =
-      [[NSAttributedString alloc] initWithString:mentionText attributes:attrs];
-
-  if (range.length == 0) {
-    [string insertAttributedString:mention atIndex:range.location];
-  } else {
-    [string replaceCharactersInRange:range withAttributedString:mention];
-  }
-}
-
 @end

@@ -62,9 +62,6 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (MentionParams *)getMentionParamsAt:(NSUInteger)location;
 - (NSRange)getFullMentionRangeAt:(NSUInteger)location;
 - (NSValue *)getActiveMentionRange;
-- (void)addMentionInAttributedString:(NSMutableAttributedString *)string
-                               range:(NSRange)range
-                              params:(MentionParams *)params;
 @end
 
 @interface HeadingStyleBase : NSObject <BaseStyleProtocol> {
@@ -122,9 +119,6 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
               imageData:(ImageData *)imageData
           withSelection:(BOOL)withSelection;
 - (ImageData *)getImageDataAt:(NSUInteger)location;
-- (void)addImageInAttributedString:(NSMutableAttributedString *)attributedString
-                             range:(NSRange)range
-                         imageData:(ImageData *)imageData;
 @end
 
 @interface CheckBoxStyle

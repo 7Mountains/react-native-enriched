@@ -215,28 +215,4 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
           withSelection:YES];
 }
 
-- (void)addImageInAttributedString:(NSMutableAttributedString *)string
-                             range:(NSRange)range
-                         imageData:(ImageData *)imageData {
-  if (!imageData)
-    return;
-
-  ImageAttachment *attachment =
-      [[ImageAttachment alloc] initWithImageData:imageData];
-  attachment.delegate = _input;
-
-  NSMutableDictionary *attrs = [_input->defaultTypingAttributes mutableCopy];
-  attrs[NSAttachmentAttributeName] = attachment;
-  attrs[ImageAttributeName] = imageData;
-
-  NSAttributedString *imgString =
-      [[NSAttributedString alloc] initWithString:@"\uFFFC" attributes:attrs];
-
-  if (range.length == 0) {
-    [string insertAttributedString:imgString atIndex:range.location];
-  } else {
-    [string replaceCharactersInRange:range withAttributedString:imgString];
-  }
-}
-
 @end
