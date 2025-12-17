@@ -340,12 +340,15 @@ class EnrichedTextInputViewManager :
     // no-op for now
   }
 
-  override fun addImage(
-    view: EnrichedTextInputView?,
-    src: String,
-    width: Float,
-    height: Float,
-  ) {
+  override fun addDividerAtNewLine(view: EnrichedTextInputView?) {
+    // no-op for now
+  }
+
+  override fun addLink(view: EnrichedTextInputView?, start: Int, end: Int, text: String, url: String) {
+    view?.addLink(start, end, text, url)
+  }
+
+  override fun addImage(view: EnrichedTextInputView?, src: String, width: Float, height: Float) {
     view?.addImage(src, width, height)
   }
 

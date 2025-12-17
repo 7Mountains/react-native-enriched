@@ -87,25 +87,36 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const contentHtml = Array(1)
+const contentHtml = Array(100)
   .fill(
-    `
-<h1>Title H1</h1>
-<hr />
-<p><u><font color="#FF0000">Test </font><font color="#E6FF5C">te</font></u><font color="#E6FF5C">st</font></p>
-<checklist checked="false">First item</checklist>
-<checklist checked="true">Second item</checklist>
-<checklist checked="true">Third item</checklist>
-<content src="https://picsum.photos/id/237/200/300" text="Some picture" type="image" />
-<content type="placeholder" text="Some content/or comment" />
-<p><b>Bold text</b></p>
-<p><i>Italic text</i></p>
-<p><u>Underline text</u></p>
-`
+    `<h1>First item</h1>
+    <ul><li>Test 2</li><li>Test 3</li></ul>
+    <p><b>Bold</b> <i>Italic</i> <u>Underline</u> <s>Strikethrough</s> <u><s><b><i>Combined</i></b></s></u></p>
+    <p><a href="https://www.google.com">https://www.google.com</a></p>
+    <content type="image" src="https://picsum.photos/200/300" text="test" />
+    <p><code>Inline code example</code></p>` +
+      `<blockquote>
+    <p>Test</p>
+    <p>Test</p>
+    <p>Test</p>
+    <p>Test</p>
+    </blockquote>` +
+      `<codeblock>
+    <p>Test</p>
+    <p>Test</p>
+    <p>Test</p>
+    <p>Test</p>
+    </codeblock>` +
+      `<hr />` +
+      `<checklist checked="false">Unchecked item</checklist>` +
+      `<p><img src="https://picsum.photos/200/300" width="100" height="100" /></p>` +
+      '<hr />'
   )
   .join('');
 
 const html = '<html>' + contentHtml + '</html>';
+
+console.log(html);
 
 export default function App() {
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);

@@ -75,8 +75,49 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   // no-op for mentions
 }
 
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
+- (void)addAttributes:(NSRange)range {
   // no-op for mentions
+}
+
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (!attributedString || !attributes || attributes.count == 0)
+    return;
+
+  NSString *indicator = attributes[@"indicator"];
+  NSString *text = attributes[@"text"] ?: @"";
+
+  MentionStyleProps *props =
+      [_input->config mentionStylePropsForIndicator:indicator];
+
+  NSMutableDictionary<NSAttributedStringKey, id> *attrs =
+      [_input->textView.typingAttributes mutableCopy];
+
+  attrs[MentionAttributeName] = attributes;
+  attrs[NSForegroundColorAttributeName] = props.color;
+  attrs[NSUnderlineColorAttributeName] = props.color;
+  attrs[NSStrikethroughColorAttributeName] = props.color;
+  attrs[NSBackgroundColorAttributeName] =
+      [props.backgroundColor colorWithAlphaIfNotTransparent:0.4];
+
+  if (props.decorationLine == DecorationUnderline) {
+    attrs[NSUnderlineStyleAttributeName] = @(NSUnderlineStyleSingle);
+  } else {
+    [attrs removeObjectForKey:NSUnderlineStyleAttributeName];
+  }
+
+  NSAttributedString *mention =
+      [[NSAttributedString alloc] initWithString:text attributes:attrs];
+
+  if (range.length == 0) {
+    [attributedString insertAttributedString:mention atIndex:range.location];
+  } else {
+    [attributedString replaceCharactersInRange:range
+                          withAttributedString:mention];
+  }
 }
 
 - (void)addTypingAttributes {
@@ -184,8 +225,8 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
     return [OccurenceUtils detect:MentionAttributeName
                         withInput:_input
                           inRange:range
-                    withCondition:^BOOL(id _Nullable value, NSRange range) {
-                      return [self styleCondition:value range:range];
+                    withCondition:^BOOL(id value, NSRange r) {
+                      return [self styleCondition:value range:r];
                     }];
   } else {
     return [self getMentionParamsAt:range.location] != nullptr;
@@ -724,6 +765,24 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
     _activeMentionRange = nullptr;
     [_input emitOnMentionEvent:indicatorCopy text:nullptr];
   }
+}
+
+- (NSRange)getFullMentionRangeInAttributedString:
+               (NSMutableAttributedString *)attrString
+                                         atIndex:(NSUInteger)location {
+  NSRange full = NSMakeRange(0, 0);
+  NSRange bounds = NSMakeRange(0, attrString.length);
+
+  if (location >= attrString.length && attrString.length > 0) {
+    location = attrString.length - 1;
+  }
+
+  [attrString attribute:MentionAttributeName
+                    atIndex:location
+      longestEffectiveRange:&full
+                    inRange:bounds];
+
+  return full;
 }
 
 @end

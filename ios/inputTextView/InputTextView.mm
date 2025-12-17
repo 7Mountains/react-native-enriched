@@ -68,16 +68,11 @@
       htmlString = htmlValue;
     }
 
-    // validate the html
-    NSString *initiallyProcessedHtml =
-        [typedInput->parser initiallyProcessHtml:htmlString];
-
-    if (initiallyProcessedHtml != nullptr) {
+    if (htmlString != nullptr) {
       // valid html, let's apply it
       currentRange.length > 0
-          ? [typedInput->parser replaceFromHtml:initiallyProcessedHtml
-                                          range:currentRange]
-          : [typedInput->parser insertFromHtml:initiallyProcessedHtml
+          ? [typedInput->parser replaceFromHtml:htmlString range:currentRange]
+          : [typedInput->parser insertFromHtml:htmlString
                                       location:currentRange.location];
     } else {
       // fall back to plain text, otherwise do nothing

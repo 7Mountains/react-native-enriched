@@ -12,7 +12,13 @@
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range;
 - (instancetype _Nonnull)initWithInput:(id _Nonnull)input;
 - (void)applyStyle:(NSRange)range;
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr;
+- (void)addAttributes:(NSRange)range;
+- (void)
+    addAttributesInAttributedString:(NSMutableAttributedString *_Nonnull)string
+                              range:(NSRange)range
+                         attributes:
+                             (NSDictionary<NSString *, NSString *> *_Nullable)
+                                 attributes;
 - (void)removeAttributes:(NSRange)range;
 - (void)addTypingAttributes;
 - (void)removeTypingAttributes;

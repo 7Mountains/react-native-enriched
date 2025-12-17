@@ -44,17 +44,36 @@
 - (void)applyStyle:(NSRange)range {
   BOOL isStylePresent = [self detectStyle:range];
   if (range.length >= 1) {
-    isStylePresent ? [self removeAttributes:range]
-                   : [self addAttributes:range withTypingAttr:YES];
+    isStylePresent ? [self removeAttributes:range] : [self addAttributes:range];
   } else {
     isStylePresent ? [self removeTypingAttributes] : [self addTypingAttributes];
   }
 }
 
 // the range will already be the proper full paragraph/s range
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
+- (void)addAttributes:(NSRange)range {
+  [self addAttributes:range withTypingAttributes:YES];
+}
+
+- (void)addAttributes:(NSRange)range
+    withTypingAttributes:(BOOL)withTypingAttributes {
   [[self typedInput]->textView.textStorage beginEditing];
-  [[self typedInput]->textView.textStorage
+  [self addAttributesInAttributedString:[self typedInput]->textView.textStorage
+                                  range:range
+                             attributes:nullptr];
+  [[self typedInput]->textView.textStorage endEditing];
+  if (withTypingAttributes) {
+    // also toggle typing attributes
+    [self addTypingAttributes];
+  }
+}
+
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  [attributedString
       enumerateAttribute:NSFontAttributeName
                  inRange:range
                  options:0
@@ -66,18 +85,11 @@
                   if ([self isHeadingBold]) {
                     newFont = [newFont setBold];
                   }
-                  [[self typedInput]->textView.textStorage
-                      addAttribute:NSFontAttributeName
-                             value:newFont
-                             range:range];
+                  [attributedString addAttribute:NSFontAttributeName
+                                           value:newFont
+                                           range:range];
                 }
               }];
-  [[self typedInput]->textView.textStorage endEditing];
-
-  // also toggle typing attributes
-  if (withTypingAttr) {
-    [self addTypingAttributes];
-  }
 }
 
 // will always be called on empty paragraphs so only typing attributes can be
@@ -157,7 +169,7 @@
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
     return [OccurenceUtils detect:NSFontAttributeName
-                        withInput:[self typedInput]
+                        withInput:input
                           inRange:range
                     withCondition:^BOOL(id _Nullable value, NSRange range) {
                       return [self styleCondition:value range:range];
@@ -225,7 +237,7 @@
     if (!NSEqualRanges(occurenceRange, paragraphRange)) {
       // we have a heading but it does not span its whole paragraph - let's fix
       // it
-      [self addAttributes:paragraphRange withTypingAttr:NO];
+      [self addAttributes:paragraphRange withTypingAttributes:NO];
     }
   }
 }

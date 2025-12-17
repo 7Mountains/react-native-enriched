@@ -28,7 +28,7 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   return "img";
 }
 
-+ (NSString *)subTagName {
++ (const char *)subTagName {
   return nil;
 }
 
@@ -58,8 +58,41 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   // no-op for image
 }
 
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
+- (void)addAttributes:(NSRange)range {
   // no-op for image
+}
+
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (attributes.count == 0) {
+    return;
+  }
+
+  NSString *src = attributes[@"src"] ?: @"";
+  NSString *width = attributes[@"width"] ?: @"";
+  NSString *height = attributes[@"height"] ?: @"";
+
+  ImageData *imageData = [[ImageData alloc] init];
+  imageData.uri = src;
+  imageData.width = [width floatValue];
+  imageData.height = [height floatValue];
+
+  ImageAttachment *attachment =
+      [[ImageAttachment alloc] initWithImageData:imageData];
+  attachment.delegate = _input;
+
+  NSDictionary *attrs =
+      @{NSAttachmentAttributeName : attachment, ImageAttributeName : imageData};
+
+  NSString *placeholderChar = @"\uFFFC";
+  NSAttributedString *replacement =
+      [[NSAttributedString alloc] initWithString:placeholderChar
+                                      attributes:attrs];
+  [attributedString replaceCharactersInRange:range
+                        withAttributedString:replacement];
 }
 
 - (void)addTypingAttributes {
@@ -162,13 +195,13 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   if (range.length == 0) {
     [TextInsertionUtils insertText:placeholderChar
                                 at:range.location
-              additionalAttributes:attributes
+              additionalAttributes:attrs
                              input:_input
                      withSelection:withSelection];
   } else {
     [TextInsertionUtils replaceText:placeholderChar
                                  at:range
-               additionalAttributes:attributes
+               additionalAttributes:attrs
                               input:_input
                       withSelection:withSelection];
   }
