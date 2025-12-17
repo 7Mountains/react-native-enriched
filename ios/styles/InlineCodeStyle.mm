@@ -21,7 +21,7 @@
   return "code";
 }
 
-+ (NSString *)subTagName {
++ (const char *)subTagName {
   return nil;
 }
 
@@ -42,14 +42,35 @@
 - (void)applyStyle:(NSRange)range {
   BOOL isStylePresent = [self detectStyle:range];
   if (range.length >= 1) {
-    isStylePresent ? [self removeAttributes:range]
-                   : [self addAttributes:range withTypingAttr:YES];
+    isStylePresent ? [self removeAttributes:range] : [self addAttributes:range];
   } else {
     isStylePresent ? [self removeTypingAttributes] : [self addTypingAttributes];
   }
 }
 
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  [attributedString addAttribute:NSBackgroundColorAttributeName
+                           value:[[_input->config inlineCodeBgColor]
+                                     colorWithAlphaIfNotTransparent:0.4]
+                           range:range];
+  [attributedString addAttribute:NSForegroundColorAttributeName
+                           value:[_input->config inlineCodeFgColor]
+                           range:range];
+  [attributedString addAttribute:NSUnderlineColorAttributeName
+                           value:[_input->config inlineCodeFgColor]
+                           range:range];
+  [attributedString addAttribute:NSStrikethroughColorAttributeName
+                           value:[_input->config inlineCodeFgColor]
+                           range:range];
+  UIFont *font = [_input->config monospacedFont];
+  [attributedString addAttribute:NSFontAttributeName value:font range:range];
+}
+
+- (void)addAttributes:(NSRange)range {
   // we don't want to apply inline code to newline characters, it looks bad
   NSArray *nonNewlineRanges =
       [ParagraphsUtils getNonNewlineRangesIn:_input->textView range:range];
@@ -57,41 +78,9 @@
   for (NSValue *value in nonNewlineRanges) {
     NSRange currentRange = [value rangeValue];
     [_input->textView.textStorage beginEditing];
-
-    [_input->textView.textStorage
-        addAttribute:NSBackgroundColorAttributeName
-               value:[[_input->config inlineCodeBgColor]
-                         colorWithAlphaIfNotTransparent:0.4]
-               range:currentRange];
-    [_input->textView.textStorage
-        addAttribute:NSForegroundColorAttributeName
-               value:[_input->config inlineCodeFgColor]
-               range:currentRange];
-    [_input->textView.textStorage
-        addAttribute:NSUnderlineColorAttributeName
-               value:[_input->config inlineCodeFgColor]
-               range:currentRange];
-    [_input->textView.textStorage
-        addAttribute:NSStrikethroughColorAttributeName
-               value:[_input->config inlineCodeFgColor]
-               range:currentRange];
-    [_input->textView.textStorage
-        enumerateAttribute:NSFontAttributeName
-                   inRange:currentRange
-                   options:0
-                usingBlock:^(id _Nullable value, NSRange range,
-                             BOOL *_Nonnull stop) {
-                  UIFont *font = (UIFont *)value;
-                  if (font != nullptr) {
-                    UIFont *newFont = [[[_input->config monospacedFont]
-                        withFontTraits:font] setSize:font.pointSize];
-                    [_input->textView.textStorage
-                        addAttribute:NSFontAttributeName
-                               value:newFont
-                               range:range];
-                  }
-                }];
-
+    [self addAttributesInAttributedString:_input->textView.textStorage
+                                    range:currentRange
+                               attributes:nullptr];
     [_input->textView.textStorage endEditing];
   }
 }
@@ -195,7 +184,6 @@
 
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    // detect only in non-newline characters
     NSArray *nonNewlineRanges =
         [ParagraphsUtils getNonNewlineRangesIn:_input->textView range:range];
     if (nonNewlineRanges.count == 0) {

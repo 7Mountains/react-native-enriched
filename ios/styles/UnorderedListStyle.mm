@@ -49,15 +49,34 @@
 - (void)applyStyle:(NSRange)range {
   BOOL isStylePresent = [self detectStyle:range];
   if (range.length >= 1) {
-    isStylePresent ? [self removeAttributes:range]
-                   : [self addAttributes:range withTypingAttr:YES];
+    isStylePresent ? [self removeAttributes:range] : [self addAttributes:range];
   } else {
     isStylePresent ? [self removeTypingAttributes] : [self addTypingAttributes];
   }
 }
 
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  NSTextList *numberBullet =
+      [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDisc options:0];
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+
+  pStyle.textLists = @[ numberBullet ];
+  pStyle.headIndent = [self getHeadIndent];
+  pStyle.firstLineHeadIndent = [self getHeadIndent];
+  NSMutableDictionary *typingAttrs =
+      [_input->defaultTypingAttributes mutableCopy];
+  typingAttrs[NSParagraphStyleAttributeName] = pStyle;
+  [attributedString addAttribute:NSParagraphStyleAttributeName
+                           value:pStyle
+                           range:range];
+}
+
 // we assume correct paragraph range is already given
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
+- (void)addAttributes:(NSRange)range {
   NSTextList *bullet =
       [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDisc options:0];
   NSArray *paragraphs =
@@ -100,7 +119,8 @@
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
+                      value == nil ? [NSMutableParagraphStyle new]
+                                   : [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[ bullet ];
                   pStyle.headIndent = [self getHeadIndent];
                   pStyle.firstLineHeadIndent = [self getHeadIndent];
@@ -125,22 +145,20 @@
   }
 
   // also add typing attributes
-  if (withTypingAttr) {
-    NSMutableDictionary *typingAttrs =
-        [_input->textView.typingAttributes mutableCopy];
-    NSMutableParagraphStyle *pStyle =
-        [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
-    pStyle.textLists = @[ bullet ];
-    pStyle.headIndent = [self getHeadIndent];
-    pStyle.firstLineHeadIndent = [self getHeadIndent];
-    typingAttrs[NSParagraphStyleAttributeName] = pStyle;
-    _input->textView.typingAttributes = typingAttrs;
-  }
+  NSMutableDictionary *typingAttrs =
+      [_input->textView.typingAttributes mutableCopy];
+  NSMutableParagraphStyle *pStyle =
+      [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
+  pStyle.textLists = @[ bullet ];
+  pStyle.headIndent = [self getHeadIndent];
+  pStyle.firstLineHeadIndent = [self getHeadIndent];
+  typingAttrs[NSParagraphStyleAttributeName] = pStyle;
+  _input->textView.typingAttributes = typingAttrs;
 }
 
 // does pretty much the same as normal addAttributes, just need to get the range
 - (void)addTypingAttributes {
-  [self addAttributes:_input->textView.selectedRange withTypingAttr:YES];
+  [self addAttributes:_input->textView.selectedRange];
 }
 
 - (void)removeAttributes:(NSRange)range {
@@ -241,8 +259,7 @@
 
         // add attributes on the dashless paragraph
         [self addAttributes:NSMakeRange(paragraphRange.location,
-                                        paragraphRange.length - 1)
-             withTypingAttr:YES];
+                                        paragraphRange.length - 1)];
         return YES;
       }
     }

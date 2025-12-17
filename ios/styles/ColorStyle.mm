@@ -63,10 +63,6 @@
 }
 
 #pragma mark - Add attributes
-
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
-}
-
 - (void)addAttributes:(NSRange)range color:(UIColor *)color {
   if (color == nil)
     return;
@@ -125,6 +121,34 @@
   }
 
   [ts endEditing];
+}
+
+#pragma mark - Add Attributes (HTML → AttributedString)
+
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (range.length == 0)
+    return;
+
+  NSString *colorAttribute = attributes[@"color"] ?: @"";
+
+  UIColor *color = nil;
+  if ([colorAttribute isKindOfClass:[NSString class]]) {
+    color = [UIColor colorFromString:(NSString *)colorAttribute];
+  }
+
+  if (!color)
+    return;
+
+  [attributedString addAttributes:@{
+    NSForegroundColorAttributeName : color,
+    NSUnderlineColorAttributeName : color,
+    NSStrikethroughColorAttributeName : color
+  }
+                            range:range];
 }
 
 - (void)removeTypingAttributes {

@@ -389,6 +389,31 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _placeholderLabel.hidden = YES;
 }
 
+- (void)mediaAttachmentDidUpdate:(NSTextAttachment *)attachment {
+  NSTextStorage *storage = textView.textStorage;
+  NSRange fullRange = NSMakeRange(0, storage.length);
+
+  __block NSRange foundRange = NSMakeRange(NSNotFound, 0);
+
+  [storage enumerateAttribute:NSAttachmentAttributeName
+                      inRange:fullRange
+                      options:0
+                   usingBlock:^(id value, NSRange range, BOOL *stop) {
+                     if (value == attachment) {
+                       foundRange = range;
+                       *stop = YES;
+                     }
+                   }];
+
+  if (foundRange.location == NSNotFound) {
+    return;
+  }
+
+  [storage edited:NSTextStorageEditedAttributes
+               range:foundRange
+      changeInLength:0];
+}
+
 // MARK: - Props
 
 - (void)updateProps:(Props::Shared const &)props
@@ -843,31 +868,34 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     stylePropChanged = YES;
   }
 
+  BOOL defaultValueChanged =
+      newViewProps.defaultValue != oldViewProps.defaultValue;
+
   if (stylePropChanged) {
-    // all the text needs to be rebuilt
-    // we get the current html using old config, then switch to new config and
-    // replace text using the html this way, the newest config attributes are
-    // being used!
-
-    // the html needs to be generated using the old config
-    NSString *currentHtml = [parser
-        parseToHtmlFromRange:NSMakeRange(0,
-                                         textView.textStorage.string.length)];
-
     // now set the new config
     config = newConfig;
 
-    // no emitting during styles reload
-    blockEmitting = YES;
+    // we already applied html with styles in default value
+    if (!defaultValueChanged) {
+      // all the text needs to be rebuilt
+      // we get the current html using old config, then switch to new config and
+      // replace text using the html this way, the newest config attributes are
+      // being used!
 
-    // make sure everything is sound in the html
-    NSString *initiallyProcessedHtml =
-        [parser initiallyProcessHtml:currentHtml];
-    if (initiallyProcessedHtml != nullptr) {
-      [parser replaceWholeFromHtml:initiallyProcessedHtml];
+      // the html needs to be generated using the old config
+      NSString *currentHtml = [parser
+          parseToHtmlFromRange:NSMakeRange(0,
+                                           textView.textStorage.string.length)];
+      // no emitting during styles reload
+      blockEmitting = YES;
+
+      if (currentHtml != nullptr) {
+        [parser replaceWholeFromHtml:currentHtml
+            notifyAnyTextMayHaveBeenModified:!isFirstMount];
+      }
+
+      blockEmitting = NO;
     }
-
-    blockEmitting = NO;
 
     // fill the typing attributes with style props
     defaultTypingAttributes[NSForegroundColorAttributeName] =
@@ -892,18 +920,17 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   // default value - must be set before placeholder to make sure it correctly
   // shows on first mount
-  if (newViewProps.defaultValue != oldViewProps.defaultValue) {
+  if (defaultValueChanged) {
     NSString *newDefaultValue =
         [NSString fromCppString:newViewProps.defaultValue];
 
-    NSString *initiallyProcessedHtml =
-        [parser initiallyProcessHtml:newDefaultValue];
-    if (initiallyProcessedHtml == nullptr) {
+    if (newDefaultValue == nullptr) {
       // just plain text
       textView.text = newDefaultValue;
     } else {
       // we've got some seemingly proper html
-      [parser replaceWholeFromHtml:initiallyProcessedHtml];
+      [parser replaceWholeFromHtml:newDefaultValue
+          notifyAnyTextMayHaveBeenModified:!isFirstMount];
     }
   }
 
@@ -983,8 +1010,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _emitHtml = newViewProps.isOnChangeHtmlSet;
 
   [super updateProps:props oldProps:oldProps];
-  // run the changes callback
-  [self anyTextMayHaveBeenModified];
+
+  // if default value changed it will be fired in default value update
+  // if this is initial mount it will be called in didMoveToWindow
+  if (!defaultValueChanged && !isFirstMount) {
+    // run the changes callback
+    [self anyTextMayHaveBeenModified];
+  }
 
   // autofocus - needs to be done at the very end
   if (isFirstMount && newViewProps.autoFocus) {
@@ -1346,13 +1378,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)setValue:(NSString *)value {
-  NSString *initiallyProcessedHtml = [parser initiallyProcessHtml:value];
-  if (initiallyProcessedHtml == nullptr) {
+  if (value == nullptr) {
     // just plain text
     textView.text = value;
   } else {
     // we've got some seemingly proper html
-    [parser replaceWholeFromHtml:initiallyProcessedHtml];
+    [parser replaceWholeFromHtml:value notifyAnyTextMayHaveBeenModified:YES];
   }
 
   // set recentlyChangedRange and check for changes
@@ -1865,8 +1896,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)didMoveToWindow {
   [super didMoveToWindow];
-  // used to run all lifecycle callbacks
-  [self anyTextMayHaveBeenModified];
+  [self scheduleRelayoutIfNeeded];
 }
 
 // MARK: - UITextView delegate methods
@@ -1905,27 +1935,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   NSTextStorage *storage = textView.textStorage;
   NSUInteger length = storage.length;
 
-  if (length == 0) {
+  if (length == 0)
     return NO;
-  }
-  if (location >= length) {
-    location = length - 1;
-  }
-
-  id currentValue = [storage attribute:ReadOnlyParagraphKey
-                               atIndex:location
-                        effectiveRange:nil];
-  if (currentValue) {
-    return YES;
-  }
 
   if (location > 0) {
-    id previousValue = [storage attribute:ReadOnlyParagraphKey
-                                  atIndex:location - 1
-                           effectiveRange:nil];
-    if (previousValue) {
+    id left = [storage attribute:ReadOnlyParagraphKey
+                         atIndex:location - 1
+                  effectiveRange:nil];
+    if (left)
       return YES;
-    }
+  }
+
+  if (location < length) {
+    id right = [storage attribute:ReadOnlyParagraphKey
+                          atIndex:location
+                   effectiveRange:nil];
+    if (right)
+      return YES;
   }
 
   return NO;

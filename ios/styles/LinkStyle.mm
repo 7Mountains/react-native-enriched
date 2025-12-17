@@ -37,7 +37,8 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   return LinkAttributeName;
 }
 
-+ (NSDictionary *)getParametersFromValue:(id)value {
++ (NSDictionary<NSString *, NSString *> *_Nullable)getParametersFromValue:
+    (id)value {
   NSString *url = value;
   if (!url)
     return nil;
@@ -58,15 +59,55 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   // no-op for links
 }
 
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
+- (void)addAttributes:(NSRange)range {
   // no-op for links
+}
+
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (range.length == 0)
+    return;
+  NSString *href = attributes[@"href"];
+  if (href == nullptr || href.length == 0)
+    return;
+  UIColor *linkColor = [_input->config linkColor];
+
+  [attributedString addAttribute:NSForegroundColorAttributeName
+                           value:linkColor
+                           range:range];
+
+  [attributedString addAttribute:NSUnderlineColorAttributeName
+                           value:linkColor
+                           range:range];
+
+  [attributedString addAttribute:NSStrikethroughColorAttributeName
+                           value:linkColor
+                           range:range];
+
+  if ([_input->config linkDecorationLine] == DecorationUnderline) {
+    [attributedString addAttribute:NSUnderlineStyleAttributeName
+                             value:@(NSUnderlineStyleSingle)
+                             range:range];
+  }
+
+  NSString *subscrting =
+      [attributedString.string substringFromIndex:range.location];
+
+  NSAttributedStringKey attributeName = [subscrting isEqualToString:href]
+                                            ? AutomaticLinkAttributeName
+                                            : ManualLinkAttributeName;
+
+  [attributedString addAttribute:LinkAttributeName value:href range:range];
+  [attributedString addAttribute:attributeName value:href range:range];
 }
 
 - (void)addTypingAttributes {
   // no-op for links
 }
 
-// we have to make sure all links in the range get fully removed here
 - (void)removeAttributes:(NSRange)range {
   NSArray<StylePair *> *links = [self findAllOccurences:range];
   [_input->textView.textStorage beginEditing];
@@ -76,8 +117,6 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
     [_input->textView.textStorage removeAttribute:ManualLinkAttributeName
                                             range:linkRange];
     [_input->textView.textStorage removeAttribute:AutomaticLinkAttributeName
-                                            range:linkRange];
-    [_input->textView.textStorage removeAttribute:LinkAttributeName
                                             range:linkRange];
     [_input->textView.textStorage addAttribute:NSForegroundColorAttributeName
                                          value:[_input->config primaryColor]
@@ -378,8 +417,8 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 - (void)handleAutomaticLinks:(NSString *)word inRange:(NSRange)wordRange {
   InlineCodeStyle *inlineCodeStyle =
       [_input->stylesDict objectForKey:@([InlineCodeStyle getStyleType])];
-  MentionStyle *mentionStyle =
-      [_input->stylesDict objectForKey:@([MentionStyle getStyleType])];
+  MentionStyle *mentionStyle = (MentionStyle *)[_input->stylesDict
+      objectForKey:@([MentionStyle getStyleType])];
   CodeBlockStyle *codeBlockStyle =
       [_input->stylesDict objectForKey:@([CodeBlockStyle getStyleType])];
 

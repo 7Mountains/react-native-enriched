@@ -39,17 +39,26 @@
 - (void)applyStyle:(NSRange)range {
   BOOL isStylePresent = [self detectStyle:range];
   if (range.length >= 1) {
-    isStylePresent ? [self removeAttributes:range]
-                   : [self addAttributes:range withTypingAttr:YES];
+    isStylePresent ? [self removeAttributes:range] : [self addAttributes:range];
   } else {
     isStylePresent ? [self removeTypingAttributes] : [self addTypingAttributes];
   }
 }
 
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
-  [_input->textView.textStorage addAttribute:NSStrikethroughStyleAttributeName
-                                       value:@(NSUnderlineStyleSingle)
-                                       range:range];
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  [attributedString addAttribute:NSStrikethroughStyleAttributeName
+                           value:@(NSUnderlineStyleSingle)
+                           range:range];
+}
+
+- (void)addAttributes:(NSRange)range {
+  [self addAttributesInAttributedString:_input->textView.textStorage
+                                  range:range
+                             attributes:nullptr];
 }
 
 - (void)addTypingAttributes {

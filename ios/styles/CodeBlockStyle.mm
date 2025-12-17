@@ -47,16 +47,38 @@ static NSString *const CodeBlockMarker = @"codeblock";
 - (void)applyStyle:(NSRange)range {
   BOOL isStylePresent = [self detectStyle:range];
   if (range.length >= 1) {
-    isStylePresent ? [self removeAttributes:range]
-                   : [self addAttributes:range withTypingAttr:YES];
+    isStylePresent ? [self removeAttributes:range] : [self addAttributes:range];
   } else {
     isStylePresent ? [self removeTypingAttributes] : [self addTypingAttributes];
   }
 }
 
-- (void)addAttributes:(NSRange)range withTypingAttr:(BOOL)withTypingAttr {
+- (void)addAttributesInAttributedString:
+            (NSMutableAttributedString *)attributedString
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *>
+                                             *_Nullable)attributes {
+  if (range.length == 0)
+    return;
+
   NSTextList *codeBlockList =
       [[NSTextList alloc] initWithMarkerFormat:CodeBlockMarker options:0];
+
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  pStyle.textLists = @[ codeBlockList ];
+
+  NSDictionary *finalAttributes = @{
+    NSParagraphStyleAttributeName : pStyle,
+    NSForegroundColorAttributeName : _input->config.codeBlockFgColor,
+    NSFontAttributeName : _input->config.monospacedFont
+  };
+
+  [attributedString addAttributes:finalAttributes range:range];
+}
+
+- (void)addAttributes:(NSRange)range {
+  NSTextList *codeBlockList =
+      [[NSTextList alloc] initWithMarkerFormat:@"codeblock" options:0];
   NSArray *paragraphs =
       [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
                                                range:range];
@@ -94,7 +116,8 @@ static NSString *const CodeBlockMarker = @"codeblock";
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
+                      value == nil ? [NSMutableParagraphStyle new]
+                                   : [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[ codeBlockList ];
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
@@ -117,20 +140,18 @@ static NSString *const CodeBlockMarker = @"codeblock";
   }
 
   // also add typing attributes
-  if (withTypingAttr) {
-    NSMutableDictionary *typingAttrs =
-        [_input->textView.typingAttributes mutableCopy];
-    NSMutableParagraphStyle *pStyle =
-        [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
-    pStyle.textLists = @[ codeBlockList ];
-    typingAttrs[NSParagraphStyleAttributeName] = pStyle;
+  NSMutableDictionary *typingAttrs =
+      [_input->textView.typingAttributes mutableCopy];
+  NSMutableParagraphStyle *pStyle =
+      [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
+  pStyle.textLists = @[ codeBlockList ];
+  typingAttrs[NSParagraphStyleAttributeName] = pStyle;
 
-    _input->textView.typingAttributes = typingAttrs;
-  }
+  _input->textView.typingAttributes = typingAttrs;
 }
 
 - (void)addTypingAttributes {
-  [self addAttributes:_input->textView.selectedRange withTypingAttr:YES];
+  [self addAttributes:_input->textView.selectedRange];
 }
 
 - (void)removeAttributes:(NSRange)range {
