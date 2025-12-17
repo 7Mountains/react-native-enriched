@@ -1,24 +1,13 @@
 #import "EnrichedHTMLToAttributedStringParser.h"
+#import "EnrichedHTMLToAttributedStringParserUtils.h"
+#import "StylesStack.h"
 #import <libxml/HTMLparser.h>
 #import <libxml/tree.h>
 
-#pragma mark - ActiveStyle
-
-@interface ActiveStyle : NSObject
-@property(nonatomic, strong) id<BaseStyleProtocol> style;
-@property(nonatomic, strong) NSDictionary<NSString *, NSString *> *attributes;
-@end
-
-@implementation ActiveStyle
-@end
-
-#pragma mark - Parser
 @implementation EnrichedHTMLToAttributedStringParser {
   NSMutableAttributedString *_result;
-  NSMutableArray<ActiveStyle *> *_activeStyles;
+  StylesStack *_styleStack;
 }
-
-#pragma mark - Init
 
 - (instancetype)initWithStyles:
                     (NSDictionary<NSNumber *, id<BaseStyleProtocol>> *)styles
@@ -28,7 +17,7 @@
     return nil;
 
   _defaultTypingAttributes = defaultAttributes ?: @{};
-  _activeStyles = [NSMutableArray new];
+  _styleStack = [StylesStack new];
 
   NSMutableDictionary *tags = [NSMutableDictionary dictionary];
 
@@ -39,11 +28,9 @@
     tags[tag] = style;
   }];
 
-  _tagRegistry = tags.copy;
+  _tagsRegistry = tags.copy;
   return self;
 }
-
-#pragma mark - Public API
 
 - (NSMutableAttributedString *)parseToAttributedString:(NSString *)html {
   _result = [[NSMutableAttributedString alloc]
@@ -52,29 +39,28 @@
   [_result beginEditing];
   const char *cHtml = html.UTF8String ?: "";
 
-  htmlDocPtr doc = htmlReadMemory(cHtml, (int)strlen(cHtml), NULL, "UTF-8",
-                                  HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING |
-                                      HTML_PARSE_RECOVER);
+  htmlDocPtr htmlDocumentPtr = htmlReadMemory(
+      cHtml, (int)strlen(cHtml), NULL, "UTF-8",
+      HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_RECOVER);
 
-  if (!doc)
+  if (!htmlDocumentPtr)
     return _result;
 
-  xmlNodePtr root = xmlDocGetRootElement(doc);
+  xmlNodePtr root = xmlDocGetRootElement(htmlDocumentPtr);
   if (root) {
     [self traverseChildren:root];
   }
 
-  xmlFreeDoc(doc);
+  xmlFreeDoc(htmlDocumentPtr);
   [_result endEditing];
   return _result;
 }
 
-#pragma mark - Traversal
-
+// MARK: - Traversal
 - (void)traverseChildren:(xmlNodePtr)parent {
   for (xmlNodePtr cur = parent->children; cur; cur = cur->next) {
 
-    xmlNodePtr nextRenderable = [self nextRenderableSibling:cur];
+    xmlNodePtr nextRenderable = nextRenderableSibling(cur);
     BOOL isLastRenderable = (nextRenderable == NULL);
 
     [self traverseNode:cur isLastRenderable:isLastRenderable];
@@ -83,7 +69,7 @@
 
 - (void)traverseNode:(xmlNodePtr)cur isLastRenderable:(BOOL)isLastRenderable {
   if (cur->type == XML_TEXT_NODE) {
-    [self handleTextNode:cur];
+    [self traverseTextNode:cur];
     return;
   }
 
@@ -96,78 +82,39 @@
                             .lowercaseString
                       : @"";
 
-  NSString *parentTag =
-      (cur->parent && cur->parent->name)
-          ? [NSString stringWithUTF8String:(const char *)cur->parent->name]
-                .lowercaseString
-          : @"";
+  id<BaseStyleProtocol> style = self.tagsRegistry[tag];
+  NSDictionary *attributes = HTMLAttributesFromNode(cur);
 
-  id<BaseStyleProtocol> style = self.tagRegistry[tag];
-  BOOL isSelfClosing = style && [[style class] isSelfClosing];
-  NSDictionary *attributes = [self attributesFromNode:cur];
+  if (style && [[style class] isSelfClosing]) {
+    [self traverseSelfClosing:style attributes:attributes tag:tag];
+    return;
+  }
 
   if (style) {
-    if (isSelfClosing) {
-      [self emitSelfClosing:style attributes:attributes tag:tag];
-      return;
-    } else {
-      [self pushStyle:style attributes:attributes];
-    }
+    [_styleStack pushStyle:style attributes:attributes];
   }
 
   if (cur->children) {
     [self traverseChildren:cur];
   }
 
-  if (style && !isSelfClosing) {
-    [self popStyle:style];
+  if (style) {
+    [_styleStack popStyle:style];
   }
 
-  if ([self isTopLevelNode:cur] && isLastRenderable) {
+  if (isTopLevelNode(cur) && isLastRenderable) {
     return;
   }
 
-  if ([self isBlockTag:tag] &&
-      ![self isLastParagraphInBlockContext:cur
-                                       tag:tag
-                                 parentTag:parentTag
-                                    isLast:isLastRenderable]) {
+  if (isBlockTag(tag) &&
+      !HTMLIsLastParagraphInBlockContext(cur, cur->name,
+                                         cur->parent ? cur->parent->name : NULL,
+                                         isLastRenderable)) {
     [self appendText:@"\n"];
   }
 }
 
-- (NSString *)collapseHTMLWhitespace:(NSString *)text {
-  if (text.length == 0)
-    return text;
-
-  NSMutableString *out = [NSMutableString stringWithCapacity:text.length];
-
-  BOOL lastWasWhitespace = NO;
-
-  NSUInteger len = text.length;
-  for (NSUInteger i = 0; i < len; i++) {
-    unichar c = [text characterAtIndex:i];
-
-    BOOL isWhitespace = (c == ' ' || c == '\n' || c == '\t' || c == '\r' ||
-                         c == '\f' || c == 0x00A0);
-
-    if (isWhitespace) {
-      if (!lastWasWhitespace) {
-        [out appendString:@" "];
-        lastWasWhitespace = YES;
-      }
-    } else {
-      [out appendFormat:@"%C", c];
-      lastWasWhitespace = NO;
-    }
-  }
-
-  return out;
-}
-
-#pragma mark - Text
-
-- (void)handleTextNode:(xmlNodePtr)node {
+- (void)traverseTextNode:(xmlNodePtr)node {
   if (!node->content)
     return;
 
@@ -175,58 +122,26 @@
   if (!text)
     return;
 
-  NSString *collapsed = [self collapseHTMLWhitespace:text];
+  // Collapse whitespace
+  NSString *collapsed = collapseWhiteSpace(text);
   if (collapsed.length == 0)
     return;
 
-  if (_result.length == 0) {
-    NSCharacterSet *ws = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-    BOOL onlyWhitespace = YES;
+  // Skip leading whitespace-only content
+  if (_result.length == 0 && isWhiteSpaceOnly(collapsed))
+    return;
 
-    for (NSUInteger i = 0; i < collapsed.length; i++) {
-      if (![ws characterIsMember:[collapsed characterAtIndex:i]]) {
-        onlyWhitespace = NO;
-        break;
-      }
-    }
-
-    if (onlyWhitespace) {
-      return;
-    }
-  }
-
-  if (_result.length > 0) {
-    unichar lastChar = [[_result string] characterAtIndex:_result.length - 1];
-    if ([[NSCharacterSet whitespaceAndNewlineCharacterSet]
-            characterIsMember:lastChar] &&
-        [collapsed hasPrefix:@" "]) {
-      collapsed = [collapsed substringFromIndex:1];
-    }
+  // Trim leading space if needed
+  if ([self shouldTrimLeadingSpaceForText:collapsed]) {
+    collapsed = [collapsed substringFromIndex:1];
   }
 
   [self appendText:collapsed];
 }
 
-#pragma mark - Style Stack
-
-- (void)pushStyle:(id<BaseStyleProtocol>)style
-       attributes:(NSDictionary *)attributes {
-  ActiveStyle *a = [ActiveStyle new];
-  a.style = style;
-  a.attributes = attributes ?: @{};
-  [_activeStyles addObject:a];
+- (void)appendEmptyLine {
+  [self appendText:@"\n"];
 }
-
-- (void)popStyle:(id<BaseStyleProtocol>)style {
-  for (NSInteger i = _activeStyles.count - 1; i >= 0; i--) {
-    if (_activeStyles[i].style == style) {
-      [_activeStyles removeObjectAtIndex:i];
-      return;
-    }
-  }
-}
-
-#pragma mark - Output
 
 - (void)appendText:(NSString *)text {
   NSUInteger start = _result.length;
@@ -237,18 +152,14 @@
 
   NSRange range = NSMakeRange(start, text.length);
 
-  for (ActiveStyle *a in _activeStyles) {
-    [a.style addAttributesInAttributedString:_result
-                                       range:range
-                                  attributes:a.attributes];
-  }
+  [_styleStack applyStylesToAttributedString:_result range:range];
 }
 
-- (void)emitSelfClosing:(id<BaseStyleProtocol>)style
-             attributes:(NSDictionary *)attributes
-                    tag:(NSString *)tag {
+- (void)traverseSelfClosing:(id<BaseStyleProtocol>)style
+                 attributes:(NSDictionary *)attributes
+                        tag:(NSString *)tag {
   if ([tag isEqualToString:@"br"]) {
-    [self appendText:@"\n"];
+    [self appendEmptyLine];
     return;
   }
   BOOL isParagraph = [style.class isParagraphStyle];
@@ -256,7 +167,7 @@
   if (isParagraph && _result.length > 0) {
     unichar last = [[_result string] characterAtIndex:_result.length - 1];
     if (last != '\n') {
-      [self appendText:@"\n"];
+      [self appendEmptyLine];
     }
   }
 
@@ -270,19 +181,11 @@
 
   NSRange r = NSMakeRange(start, 1);
 
-  for (ActiveStyle *activeStyle in _activeStyles) {
-    [activeStyle.style addAttributesInAttributedString:_result
-                                                 range:r
-                                            attributes:activeStyle.attributes];
-  }
-
   [style addAttributesInAttributedString:_result range:r attributes:attributes];
   if (isParagraph) {
-    [self appendText:@"\n"];
+    [self appendEmptyLine];
   }
 }
-
-#pragma mark - Helpers
 
 - (xmlNodePtr)nextRenderableSibling:(xmlNodePtr)node {
   for (xmlNodePtr next = node->next; next; next = next->next) {
@@ -303,71 +206,17 @@
   return NULL;
 }
 
-- (NSDictionary *)attributesFromNode:(xmlNodePtr)node {
-  NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-
-  for (xmlAttrPtr attr = node->properties; attr; attr = attr->next) {
-    if (!attr->children || !attr->children->content)
-      continue;
-
-    NSString *key = [NSString stringWithUTF8String:(const char *)attr->name];
-    NSString *val =
-        [NSString stringWithUTF8String:(const char *)attr->children->content];
-
-    if (key && val)
-      dict[key] = val;
-  }
-
-  return dict;
-}
-
-- (BOOL)isBlockTag:(NSString *)tag {
-  static NSSet *blockTags;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    blockTags = [NSSet setWithArray:@[
-      @"p", @"div", @"ul", @"ol", @"li", @"h1", @"h2", @"h3", @"h4", @"h5",
-      @"h6", @"blockquote", @"checklist", @"codeblock", @"hr"
-    ]];
-  });
-
-  return [blockTags containsObject:tag];
-}
-
-- (BOOL)isLastParagraphInBlockContext:(xmlNodePtr)node
-                                  tag:(NSString *)tag
-                            parentTag:(NSString *)parentTag
-                               isLast:(BOOL)isLast {
-  if (!isLast)
+- (BOOL)shouldTrimLeadingSpaceForText:(NSString *)text {
+  if (_result.length == 0)
     return NO;
 
-  if ([tag isEqualToString:@"p"]) {
-    return [parentTag isEqualToString:@"blockquote"] ||
-           [parentTag isEqualToString:@"codeblock"];
-  }
-
-  if ([tag isEqualToString:@"li"]) {
-    return
-        [parentTag isEqualToString:@"ol"] || [parentTag isEqualToString:@"ul"];
-  }
-
-  return NO;
-}
-
-- (BOOL)isTopLevelNode:(xmlNodePtr)node {
-  if (!node || !node->parent)
+  if (![text hasPrefix:@" "])
     return NO;
 
-  if (node->parent->type == XML_DOCUMENT_NODE)
-    return YES;
+  unichar last = [[_result string] characterAtIndex:_result.length - 1];
 
-  NSString *parent =
-      node->parent->name
-          ? [NSString stringWithUTF8String:(const char *)node->parent->name]
-                .lowercaseString
-          : @"";
-
-  return [parent isEqualToString:@"html"] || [parent isEqualToString:@"body"];
+  return [[NSCharacterSet whitespaceAndNewlineCharacterSet]
+      characterIsMember:last];
 }
 
 @end
