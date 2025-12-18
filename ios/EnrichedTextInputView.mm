@@ -1,4 +1,5 @@
 #import "EnrichedTextInputView.h"
+#import "BaseLabelAttachment.h"
 #import "CheckboxHitTestUtils.h"
 #import "ColorExtension.h"
 #import "CoreText/CoreText.h"
@@ -9,6 +10,7 @@
 #import "RCTImagePrimitivesConversions.h"
 #import "StringExtension.h"
 #import "StyleHeaders.h"
+#import "TextBlockTapGestureRecognizer.h"
 #import "UIView+React.h"
 #import "WordsUtils.h"
 #import "ZeroWidthSpaceUtils.h"
@@ -19,9 +21,6 @@
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/Props.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/RCTComponentViewHelpers.h>
 #import <react/utils/ManagedObjectWrapper.h>
-#import "BaseLabelAttachment.h"
-#import "TextBlockTapGestureRecognizer.h"
-#import "CheckboxHitTestUtils.h"
 
 using namespace facebook::react;
 
@@ -360,8 +359,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   textView.input = self;
   textView.layoutManager.input = self;
   TextBlockTapGestureRecognizer *blockTap =
-      [[TextBlockTapGestureRecognizer alloc] initWithTarget:self
-                                                      action:@selector(onTextBlockTap:)];
+      [[TextBlockTapGestureRecognizer alloc]
+          initWithTarget:self
+                  action:@selector(onTextBlockTap:)];
 
   blockTap.textView = textView;
   blockTap.input = self;
@@ -1116,16 +1116,19 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   NSRange detectedMentionRange = NSMakeRange(0, 0);
   NSRange selectionRange = textView.selectedRange;
   NSLog(@"current text:@", textView.textStorage.string);
-  [textView.textStorage enumerateAttributesInRange:NSMakeRange(0, textView.textStorage.length)
-                              options:0
-                           usingBlock:^(NSDictionary<NSAttributedStringKey, id> *attrs,
-                                        NSRange range,
-                                        BOOL *stop) {
-    NSLog(@"[ITL] Range %@ -> Attributes: %@",
-          NSStringFromRange(range),
-          attrs);
-    NSLog(@"Text : %@", [textView.textStorage attributedSubstringFromRange:range].string);
-  }];
+  [textView.textStorage
+      enumerateAttributesInRange:NSMakeRange(0, textView.textStorage.length)
+                         options:0
+                      usingBlock:^(
+                          NSDictionary<NSAttributedStringKey, id> *attrs,
+                          NSRange range, BOOL *stop) {
+                        NSLog(@"[ITL] Range %@ -> Attributes: %@",
+                              NSStringFromRange(range), attrs);
+                        NSLog(@"Text : %@",
+                              [textView.textStorage
+                                  attributedSubstringFromRange:range]
+                                  .string);
+                      }];
 
   for (NSNumber *type in stylesDict) {
     id<BaseStyleProtocol> style = stylesDict[type];
@@ -1986,6 +1989,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       [checkBoxStyle handleBackspaceInRange:range replacementText:text] ||
       [checkBoxStyle handleNewlinesInRange:range replacementText:text] ||
       [bqStyle handleBackspaceInRange:range replacementText:text] ||
+      [bqStyle handleNewlinesInRange:range replacementText:text] ||
       [cbStyle handleBackspaceInRange:range replacementText:text] ||
       [linkStyle handleLeadingLinkReplacement:range replacementText:text] ||
       [mentionStyle handleLeadingMentionReplacement:range
@@ -2008,8 +2012,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       // the backspace action to change its state, only then do we proceed to
       // physically delete the newline and merge paragraphs.
       [ParagraphAttributesUtils handleParagraphStylesMergeOnBackspace:range
-                                                    replacementText:text
-                                                              input:self]) {
+                                                      replacementText:text
+                                                                input:self]) {
     [self anyTextMayHaveBeenModified];
     return NO;
   }
@@ -2081,35 +2085,35 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)onTextBlockTap:(TextBlockTapGestureRecognizer *)gr {
-  if (gr.state != UIGestureRecognizerStateEnded) return;
+  if (gr.state != UIGestureRecognizerStateEnded)
+    return;
   if (![self->textView isFirstResponder]) {
-      [self->textView becomeFirstResponder];
-    }
+    [self->textView becomeFirstResponder];
+  }
 
   switch (gr.tapKind) {
 
-    case TextBlockTapKindCheckbox: {
-      CheckBoxStyle *checkboxStyle =
-          (CheckBoxStyle *)stylesDict[@([CheckBoxStyle getStyleType])];
+  case TextBlockTapKindCheckbox: {
+    CheckBoxStyle *checkboxStyle =
+        (CheckBoxStyle *)stylesDict[@([CheckBoxStyle getStyleType])];
 
-      if (checkboxStyle) {
-        [checkboxStyle toggleCheckedAt:(NSUInteger)gr.characterIndex];
-        [self anyTextMayHaveBeenModified];
-      }
-      break;
+    if (checkboxStyle) {
+      [checkboxStyle toggleCheckedAt:(NSUInteger)gr.characterIndex];
+      [self anyTextMayHaveBeenModified];
     }
+    break;
+  }
 
-    case TextBlockTapKindAttachment: {
-      NSInteger newLocation = gr.characterIndex + 1;
-      newLocation = MIN(newLocation, self->textView.textStorage.length);
-      self->textView.selectedRange = NSMakeRange(newLocation, 0);
-      break;
-    }
+  case TextBlockTapKindAttachment: {
+    NSInteger newLocation = gr.characterIndex + 1;
+    newLocation = MIN(newLocation, self->textView.textStorage.length);
+    self->textView.selectedRange = NSMakeRange(newLocation, 0);
+    break;
+  }
 
-    default:
-      break;
+  default:
+    break;
   }
 }
-
 
 @end

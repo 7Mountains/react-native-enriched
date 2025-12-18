@@ -5,7 +5,7 @@
 @property(nonatomic) UIImage *contentImage;
 @property(nonatomic) BOOL isLoading;
 @property NSDictionary<NSString *, NSString *> *headers;
-@property (nonatomic, strong) NSString* fallbackUri;
+@property(nonatomic, strong) NSString *fallbackUri;
 
 // layout
 @property(nonatomic) CGFloat imageSpacing;

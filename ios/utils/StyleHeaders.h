@@ -107,6 +107,7 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 @interface BlockQuoteStyle : NSObject <BaseStyleProtocol>
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (void)manageBlockquoteColor;
+- (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 @end
 
 @interface CodeBlockStyle : NSObject <BaseStyleProtocol>

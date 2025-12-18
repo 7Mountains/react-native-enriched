@@ -207,44 +207,95 @@ static void const *kInputKey = &kInputKey;
 - (void)drawBlockQuotes:(EnrichedTextInputView *)typedInput
                  origin:(CGPoint)origin
        visibleCharRange:(NSRange)visibleCharRange {
+
   BlockQuoteStyle *bqStyle =
       typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
-  if (bqStyle == nullptr) {
+  if (!bqStyle)
     return;
-  }
 
-  // it isn't the most performant but we have to check for all the blockquotes
-  // each time and redraw them
-  NSArray *allBlockquotes = [bqStyle findAllOccurences:visibleCharRange];
+  NSString *text = typedInput->textView.textStorage.string;
 
-  for (StylePair *pair in allBlockquotes) {
-    NSRange paragraphRange = [typedInput->textView.textStorage.string
-        paragraphRangeForRange:[pair.rangeValue rangeValue]];
-    NSRange paragraphGlyphRange =
-        [self glyphRangeForCharacterRange:paragraphRange
-                     actualCharacterRange:nullptr];
-    [self
-        enumerateLineFragmentsForGlyphRange:paragraphGlyphRange
-                                 usingBlock:^(
-                                     CGRect rect, CGRect usedRect,
-                                     NSTextContainer *_Nonnull textContainer,
-                                     NSRange glyphRange, BOOL *_Nonnull stop) {
-                                   CGFloat paddingLeft = origin.x;
-                                   CGFloat paddingTop = origin.y;
-                                   CGFloat x = paddingLeft;
-                                   CGFloat y = paddingTop + rect.origin.y;
-                                   CGFloat width =
-                                       [typedInput
-                                               ->config blockquoteBorderWidth];
-                                   CGFloat height = rect.size.height;
+  [text
+      enumerateSubstringsInRange:visibleCharRange
+                         options:NSStringEnumerationByParagraphs
+                      usingBlock:^(NSString *substring, NSRange paragraphRange,
+                                   NSRange enclosingRange, BOOL *stop) {
+                        if (paragraphRange.length == 0)
+                          return;
 
-                                   CGRect lineRect =
-                                       CGRectMake(x, y, width, height);
-                                   [[typedInput->config blockquoteBorderColor]
-                                       setFill];
-                                   UIRectFill(lineRect);
-                                 }];
-  }
+                        NSUInteger firstChar = paragraphRange.location;
+                        NSDictionary *attrs = [typedInput->textView.textStorage
+                            attributesAtIndex:firstChar
+                               effectiveRange:nil];
+
+                        id value = attrs[[BlockQuoteStyle attributeKey]];
+                        if (![bqStyle styleCondition:value
+                                               range:NSMakeRange(firstChar, 1)])
+                          return;
+
+                        NSRange glyphRange =
+                            [self glyphRangeForCharacterRange:paragraphRange
+                                         actualCharacterRange:nil];
+
+                        NSDictionary *drawAttrs = @{
+                          NSFontAttributeName : typedInput->textView.font,
+                          NSForegroundColorAttributeName :
+                              typedInput->config.blockquoteBorderColor
+                        };
+                        __block BOOL isFirstLine = YES;
+                        [self
+                            enumerateLineFragmentsForGlyphRange:glyphRange
+                                                     usingBlock:^(
+                                                         CGRect rect,
+                                                         CGRect usedRect,
+                                                         NSTextContainer
+                                                             *container,
+                                                         NSRange lineGlyphRange,
+                                                         BOOL *stop) {
+                                                       CGFloat y =
+                                                           origin.y +
+                                                           usedRect.origin.y;
+                                                       if (isFirstLine) {
+                                                         NSString *openQuote =
+                                                             @"“";
+                                                         CGSize qSize = [openQuote
+                                                             sizeWithAttributes:
+                                                                 drawAttrs];
+                                                         CGPoint openPoint =
+                                                             CGPointMake(
+                                                                 usedRect.origin
+                                                                         .x -
+                                                                     qSize
+                                                                         .width -
+                                                                     6,
+                                                                 y);
+                                                         [openQuote
+                                                                drawAtPoint:
+                                                                    openPoint
+                                                             withAttributes:
+                                                                 drawAttrs];
+                                                         isFirstLine = NO;
+                                                       }
+                                                       if (NSMaxRange(
+                                                               lineGlyphRange) >=
+                                                           NSMaxRange(
+                                                               glyphRange)) {
+                                                         NSString *closeQuote =
+                                                             @"”";
+                                                         CGPoint closePoint =
+                                                             CGPointMake(
+                                                                 CGRectGetMaxX(
+                                                                     usedRect) +
+                                                                     6,
+                                                                 y);
+                                                         [closeQuote
+                                                                drawAtPoint:
+                                                                    closePoint
+                                                             withAttributes:
+                                                                 drawAttrs];
+                                                       }
+                                                     }];
+                      }];
 }
 
 - (void)drawLists:(EnrichedTextInputView *)typedInput
