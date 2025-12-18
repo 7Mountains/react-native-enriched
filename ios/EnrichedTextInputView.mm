@@ -1037,8 +1037,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [layoutManager ensureLayoutForTextContainer:container];
 
   CGRect usedRect = [layoutManager usedRectForTextContainer:container];
-  textView.contentSize = CGSizeMake(maxWidth, ceil(usedRect.size.height));
-  return CGSizeMake(maxWidth, ceil(usedRect.size.height));
+  CGSize contentSize = CGSizeMake(maxWidth, ceil(usedRect.size.height));
+  textView.contentSize = contentSize;
+  return contentSize;
 }
 
 // make sure the newest state is kept in _state property
@@ -1802,11 +1803,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [self tryUpdatingHeight];
   // update active styles as well
   [self tryUpdatingActiveStyles];
-}
-
-- (void)didMoveToWindow {
-  [super didMoveToWindow];
-  [self layoutIfNeeded];
 }
 
 // MARK: - UITextView delegate methods
