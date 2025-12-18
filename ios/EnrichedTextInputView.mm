@@ -1037,7 +1037,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [layoutManager ensureLayoutForTextContainer:container];
 
   CGRect usedRect = [layoutManager usedRectForTextContainer:container];
-
+  textView.contentSize = CGSizeMake(maxWidth, ceil(usedRect.size.height));
   return CGSizeMake(maxWidth, ceil(usedRect.size.height));
 }
 
