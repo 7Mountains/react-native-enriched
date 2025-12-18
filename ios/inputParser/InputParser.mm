@@ -41,7 +41,7 @@
       [_input->textView.textStorage attributedSubstringFromRange:range];
 
   return [_attributedStringHTMLSerializer buildHtmlFromAttributedString:sub
-                                                                pretify:YES];
+                                                                pretify:NO];
 }
 
 - (void)replaceWholeFromHtml:(NSString *)html

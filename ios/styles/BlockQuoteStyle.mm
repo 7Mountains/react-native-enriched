@@ -23,7 +23,7 @@
 }
 
 + (const char *)subTagName {
-  return "p";
+  return nil;
 }
 
 + (BOOL)isSelfClosing {
@@ -257,6 +257,25 @@
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];
                }];
+}
+
+// used to make sure blockquote ends on the next new line insertion
+- (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text {
+  // in a heading and a new text ends with a newline
+  if ([self detectStyle:_input->textView.selectedRange] && text.length > 0 &&
+      [[NSCharacterSet newlineCharacterSet]
+          characterIsMember:[text characterAtIndex:text.length - 1]]) {
+    // do the replacement manually
+    [TextInsertionUtils replaceText:text
+                                 at:range
+               additionalAttributes:nullptr
+                              input:_input
+                      withSelection:YES];
+    // remove the attribtues at the new selection
+    [self removeAttributes:_input->textView.selectedRange];
+    return YES;
+  }
+  return NO;
 }
 
 // general checkup correcting blockquote color
