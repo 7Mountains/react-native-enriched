@@ -8,13 +8,17 @@
   NSTextAttachment *_attachment;
 }
 
-- (TextBlockTapKind)tapKind { return _tapKind; }
-- (NSInteger)characterIndex { return _characterIndex; }
-- (NSTextAttachment *)attachment { return _attachment; }
+- (TextBlockTapKind)tapKind {
+  return _tapKind;
+}
+- (NSInteger)characterIndex {
+  return _characterIndex;
+}
+- (NSTextAttachment *)attachment {
+  return _attachment;
+}
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches
-           withEvent:(UIEvent *)event
-{
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
   _tapKind = TextBlockTapKindNone;
   _characterIndex = NSNotFound;
   _attachment = nil;
@@ -25,10 +29,9 @@
   }
 
   UITouch *touch = touches.anyObject;
-  CGPoint point = [touch locationInView:self.textView];  
+  CGPoint point = [touch locationInView:self.textView];
   NSInteger checkboxIndex =
-      [CheckboxHitTestUtils hitTestCheckboxAtPoint:point
-                                           inInput:self.input];
+      [CheckboxHitTestUtils hitTestCheckboxAtPoint:point inInput:self.input];
 
   if (checkboxIndex >= 0) {
     _tapKind = TextBlockTapKindCheckbox;
@@ -40,17 +43,16 @@
   NSLayoutManager *lm = self.textView.layoutManager;
   NSTextContainer *tc = self.textView.textContainer;
 
-  NSUInteger glyphIndex =
-      [lm glyphIndexForPoint:point
-              inTextContainer:tc
-       fractionOfDistanceThroughGlyph:nil];
+  NSUInteger glyphIndex = [lm glyphIndexForPoint:point
+                                 inTextContainer:tc
+                  fractionOfDistanceThroughGlyph:nil];
 
   if (glyphIndex != NSNotFound) {
     NSUInteger charIndex = [lm characterIndexForGlyphAtIndex:glyphIndex];
 
     if (charIndex < self.textView.textStorage.length &&
-        [self.textView.textStorage.string characterAtIndex:charIndex] ==
-            NSAttachmentCharacter) {
+        [self.textView.textStorage.string
+            characterAtIndex:charIndex] == NSAttachmentCharacter) {
 
       NSTextAttachment *att =
           [self.textView.textStorage attribute:NSAttachmentAttributeName
