@@ -1,5 +1,5 @@
-#import <UIKit/UIKit.h>
 #import "MediaAttachment.h"
+#import <UIKit/UIKit.h>
 
 @interface BaseLabelAttachment : MediaAttachment
 
