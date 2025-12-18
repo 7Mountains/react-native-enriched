@@ -63,9 +63,8 @@
   [textView.layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex
                                            effectiveRange:&lineGlyphRange];
 
-  CGRect checkboxRect =
-      [self checkboxRectAtGlyphIndex:lineGlyphRange.location
-                             inInput:input];
+  CGRect checkboxRect = [self checkboxRectAtGlyphIndex:lineGlyphRange.location
+                                               inInput:input];
 
   if (CGRectIsNull(checkboxRect)) {
     return -1;
@@ -78,6 +77,5 @@
   return [textView.layoutManager
       characterIndexForGlyphAtIndex:lineGlyphRange.location];
 }
-
 
 @end

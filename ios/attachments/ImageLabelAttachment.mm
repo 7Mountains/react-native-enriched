@@ -1,6 +1,6 @@
 #import "ImageLabelAttachment.h"
-#import "ImageLayoutUtils.h"
 #import "EnrichedImageLoader.h"
+#import "ImageLayoutUtils.h"
 
 @implementation ImageLabelAttachment
 
@@ -170,27 +170,27 @@
   return path;
 }
 
--(void)loadAsync {
+- (void)loadAsync {
   dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
     NSURL *url = [NSURL URLWithString:self.uri];
     NSURL *fallbackUrl = [NSURL URLWithString:self.fallbackUri];
     if (self->_headers.count == 0) {
       [[EnrichedImageLoader shared]
-       loadImage:url
-       completion:^(UIImage *image) {
-        self->_contentImage = image ?: [self loadFallbackImage:fallbackUrl];
-        self.isLoading = NO;
-        [self notifyUpdate];
-      }];
+           loadImage:url
+          completion:^(UIImage *image) {
+            self->_contentImage = image ?: [self loadFallbackImage:fallbackUrl];
+            self.isLoading = NO;
+            [self notifyUpdate];
+          }];
     } else {
       [[EnrichedImageLoader shared]
-       loadImage:url
-       headers:self->_headers
-       completion:^(UIImage *image) {
-        self->_contentImage = image ?: [self loadFallbackImage:fallbackUrl];
-        self.isLoading = NO;
-        [self notifyUpdate];
-      }];
+           loadImage:url
+             headers:self->_headers
+          completion:^(UIImage *image) {
+            self->_contentImage = image ?: [self loadFallbackImage:fallbackUrl];
+            self.isLoading = NO;
+            [self notifyUpdate];
+          }];
     }
   });
 }

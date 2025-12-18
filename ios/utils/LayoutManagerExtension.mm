@@ -229,20 +229,41 @@ static void const *kInputKey = &kInputKey;
                                      CGRect rect, CGRect usedRect,
                                      NSTextContainer *_Nonnull textContainer,
                                      NSRange glyphRange, BOOL *_Nonnull stop) {
-                                   CGFloat paddingLeft = origin.x;
-                                   CGFloat paddingTop = origin.y;
-                                   CGFloat x = paddingLeft;
-                                   CGFloat y = paddingTop + rect.origin.y;
-                                   CGFloat width =
-                                       [typedInput
-                                               ->config blockquoteBorderWidth];
-                                   CGFloat height = rect.size.height;
+                                   BOOL isFirstLine =
+                                       (glyphRange.location ==
+                                        paragraphGlyphRange.location);
+                                   BOOL isLastLine =
+                                       (NSMaxRange(glyphRange) >=
+                                        NSMaxRange(paragraphGlyphRange));
 
-                                   CGRect lineRect =
-                                       CGRectMake(x, y, width, height);
-                                   [[typedInput->config blockquoteBorderColor]
-                                       setFill];
-                                   UIRectFill(lineRect);
+                                   NSDictionary *attrs = @{
+                                     NSFontAttributeName :
+                                         typedInput->textView.font,
+                                     NSForegroundColorAttributeName : typedInput
+                                         ->config.blockquoteBorderColor
+                                   };
+
+                                   CGFloat y = origin.y + usedRect.origin.y;
+
+                                   if (isFirstLine) {
+                                     NSString *openQuote = @"“";
+                                     CGSize size =
+                                         [openQuote sizeWithAttributes:attrs];
+                                     CGPoint p = CGPointMake(
+                                         usedRect.origin.x - size.width - 6, y);
+                                     [openQuote drawAtPoint:p
+                                             withAttributes:attrs];
+                                   }
+
+                                   if (isLastLine) {
+                                     NSString *closeQuote = @"”";
+                                     CGSize size =
+                                         [closeQuote sizeWithAttributes:attrs];
+                                     CGPoint p = CGPointMake(
+                                         CGRectGetMaxX(usedRect) + 6, y);
+                                     [closeQuote drawAtPoint:p
+                                              withAttributes:attrs];
+                                   }
                                  }];
   }
 }
