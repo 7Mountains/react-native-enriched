@@ -1,9 +1,7 @@
 #import "EnrichedTextInputView.h"
 #import "CheckboxHitTestUtils.h"
 #import "ColorExtension.h"
-#import "ContentHitTestUtils.h"
 #import "CoreText/CoreText.h"
-#import "DividerHitTestUtils.h"
 #import "EnrichedImageLoader.h"
 #import "LayoutManagerExtension.h"
 #import "ParagraphAttributesUtils.h"
@@ -21,6 +19,9 @@
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/Props.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/RCTComponentViewHelpers.h>
 #import <react/utils/ManagedObjectWrapper.h>
+#import "BaseLabelAttachment.h"
+#import "TextBlockTapGestureRecognizer.h"
+#import "CheckboxHitTestUtils.h"
 
 using namespace facebook::react;
 
@@ -358,17 +359,20 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   textView.delegate = self;
   textView.input = self;
   textView.layoutManager.input = self;
-  tapRecognizer = [[UITapGestureRecognizer alloc] init];
-  tapRecognizer.numberOfTapsRequired = 1;
-  tapRecognizer.cancelsTouchesInView = YES;
-  [tapRecognizer addTarget:self action:@selector(handleTap:)];
-  [self addGestureRecognizer:tapRecognizer];
-  for (UIDragInteraction *interaction in textView.interactions) {
-    if ([interaction isKindOfClass:[UIDragInteraction class]] ||
-        [interaction isKindOfClass:[UIDropInteraction class]]) {
-      [textView removeInteraction:interaction];
-    }
+  TextBlockTapGestureRecognizer *blockTap =
+      [[TextBlockTapGestureRecognizer alloc] initWithTarget:self
+                                                      action:@selector(onTextBlockTap:)];
+
+  blockTap.textView = textView;
+  blockTap.input = self;
+  blockTap.cancelsTouchesInView = YES;
+  blockTap.delaysTouchesBegan = YES;
+  blockTap.delaysTouchesEnded = YES;
+
+  for (UIGestureRecognizer *gr in textView.gestureRecognizers) {
+    [gr requireGestureRecognizerToFail:blockTap];
   }
+  [textView addGestureRecognizer:blockTap];
 }
 
 - (void)setupPlaceholderLabel {
@@ -1112,11 +1116,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // data for onMentionDetected event
   MentionParams *detectedMentionParams;
   NSRange detectedMentionRange = NSMakeRange(0, 0);
+  NSRange selectionRange = textView.selectedRange;
+  NSLog(@"current text:@", textView.textStorage.string);
+  [textView.textStorage enumerateAttributesInRange:NSMakeRange(0, textView.textStorage.length)
+                              options:0
+                           usingBlock:^(NSDictionary<NSAttributedStringKey, id> *attrs,
+                                        NSRange range,
+                                        BOOL *stop) {
+    NSLog(@"[ITL] Range %@ -> Attributes: %@",
+          NSStringFromRange(range),
+          attrs);
+    NSLog(@"Text : %@", [textView.textStorage attributedSubstringFromRange:range].string);
+  }];
 
   for (NSNumber *type in stylesDict) {
     id<BaseStyleProtocol> style = stylesDict[type];
     BOOL wasActive = [newActiveStyles containsObject:type];
-    BOOL isActive = [style detectStyle:textView.selectedRange];
+    BOOL isActive = [style detectStyle:selectionRange];
     if (wasActive != isActive) {
       updateNeeded = YES;
       if (isActive) {
@@ -2096,12 +2112,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       changeInLength:0];
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
-    shouldRecognizeSimultaneouslyWithGestureRecognizer:
-        (UIGestureRecognizer *)otherGestureRecognizer {
-  return YES;
-}
-
 - (CGPoint)adjustedPointForViewPoint:(CGPoint)pt {
   CGPoint tvPoint = [self convertPoint:pt toView:textView];
   tvPoint.x -= textView.textContainerInset.left;
@@ -2109,82 +2119,36 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   return tvPoint;
 }
 
-- (BOOL)getCharIndex:(NSUInteger *)charIndex forAdjustedPoint:(CGPoint)pt {
-  NSUInteger glyphIndex =
-      [textView.layoutManager glyphIndexForPoint:pt
-                                 inTextContainer:textView.textContainer
-                  fractionOfDistanceThroughGlyph:nil];
-
-  if (glyphIndex == NSNotFound)
-    return NO;
-
-  *charIndex =
-      [textView.layoutManager characterIndexForGlyphAtIndex:glyphIndex];
-  return YES;
-}
-
-- (void)handleTap:(UITapGestureRecognizer *)gr {
-  if (gr.state != UIGestureRecognizerStateEnded)
-    return;
-
-  CGPoint adjusted = [self adjustedPointForViewPoint:[gr locationInView:self]];
-  NSInteger dividerCharIndex =
-      [DividerHitTestUtils hitTestDividerAtPoint:adjusted inInput:self];
-  if (dividerCharIndex >= 0) {
-    NSUInteger newLocation = (NSUInteger)dividerCharIndex + 1;
-    if (newLocation > textView.textStorage.length) {
-      newLocation = textView.textStorage.length;
+- (void)onTextBlockTap:(TextBlockTapGestureRecognizer *)gr {
+  if (gr.state != UIGestureRecognizerStateEnded) return;
+  if (![self->textView isFirstResponder]) {
+      [self->textView becomeFirstResponder];
     }
 
-    textView.selectedRange = NSMakeRange(newLocation, 0);
-    return;
-  }
+  switch (gr.tapKind) {
 
-  NSInteger contentCharIndex =
-      [ContentHitTestUtils hitTestContentAtPoint:adjusted inInput:self];
-  if (contentCharIndex >= 0) {
-    NSUInteger newLocation = (NSUInteger)contentCharIndex + 1;
-    if (newLocation > textView.textStorage.length) {
-      newLocation = textView.textStorage.length;
-    }
-    textView.selectedRange = NSMakeRange(newLocation, 0);
-    return;
-  }
+    case TextBlockTapKindCheckbox: {
+      CheckBoxStyle *checkboxStyle =
+          (CheckBoxStyle *)stylesDict[@([CheckBoxStyle getStyleType])];
 
-  NSInteger checkboxCharIndex =
-      [CheckboxHitTestUtils hitTestCheckboxAtPoint:adjusted inInput:self];
-  if (checkboxCharIndex >= 0) {
-    CheckBoxStyle *check =
-        (CheckBoxStyle *)stylesDict[@([CheckBoxStyle getStyleType])];
-    if (check) {
-      [check toggleCheckedAt:(NSUInteger)checkboxCharIndex];
-      [self anyTextMayHaveBeenModified];
+      if (checkboxStyle) {
+        [checkboxStyle toggleCheckedAt:(NSUInteger)gr.characterIndex];
+        [self anyTextMayHaveBeenModified];
+      }
+      break;
     }
-    return;
+
+    case TextBlockTapKindAttachment: {
+      NSInteger newLocation = gr.characterIndex + 1;
+      newLocation = MIN(newLocation, self->textView.textStorage.length);
+      self->textView.selectedRange = NSMakeRange(newLocation, 0);
+      break;
+    }
+
+    default:
+      break;
   }
 }
 
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-  UIView *hit = [super hitTest:point withEvent:event];
-  if (!hit)
-    return nil;
-
-  CGPoint adjusted = [self adjustedPointForViewPoint:point];
-
-  if ([DividerHitTestUtils hitTestDividerAtPoint:adjusted inInput:self] >= 0) {
-    return self;
-  }
-
-  if ([ContentHitTestUtils hitTestContentAtPoint:adjusted inInput:self] >= 0) {
-    return self;
-  }
-
-  if ([CheckboxHitTestUtils hitTestCheckboxAtPoint:adjusted
-                                           inInput:self] >= 0) {
-    return self;
-  }
-
-  return hit;
-}
 
 @end

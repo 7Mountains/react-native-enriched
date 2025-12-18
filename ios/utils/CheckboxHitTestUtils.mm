@@ -59,8 +59,13 @@
     return -1;
   }
 
-  CGRect checkboxRect = [self checkboxRectAtGlyphIndex:glyphIndex
-                                               inInput:input];
+  NSRange lineGlyphRange;
+  [textView.layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex
+                                           effectiveRange:&lineGlyphRange];
+
+  CGRect checkboxRect =
+      [self checkboxRectAtGlyphIndex:lineGlyphRange.location
+                             inInput:input];
 
   if (CGRectIsNull(checkboxRect)) {
     return -1;
@@ -70,7 +75,9 @@
     return -1;
   }
 
-  return [textView.layoutManager characterIndexForGlyphAtIndex:glyphIndex];
+  return [textView.layoutManager
+      characterIndexForGlyphAtIndex:lineGlyphRange.location];
 }
+
 
 @end
