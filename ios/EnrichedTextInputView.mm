@@ -1117,20 +1117,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   MentionParams *detectedMentionParams;
   NSRange detectedMentionRange = NSMakeRange(0, 0);
   NSRange selectionRange = textView.selectedRange;
-  NSLog(@"current text:@", textView.textStorage.string);
-  [textView.textStorage
-      enumerateAttributesInRange:NSMakeRange(0, textView.textStorage.length)
-                         options:0
-                      usingBlock:^(
-                          NSDictionary<NSAttributedStringKey, id> *attrs,
-                          NSRange range, BOOL *stop) {
-                        NSLog(@"[ITL] Range %@ -> Attributes: %@",
-                              NSStringFromRange(range), attrs);
-                        NSLog(@"Text : %@",
-                              [textView.textStorage
-                                  attributedSubstringFromRange:range]
-                                  .string);
-                      }];
 
   for (NSNumber *type in stylesDict) {
     id<BaseStyleProtocol> style = stylesDict[type];
