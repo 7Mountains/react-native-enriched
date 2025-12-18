@@ -1802,7 +1802,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [self tryUpdatingHeight];
   // update active styles as well
   [self tryUpdatingActiveStyles];
-  // update drawing - schedule debounced relayout
 }
 
 - (void)didMoveToWindow {
