@@ -4,9 +4,6 @@
 
 @interface CheckboxHitTestUtils : NSObject
 
-+ (CGRect)checkboxRectAtGlyphIndex:(NSUInteger)glyphIndex
-                           inInput:(EnrichedTextInputView *)input;
-
 + (NSInteger)hitTestCheckboxAtPoint:(CGPoint)pt
                             inInput:(EnrichedTextInputView *)input;
 

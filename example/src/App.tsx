@@ -87,31 +87,9 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const contentHtml = Array(100)
+const contentHtml = Array(1)
   .fill(
-    `<h1>First item</h1>
-    <ul><li>Test 2</li><li>Test 3</li></ul>
-    <p><b>Bold</b> <i>Italic</i> <u>Underline</u> <s>Strikethrough</s> <u><s><b><i>Combined</i></b></s></u></p>
-    <p><a href="https://www.google.com">https://www.google.com</a></p>
-    <content type="image" src="https://picsum.photos/200/300" text="test" />
-    <content type="placeholder" text="Placeholder for image or video" />
-    <p><code>Inline code example</code></p>` +
-      `<blockquote>
-    <p>Test</p>
-    <p>Test</p>
-    <p>Test</p>
-    <p>Test</p>
-    </blockquote>` +
-      `<codeblock>
-    <p>Test</p>
-    <p>Test</p>
-    <p>Test</p>
-    <p>Test</p>
-    </codeblock>` +
-      `<hr />` +
-      `<checklist checked="false">Unchecked item</checklist>` +
-      `<p><img src="https://picsum.photos/200/300" width="100" height="100" /></p>` +
-      '<hr />'
+    `<p><u>Test</u></p><checklist checked="false">This is a checklist item</checklist>`
   )
   .join('');
 
@@ -347,6 +325,7 @@ export default function App() {
         <View style={styles.editor}>
           <EnrichedTextInput
             ref={ref}
+            autoFocus
             mentionIndicators={['@', '#']}
             style={styles.editorInput}
             htmlStyle={htmlStyle}
