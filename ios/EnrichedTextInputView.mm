@@ -1024,52 +1024,16 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 // MARK: - Measuring and states
-
 - (CGSize)measureSize:(CGFloat)maxWidth {
-  // copy the the whole attributed string
-  NSMutableAttributedString *currentStr = [[NSMutableAttributedString alloc]
-      initWithAttributedString:textView.textStorage];
+  NSTextContainer *container = textView.textContainer;
+  NSLayoutManager *layoutManager = textView.layoutManager;
 
-  // edge case: empty input should still be of a height of a single line, so we
-  // add a mock "I" character
-  if ([currentStr length] == 0) {
-    [currentStr
-        appendAttributedString:[[NSAttributedString alloc]
-                                   initWithString:@"I"
-                                       attributes:textView.typingAttributes]];
-  }
+  container.size = CGSizeMake(maxWidth, CGFLOAT_MAX);
+  [layoutManager ensureLayoutForTextContainer:container];
 
-  // edge case: input with only a zero width space should still be of a height
-  // of a single line, so we add a mock "I" character
-  if ([currentStr length] == 1 &&
-      [[currentStr.string substringWithRange:NSMakeRange(0, 1)]
-          isEqualToString:@"\u200B"]) {
-    [currentStr
-        appendAttributedString:[[NSAttributedString alloc]
-                                   initWithString:@"I"
-                                       attributes:textView.typingAttributes]];
-  }
+  CGRect usedRect = [layoutManager usedRectForTextContainer:container];
 
-  // edge case: trailing newlines aren't counted towards height calculations, so
-  // we add a mock "I" character
-  if (currentStr.length > 0) {
-    unichar lastChar =
-        [currentStr.string characterAtIndex:currentStr.length - 1];
-    if ([[NSCharacterSet newlineCharacterSet] characterIsMember:lastChar]) {
-      [currentStr
-          appendAttributedString:[[NSAttributedString alloc]
-                                     initWithString:@"I"
-                                         attributes:defaultTypingAttributes]];
-    }
-  }
-
-  CGRect boundingBox =
-      [currentStr boundingRectWithSize:CGSizeMake(maxWidth, CGFLOAT_MAX)
-                               options:NSStringDrawingUsesLineFragmentOrigin |
-                                       NSStringDrawingUsesFontLeading
-                               context:nullptr];
-
-  return CGSizeMake(maxWidth, ceil(boundingBox.size.height));
+  return CGSizeMake(maxWidth, ceil(usedRect.size.height));
 }
 
 // make sure the newest state is kept in _state property
@@ -1833,50 +1797,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // update active styles as well
   [self tryUpdatingActiveStyles];
   // update drawing - schedule debounced relayout
-  [self scheduleRelayoutIfNeeded];
-}
-
-// Debounced relayout helper - coalesces multiple requests into one per runloop
-// tick
-- (void)scheduleRelayoutIfNeeded {
-  // Cancel any previously scheduled invocation to debounce
-  [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                           selector:@selector(_performRelayout)
-                                             object:nil];
-  // Schedule on next runloop cycle
-  [self performSelector:@selector(_performRelayout)
-             withObject:nil
-             afterDelay:0];
-}
-
-- (void)_performRelayout {
-  if (!textView) {
-    return;
-  }
-
-  dispatch_async(dispatch_get_main_queue(), ^{
-    NSRange wholeRange =
-        NSMakeRange(0, self->textView.textStorage.string.length);
-    NSRange actualRange = NSMakeRange(0, 0);
-    [self->textView.layoutManager
-        invalidateLayoutForCharacterRange:wholeRange
-                     actualCharacterRange:&actualRange];
-    [self->textView.layoutManager ensureLayoutForCharacterRange:actualRange];
-    [self->textView.layoutManager
-        invalidateDisplayForCharacterRange:wholeRange];
-
-    // We have to explicitly set contentSize
-    // That way textView knows if content overflows and if should be scrollable
-    // We recall measureSize here because value returned from previous
-    // measureSize may not be up-to date at that point
-    CGSize measuredSize = [self measureSize:self->textView.frame.size.width];
-    self->textView.contentSize = measuredSize;
-  });
 }
 
 - (void)didMoveToWindow {
   [super didMoveToWindow];
-  [self scheduleRelayoutIfNeeded];
+  [self layoutIfNeeded];
 }
 
 // MARK: - UITextView delegate methods
