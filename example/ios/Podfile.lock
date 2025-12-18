@@ -2477,7 +2477,7 @@ PODS:
     - React-perflogger (= 0.83.0)
     - React-utils (= 0.83.0)
     - SocketRocket
-  - ReactNativeEnriched (0.2.0):
+  - ReactNativeEnriched (0.2.1):
     - boost
     - DoubleConversion
     - fast_float
