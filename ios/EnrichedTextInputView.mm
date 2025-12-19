@@ -851,6 +851,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       newViewProps.defaultValue != oldViewProps.defaultValue;
 
   if (stylePropChanged) {
+    // we want to preserve the selection between props changes
+    NSRange prevSelectedRange = textView.selectedRange;
+
     // now set the new config
     config = newConfig;
 
@@ -887,6 +890,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     defaultTypingAttributes[NSParagraphStyleAttributeName] =
         [[NSParagraphStyle alloc] init];
     textView.typingAttributes = defaultTypingAttributes;
+    textView.selectedRange = prevSelectedRange;
 
     // update the placeholder as well
     [self refreshPlaceholderLabelStyles];
@@ -911,6 +915,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       [parser replaceWholeFromHtml:newDefaultValue
           notifyAnyTextMayHaveBeenModified:!isFirstMount];
     }
+    textView.selectedRange = NSRange(textView.textStorage.string.length, 0);
   }
 
   // placeholderTextColor
@@ -1332,6 +1337,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   // set recentlyChangedRange and check for changes
   recentlyChangedRange = NSMakeRange(0, textView.textStorage.string.length);
+  textView.selectedRange = NSRange(textView.textStorage.string.length, 0);
   [self anyTextMayHaveBeenModified];
 }
 
