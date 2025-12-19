@@ -34,6 +34,7 @@
   ],
   "scripts": {
     "example": "yarn workspace react-native-enriched-example",
+    "example-web": "yarn workspace react-native-enriched-web-example",
     "test": "jest --passWithNoTests",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
@@ -98,7 +99,8 @@
     "react-native": "*"
   },
   "workspaces": [
-    "example"
+    "example",
+    "apps/example-web"
   ],
   "packageManager": "yarn@3.6.1",
   "jest": {
