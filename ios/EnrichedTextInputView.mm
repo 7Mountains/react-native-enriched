@@ -1039,7 +1039,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   CGRect usedRect = [layoutManager usedRectForTextContainer:container];
   CGSize contentSize = CGSizeMake(maxWidth, ceil(usedRect.size.height));
   textView.contentSize = contentSize;
-  return self.bounds.size;
+  return contentSize;
 }
 
 // make sure the newest state is kept in _state property
