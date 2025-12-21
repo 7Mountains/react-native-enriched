@@ -1,3 +1,4 @@
+#import "AlignmentConverter.h"
 #import "ColorExtension.h"
 #import "EnrichedTextInputView.h"
 #import "OccurenceUtils.h"
@@ -32,6 +33,21 @@
 
 + (NSAttributedStringKey)attributeKey {
   return NSParagraphStyleAttributeName;
+}
+
++ (NSDictionary<NSString *, NSString *> *)getParametersFromValue:(id)value {
+  if (value) {
+    NSParagraphStyle *paragraphStyle = value;
+
+    NSTextAlignment alignment = paragraphStyle.alignment;
+
+    return alignment != NSTextAlignmentNatural ? @{
+      @"aligment" : [AlignmentConverter stringFromAlignment:alignment]
+    }
+                                               : nullptr;
+  }
+
+  return nullptr;
 }
 
 - (instancetype)initWithInput:(id)input {
@@ -69,6 +85,7 @@
   NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
   pStyle.headIndent = [self getHeadIndent];
   pStyle.firstLineHeadIndent = [self getHeadIndent];
+  pStyle.tailIndent = -[self getHeadIndent];
   attributes[NSParagraphStyleAttributeName] = pStyle;
   [attributedString addAttributes:attributes range:range];
 }

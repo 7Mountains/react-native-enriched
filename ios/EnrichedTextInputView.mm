@@ -1,4 +1,5 @@
 #import "EnrichedTextInputView.h"
+#import "AlignmentConverter.h"
 #import "BaseLabelAttachment.h"
 #import "CheckboxHitTestUtils.h"
 #import "ColorExtension.h"
@@ -21,7 +22,6 @@
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/Props.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/RCTComponentViewHelpers.h>
 #import <react/utils/ManagedObjectWrapper.h>
-#import "AlignmentConverter.h"
 
 using namespace facebook::react;
 
@@ -123,7 +123,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([CheckBoxStyle getStyleType]) :
         [[CheckBoxStyle alloc] initWithInput:self],
     @([DividerStyle getStyleType]) : [[DividerStyle alloc] initWithInput:self],
-    @([ContentStyle getStyleType]) : [[ContentStyle alloc] initWithInput:self]
+    @([ContentStyle getStyleType]) : [[ContentStyle alloc] initWithInput:self],
+    @([ParagraphAlignmentStyle getStyleType]) :
+        [[ParagraphAlignmentStyle alloc] initWithInput:self]
   };
 
   conflictingStyles = @{
@@ -1281,8 +1283,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
   } else if ([commandName isEqualToString:@"addDividerAtNewLine"]) {
     [self addDividerAtNewLine];
-    [self addImage:uri];
-  } else if([commandName isEqualToString:@"setParagraphAlignment"]) {
+  } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
     NSString *alignment = (NSString *)args[0];
     [self setParagraphAllignment:alignment];
   }
@@ -1605,13 +1606,17 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
-- (void)setParagraphAllignment:(NSString*)alignment {
-  ParagraphAlignmentStyle *paragraphAlignmentStyle = (ParagraphAlignmentStyle *)stylesDict[@([ParagraphAlignmentStyle getStyleType])];
-  if(paragraphAlignmentStyle == nullptr) return;
-  
-  NSTextAlignment convertedAlignment = [AlignmentConverter alignmentFromString: alignment];
-  
-  [paragraphAlignmentStyle applyStyle:textView.selectedRange alignment:convertedAlignment];
+- (void)setParagraphAllignment:(NSString *)alignment {
+  ParagraphAlignmentStyle *paragraphAlignmentStyle = (ParagraphAlignmentStyle *)
+      stylesDict[@([ParagraphAlignmentStyle getStyleType])];
+  if (paragraphAlignmentStyle == nullptr)
+    return;
+
+  NSTextAlignment convertedAlignment =
+      [AlignmentConverter alignmentFromString:alignment];
+
+  [paragraphAlignmentStyle applyStyle:textView.selectedRange
+                            alignment:convertedAlignment];
 }
 
 // returns false when style shouldn't be applied and true when it can be
@@ -1900,7 +1905,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     return NO;
   }
   recentlyChangedRange = NSMakeRange(range.location, text.length);
-
   UnorderedListStyle *uStyle = stylesDict[@([UnorderedListStyle getStyleType])];
   OrderedListStyle *oStyle = stylesDict[@([OrderedListStyle getStyleType])];
   BlockQuoteStyle *bqStyle = stylesDict[@([BlockQuoteStyle getStyleType])];

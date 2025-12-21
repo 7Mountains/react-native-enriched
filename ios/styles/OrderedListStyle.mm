@@ -70,6 +70,7 @@ static NSArray *const TextLists = @[ NumberBulletList ];
   pStyle.textLists = TextLists;
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
+   pStyle.tailIndent = -10;
   NSMutableDictionary *typingAttrs =
       [_input->defaultTypingAttributes mutableCopy];
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
@@ -126,8 +127,10 @@ static NSArray *const TextLists = @[ NumberBulletList ];
                       value == nil ? [NSMutableParagraphStyle new]
                                    : [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[ numberBullet ];
-                  pStyle.headIndent = [self getHeadIndent];
-                  pStyle.firstLineHeadIndent = [self getHeadIndent];
+                  CGFloat headIntet = [self getHeadIndent];
+                  pStyle.headIndent = headIntet;
+                  pStyle.firstLineHeadIndent = headIntet;
+                  pStyle.tailIndent = -10;
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
                              value:pStyle
