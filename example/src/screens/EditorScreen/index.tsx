@@ -337,6 +337,7 @@ export function EditorScreen() {
           style={styles.valueButton}
         />
         <Button
+          style={styles.valueButton}
           title="Navigate to Preview"
           onPress={() => navigate('Preview', { html: currentHtml })}
         />
