@@ -10,25 +10,25 @@ extern const char EnrichedTextInputViewComponentName[] =
     "EnrichedTextInputView";
 
 void EnrichedTextInputViewShadowNode::createTextStorage() const {
-  if (textStorage_) {
+  if (_textStorage) {
     return;
   }
 
-  textContainer_ = [NSTextContainer new];
-  textContainer_.lineFragmentPadding = 0;
-  textContainer_.maximumNumberOfLines = 0;
+  _textContainer = [NSTextContainer new];
+  _textContainer.lineFragmentPadding = 0;
+  _textContainer.maximumNumberOfLines = 0;
 
-  layoutManager_ = [NSLayoutManager new];
-  [layoutManager_ addTextContainer:textContainer_];
+  _layoutManager = [NSLayoutManager new];
+  [_layoutManager addTextContainer:_textContainer];
 
-  textStorage_ = [NSTextStorage new];
-  [textStorage_ addLayoutManager:layoutManager_];
-  prevAttributedText_ = [NSAttributedString alloc];
+  _textStorage = [NSTextStorage new];
+  [_textStorage addLayoutManager:_layoutManager];
+  _prevAttributedText = [NSAttributedString alloc];
 }
 
 void EnrichedTextInputViewShadowNode::dirtyLayoutIfNeeded() {
   const auto state = this->getStateData();
-  if (![prevAttributedText_
+  if (![_prevAttributedText
           isEqualToAttributedString:state.getAttributedText()]) {
     YGNodeMarkDirty(&yogaNode_);
   }
@@ -65,6 +65,7 @@ Size EnrichedTextInputViewShadowNode::measureContent(
   createTextStorage();
 
   NSAttributedString *attributedText = getAttributedString();
+  _prevAttributedText = attributedText;
 
   CGSize maxSize = {constraints.maximumSize.width,
                     constraints.maximumSize.height ==
@@ -72,15 +73,15 @@ Size EnrichedTextInputViewShadowNode::measureContent(
                         ? CGFLOAT_MAX
                         : constraints.maximumSize.height};
 
-  textContainer_.size = maxSize;
+  _textContainer.size = maxSize;
 
-  [textStorage_ replaceCharactersInRange:NSMakeRange(0, textStorage_.length)
+  [_textStorage replaceCharactersInRange:NSMakeRange(0, +_textStorage.length)
                     withAttributedString:attributedText];
 
-  [layoutManager_ ensureLayoutForTextContainer:textContainer_];
+  [_layoutManager ensureLayoutForTextContainer:_textContainer];
 
   CGSize usedSize =
-      [layoutManager_ usedRectForTextContainer:textContainer_].size;
+      [_layoutManager usedRectForTextContainer:_textContainer].size;
 
   auto width = std::min((Float)usedSize.width, constraints.maximumSize.width);
   auto height =

@@ -44,10 +44,10 @@ public:
 private:
   NSAttributedString *getAttributedString() const;
   void createTextStorage() const;
-  mutable NSTextStorage *textStorage_ = nil;
-  mutable NSLayoutManager *layoutManager_ = nil;
-  mutable NSTextContainer *textContainer_ = nil;
-  mutable NSAttributedString *prevAttributedText_ = nil;
+  mutable NSTextStorage *_textStorage = nil;
+  mutable NSLayoutManager *_layoutManager = nil;
+  mutable NSTextContainer *_textContainer = nil;
+  mutable NSAttributedString *_prevAttributedText = nil;
 };
 
 } // namespace facebook::react
