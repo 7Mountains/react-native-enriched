@@ -1,22 +1,21 @@
 #pragma once
 #include <memory>
 
+@class NSAttributedString;
+
 namespace facebook::react {
 
 class EnrichedTextInputViewState {
 public:
-  EnrichedTextInputViewState()
-      : forceHeightRecalculationCounter_(0), componentViewRef_(nullptr) {}
-  EnrichedTextInputViewState(int counter, std::shared_ptr<void> ref) {
-    forceHeightRecalculationCounter_ = counter;
-    componentViewRef_ = ref;
-  }
-  int getForceHeightRecalculationCounter() const;
-  std::shared_ptr<void> getComponentViewRef() const;
+  EnrichedTextInputViewState() = default;
+
+  explicit EnrichedTextInputViewState(NSAttributedString *attributedText)
+      : attributedText_(attributedText) {}
+
+  NSAttributedString *getAttributedText() const { return attributedText_; }
 
 private:
-  int forceHeightRecalculationCounter_{};
-  std::shared_ptr<void> componentViewRef_{};
+  NSAttributedString *attributedText_ = nullptr;
 };
 
 } // namespace facebook::react

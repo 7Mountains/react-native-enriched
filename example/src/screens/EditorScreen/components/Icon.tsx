@@ -1,5 +1,5 @@
 import { Text, type TextStyle } from 'react-native';
-import glyphMap from '../../assets/icons/FontAwesome.json';
+import glyphMap from '../../../../assets/icons/FontAwesome.json';
 import { type FC, memo } from 'react';
 
 export type IconName = keyof typeof glyphMap;
