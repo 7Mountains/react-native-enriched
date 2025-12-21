@@ -6,6 +6,8 @@
 #include <react/renderer/components/view/ConcreteViewShadowNode.h>
 #include <react/renderer/core/LayoutConstraints.h>
 
+#import <UIKit/UIKit.h>
+
 namespace facebook::react {
 
 JSI_EXPORT extern const char EnrichedTextInputViewComponentName[];
@@ -17,14 +19,17 @@ class EnrichedTextInputViewShadowNode
     : public ConcreteViewShadowNode<
           EnrichedTextInputViewComponentName, EnrichedTextInputViewProps,
           EnrichedTextInputViewEventEmitter, EnrichedTextInputViewState> {
+
 public:
   using ConcreteViewShadowNode::ConcreteViewShadowNode;
+
   EnrichedTextInputViewShadowNode(const ShadowNodeFragment &fragment,
                                   const ShadowNodeFamily::Shared &family,
                                   ShadowNodeTraits traits);
   EnrichedTextInputViewShadowNode(const ShadowNode &sourceShadowNode,
                                   const ShadowNodeFragment &fragment);
   void dirtyLayoutIfNeeded();
+
   Size
   measureContent(const LayoutContext &layoutContext,
                  const LayoutConstraints &layoutConstraints) const override;
@@ -37,8 +42,12 @@ public:
   }
 
 private:
-  int localForceHeightRecalculationCounter_;
-  id setupMockTextInputView_() const;
+  NSAttributedString *getAttributedString() const;
+  void createTextStorage() const;
+  mutable NSTextStorage *_textStorage = nil;
+  mutable NSLayoutManager *_layoutManager = nil;
+  mutable NSTextContainer *_textContainer = nil;
+  mutable NSAttributedString *_prevAttributedText = nil;
 };
 
 } // namespace facebook::react

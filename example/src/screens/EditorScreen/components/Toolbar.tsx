@@ -5,7 +5,6 @@ import type {
   EnrichedTextInputInstance,
 } from 'react-native-enriched';
 import type { FC } from 'react';
-import { ToolbarColorButton } from './ToolbarColorButton';
 
 const STYLE_ITEMS = [
   {
@@ -41,18 +40,6 @@ const STYLE_ITEMS = [
     text: 'H3',
   },
   {
-    name: 'heading-4',
-    text: 'H4',
-  },
-  {
-    name: 'heading-5',
-    text: 'H5',
-  },
-  {
-    name: 'heading-6',
-    text: 'H6',
-  },
-  {
     name: 'quote',
     icon: 'quote-right',
   },
@@ -80,16 +67,6 @@ const STYLE_ITEMS = [
     name: 'ordered-list',
     icon: 'list-ol',
   },
-  {
-    name: 'color',
-    value: '#FF0000',
-    text: 'A',
-  },
-  {
-    name: 'color',
-    value: '#E6FF5C',
-    text: 'A',
-  },
 ] as const;
 
 type Item = (typeof STYLE_ITEMS)[number];
@@ -100,7 +77,6 @@ export interface ToolbarProps {
   editorRef?: React.RefObject<EnrichedTextInputInstance | null>;
   onOpenLinkModal: () => void;
   onSelectImage: () => void;
-  selectionColor: string | null;
 }
 
 export const Toolbar: FC<ToolbarProps> = ({
@@ -108,7 +84,6 @@ export const Toolbar: FC<ToolbarProps> = ({
   editorRef,
   onOpenLinkModal,
   onSelectImage,
-  selectionColor,
 }) => {
   const handlePress = (item: Item) => {
     const currentRef = editorRef?.current;
@@ -139,15 +114,6 @@ export const Toolbar: FC<ToolbarProps> = ({
       case 'heading-3':
         editorRef.current?.toggleH3();
         break;
-      case 'heading-4':
-        editorRef.current?.toggleH4();
-        break;
-      case 'heading-5':
-        editorRef.current?.toggleH5();
-        break;
-      case 'heading-6':
-        editorRef.current?.toggleH6();
-        break;
       case 'code-block':
         editorRef?.current?.toggleCodeBlock();
         break;
@@ -172,10 +138,6 @@ export const Toolbar: FC<ToolbarProps> = ({
     }
   };
 
-  const handleColorButtonPress = (color: string) => {
-    editorRef?.current?.setColor(color);
-  };
-
   const isActive = (item: Item) => {
     switch (item.name) {
       case 'bold':
@@ -194,12 +156,6 @@ export const Toolbar: FC<ToolbarProps> = ({
         return stylesState.isH2;
       case 'heading-3':
         return stylesState.isH3;
-      case 'heading-4':
-        return stylesState.isH4;
-      case 'heading-5':
-        return stylesState.isH5;
-      case 'heading-6':
-        return stylesState.isH6;
       case 'code-block':
         return stylesState.isCodeBlock;
       case 'quote':
@@ -220,14 +176,7 @@ export const Toolbar: FC<ToolbarProps> = ({
   };
 
   const renderItem = ({ item }: ListRenderItemInfo<Item>) => {
-    return item.name === 'color' ? (
-      <ToolbarColorButton
-        onPress={handleColorButtonPress}
-        color={item.value}
-        text={item.text}
-        isActive={stylesState.isColored && selectionColor === item.value}
-      />
-    ) : (
+    return (
       <ToolbarButton
         {...item}
         isActive={isActive(item)}
@@ -236,8 +185,7 @@ export const Toolbar: FC<ToolbarProps> = ({
     );
   };
 
-  const keyExtractor = (item: Item) =>
-    item.name === 'color' ? item.value : item.name;
+  const keyExtractor = (item: Item) => item.name;
 
   return (
     <FlatList
