@@ -304,7 +304,6 @@ export function EditorScreen() {
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
             autoCapitalize="sentences"
-            defaultValue="<html><h1>Test</h1></html>"
             onChangeText={(e) => handleChangeText(e.nativeEvent)}
             onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
