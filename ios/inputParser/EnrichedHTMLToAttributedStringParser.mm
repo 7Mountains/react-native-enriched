@@ -23,9 +23,11 @@
 
   [styles enumerateKeysAndObjectsUsingBlock:^(
               NSNumber *key, id<BaseStyleProtocol> style, BOOL *stop) {
-    NSString *tag = [[NSString stringWithUTF8String:[[style class] tagName]]
-        lowercaseString];
-    tags[tag] = style;
+    const char *tagName = [[style class] tagName];
+    if (tagName) {
+      NSString *tag = [NSString stringWithUTF8String:tagName];
+      tags[tag] = style;
+    }
   }];
 
   _tagsRegistry = tags.copy;

@@ -104,13 +104,15 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
                       replacementText:(NSString *)text;
 @end
 
-@interface BlockQuoteStyle : NSObject <BaseStyleProtocol>
+@interface BlockQuoteStyle
+    : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (void)manageBlockquoteColor;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 @end
 
-@interface CodeBlockStyle : NSObject <BaseStyleProtocol>
+@interface CodeBlockStyle
+    : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (void)manageCodeBlockFontAndColor;
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 @end
@@ -142,7 +144,6 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (ContentParams *)getContentParams:(NSUInteger)location;
 @end
 
-@interface ParagraphAlignmentStyle : NSObject<BaseStyleProtocol>
+@interface ParagraphAlignmentStyle : NSObject <BaseStyleProtocol>
 - (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment;
-- (BOOL)handleEnterPressInRange:(NSRange)range;
 @end

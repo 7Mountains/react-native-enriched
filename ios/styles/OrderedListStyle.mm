@@ -64,10 +64,11 @@
       [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDecimal
                                        options:0];
   NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-
+  CGFloat headIntet = [self getHeadIndent];
   pStyle.textLists = @[ numberBullet ];
-  pStyle.headIndent = [self getHeadIndent];
-  pStyle.firstLineHeadIndent = [self getHeadIndent];
+  pStyle.headIndent = headIntet;
+  pStyle.firstLineHeadIndent = headIntet;
+  pStyle.tailIndent = -10;
   NSMutableDictionary *typingAttrs =
       [_input->defaultTypingAttributes mutableCopy];
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
@@ -124,8 +125,10 @@
                       value == nil ? [NSMutableParagraphStyle new]
                                    : [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[ numberBullet ];
-                  pStyle.headIndent = [self getHeadIndent];
-                  pStyle.firstLineHeadIndent = [self getHeadIndent];
+                  CGFloat headIntet = [self getHeadIndent];
+                  pStyle.headIndent = headIntet;
+                  pStyle.firstLineHeadIndent = headIntet;
+                  pStyle.tailIndent = -10;
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
                              value:pStyle
