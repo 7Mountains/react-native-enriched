@@ -27,8 +27,8 @@ import {
   prepareImageDimensions,
 } from './utils/prepareImageDimensions';
 import { useNavigation } from '@react-navigation/native';
-import type { RootStackParamList } from '../../App';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../App';
 
 type StylesState = OnChangeStateEvent;
 
@@ -56,6 +56,12 @@ const DEFAULT_STYLE: StylesState = {
   isLink: false,
   isImage: false,
   isMention: false,
+  isCheckList: false,
+  isColored: false,
+  isContent: false,
+  isH4: false,
+  isH5: false,
+  isH6: false,
 };
 
 const DEFAULT_LINK_STATE = {
@@ -304,6 +310,7 @@ export function EditorScreen() {
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
             autoCapitalize="sentences"
+            defaultValue="<html><h1>Test</h1></html>"
             onChangeText={(e) => handleChangeText(e.nativeEvent)}
             onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
