@@ -8,16 +8,12 @@ import {
 import { MainScreen } from './screens/MainScreen';
 import { EditorScreen } from './screens/EditorScreen/index';
 import { PreviewScreen } from './screens/PreviewScreen';
-import { enableFreeze, enableScreens } from 'react-native-screens';
 
 export type RootStackParamList = {
   Main: undefined;
   Editor: undefined;
   Preview: { html: string };
 };
-
-enableScreens(false);
-enableFreeze(false);
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
