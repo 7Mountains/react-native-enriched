@@ -144,7 +144,8 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                  origin:(CGPoint)origin
        visibleCharRange:(NSRange)visibleCharRange {
 
-  BlockQuoteStyle *style = input->stylesDict[@([BlockQuoteStyle getStyleType])];
+  BlockQuoteStyle *style =
+      (BlockQuoteStyle *)input->stylesDict[@([BlockQuoteStyle getStyleType])];
   if (!style)
     return;
 
@@ -178,7 +179,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                               input->config.blockquoteBorderColor
                         };
 
-                        __block BOOL firstLine = YES;
+                        __block BOOL didDraw = NO;
 
                         [self
                             enumerateLineFragmentsForGlyphRange:glyphRange
@@ -189,39 +190,49 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                                              *container,
                                                          NSRange lineGlyphRange,
                                                          BOOL *stop) {
+                                                       if (didDraw) {
+                                                         *stop = YES;
+                                                         return;
+                                                       }
+
+                                                       CGFloat lineLeft =
+                                                           origin.x +
+                                                           rect.origin.x;
+                                                       CGFloat textLeft =
+                                                           lineLeft +
+                                                           usedRect.origin.x;
+                                                       CGFloat textRight =
+                                                           textLeft +
+                                                           usedRect.size.width;
+
                                                        CGFloat y =
                                                            origin.y +
-                                                           usedRect.origin.y;
+                                                           rect.origin.y;
 
-                                                       if (firstLine) {
-                                                         NSString *open = @"“";
-                                                         CGSize size = [open
-                                                             sizeWithAttributes:
-                                                                 drawAttrs];
-                                                         [open drawAtPoint:
-                                                                   CGPointMake(
-                                                                       usedRect.origin
-                                                                               .x -
-                                                                           size.width,
-                                                                       y)
-                                                             withAttributes:
-                                                                 drawAttrs];
-                                                         firstLine = NO;
-                                                       }
+                                                       NSString *open = @"“";
+                                                       NSString *close = @"”";
 
-                                                       if (NSMaxRange(
-                                                               lineGlyphRange) >=
-                                                           NSMaxRange(
-                                                               glyphRange)) {
-                                                         NSString *close = @"”";
-                                                         [close drawAtPoint:
-                                                                    CGPointMake(
-                                                                        CGRectGetMaxX(
-                                                                            usedRect),
-                                                                        y)
-                                                             withAttributes:
-                                                                 drawAttrs];
-                                                       }
+                                                       CGSize openSize = [open
+                                                           sizeWithAttributes:
+                                                               drawAttrs];
+
+                                                       [open drawAtPoint:
+                                                                 CGPointMake(
+                                                                     textLeft -
+                                                                         openSize
+                                                                             .width,
+                                                                     y)
+                                                           withAttributes:
+                                                               drawAttrs];
+                                                       [close drawAtPoint:
+                                                                  CGPointMake(
+                                                                      textRight,
+                                                                      y)
+                                                           withAttributes:
+                                                               drawAttrs];
+
+                                                       didDraw = YES;
+                                                       *stop = YES;
                                                      }];
                       }];
 }
@@ -244,23 +255,21 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   if (ol)
     [pairs addObjectsFromArray:[ol findAllOccurences:visibleCharRange]];
 
-  NSTextStorage *ts = input->textView.textStorage;
-  NSUInteger textLength = ts.length;
+  NSTextStorage *textStorage = input->textView.textStorage;
+  NSUInteger textLength = textStorage.length;
 
   for (StylePair *pair in pairs) {
-
     NSArray<NSValue *> *paragraphs = [ParagraphsUtils
         getSeparateParagraphsRangesIn:input->textView
                                 range:[pair.rangeValue rangeValue]];
 
-    for (NSValue *p in paragraphs) {
+    for (NSValue *paragraph in paragraphs) {
+      NSRange paragraphRange = [paragraph rangeValue];
 
-      // Keep semantic paragraph range intact
-      NSRange paragraphRange = [p rangeValue];
-
-      NSParagraphStyle *pStyle = [ts attribute:NSParagraphStyleAttributeName
-                                       atIndex:paragraphRange.location
-                                effectiveRange:nil];
+      NSParagraphStyle *pStyle =
+          [textStorage attribute:NSParagraphStyleAttributeName
+                         atIndex:paragraphRange.location
+                  effectiveRange:nil];
 
       if (!pStyle || pStyle.textLists.count == 0) {
         continue;
@@ -290,16 +299,16 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                        *stop = YES;
                                        return;
                                      }
+                                     CGFloat baseY = origin.y + rect.origin.y;
 
-                                     CGFloat baseY =
-                                         origin.y + usedRect.origin.y;
                                      CGFloat indentWidth =
                                          pStyle.firstLineHeadIndent;
 
                                      CGFloat baseX = origin.x;
 
-                                     if (list.markerFormat ==
-                                         NSTextListMarkerDisc) {
+                                     if ([list.markerFormat
+                                             isEqualToString:
+                                                 NSTextListMarkerDisc]) {
 
                                        CGFloat bulletSize =
                                            [input->config
@@ -309,7 +318,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                            baseX + indentWidth / 2.0;
 
                                        CGFloat bulletY =
-                                           origin.y + CGRectGetMidY(usedRect);
+                                           origin.y + CGRectGetMidY(rect);
 
                                        CGContextRef ctx =
                                            UIGraphicsGetCurrentContext();

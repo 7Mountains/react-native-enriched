@@ -35,21 +35,6 @@
   return NSParagraphStyleAttributeName;
 }
 
-+ (NSDictionary<NSString *, NSString *> *)getParametersFromValue:(id)value {
-  if (value) {
-    NSParagraphStyle *paragraphStyle = value;
-
-    NSTextAlignment alignment = paragraphStyle.alignment;
-
-    return alignment != NSTextAlignmentNatural ? @{
-      @"aligment" : [AlignmentConverter stringFromAlignment:alignment]
-    }
-                                               : nullptr;
-  }
-
-  return nullptr;
-}
-
 - (instancetype)initWithInput:(id)input {
   self = [super init];
   _input = (EnrichedTextInputView *)input;

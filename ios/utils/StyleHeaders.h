@@ -5,6 +5,7 @@
 #import "ImageData.h"
 #import "LinkData.h"
 #import "MentionParams.h"
+#import "ParagraphModifierStyle.h"
 #import "ParameterizedStyleProtocol.h"
 
 static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
@@ -104,15 +105,13 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
                       replacementText:(NSString *)text;
 @end
 
-@interface BlockQuoteStyle
-    : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
+@interface BlockQuoteStyle : NSObject <BaseStyleProtocol>
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (void)manageBlockquoteColor;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 @end
 
-@interface CodeBlockStyle
-    : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
+@interface CodeBlockStyle : NSObject <BaseStyleProtocol>
 - (void)manageCodeBlockFontAndColor;
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 @end
@@ -144,6 +143,7 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (ContentParams *)getContentParams:(NSUInteger)location;
 @end
 
-@interface ParagraphAlignmentStyle : NSObject <BaseStyleProtocol>
+@interface ParagraphAlignmentStyle
+    : NSObject <BaseStyleProtocol, ParagraphModifierStyle>
 - (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment;
 @end

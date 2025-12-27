@@ -362,7 +362,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   textView.layoutManager.input = self;
   textView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-   TextBlockTapGestureRecognizer *blockTap =
+  TextBlockTapGestureRecognizer *blockTap =
       [[TextBlockTapGestureRecognizer alloc]
           initWithTarget:self
                   action:@selector(onTextBlockTap:)];
@@ -376,7 +376,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   for (UIGestureRecognizer *gr in textView.gestureRecognizers) {
     [gr requireGestureRecognizerToFail:blockTap];
   }
-  [textView addGestureRecognizer:blockTap];    
+  [textView addGestureRecognizer:blockTap];
 }
 
 // MARK: - Props
@@ -1262,6 +1262,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
     NSString *alignment = (NSString *)args[0];
     [self setParagraphAllignment:alignment];
+    [self anyTextMayHaveBeenModified];
   }
 }
 

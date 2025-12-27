@@ -1,4 +1,11 @@
-import { View, StyleSheet, Text, ScrollView, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Text,
+  ScrollView,
+  Platform,
+  Image,
+} from 'react-native';
 import {
   EnrichedTextInput,
   type OnChangeTextEvent,
@@ -9,6 +16,7 @@ import {
   type OnChangeStateEvent,
   type OnChangeSelectionEvent,
   type HtmlStyle,
+  type OnChangeColorEvent,
 } from 'react-native-enriched';
 import { useRef, useState } from 'react';
 import { Button } from './components/Button';
@@ -26,9 +34,7 @@ import {
   DEFAULT_IMAGE_WIDTH,
   prepareImageDimensions,
 } from './utils/prepareImageDimensions';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../App';
+import ColorPreview from './components/ColorPreview';
 
 type StylesState = OnChangeStateEvent;
 
@@ -40,6 +46,8 @@ interface Selection {
   text: string;
 }
 
+const PRIMARY_COLOR = '#000000';
+
 const DEFAULT_STYLE: StylesState = {
   isBold: false,
   isItalic: false,
@@ -49,6 +57,9 @@ const DEFAULT_STYLE: StylesState = {
   isH1: false,
   isH2: false,
   isH3: false,
+  isH4: false,
+  isH5: false,
+  isH6: false,
   isBlockQuote: false,
   isCodeBlock: false,
   isOrderedList: false,
@@ -59,9 +70,6 @@ const DEFAULT_STYLE: StylesState = {
   isCheckList: false,
   isColored: false,
   isContent: false,
-  isH4: false,
-  isH5: false,
-  isH6: false,
 };
 
 const DEFAULT_LINK_STATE = {
@@ -79,9 +87,15 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
+const contentHtml = Array(1)
+  .fill(
+    `<h1>Test</h1><h2>Heading two</h2><h3>Heading three</h3><ol><li>First item</li><li>Second item</li></ol><ul><li>First item</li><li>Second item</li></ul><p><u>Test</u></p>`
+  )
+  .join('');
+
+const html = '<html>' + contentHtml + '</html>';
+
 export function EditorScreen() {
-  const { navigate } =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);
   const [isUserPopupOpen, setIsUserPopupOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -93,6 +107,7 @@ export function EditorScreen() {
   const [stylesState, setStylesState] = useState<StylesState>(DEFAULT_STYLE);
   const [currentLink, setCurrentLink] =
     useState<CurrentLinkState>(DEFAULT_LINK_STATE);
+  const [selectionColor, setSelectionColor] = useState<string>(PRIMARY_COLOR);
 
   const ref = useRef<EnrichedTextInputInstance>(null);
 
@@ -292,6 +307,12 @@ export function EditorScreen() {
     setSelection(sel);
   };
 
+  const handleSelectionColorChange = (e: OnChangeColorEvent) => {
+    if (e.color) {
+      setSelectionColor(e.color);
+    }
+  };
+
   return (
     <>
       <ScrollView
@@ -302,6 +323,7 @@ export function EditorScreen() {
         <View style={styles.editor}>
           <EnrichedTextInput
             ref={ref}
+            autoFocus
             mentionIndicators={['@', '#']}
             style={styles.editorInput}
             htmlStyle={htmlStyle}
@@ -310,10 +332,13 @@ export function EditorScreen() {
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
             autoCapitalize="sentences"
-            defaultValue="<html><h1>Test</h1></html>"
             onChangeText={(e) => handleChangeText(e.nativeEvent)}
             onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
+            defaultValue={html}
+            onColorChangeInSelection={(e) => {
+              handleSelectionColorChange(e.nativeEvent);
+            }}
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}
@@ -329,6 +354,7 @@ export function EditorScreen() {
           <Toolbar
             stylesState={stylesState}
             editorRef={ref}
+            selectionColor={selectionColor}
             onOpenLinkModal={openLinkModal}
             onSelectImage={openImageModal}
           />
@@ -338,17 +364,43 @@ export function EditorScreen() {
           <Button title="Blur" onPress={handleBlur} style={styles.button} />
         </View>
         <Button
+          title="Add Divider"
+          onPress={() => ref.current?.addDividerAtNewLine()}
+          style={styles.valueButton}
+        />
+        <Button
           title="Set input's value"
           onPress={openValueModal}
           style={styles.valueButton}
         />
         <Button
-          style={styles.valueButton}
-          title="Navigate to Preview"
-          onPress={() => navigate('Preview', { html: currentHtml })}
+          title="toggle check list"
+          onPress={() => ref.current?.toggleCheckList()}
         />
+        <Button
+          title="remove color"
+          onPress={() => ref.current?.removeColor()}
+        />
+        <Button
+          title="set right alignment"
+          onPress={() => ref.current?.setParagraphAlignment('right')}
+        />
+        <Button
+          title="set left alignment"
+          onPress={() => ref.current?.setParagraphAlignment('left')}
+        />
+        <Button
+          title="set center alignment"
+          onPress={() => ref.current?.setParagraphAlignment('center')}
+        />
+        <Button
+          title="set default alignment"
+          onPress={() => ref.current?.setParagraphAlignment('default')}
+        />
+        <Text>is Check list {stylesState.isCheckList ? 'true' : 'false'}</Text>
         <HtmlSection currentHtml={currentHtml} />
         {DEBUG_SCROLLABLE && <View style={styles.scrollPlaceholder} />}
+        <ColorPreview color={selectionColor} />
       </ScrollView>
       <LinkModal
         isOpen={isLinkModalOpen}
@@ -387,14 +439,26 @@ export function EditorScreen() {
 
 const htmlStyle: HtmlStyle = {
   h1: {
-    fontSize: 40,
+    fontSize: 72,
     bold: true,
   },
   h2: {
-    fontSize: 32,
+    fontSize: 60,
     bold: true,
   },
   h3: {
+    fontSize: 50,
+    bold: true,
+  },
+  h4: {
+    fontSize: 40,
+    bold: true,
+  },
+  h5: {
+    fontSize: 30,
+    bold: true,
+  },
+  h6: {
     fontSize: 24,
     bold: true,
   },
@@ -414,7 +478,7 @@ const htmlStyle: HtmlStyle = {
     backgroundColor: 'yellow',
   },
   a: {
-    color: 'green',
+    color: 'blue',
     textDecorationLine: 'underline',
   },
   mention: {
@@ -429,6 +493,67 @@ const htmlStyle: HtmlStyle = {
       textDecorationLine: 'none',
     },
   },
+  content: {
+    image: {
+      textColor: 'black',
+      backgroundColor: 'lightgray',
+      borderRadius: 4,
+      paddingTop: 20,
+      paddingBottom: 20,
+      marginTop: 4,
+      marginBottom: 4,
+      paddingLeft: 0,
+      paddingRight: 0,
+      imageBorderRadiusTopLeft: 4,
+      imageBorderRadiusBottomLeft: 4,
+      imageResizeMode: 'stretch',
+      imageWidth: 50,
+      fontSize: 14,
+      fontWeight: '900',
+      fallbackImageURI: Image.resolveAssetSource(
+        require('../../../assets/placeholder.png')
+      ).uri,
+    },
+    video: {
+      borderWidth: 1,
+      borderColor: 'blue',
+      textColor: 'blue',
+      borderStyle: 'dotted',
+      borderRadius: 4,
+      paddingTop: 16,
+      paddingBottom: 16,
+      marginTop: 4,
+      marginBottom: 4,
+    },
+    placeholder: {
+      borderWidth: 1,
+      borderColor: 'blue',
+      textColor: 'blue',
+      borderStyle: 'dotted',
+      borderRadius: 4,
+      paddingTop: 14,
+      paddingBottom: 14,
+      marginTop: 8,
+      marginBottom: 8,
+      imageWidth: 50,
+      imageBorderRadiusTopLeft: 4,
+      imageBorderRadiusBottomLeft: 4,
+      imageResizeMode: 'cover',
+    },
+    test: {
+      borderColor: 'red',
+      borderWidth: 1,
+      paddingTop: 10,
+      paddingBottom: 10,
+      borderRadius: 8,
+      borderStyle: 'dashed',
+      textColor: 'blue',
+    },
+  },
+  img: {
+    width: 50,
+    height: 50,
+  },
   ol: {
     gapWidth: 16,
     marginLeft: 24,
@@ -440,6 +565,20 @@ const htmlStyle: HtmlStyle = {
     bulletSize: 8,
     marginLeft: 24,
     gapWidth: 16,
+  },
+  checkbox: {
+    imageWidth: 24,
+    imageHeight: 24,
+    checkedImage: require('../../../assets/images/checkbox_checked.png'),
+    uncheckedImage: require('../../../assets/images/checkbox.png'),
+    marginLeft: 0,
+    gapWidth: 6,
+    checkedTextColor: 'gray',
+  },
+  divider: {
+    height: 24,
+    color: 'gray',
+    thickness: 2,
   },
 };
 
@@ -477,7 +616,7 @@ const styles = StyleSheet.create({
   editorInput: {
     marginTop: 24,
     width: '100%',
-    maxHeight: 180,
+    maxHeight: 300,
     backgroundColor: 'gainsboro',
     fontSize: 18,
     fontFamily: 'Nunito-Regular',
