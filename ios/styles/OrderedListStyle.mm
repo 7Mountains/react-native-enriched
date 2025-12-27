@@ -2,6 +2,7 @@
 #import "FontExtension.h"
 #import "OccurenceUtils.h"
 #import "ParagraphsUtils.h"
+#import "StyleConstants.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
@@ -70,7 +71,7 @@ static NSArray *const TextLists = @[ NumberBulletList ];
   pStyle.textLists = TextLists;
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
-   pStyle.tailIndent = -10;
+   pStyle.tailIndent = DefaultListTailIndent;
   NSMutableDictionary *typingAttrs =
       [_input->defaultTypingAttributes mutableCopy];
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
@@ -130,7 +131,7 @@ static NSArray *const TextLists = @[ NumberBulletList ];
                   CGFloat headIntet = [self getHeadIndent];
                   pStyle.headIndent = headIntet;
                   pStyle.firstLineHeadIndent = headIntet;
-                  pStyle.tailIndent = -10;
+                  pStyle.tailIndent = DefaultListTailIndent;
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
                              value:pStyle

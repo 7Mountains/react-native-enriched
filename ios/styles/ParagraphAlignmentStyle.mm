@@ -1,5 +1,6 @@
 #import "AlignmentConverter.h"
 #import "EnrichedTextInputView.h"
+#import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
@@ -50,7 +51,9 @@
   if (alignment == NSTextAlignmentNatural)
     return nil;
 
-  return @{@"alignment" : [AlignmentConverter stringFromAlignment:alignment]};
+  return @{
+    AlignmentAttributeName : [AlignmentConverter stringFromAlignment:alignment]
+  };
 }
 
 #pragma mark - List helpers
@@ -193,34 +196,58 @@
   [storage endEditing];
 }
 
+- (void)updateTypingAlignment:(NSTextAlignment)alignment {
+  NSMutableDictionary *typing = [_input->textView.typingAttributes mutableCopy]
+                                    ?: [NSMutableDictionary new];
+
+  NSMutableParagraphStyle *style =
+      [typing[NSParagraphStyleAttributeName] mutableCopy];
+
+  if (!style) {
+    style = [[NSMutableParagraphStyle alloc] init];
+  }
+
+  style.alignment = alignment;
+
+  typing[NSParagraphStyleAttributeName] = style;
+  _input->textView.typingAttributes = typing;
+}
+
 #pragma mark - Main entry point
 
 - (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment {
 
-  NSString *text = _input->textView.textStorage.string;
-  if (range.location == NSNotFound)
-    return;
+  NSTextStorage *storage = _input->textView.textStorage;
+  NSString *text = storage.string;
 
-  NSRange targetRange;
+  if (range.location == NSNotFound) {
+    return;
+  }
+
+  NSRange targetRange = NSMakeRange(0, 0);
+
+  BOOL hasText = text.length > 0;
 
   if (range.length == 0) {
-    // caret
+    if (!hasText) {
+      [self updateTypingAlignment:alignment];
+      return;
+    }
+
     NSRange paragraph = [self paragraphRangeForRange:range];
 
-    NSUInteger safeIndex = paragraph.location >= text.length
-                               ? text.length - 1
-                               : paragraph.location;
+    NSUInteger safeIndex = MIN(paragraph.location, text.length - 1);
 
-    NSParagraphStyle *style =
-        [_input->textView.textStorage attribute:NSParagraphStyleAttributeName
-                                        atIndex:safeIndex
-                                 effectiveRange:nil];
+    NSParagraphStyle *style = [storage attribute:NSParagraphStyleAttributeName
+                                         atIndex:safeIndex
+                                  effectiveRange:nil];
 
-    if ([self primaryListFromStyle:style]) {
+    if (style && [self primaryListFromStyle:style]) {
       targetRange = [self expandRangeToFullList:paragraph];
     } else {
       targetRange = paragraph;
     }
+
   } else {
     NSRange paragraphRange = [self paragraphRangeForRange:range];
 
@@ -230,20 +257,12 @@
       targetRange = paragraphRange;
     }
   }
+  if (targetRange.length > 0) {
+    [self applyAlignment:alignment inRange:targetRange];
+  }
 
-  [self applyAlignment:alignment inRange:targetRange];
-
-  // update typing attributes
-  NSMutableDictionary *typing = [_input->textView.typingAttributes mutableCopy];
-
-  NSMutableParagraphStyle *typingStyle =
-      [typing[NSParagraphStyleAttributeName] mutableCopy]
-          ?: [[NSMutableParagraphStyle alloc] init];
-
-  typingStyle.alignment = alignment;
-  typing[NSParagraphStyleAttributeName] = typingStyle;
-
-  _input->textView.typingAttributes = typing;
+  // Always update typing attributes
+  [self updateTypingAlignment:alignment];
 }
 
 #pragma mark - Required overrides
@@ -330,13 +349,40 @@
 - (void)removeAttributes:(NSRange)range {
 }
 
-- (void)
-    addAttributesInAttributedString:(NSMutableAttributedString *_Nonnull)string
-                              range:(NSRange)range
-                         attributes:
-                             (NSDictionary<NSString *, NSString *> *_Nullable)
-                                 attributes {
-  // no-op
+- (void)addAttributesInAttributedString:(NSMutableAttributedString *)string
+                                  range:(NSRange)range
+                             attributes:(NSDictionary<NSString *, NSString *> *)
+                                            attributes {
+  NSString *alignmentString = attributes[AlignmentAttributeName];
+  if (alignmentString.length == 0) {
+    return;
+  }
+
+  NSTextAlignment alignment =
+      [AlignmentConverter alignmentFromString:alignmentString];
+
+  NSString *text = string.string;
+  if (text.length == 0 || range.location == NSNotFound) {
+    return;
+  }
+
+  // расширяем range до реального параграфа
+  NSRange paragraph = [text paragraphRangeForRange:range];
+
+  NSUInteger safeIndex = MIN(paragraph.location, text.length - 1);
+
+  NSParagraphStyle *current = [string attribute:NSParagraphStyleAttributeName
+                                        atIndex:safeIndex
+                                 effectiveRange:nil];
+
+  NSMutableParagraphStyle *mutableParagraphStyle =
+      current ? [current mutableCopy] : [[NSMutableParagraphStyle alloc] init];
+
+  mutableParagraphStyle.alignment = alignment;
+
+  [string addAttribute:NSParagraphStyleAttributeName
+                 value:mutableParagraphStyle
+                 range:paragraph];
 }
 
 - (void)addTypingAttributes {

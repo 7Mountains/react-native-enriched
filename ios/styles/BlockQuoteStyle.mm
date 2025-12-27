@@ -1,8 +1,10 @@
 #import "AlignmentConverter.h"
 #import "ColorExtension.h"
 #import "EnrichedTextInputView.h"
+#import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
 #import "ParagraphsUtils.h"
+#import "StyleConstants.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
@@ -63,14 +65,13 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)_ {
-
   NSMutableDictionary *attributes =
       [_input->defaultTypingAttributes mutableCopy];
   attributes[NSForegroundColorAttributeName] = _input->config.blockquoteColor;
   NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
   pStyle.headIndent = [self getHeadIndent];
   pStyle.firstLineHeadIndent = [self getHeadIndent];
-  pStyle.tailIndent = -[self getHeadIndent];
+  pStyle.tailIndent = DefaultListTailIndent;
   attributes[NSParagraphStyleAttributeName] = pStyle;
   [attributedString addAttributes:attributes range:range];
 }
@@ -117,6 +118,7 @@
                       [(NSParagraphStyle *)value mutableCopy];
                   pStyle.headIndent = [self getHeadIndent];
                   pStyle.firstLineHeadIndent = [self getHeadIndent];
+                  pStyle.tailIndent = DefaultListTailIndent;
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
                              value:pStyle
