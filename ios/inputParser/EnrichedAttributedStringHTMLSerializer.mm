@@ -1,12 +1,14 @@
 #import "EnrichedAttributedStringHTMLSerializer.h"
 #import "EnrichedAttributedStringHTMLSerializerTagUtils.h"
 #import "HtmlNode.h"
+#import "ParagraphModifierStyle.h"
 #import "StyleHeaders.h"
 
 @implementation EnrichedAttributedStringHTMLSerializer {
   NSDictionary<NSNumber *, id<BaseStyleProtocol>> *_styles;
   NSArray<id<BaseStyleProtocol>> *_inlineStyles;
   NSArray<id<BaseStyleProtocol>> *_paragraphStyles;
+  NSArray<id<BaseStyleProtocol>> *_paragraphModificatorStyles;
 }
 
 - (instancetype)initWithStyles:(NSDictionary<NSNumber *, id> *)stylesDict {
@@ -18,6 +20,7 @@
 
   NSMutableArray *inlineStylesArray = [NSMutableArray array];
   NSMutableArray *paragraphStylesArray = [NSMutableArray array];
+  NSMutableArray *paragraphModificatorsArray = [NSMutableArray array];
 
   NSArray *allKeys = stylesDict.allKeys;
   for (NSInteger i = 0; i < allKeys.count; i++) {
@@ -29,7 +32,11 @@
                        [cls isParagraphStyle];
 
     if (isParagraph) {
-      [paragraphStylesArray addObject:style];
+      BOOL isParagraphModificatorStyle =
+          [cls conformsToProtocol:@protocol(ParagraphModifierStyle)];
+
+      isParagraphModificatorStyle ? [paragraphModificatorsArray addObject:style]
+                                  : [paragraphStylesArray addObject:style];
     } else {
       [inlineStylesArray addObject:style];
     }
@@ -37,6 +44,7 @@
 
   _inlineStyles = inlineStylesArray.copy;
   _paragraphStyles = paragraphStylesArray.copy;
+  _paragraphModificatorStyles = paragraphModificatorsArray.copy;
 
   return self;
 }
@@ -159,6 +167,30 @@
   return foundParagraphStyle;
 }
 
+- (void)applyParagraphModifiersToElement:(HTMLElement *)element
+                            attrsAtStart:(NSDictionary *)attrsAtStart {
+
+  for (id<BaseStyleProtocol> style in _paragraphModificatorStyles) {
+    Class cls = style.class;
+    NSAttributedStringKey key = [cls attributeKey];
+    id value = key ? attrsAtStart[key] : nil;
+
+    NSDictionary *paragraphModifierAttributes =
+        [cls respondsToSelector:@selector(containerAttributesFromValue:)]
+            ? [cls containerAttributesFromValue:value]
+            : nil;
+
+    if (!paragraphModifierAttributes)
+      continue;
+
+    NSMutableDictionary *attributes = element.attributes
+                                          ? [element.attributes mutableCopy]
+                                          : [NSMutableDictionary new];
+    [attributes addEntriesFromDictionary:paragraphModifierAttributes];
+    element.attributes = attributes;
+  }
+}
+
 - (HTMLElement *)currentParagraphType:(NSNumber *)currentParagraphType
                 previousParagraphType:(NSNumber *)previousParagraphType
                          previousNode:(HTMLElement *)previousNode
@@ -196,6 +228,7 @@
     HTMLElement *outer = [HTMLElement new];
     outer.tag = "p";
     [rootNode.children addObject:outer];
+    [self applyParagraphModifiersToElement:outer attrsAtStart:attrsAtStart];
     return outer;
   }
 
@@ -215,6 +248,7 @@
       [styleClass respondsToSelector:@selector(getParametersFromValue:)]) {
     outer.attributes = [styleClass getParametersFromValue:value];
   }
+  [self applyParagraphModifiersToElement:outer attrsAtStart:attrsAtStart];
 
   [rootNode.children addObject:outer];
   return outer;

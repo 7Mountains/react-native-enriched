@@ -1286,6 +1286,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
     NSString *alignment = (NSString *)args[0];
     [self setParagraphAllignment:alignment];
+    [self anyTextMayHaveBeenModified];
   }
 }
 

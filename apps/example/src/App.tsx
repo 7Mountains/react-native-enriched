@@ -95,8 +95,6 @@ const contentHtml = Array(1)
 
 const html = '<html>' + contentHtml + '</html>';
 
-console.log(html);
-
 export default function App() {
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);
   const [isUserPopupOpen, setIsUserPopupOpen] = useState(false);
@@ -337,6 +335,7 @@ export default function App() {
             onChangeText={(e) => handleChangeText(e.nativeEvent)}
             onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
+            defaultValue={html}
             onColorChangeInSelection={(e) => {
               handleSelectionColorChange(e.nativeEvent);
             }}
@@ -381,6 +380,22 @@ export default function App() {
         <Button
           title="remove color"
           onPress={() => ref.current?.removeColor()}
+        />
+        <Button
+          title="set right alignment"
+          onPress={() => ref.current?.setParagraphAlignment('right')}
+        />
+        <Button
+          title="set left alignment"
+          onPress={() => ref.current?.setParagraphAlignment('left')}
+        />
+        <Button
+          title="set center alignment"
+          onPress={() => ref.current?.setParagraphAlignment('center')}
+        />
+        <Button
+          title="set default alignment"
+          onPress={() => ref.current?.setParagraphAlignment('default')}
         />
         <Text>is Check list {stylesState.isCheckList ? 'true' : 'false'}</Text>
         <HtmlSection currentHtml={currentHtml} />
