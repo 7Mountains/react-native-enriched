@@ -1,6 +1,7 @@
 #import "ColorExtension.h"
 #import "EnrichedImageLoader.h"
 #import "EnrichedTextInputView.h"
+#import "HtmlAttributeNames.h"
 #import "ImageLabelAttachment.h"
 #import "OccurenceUtils.h"
 #import "StyleHeaders.h"
@@ -46,9 +47,9 @@ static NSString *const placeholder = @"\uFFFC";
   ContentParams *contentParams = value;
 
   NSMutableDictionary *params = [@{
-    @"type" : contentParams.type,
-    @"src" : contentParams.url,
-    @"text" : contentParams.text,
+    ContentTypeAttributeName : contentParams.type,
+    ContentSrcAttributeName : contentParams.url,
+    ContentTextAttributeName : contentParams.text,
   } mutableCopy];
 
   if (contentParams.attributes) {
@@ -76,10 +77,11 @@ static NSString *const placeholder = @"\uFFFC";
     return;
 
   ContentParams *params = [ContentParams new];
-  params.text = attributes[@"text"] ?: @"";
-  params.type = attributes[@"type"] ?: @"";
-  params.url = attributes[@"src"] ?: @"";
-  params.headers = [ContentParams parseHeaderFromString:attributes[@"headers"]];
+  params.text = attributes[ContentTextAttributeName] ?: @"";
+  params.type = attributes[ContentTypeAttributeName] ?: @"";
+  params.url = attributes[ContentSrcAttributeName] ?: @"";
+  params.headers = [ContentParams
+      parseHeaderFromString:attributes[ContentHeadersAttributeName]];
 
   BaseLabelAttachment *attachment = [self prepareAttachment:params];
 

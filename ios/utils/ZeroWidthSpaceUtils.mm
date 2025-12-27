@@ -234,7 +234,7 @@
       }
       [TextInsertionUtils replaceText:@""
                                    at:removalRange
-                 additionalAttributes:typedInput->textView.typingAttributes
+                 additionalAttributes:nullptr
                                 input:typedInput
                         withSelection:YES];
       return YES;

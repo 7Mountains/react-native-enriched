@@ -1,6 +1,7 @@
 #import "ColorExtension.h"
 #import "EnrichedTextInputView.h"
 #import "FontExtension.h"
+#import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
 #import "StyleHeaders.h"
 #import "StyleTypeEnum.h"
@@ -46,7 +47,7 @@
   UIColor *color = value;
 
   return @{
-    @"color" : [color hexString],
+    ColorAttributeName : [color hexString],
   };
 }
 
@@ -133,7 +134,7 @@
   if (range.length == 0)
     return;
 
-  NSString *colorAttribute = attributes[@"color"] ?: @"";
+  NSString *colorAttribute = attributes[ColorAttributeName] ?: @"";
 
   UIColor *color = nil;
   if ([colorAttribute isKindOfClass:[NSString class]]) {

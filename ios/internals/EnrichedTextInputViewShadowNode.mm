@@ -75,7 +75,7 @@ Size EnrichedTextInputViewShadowNode::measureContent(
 
   _textContainer.size = maxSize;
 
-  [_textStorage replaceCharactersInRange:NSMakeRange(0, +_textStorage.length)
+  [_textStorage replaceCharactersInRange:NSMakeRange(0, _textStorage.length)
                     withAttributedString:attributedText];
 
   [_layoutManager ensureLayoutForTextContainer:_textContainer];
@@ -83,9 +83,13 @@ Size EnrichedTextInputViewShadowNode::measureContent(
   CGSize usedSize =
       [_layoutManager usedRectForTextContainer:_textContainer].size;
 
-  auto width = std::min((Float)usedSize.width, constraints.maximumSize.width);
-  auto height =
-      std::min((Float)usedSize.height, constraints.maximumSize.height);
+  Float width =
+      std::max(constraints.minimumSize.width,
+               std::min((Float)usedSize.width, constraints.maximumSize.width));
+
+  Float height = std::max(
+      constraints.minimumSize.height,
+      std::min((Float)usedSize.height, constraints.maximumSize.height));
 
   return Size(width, height);
 }
