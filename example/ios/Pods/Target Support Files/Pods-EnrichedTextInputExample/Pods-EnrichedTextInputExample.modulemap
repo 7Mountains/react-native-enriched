@@ -1,6 +1,0 @@
-module Pods_EnrichedTextInputExample {
-  umbrella header "Pods-EnrichedTextInputExample-umbrella.h"
-
-  export *
-  module * { export * }
-}

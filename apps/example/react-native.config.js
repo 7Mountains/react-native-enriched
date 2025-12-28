@@ -9,10 +9,12 @@ module.exports = {
   },
   dependencies: {
     [pkg.name]: {
-      root: path.join(__dirname, '..'),
+      root: path.join(__dirname, '../..'),
       platforms: {
-        android: {},
+        // Codegen script incorrectly fails without this
+        // So we explicitly specify the platforms with empty object
         ios: {},
+        android: {},
       },
     },
   },
