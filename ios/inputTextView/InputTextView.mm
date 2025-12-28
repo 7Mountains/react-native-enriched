@@ -4,8 +4,14 @@
 #import "TextInsertionUtils.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+static inline BOOL CGSizeAlmostEqual(CGSize a, CGSize b, CGFloat epsilon) {
+  return fabs(a.width - b.width) < epsilon &&
+         fabs(a.height - b.height) < epsilon;
+}
+
 @implementation InputTextView {
   UILabel *placeholderView;
+  CGSize _lastCommittedSize;
 };
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -18,6 +24,7 @@
     self.textContainer.lineFragmentPadding = 0;
     self.scrollEnabled = YES;
     self.scrollsToTop = NO;
+    _lastCommittedSize = CGSizeZero;
   }
   return self;
 }
@@ -207,6 +214,18 @@
       [placeholderView sizeThatFits:textFrame.size].height;
   textFrame.size.height = MIN(placeholderHeight, textFrame.size.height);
   placeholderView.frame = textFrame;
+  CGRect usedRect =
+      [self.layoutManager usedRectForTextContainer:self.textContainer];
+
+  CGSize newSize = usedRect.size;
+
+  if (CGSizeAlmostEqual(newSize, _lastCommittedSize, 0.5)) {
+    return;
+  }
+
+  _lastCommittedSize = newSize;
+
+  [_input commitSize:newSize];
 }
 
 @end
