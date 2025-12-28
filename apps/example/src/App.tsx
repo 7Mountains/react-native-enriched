@@ -339,6 +339,9 @@ export default function App() {
             onColorChangeInSelection={(e) => {
               handleSelectionColorChange(e.nativeEvent);
             }}
+            onParagraphAlignmentChange={(e) =>
+              console.log(e.nativeEvent.alignment)
+            }
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}

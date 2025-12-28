@@ -46,6 +46,7 @@ using namespace facebook::react;
   UIColor *_placeholderColor;
   BOOL _emitFocusBlur;
   UITapGestureRecognizer *tapRecognizer;
+  NSString *_recentlyEmittedAlignment;
 }
 
 // MARK: - Component utils
@@ -89,6 +90,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _recentlyEmittedColor = nil;
   blockEmitting = NO;
   _emitFocusBlur = YES;
+  _recentlyEmittedAlignment = nil;
 
   defaultTypingAttributes =
       [[NSMutableDictionary<NSAttributedStringKey, id> alloc] init];
@@ -1196,6 +1198,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   [self emitCurrentSelectionColorIfChanged];
+  [self emitParagraphAlignmentIfChanged];
 
   // emit onChangeHtml event if needed
   [self tryEmittingOnChangeHtmlEvent];
@@ -1418,6 +1421,54 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       emitter->onColorChangeInSelection({.color = [hexColor toCppString]});
     }
     _recentlyEmittedColor = hexColor;
+  }
+}
+
+- (void)emitParagraphAlignmentIfChanged {
+  NSRange selectedRange = textView.selectedRange;
+  NSTextAlignment alignment = NSTextAlignmentNatural;
+
+  if (selectedRange.length == 0) {
+    NSParagraphStyle *style =
+        textView.typingAttributes[NSParagraphStyleAttributeName];
+    alignment = style ? style.alignment : NSTextAlignmentNatural;
+  } else {
+    NSTextStorage *storage = textView.textStorage;
+
+    NSUInteger start = selectedRange.location;
+
+    if (storage.length == 0 || start >= storage.length) {
+      alignment = NSTextAlignmentNatural;
+    } else {
+      NSRange effectiveRange = NSMakeRange(0, 0);
+      NSParagraphStyle *style = [storage attribute:NSParagraphStyleAttributeName
+                                           atIndex:start
+                             longestEffectiveRange:&effectiveRange
+                                           inRange:selectedRange];
+
+      BOOL coversWholeSelection =
+          (NSMaxRange(effectiveRange) >= NSMaxRange(selectedRange));
+
+      if (coversWholeSelection) {
+        alignment = style ? style.alignment : NSTextAlignmentNatural;
+      } else {
+        alignment = NSTextAlignmentNatural;
+      }
+    }
+  }
+
+  NSString *stringAlignment =
+      [AlignmentConverter stringFromAlignment:alignment];
+
+  if ([stringAlignment isEqualToString:_recentlyEmittedAlignment]) {
+    return;
+  }
+
+  auto emitter = [self getEventEmitter];
+  if (emitter != nullptr) {
+    emitter->onParagraphAlignmentChange(
+        {.alignment = [stringAlignment toCppString]});
+    _recentlyEmittedAlignment = stringAlignment;
   }
 }
 

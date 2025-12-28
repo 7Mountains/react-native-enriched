@@ -21,6 +21,7 @@ import EnrichedTextInputNativeComponent, {
   type MentionStyleProperties,
   type OnChangeColorEvent,
   type ContentStyleProperties,
+  type OnParagraphAlignmentChangeEvent,
 } from './EnrichedTextInputNativeComponent';
 import type {
   ColorValue,
@@ -174,6 +175,9 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   onColorChangeInSelection?: (
     color: NativeSyntheticEvent<OnChangeColorEvent>
   ) => void;
+  onParagraphAlignmentChange?: (
+    e: NativeSyntheticEvent<OnParagraphAlignmentChangeEvent>
+  ) => void;
   /**
    * If true, Android will use experimental synchronous events.
    * This will prevent from input flickering when updating component size.
@@ -230,6 +234,7 @@ export const EnrichedTextInput = ({
   onEndMention,
   onChangeSelection,
   onColorChangeInSelection,
+  onParagraphAlignmentChange,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
   ...rest
@@ -453,6 +458,7 @@ export const EnrichedTextInput = ({
       onChangeSelection={onChangeSelection}
       onRequestHtmlResult={handleRequestHtmlResult}
       onColorChangeInSelection={onColorChangeInSelection}
+      onParagraphAlignmentChange={onParagraphAlignmentChange}
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }
