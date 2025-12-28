@@ -1,5 +1,11 @@
 #import "AlignmentConverter.h"
 
+static NSString *const LeftAlignmentString = @"left";
+static NSString *const RightAlignmentString = @"right";
+static NSString *const CenterAlignmentString = @"center";
+static NSString *const JustifyAlignmentString = @"justify";
+static NSString *const NeuturalAlignmentString = @"default";
+
 @implementation AlignmentConverter
 
 + (NSTextAlignment)alignmentFromString:(NSString *)string {
@@ -10,11 +16,11 @@
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     map = @{
-      @"left" : @(NSTextAlignmentLeft),
-      @"right" : @(NSTextAlignmentRight),
-      @"center" : @(NSTextAlignmentCenter),
-      @"default" : @(NSTextAlignmentNatural),
-      @"justify" : @(NSTextAlignmentJustified)
+      LeftAlignmentString : @(NSTextAlignmentLeft),
+      RightAlignmentString : @(NSTextAlignmentRight),
+      CenterAlignmentString : @(NSTextAlignmentCenter),
+      NeuturalAlignmentString : @(NSTextAlignmentNatural),
+      JustifyAlignmentString : @(NSTextAlignmentJustified)
     };
   });
 
@@ -25,16 +31,16 @@
 + (NSString *)stringFromAlignment:(NSTextAlignment)alignment {
   switch (alignment) {
   case NSTextAlignmentLeft:
-    return @"left";
+    return LeftAlignmentString;
   case NSTextAlignmentRight:
-    return @"right";
+    return RightAlignmentString;
   case NSTextAlignmentCenter:
-    return @"center";
+    return CenterAlignmentString;
   case NSTextAlignmentJustified:
-    return @"justified";
+    return JustifyAlignmentString;
   case NSTextAlignmentNatural:
   default:
-    return @"default";
+    return NeuturalAlignmentString;
   }
 }
 

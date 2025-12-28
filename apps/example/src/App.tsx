@@ -89,7 +89,7 @@ const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
 const contentHtml = Array(1)
   .fill(
-    `<p><u>Test</u></p><checklist checked="false">This is a checklist item</checklist>`
+    `<p alignment="center"><u>Test</u></p><checklist alignment="center" checked="false">This is a checklist item</checklist>`
   )
   .join('');
 

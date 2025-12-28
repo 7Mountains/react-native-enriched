@@ -208,7 +208,7 @@
   }
 
   Class styleClass = currentStyle.class;
-  BOOL hasSub = ([styleClass subTagName] != NULL);
+  BOOL hasSubTag = ([styleClass subTagName] != NULL);
 
   BOOL sameStyle = NO;
 
@@ -222,7 +222,7 @@
     sameStyle = [currentAttrs isEqualToDictionary:previousAttrs];
   }
 
-  if (sameStyle && hasSub)
+  if (sameStyle && hasSubTag)
     return previousNode;
 
   HTMLElement *outer = [HTMLElement new];
@@ -246,12 +246,12 @@
   if (!style)
     return container;
 
-  const char *sub = [style.class subTagName];
-  if (!sub)
+  const char *subTag = [style.class subTagName];
+  if (!subTag)
     return container;
 
   HTMLElement *inner = [HTMLElement new];
-  inner.tag = sub;
+  inner.tag = subTag;
   [container.children addObject:inner];
   return inner;
 }
@@ -262,13 +262,13 @@
                             attrsAtStart:(NSDictionary *)attrsAtStart {
 
   for (id<BaseStyleProtocol> style in _paragraphModificatorStyles) {
-    Class cls = style.class;
-    NSAttributedStringKey key = [cls attributeKey];
+    Class styleClass = style.class;
+    NSAttributedStringKey key = [styleClass attributeKey];
     id value = key ? attrsAtStart[key] : nil;
 
     NSDictionary *attrs =
-        [cls respondsToSelector:@selector(containerAttributesFromValue:)]
-            ? [cls containerAttributesFromValue:value]
+        [styleClass respondsToSelector:@selector(containerAttributesFromValue:)]
+            ? [styleClass containerAttributesFromValue:value]
             : nil;
 
     if (!attrs)

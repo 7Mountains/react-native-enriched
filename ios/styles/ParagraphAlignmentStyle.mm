@@ -64,12 +64,14 @@
   return style.textLists.firstObject;
 }
 
-- (BOOL)isSameList:(NSParagraphStyle *)a other:(NSParagraphStyle *)b {
-  NSTextList *la = [self primaryListFromStyle:a];
-  NSTextList *lb = [self primaryListFromStyle:b];
-  if (!la || !lb)
+- (BOOL)isSameList:(NSParagraphStyle *)firstList
+             other:(NSParagraphStyle *)secondList {
+  NSTextList *firstListObject = [self primaryListFromStyle:firstList];
+  NSTextList *secondListObject = [self primaryListFromStyle:secondList];
+  if (!firstListObject || !secondListObject)
     return NO;
-  return [la.markerFormat isEqualToString:lb.markerFormat];
+  return [firstListObject.markerFormat
+      isEqualToString:secondListObject.markerFormat];
 }
 
 #pragma mark - Range helpers
