@@ -53,7 +53,7 @@
                                     pretify:(BOOL)pretify {
 
   if (text.length == 0)
-    return @"<html>\n<p></p>\n</html>";
+    return DefaultHtmlValue;
 
   HTMLElement *root = [self buildRootNodeFromAttributedString:text];
 
@@ -69,10 +69,10 @@
   NSString *plain = text.string;
 
   HTMLElement *root = [HTMLElement new];
-  root.tag = "html";
+  root.tag = HtmlTagHTML;
 
   HTMLElement *br = [HTMLElement new];
-  br.tag = "br";
+  br.tag = HtmlTagBR;
   br.selfClosing = YES;
 
   __block id<BaseStyleProtocol> previousParagraphStyle = nil;
@@ -176,12 +176,13 @@
   }
 
   for (id<BaseStyleProtocol> modifier in _paragraphModificatorStyles) {
-    Class mcls = modifier.class;
-    NSAttributedStringKey mkey = [mcls attributeKey];
-    id mvalue = mkey ? attrsAtStart[mkey] : nil;
+    Class modifierClass = modifier.class;
+    NSAttributedStringKey attributeKey = [modifierClass attributeKey];
+    id mvalue = attributeKey ? attrsAtStart[attributeKey] : nil;
 
-    if ([mcls respondsToSelector:@selector(containerAttributesFromValue:)]) {
-      NSDictionary *attrs = [mcls containerAttributesFromValue:mvalue];
+    if ([modifierClass
+            respondsToSelector:@selector(containerAttributesFromValue:)]) {
+      NSDictionary *attrs = [modifierClass containerAttributesFromValue:mvalue];
       if (attrs)
         [result addEntriesFromDictionary:attrs];
     }
@@ -201,7 +202,7 @@
 
   if (!currentStyle) {
     HTMLElement *outer = [HTMLElement new];
-    outer.tag = "p";
+    outer.tag = HtmlParagraphTag;
     [self applyParagraphModifiersToElement:outer attrsAtStart:attrsAtStart];
     [rootNode.children addObject:outer];
     return outer;
@@ -350,7 +351,7 @@
     [self createHtmlFromNode:child into:buffer pretify:pretify];
 
   if (addNewLineAfter)
-    appendC(buffer, "\n");
+    appendC(buffer, NewLine);
 
   appendCloseTag(buffer, element.tag);
 }
