@@ -999,22 +999,62 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // componentView) so we need to run a single height calculation for any
   // initial values
   if (oldState == nullptr) {
-    [self commitState];
+    [self measureAndCommitSize];
   }
 }
-
-- (void)commitState {
+- (void)measureAndCommitSize {
   if (_state == nullptr) {
     return;
   }
-  NSAttributedString *currentAttributedText = [textView.attributedText copy];
-  NSAttributedString *snapshot =
-      currentAttributedText && currentAttributedText.length > 0
-          ? currentAttributedText
-          : [[NSAttributedString alloc]
-                initWithString:@"I"
-                    attributes:textView.typingAttributes];
-  _state->updateState(EnrichedTextInputViewState(snapshot));
+  [textView.layoutManager ensureLayoutForTextContainer:textView.textContainer];
+
+  CGRect used =
+      [textView.layoutManager usedRectForTextContainer:textView.textContainer];
+  CGSize size = used.size;
+
+  // Empty text fallback
+  if (textView.textStorage.length == 0) {
+    UIFont *font =
+        textView.typingAttributes[NSFontAttributeName] ?: textView.font;
+    if (font) {
+      size.height = ceil(font.lineHeight);
+    }
+  }
+  auto selfRef = wrapManagedObjectWeakly(self);
+  facebook::react::Size newSize{.width = size.width, .height = size.height};
+  _state->updateState(
+      facebook::react::EnrichedTextInputViewState(newSize, selfRef));
+}
+
+- (CGSize)measureInitialSizeWithMaxWidth:(CGFloat)maxWidth {
+  [textView.layoutManager ensureLayoutForTextContainer:textView.textContainer];
+  CGRect usedRect =
+      [textView.layoutManager usedRectForTextContainer:textView.textContainer];
+  CGSize size = usedRect.size;
+
+  // Empty text fallback
+  if (textView.textStorage.length == 0) {
+    UIFont *font =
+        textView.typingAttributes[NSFontAttributeName] ?: textView.font;
+
+    if (font) {
+      size.height = ceil(font.lineHeight);
+    }
+  }
+  NSString *currentStr = [[textView.textStorage string] copy];
+  // Bounding rect fallback / final height calculation
+  NSString *string = currentStr ?: @"";
+  CGRect boundingBox =
+      [string boundingRectWithSize:CGSizeMake(maxWidth, CGFLOAT_MAX)
+                           options:NSStringDrawingUsesLineFragmentOrigin |
+                                   NSStringDrawingUsesFontLeading
+                        attributes:@{
+                          NSFontAttributeName : textView.font
+                              ?: [UIFont systemFontOfSize:17]
+                        }
+                           context:nil];
+
+  return CGSizeMake(maxWidth, ceil(boundingBox.size.height));
 }
 
 // MARK: - Active styles
@@ -1782,7 +1822,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   // update height on each character change
-  [self commitState];
+  [self measureAndCommitSize];
   // update active styles as well
   [self tryUpdatingActiveStyles];
 }

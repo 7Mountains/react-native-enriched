@@ -22,7 +22,6 @@ class EnrichedTextInputViewShadowNode
 
 public:
   using ConcreteViewShadowNode::ConcreteViewShadowNode;
-
   EnrichedTextInputViewShadowNode(const ShadowNodeFragment &fragment,
                                   const ShadowNodeFamily::Shared &family,
                                   ShadowNodeTraits traits);
@@ -42,12 +41,8 @@ public:
   }
 
 private:
-  NSAttributedString *getAttributedString() const;
-  void createTextStorage() const;
-  mutable NSTextStorage *_textStorage = nil;
-  mutable NSLayoutManager *_layoutManager = nil;
-  mutable NSTextContainer *_textContainer = nil;
-  mutable NSAttributedString *_prevAttributedText = nil;
+  mutable Size _prevContentSize{NAN, NAN};
+  id setupMockTextInputView_() const;
 };
 
 } // namespace facebook::react

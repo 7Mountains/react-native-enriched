@@ -1,5 +1,6 @@
 #import "EnrichedTextInputViewShadowNode.h"
 
+#import <EnrichedTextInputView.h>
 #import <React/RCTShadowView+Layout.h>
 #import <react/utils/ManagedObjectWrapper.h>
 #import <yoga/Yoga.h>
@@ -9,27 +10,43 @@ namespace facebook::react {
 extern const char EnrichedTextInputViewComponentName[] =
     "EnrichedTextInputView";
 
-void EnrichedTextInputViewShadowNode::createTextStorage() const {
-  if (_textStorage) {
-    return;
+void EnrichedTextInputViewShadowNode::dirtyLayoutIfNeeded() {
+  const auto &state = getStateData();
+  const auto nextSize = state.getContentSize();
+
+  if (_prevContentSize != nextSize) {
+    YGNodeMarkDirty(&yogaNode_);
   }
 
-  _textContainer = [NSTextContainer new];
-  _textContainer.lineFragmentPadding = 0;
-  _textContainer.maximumNumberOfLines = 0;
-
-  _layoutManager = [NSLayoutManager new];
-  [_layoutManager addTextContainer:_textContainer];
-
-  _textStorage = [NSTextStorage new];
-  [_textStorage addLayoutManager:_layoutManager];
-  _prevAttributedText = [NSAttributedString alloc];
+  _prevContentSize = nextSize;
 }
 
-void EnrichedTextInputViewShadowNode::dirtyLayoutIfNeeded() {
-  const auto state = this->getStateData();
-  if (![_prevAttributedText
-          isEqualToAttributedString:state.getAttributedText()]) {
+id EnrichedTextInputViewShadowNode::setupMockTextInputView_() const {
+  // it's rendered far away from the viewport
+  const int veryFarAway = 20000;
+  const int mockSize = 1000;
+  EnrichedTextInputView *mockTextInputView_ = [[EnrichedTextInputView alloc]
+      initWithFrame:(CGRectMake(veryFarAway, veryFarAway, mockSize, mockSize))];
+  const auto props = this->getProps();
+  mockTextInputView_->blockEmitting = YES;
+  [mockTextInputView_ updateProps:props oldProps:nullptr];
+  return mockTextInputView_;
+}
+
+EnrichedTextInputViewShadowNode::EnrichedTextInputViewShadowNode(
+    const ShadowNode &source, const ShadowNodeFragment &fragment)
+    : ConcreteViewShadowNode(source, fragment) {
+
+  const auto &oldState =
+      static_cast<const EnrichedTextInputViewShadowNode &>(source)
+          .getStateData();
+
+  const auto &newState = getStateData();
+
+  const auto &oldSize = oldState.getContentSize();
+  const auto &newSize = newState.getContentSize();
+
+  if (newSize != oldSize) {
     YGNodeMarkDirty(&yogaNode_);
   }
 }
@@ -38,56 +55,45 @@ EnrichedTextInputViewShadowNode::EnrichedTextInputViewShadowNode(
     const ShadowNodeFragment &fragment, const ShadowNodeFamily::Shared &family,
     ShadowNodeTraits traits)
     : ConcreteViewShadowNode(fragment, family, traits) {
-  createTextStorage();
-}
-
-EnrichedTextInputViewShadowNode::EnrichedTextInputViewShadowNode(
-    const ShadowNode &sourceShadowNode, const ShadowNodeFragment &fragment)
-    : ConcreteViewShadowNode(sourceShadowNode, fragment) {
-  dirtyLayoutIfNeeded();
-}
-
-NSAttributedString *
-EnrichedTextInputViewShadowNode::getAttributedString() const {
-  NSAttributedString *attributedText = getStateData().getAttributedText();
-
-  if (!attributedText || attributedText.length == 0) {
-    // Fallback to a measurable placeholder
-    return [[NSAttributedString alloc] initWithString:@"I"];
-  }
-
-  return attributedText;
+  _prevContentSize = {};
 }
 
 Size EnrichedTextInputViewShadowNode::measureContent(
     const LayoutContext &, const LayoutConstraints &constraints) const {
+  const auto state = this->getStateData();
+  const auto componentRef = state.getComponentViewRef();
+  RCTInternalGenericWeakWrapper *weakWrapper =
+      (RCTInternalGenericWeakWrapper *)unwrapManagedObject(componentRef);
+  if (weakWrapper != nullptr) {
+    id componentObject = weakWrapper.object;
+    EnrichedTextInputView *typedComponentObject =
+        (EnrichedTextInputView *)componentObject;
 
-  createTextStorage();
+    if (typedComponentObject != nullptr) {
+      auto size = state.getContentSize();
+      _prevContentSize = size;
+      return constraints.clamp(size);
+    }
+  } else {
+    __block CGSize estimatedSize;
+    // synchronously dispatch to main thread if needed
+    if ([NSThread isMainThread]) {
+      EnrichedTextInputView *mockTextInputView = setupMockTextInputView_();
+      estimatedSize = [mockTextInputView
+          measureInitialSizeWithMaxWidth:constraints.maximumSize.width];
+    } else {
+      dispatch_sync(dispatch_get_main_queue(), ^{
+        EnrichedTextInputView *mockTextInputView = setupMockTextInputView_();
+        estimatedSize = [mockTextInputView
+            measureInitialSizeWithMaxWidth:constraints.maximumSize.width];
+      });
+    }
 
-  NSAttributedString *attributedText = getAttributedString();
-  _prevAttributedText = attributedText;
+    return {estimatedSize.width,
+            MIN(estimatedSize.height, constraints.maximumSize.height)};
+  }
 
-  CGSize maxSize = {constraints.maximumSize.width,
-                    constraints.maximumSize.height ==
-                            std::numeric_limits<Float>::infinity()
-                        ? CGFLOAT_MAX
-                        : constraints.maximumSize.height};
-
-  _textContainer.size = maxSize;
-
-  [_textStorage replaceCharactersInRange:NSMakeRange(0, +_textStorage.length)
-                    withAttributedString:attributedText];
-
-  [_layoutManager ensureLayoutForTextContainer:_textContainer];
-
-  CGSize usedSize =
-      [_layoutManager usedRectForTextContainer:_textContainer].size;
-
-  auto width = std::min((Float)usedSize.width, constraints.maximumSize.width);
-  auto height =
-      std::min((Float)usedSize.height, constraints.maximumSize.height);
-
-  return Size(width, height);
+  return Size();
 }
 
 } // namespace facebook::react

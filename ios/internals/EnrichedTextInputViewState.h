@@ -1,7 +1,5 @@
 #pragma once
-#include <memory>
-
-@class NSAttributedString;
+#include <react/renderer/graphics/Size.h>
 
 namespace facebook::react {
 
@@ -9,13 +7,19 @@ class EnrichedTextInputViewState {
 public:
   EnrichedTextInputViewState() = default;
 
-  explicit EnrichedTextInputViewState(NSAttributedString *attributedText)
-      : attributedText_(attributedText) {}
+  explicit EnrichedTextInputViewState(Size contentSize,
+                                      std::shared_ptr<void> ref)
+      : contentSize_(contentSize), componentViewRef_(std::move(ref)) {}
 
-  NSAttributedString *getAttributedText() const { return attributedText_; }
+  const Size &getContentSize() const { return contentSize_; }
+
+  const std::shared_ptr<void> getComponentViewRef() const {
+    return componentViewRef_;
+  }
 
 private:
-  NSAttributedString *attributedText_ = nullptr;
+  Size contentSize_{};
+  std::shared_ptr<void> componentViewRef_{};
 };
 
 } // namespace facebook::react
