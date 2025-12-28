@@ -1288,7 +1288,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self addDividerAtNewLine];
   } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
     NSString *alignment = (NSString *)args[0];
-    [self setParagraphAllignment:alignment];
+    [self setParagraphAlignment:alignment];
     [self anyTextMayHaveBeenModified];
   }
 }
@@ -1658,7 +1658,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
-- (void)setParagraphAllignment:(NSString *)alignment {
+- (void)setParagraphAlignment:(NSString *)alignment {
   ParagraphAlignmentStyle *paragraphAlignmentStyle = (ParagraphAlignmentStyle *)
       stylesDict[@([ParagraphAlignmentStyle getStyleType])];
   if (paragraphAlignmentStyle == nullptr)
