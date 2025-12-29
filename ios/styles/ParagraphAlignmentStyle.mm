@@ -58,20 +58,13 @@
 
 #pragma mark - List helpers
 
-- (NSTextList *)primaryListFromStyle:(NSParagraphStyle *)style {
-  if (!style || style.textLists.count == 0)
-    return nil;
+- (NSTextList *)listFromStyle:(NSParagraphStyle *)style {
   return style.textLists.firstObject;
 }
 
-- (BOOL)isSameList:(NSParagraphStyle *)firstList
-             other:(NSParagraphStyle *)secondList {
-  NSTextList *firstListObject = [self primaryListFromStyle:firstList];
-  NSTextList *secondListObject = [self primaryListFromStyle:secondList];
-  if (!firstListObject || !secondListObject)
-    return NO;
-  return [firstListObject.markerFormat
-      isEqualToString:secondListObject.markerFormat];
+- (BOOL)sameList:(NSParagraphStyle *)a other:(NSParagraphStyle *)b {
+  return [[self listFromStyle:a].markerFormat
+      isEqualToString:[self listFromStyle:b].markerFormat];
 }
 
 #pragma mark - Range helpers
@@ -88,7 +81,9 @@
                       inRange:range
                       options:0
                    usingBlock:^(id value, NSRange r, BOOL *stop) {
-                     if ([self primaryListFromStyle:value]) {
+                     auto listMarker = [self listFromStyle:value].markerFormat;
+                     if (listMarker == NSTextListMarkerDisc ||
+                         listMarker == NSTextListMarkerDecimal) {
                        touches = YES;
                        *stop = YES;
                      }
@@ -96,59 +91,50 @@
   return touches;
 }
 
+- (NSParagraphStyle *)paragraphStyleAtRange:(NSRange)range
+                                    storage:(NSTextStorage *)storage {
+  if (storage.length == 0)
+    return nil;
+  NSUInteger index = MIN(range.location, storage.length - 1);
+  return [storage attribute:NSParagraphStyleAttributeName
+                    atIndex:index
+             effectiveRange:nil];
+}
+
 #pragma mark - Expand list
 
 - (NSRange)expandRangeToFullList:(NSRange)range {
-  NSString *text = _input->textView.textStorage.string;
   NSTextStorage *storage = _input->textView.textStorage;
-
+  NSString *text = storage.string;
   if (text.length == 0)
     return range;
 
-  NSRange baseParagraph = [text paragraphRangeForRange:range];
+  NSRange base = [text paragraphRangeForRange:range];
+  NSParagraphStyle *baseStyle = [self paragraphStyleAtRange:base
+                                                    storage:storage];
 
-  NSUInteger safeIndex = baseParagraph.location >= text.length
-                             ? text.length - 1
-                             : baseParagraph.location;
-
-  NSParagraphStyle *baseStyle = [storage attribute:NSParagraphStyleAttributeName
-                                           atIndex:safeIndex
-                                    effectiveRange:nil];
-
-  NSTextList *baseList = [self primaryListFromStyle:baseStyle];
+  NSTextList *baseList = [self listFromStyle:baseStyle];
   if (!baseList)
-    return baseParagraph;
+    return base;
 
-  NSInteger start = baseParagraph.location;
-  NSInteger end = NSMaxRange(baseParagraph);
+  NSInteger start = base.location;
+  NSInteger end = NSMaxRange(base);
 
-  // expand upward
+  // go up
   while (start > 0) {
     NSRange prev = [text paragraphRangeForRange:NSMakeRange(start - 1, 0)];
-
-    NSParagraphStyle *prevStyle =
-        [storage attribute:NSParagraphStyleAttributeName
-                   atIndex:prev.location
-            effectiveRange:nil];
-
-    if (![self isSameList:prevStyle other:baseStyle])
+    NSParagraphStyle *style = [self paragraphStyleAtRange:prev storage:storage];
+    if (![self sameList:style other:baseStyle])
       break;
-
     start = prev.location;
   }
 
-  // expand downward
+  // go down
   while (end < text.length) {
     NSRange next = [text paragraphRangeForRange:NSMakeRange(end, 0)];
-
-    NSParagraphStyle *nextStyle =
-        [storage attribute:NSParagraphStyleAttributeName
-                   atIndex:next.location
-            effectiveRange:nil];
-
-    if (![self isSameList:nextStyle other:baseStyle])
+    NSParagraphStyle *style = [self paragraphStyleAtRange:next storage:storage];
+    if (![self sameList:style other:baseStyle])
       break;
-
     end = NSMaxRange(next);
   }
 
@@ -158,42 +144,31 @@
 #pragma mark - Apply alignment
 
 - (void)applyAlignment:(NSTextAlignment)alignment inRange:(NSRange)range {
-
   NSTextStorage *storage = _input->textView.textStorage;
   NSString *text = storage.string;
-
   if (range.location == NSNotFound || text.length == 0)
     return;
 
   [storage beginEditing];
 
-  NSUInteger location = range.location;
+  [text enumerateSubstringsInRange:range
+                           options:NSStringEnumerationByParagraphs
+                        usingBlock:^(NSString *sub, NSRange paragraph,
+                                     NSRange range, BOOL *stop) {
+                          NSParagraphStyle *current =
+                              [self paragraphStyleAtRange:paragraph
+                                                  storage:storage];
 
-  while (location < NSMaxRange(range)) {
+                          NSMutableParagraphStyle *style =
+                              current ? [current mutableCopy]
+                                      : [NSMutableParagraphStyle new];
 
-    if (location >= text.length)
-      break;
+                          style.alignment = alignment;
 
-    NSRange paragraph = [text paragraphRangeForRange:NSMakeRange(location, 0)];
-
-    NSUInteger safeIndex = MIN(paragraph.location, text.length - 1);
-
-    NSParagraphStyle *current = [storage attribute:NSParagraphStyleAttributeName
-                                           atIndex:safeIndex
-                                    effectiveRange:nil];
-
-    NSMutableParagraphStyle *style =
-        current ? [current mutableCopy]
-                : [[NSMutableParagraphStyle alloc] init];
-
-    style.alignment = alignment;
-
-    [storage addAttribute:NSParagraphStyleAttributeName
-                    value:style
-                    range:paragraph];
-
-    location = NSMaxRange(paragraph);
-  }
+                          [storage addAttribute:NSParagraphStyleAttributeName
+                                          value:style
+                                          range:paragraph];
+                        }];
 
   [storage endEditing];
 }
@@ -203,67 +178,25 @@
                                     ?: [NSMutableDictionary new];
 
   NSMutableParagraphStyle *style =
-      [typing[NSParagraphStyleAttributeName] mutableCopy];
-
-  if (!style) {
-    style = [[NSMutableParagraphStyle alloc] init];
-  }
+      [typing[NSParagraphStyleAttributeName] mutableCopy]
+          ?: [NSMutableParagraphStyle new];
 
   style.alignment = alignment;
-
   typing[NSParagraphStyleAttributeName] = style;
+
   _input->textView.typingAttributes = typing;
 }
 
 #pragma mark - Main entry point
 
 - (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment {
+  NSRange paragraphRange = [self paragraphRangeForRange:range];
 
-  NSTextStorage *storage = _input->textView.textStorage;
-  NSString *text = storage.string;
-
-  if (range.location == NSNotFound) {
-    return;
+  if ([self rangeTouchesList:paragraphRange]) {
+    paragraphRange = [self expandRangeToFullList:paragraphRange];
   }
 
-  NSRange targetRange = NSMakeRange(0, 0);
-
-  BOOL hasText = text.length > 0;
-
-  if (range.length == 0) {
-    if (!hasText) {
-      [self updateTypingAlignment:alignment];
-      return;
-    }
-
-    NSRange paragraph = [self paragraphRangeForRange:range];
-
-    NSUInteger safeIndex = MIN(paragraph.location, text.length - 1);
-
-    NSParagraphStyle *style = [storage attribute:NSParagraphStyleAttributeName
-                                         atIndex:safeIndex
-                                  effectiveRange:nil];
-
-    if (style && [self primaryListFromStyle:style]) {
-      targetRange = [self expandRangeToFullList:paragraph];
-    } else {
-      targetRange = paragraph;
-    }
-
-  } else {
-    NSRange paragraphRange = [self paragraphRangeForRange:range];
-
-    if ([self rangeTouchesList:paragraphRange]) {
-      targetRange = [self expandRangeToFullList:paragraphRange];
-    } else {
-      targetRange = paragraphRange;
-    }
-  }
-  if (targetRange.length > 0) {
-    [self applyAlignment:alignment inRange:targetRange];
-  }
-
-  // Always update typing attributes
+  [self applyAlignment:alignment inRange:paragraphRange];
   [self updateTypingAlignment:alignment];
 }
 
@@ -356,35 +289,25 @@
                              attributes:(NSDictionary<NSString *, NSString *> *)
                                             attributes {
   NSString *alignmentString = attributes[AlignmentAttributeName];
-  if (alignmentString.length == 0) {
+  if (!alignmentString) {
     return;
   }
 
   NSTextAlignment alignment =
       [AlignmentConverter alignmentFromString:alignmentString];
 
-  NSString *text = string.string;
-  if (text.length == 0 || range.location == NSNotFound) {
-    return;
-  }
-
-  // расширяем range до реального параграфа
-  NSRange paragraph = [text paragraphRangeForRange:range];
-
-  NSUInteger safeIndex = MIN(paragraph.location, text.length - 1);
-
   NSParagraphStyle *current = [string attribute:NSParagraphStyleAttributeName
-                                        atIndex:safeIndex
+                                        atIndex:range.location
                                  effectiveRange:nil];
 
   NSMutableParagraphStyle *mutableParagraphStyle =
-      current ? [current mutableCopy] : [[NSMutableParagraphStyle alloc] init];
+      current ? [current mutableCopy] : [NSMutableParagraphStyle new];
 
   mutableParagraphStyle.alignment = alignment;
 
   [string addAttribute:NSParagraphStyleAttributeName
                  value:mutableParagraphStyle
-                 range:paragraph];
+                 range:range];
 }
 
 - (void)addTypingAttributes {

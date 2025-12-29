@@ -185,6 +185,8 @@
                   pStyle.textLists = @[];
                   pStyle.headIndent = 0;
                   pStyle.firstLineHeadIndent = 0;
+                  pStyle.tailIndent = 0;
+                  pStyle.alignment = NSTextAlignmentNatural;
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
                              value:pStyle
@@ -202,6 +204,8 @@
   pStyle.textLists = @[];
   pStyle.headIndent = 0;
   pStyle.firstLineHeadIndent = 0;
+  pStyle.tailIndent = 0;
+  pStyle.alignment = NSTextAlignmentNatural;
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
   _input->textView.typingAttributes = typingAttrs;
 }
