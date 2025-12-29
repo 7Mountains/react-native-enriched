@@ -841,7 +841,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     config = newConfig;
 
     // we already applied html with styles in default value
-    if (!defaultValueChanged) {
+    if (!defaultValueChanged && textView.textStorage.string.length > 0) {
       // all the text needs to be rebuilt
       // we get the current html using old config, then switch to new config and
       // replace text using the html this way, the newest config attributes are

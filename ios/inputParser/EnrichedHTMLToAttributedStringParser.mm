@@ -230,9 +230,7 @@
 }
 
 - (void)appendEmptyBlockPlaceholder {
-  unichar zws = 0x200B;
-  NSString *placeholder = [NSString stringWithCharacters:&zws length:1];
-
+  NSString *placeholder = @"\u200B";
   [self appendText:placeholder];
 }
 
