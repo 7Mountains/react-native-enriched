@@ -83,7 +83,8 @@
 - (BOOL)underlinedLinkConflictsInRange:(NSRange)range {
   BOOL conflicted = NO;
   if ([_input->config linkDecorationLine] == DecorationUnderline) {
-    LinkStyle *linkStyle = _input->stylesDict[@([LinkStyle getStyleType])];
+    LinkStyle *linkStyle =
+        (LinkStyle *)_input->stylesDict[@([LinkStyle getStyleType])];
     conflicted = range.length > 0 ? [linkStyle anyOccurence:range]
                                   : [linkStyle detectStyle:range];
   }
@@ -93,7 +94,7 @@
 - (BOOL)underlinedMentionConflictsInRange:(NSRange)range {
   BOOL conflicted = NO;
   MentionStyle *mentionStyle =
-      _input->stylesDict[@([MentionStyle getStyleType])];
+      (MentionStyle *)_input->stylesDict[@([MentionStyle getStyleType])];
   if (range.length == 0) {
     if ([mentionStyle detectStyle:range]) {
       MentionParams *params = [mentionStyle getMentionParamsAt:range.location];

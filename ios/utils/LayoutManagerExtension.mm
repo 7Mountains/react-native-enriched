@@ -429,7 +429,8 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                 origin:(CGPoint)origin
       visibleCharRange:(NSRange)visibleCharRange {
 
-  CheckBoxStyle *style = input->stylesDict[@([CheckBoxStyle getStyleType])];
+  CheckBoxStyle *style =
+      (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
   if (!style)
     return;
 

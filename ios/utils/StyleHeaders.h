@@ -8,6 +8,8 @@
 #import "ParagraphModifierStyle.h"
 #import "ParameterizedStyleProtocol.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 
 @interface BoldStyle : NSObject <BaseStyleProtocol>
@@ -148,3 +150,5 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
     : NSObject <BaseStyleProtocol, ParagraphModifierStyle>
 - (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment;
 @end
+
+NS_ASSUME_NONNULL_END

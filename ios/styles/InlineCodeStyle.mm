@@ -178,7 +178,8 @@
 // color if there is no mention
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
   UIColor *bgColor = (UIColor *)value;
-  MentionStyle *mStyle = _input->stylesDict[@([MentionStyle getStyleType])];
+  MentionStyle *mStyle =
+      (MentionStyle *)_input->stylesDict[@([MentionStyle getStyleType])];
   return bgColor != nullptr && mStyle != nullptr && ![mStyle detectStyle:range];
 }
 
