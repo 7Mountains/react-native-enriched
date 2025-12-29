@@ -267,7 +267,7 @@ static NSString *const UnckedValueString = @"false";
   return [OccurenceUtils detect:NSParagraphStyleAttributeName
                       withInput:_input
                         atIndex:range.location
-                  checkPrevious:YES
+                  checkPrevious:NO
                   withCondition:^BOOL(id value, NSRange r) {
                     return [self styleCondition:value range:r];
                   }];

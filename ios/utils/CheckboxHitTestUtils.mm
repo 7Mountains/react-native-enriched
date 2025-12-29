@@ -9,8 +9,27 @@ static const CGFloat kCheckboxHitSlopVertical = 6.0;
 
 @implementation CheckboxHitTestUtils
 
-+ (CGRect)checkboxRectAtGlyphIndex:(NSUInteger)glyphIndex
-                           inInput:(EnrichedTextInputView *)input {
+#pragma mark - Coordinate helpers
+
++ (CGPoint)containerPointFromViewPoint:(CGPoint)point
+                              textView:(UITextView *)textView {
+  return CGPointMake(point.x - textView.textContainerInset.left,
+                     point.y - textView.textContainerInset.top);
+}
+
+#pragma mark - Glyph lookup
+
++ (NSUInteger)glyphIndexAtContainerPoint:(CGPoint)point
+                                textView:(UITextView *)textView {
+  return [textView.layoutManager glyphIndexForPoint:point
+                                    inTextContainer:textView.textContainer
+                     fractionOfDistanceThroughGlyph:nil];
+}
+
+#pragma mark - Checkbox detection
+
++ (BOOL)isCheckboxGlyph:(NSUInteger)glyphIndex
+                inInput:(EnrichedTextInputView *)input {
   UITextView *textView = input->textView;
   NSLayoutManager *layoutManager = textView.layoutManager;
   NSTextStorage *storage = textView.textStorage;
@@ -19,18 +38,27 @@ static const CGFloat kCheckboxHitSlopVertical = 6.0;
       [layoutManager characterIndexForGlyphAtIndex:glyphIndex];
 
   if (charIndex >= storage.length) {
-    return CGRectNull;
+    return NO;
   }
 
   CheckBoxStyle *checkboxStyle =
       (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
 
-  if (!checkboxStyle ||
-      ![checkboxStyle detectStyle:NSMakeRange(charIndex, 0)]) {
-    return CGRectNull;
+  if (!checkboxStyle) {
+    return NO;
   }
 
+  return [checkboxStyle detectStyle:NSMakeRange(charIndex, 0)];
+}
+
+#pragma mark - Checkbox rect
+
++ (CGRect)checkboxRectForGlyphIndex:(NSUInteger)glyphIndex
+                            inInput:(EnrichedTextInputView *)input {
+  UITextView *textView = input->textView;
+  NSLayoutManager *layoutManager = textView.layoutManager;
   InputConfig *config = input->config;
+
   if (!config) {
     return CGRectNull;
   }
@@ -38,71 +66,59 @@ static const CGFloat kCheckboxHitSlopVertical = 6.0;
   CGRect lineRect = [layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex
                                                     effectiveRange:nil];
 
-  lineRect.origin.x += textView.textContainerInset.left;
-  lineRect.origin.y += textView.textContainerInset.top;
-
-  CGFloat checkboxWidth = config.checkBoxWidth;
-  CGFloat checkboxHeight = config.checkBoxHeight;
-
-  CGFloat originY =
-      lineRect.origin.y + (lineRect.size.height - checkboxHeight) / 2.0;
-
   CGFloat originX = lineRect.origin.x + config.checkboxListMarginLeft +
                     config.checkboxListGapWidth;
 
-  return CGRectMake(originX, originY, checkboxWidth, checkboxHeight);
+  CGFloat originY =
+      lineRect.origin.y + (lineRect.size.height - config.checkBoxHeight) / 2.0;
+
+  return CGRectMake(originX, originY, config.checkBoxWidth,
+                    config.checkBoxHeight);
 }
 
-+ (CGRect)expandedHitRectForCheckboxRect:(CGRect)rect {
-  if (CGRectIsNull(rect)) {
+#pragma mark - Hit rect
+
++ (CGRect)expandedHitRectFromCheckboxRect:(CGRect)rect {
+  if (CGRectIsNull(rect))
     return rect;
-  }
 
-  return CGRectMake(rect.origin.x - kCheckboxHitSlopLeft,
-                    rect.origin.y - kCheckboxHitSlopVertical,
-                    rect.size.width + kCheckboxHitSlopLeft +
-                        kCheckboxHitSlopRight,
-                    rect.size.height + 2 * kCheckboxHitSlopVertical);
+  return CGRectInset(rect, -kCheckboxHitSlopLeft, -kCheckboxHitSlopVertical);
 }
+
+#pragma mark - Public API
 
 + (NSInteger)hitTestCheckboxAtPoint:(CGPoint)point
                             inInput:(EnrichedTextInputView *)input {
   UITextView *textView = input->textView;
-  NSLayoutManager *layoutManager = textView.layoutManager;
 
-  CGPoint containerPoint = point;
-  containerPoint.x -= textView.textContainerInset.left;
-  containerPoint.y -= textView.textContainerInset.top;
-  containerPoint.x += textView.contentOffset.x;
-  containerPoint.y += textView.contentOffset.y;
+  CGPoint containerPoint = [self containerPointFromViewPoint:point
+                                                    textView:textView];
 
-  NSUInteger glyphIndex =
-      [layoutManager glyphIndexForPoint:containerPoint
-                         inTextContainer:textView.textContainer
-          fractionOfDistanceThroughGlyph:nil];
+  NSUInteger glyphIndex = [self glyphIndexAtContainerPoint:containerPoint
+                                                  textView:textView];
 
   if (glyphIndex == NSNotFound) {
     return -1;
   }
 
-  NSRange lineGlyphRange;
-  [layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex
-                                  effectiveRange:&lineGlyphRange];
+  if (![self isCheckboxGlyph:glyphIndex inInput:input]) {
+    return -1;
+  }
 
-  CGRect checkboxRect = [self checkboxRectAtGlyphIndex:lineGlyphRange.location
-                                               inInput:input];
+  CGRect checkboxRect = [self checkboxRectForGlyphIndex:glyphIndex
+                                                inInput:input];
 
   if (CGRectIsNull(checkboxRect)) {
     return -1;
   }
 
-  CGRect hitRect = [self expandedHitRectForCheckboxRect:checkboxRect];
+  CGRect hitRect = [self expandedHitRectFromCheckboxRect:checkboxRect];
 
-  if (!CGRectContainsPoint(hitRect, point)) {
+  if (!CGRectContainsPoint(hitRect, containerPoint)) {
     return -1;
   }
 
-  return [layoutManager characterIndexForGlyphAtIndex:lineGlyphRange.location];
+  return [textView.layoutManager characterIndexForGlyphAtIndex:glyphIndex];
 }
 
 @end

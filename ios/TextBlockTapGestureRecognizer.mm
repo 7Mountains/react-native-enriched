@@ -40,15 +40,16 @@
     return;
   }
 
-  NSLayoutManager *lm = self.textView.layoutManager;
-  NSTextContainer *tc = self.textView.textContainer;
+  NSLayoutManager *layoutManager = self.textView.layoutManager;
+  NSTextContainer *textContainer = self.textView.textContainer;
 
-  NSUInteger glyphIndex = [lm glyphIndexForPoint:point
-                                 inTextContainer:tc
-                  fractionOfDistanceThroughGlyph:nil];
+  NSUInteger glyphIndex = [layoutManager glyphIndexForPoint:point
+                                            inTextContainer:textContainer
+                             fractionOfDistanceThroughGlyph:nil];
 
   if (glyphIndex != NSNotFound) {
-    NSUInteger charIndex = [lm characterIndexForGlyphAtIndex:glyphIndex];
+    NSUInteger charIndex =
+        [layoutManager characterIndexForGlyphAtIndex:glyphIndex];
 
     if (charIndex < self.textView.textStorage.length &&
         [self.textView.textStorage.string
