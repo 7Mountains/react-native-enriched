@@ -48,11 +48,12 @@
       OrderedListStyle *olStyle =
           input->stylesDict[@([OrderedListStyle getStyleType])];
       BlockQuoteStyle *bqStyle =
-          input->stylesDict[@([BlockQuoteStyle getStyleType])];
+          (BlockQuoteStyle *)
+              input->stylesDict[@([BlockQuoteStyle getStyleType])];
       CodeBlockStyle *cbStyle =
-          input->stylesDict[@([CodeBlockStyle getStyleType])];
+          (CodeBlockStyle *)input->stylesDict[@([CodeBlockStyle getStyleType])];
       CheckBoxStyle *checkBoxStyle =
-          input->stylesDict[@([CheckBoxStyle getStyleType])];
+          (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
 
       // zero width spaces with no lists/blockquotes/codeblocks/checkboxes on
       // them get removed
@@ -74,7 +75,7 @@
     NSRange replaceRange = NSMakeRange([index integerValue] + offset, 1);
     [TextInsertionUtils replaceText:@""
                                  at:replaceRange
-               additionalAttributes:nullptr
+               additionalAttributes:input->textView.typingAttributes
                               input:input
                       withSelection:NO];
     offset -= 1;
@@ -101,10 +102,11 @@
   OrderedListStyle *olStyle =
       input->stylesDict[@([OrderedListStyle getStyleType])];
   BlockQuoteStyle *bqStyle =
-      input->stylesDict[@([BlockQuoteStyle getStyleType])];
-  CodeBlockStyle *cbStyle = input->stylesDict[@([CodeBlockStyle getStyleType])];
+      (BlockQuoteStyle *)input->stylesDict[@([BlockQuoteStyle getStyleType])];
+  CodeBlockStyle *cbStyle =
+      (CodeBlockStyle *)input->stylesDict[@([CodeBlockStyle getStyleType])];
   CheckBoxStyle *checkBoxStyle =
-      input->stylesDict[@([CheckBoxStyle getStyleType])];
+      (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
   NSMutableArray *indexesToBeInserted = [[NSMutableArray alloc] init];
   NSRange preAddSelection = input->textView.selectedRange;
 
@@ -137,7 +139,7 @@
     NSRange replaceRange = NSMakeRange([index integerValue] + offset, 1);
     [TextInsertionUtils replaceText:@"\u200B\n"
                                  at:replaceRange
-               additionalAttributes:nullptr
+               additionalAttributes:input->textView.typingAttributes
                               input:input
                       withSelection:NO];
     offset += 1;
@@ -160,7 +162,7 @@
        [checkBoxStyle detectStyle:lastRange])) {
     [TextInsertionUtils insertText:@"\u200B"
                                 at:lastRange.location
-              additionalAttributes:nullptr
+              additionalAttributes:input->textView.typingAttributes
                              input:input
                      withSelection:NO];
   }
@@ -214,11 +216,14 @@
     OrderedListStyle *olStyle =
         typedInput->stylesDict[@([OrderedListStyle getStyleType])];
     BlockQuoteStyle *bqStyle =
-        typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
+        (BlockQuoteStyle *)
+            typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
     CodeBlockStyle *cbStyle =
-        typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
+        (CodeBlockStyle *)
+            typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
     CheckBoxStyle *checkBoxStyle =
-        typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
+        (CheckBoxStyle *)
+            typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
 
     if ([cbStyle detectStyle:removalRange]) {
       // code blocks are being handled differently; we want to remove previous
@@ -237,7 +242,7 @@
 
     [TextInsertionUtils replaceText:@""
                                  at:removalRange
-               additionalAttributes:nullptr
+               additionalAttributes:typedInput->textView.typingAttributes
                               input:typedInput
                       withSelection:YES];
 

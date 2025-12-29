@@ -90,6 +90,10 @@ export interface OnChangeColorEvent {
   color: string | null;
 }
 
+export interface OnParagraphAlignmentChangeEvent {
+  alignment: string;
+}
+
 type Heading = {
   fontSize?: Float;
   bold?: boolean;
@@ -217,6 +221,7 @@ export interface NativeProps extends ViewProps {
   onChangeSelection?: DirectEventHandler<OnChangeSelectionEvent>;
   onRequestHtmlResult?: DirectEventHandler<OnRequestHtmlResultEvent>;
   onColorChangeInSelection?: DirectEventHandler<OnChangeColorEvent>;
+  onParagraphAlignmentChange?: DirectEventHandler<OnParagraphAlignmentChangeEvent>;
 
   // Style related props - used for generating proper setters in component's manager
   // These should not be passed as regular props
@@ -293,6 +298,10 @@ interface NativeCommands {
   setColor: (viewRef: React.ElementRef<ComponentType>, color: string) => void;
   removeColor: (viewRef: React.ElementRef<ComponentType>) => void;
   addDividerAtNewLine: (viewRef: React.ElementRef<ComponentType>) => void;
+  setParagraphAlignment: (
+    viewRef: React.ElementRef<ComponentType>,
+    alignment: string
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -328,6 +337,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'setColor',
     'removeColor',
     'addDividerAtNewLine',
+    'setParagraphAlignment',
   ],
 });
 

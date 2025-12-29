@@ -3,26 +3,32 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static inline NSDictionary<NSString *, NSString *> *
-HTMLAttributesFromNode(xmlNodePtr node) {
-  if (!node || !node->properties)
-    return @{};
+static NSDictionary<NSString *, NSString *>
+    *_Nullable HTMLAttributesFromNodeAndParents(xmlNodePtr node) {
+  if (!node)
+    return nullptr;
 
-  NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+  NSMutableDictionary *result = [NSMutableDictionary dictionary];
 
-  for (xmlAttrPtr attr = node->properties; attr; attr = attr->next) {
-    if (!attr->children || !attr->children->content)
+  for (xmlNodePtr n = node; n; n = n->parent) {
+    if (n->type != XML_ELEMENT_NODE)
       continue;
 
-    NSString *key = [NSString stringWithUTF8String:(const char *)attr->name];
-    NSString *val =
-        [NSString stringWithUTF8String:(const char *)attr->children->content];
+    for (xmlAttrPtr attr = n->properties; attr; attr = attr->next) {
+      if (!attr->children || !attr->children->content)
+        continue;
 
-    if (key && val)
-      dict[key] = val;
+      NSString *key = [NSString stringWithUTF8String:(const char *)attr->name];
+      NSString *val =
+          [NSString stringWithUTF8String:(const char *)attr->children->content];
+
+      if (key && val && !result[key]) {
+        result[key] = val;
+      }
+    }
   }
 
-  return dict;
+  return result;
 }
 
 static inline BOOL isTopLevelNode(xmlNodePtr node) {
@@ -67,9 +73,9 @@ MakeBlockTags(NSDictionary<NSNumber *, id<BaseStyleProtocol>> *styles) {
   return tags.copy;
 }
 
+static NSSet<NSString *> *blockTags;
+static dispatch_once_t onceToken;
 static inline BOOL isBlockTag(NSString *tag) {
-  static NSSet<NSString *> *blockTags;
-  static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     blockTags = [NSSet setWithArray:@[
       @"p", @"ul", @"ol", @"li", @"h1", @"h2", @"h3", @"h4", @"h5", @"h6",

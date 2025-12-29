@@ -9,6 +9,17 @@
 
 static void const *kInputKey = &kInputKey;
 
+#pragma mark - Helpers
+
+static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
+  if (range.length == 0 && range.location < textLength) {
+    return NSMakeRange(range.location, 1);
+  }
+  return range;
+}
+
+#pragma mark - Associated input
+
 - (id)input {
   return objc_getAssociatedObject(self, kInputKey);
 }
@@ -18,231 +29,158 @@ static void const *kInputKey = &kInputKey;
                            OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+#pragma mark - Swizzle
+
 + (void)load {
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     Class myClass = [NSLayoutManager class];
     SEL originalSelector = @selector(drawBackgroundForGlyphRange:atPoint:);
     SEL swizzledSelector = @selector(my_drawBackgroundForGlyphRange:atPoint:);
+
     Method originalMethod = class_getInstanceMethod(myClass, originalSelector);
     Method swizzledMethod = class_getInstanceMethod(myClass, swizzledSelector);
 
-    BOOL didAddMethod = class_addMethod(
-        myClass, originalSelector, method_getImplementation(swizzledMethod),
-        method_getTypeEncoding(swizzledMethod));
-
-    if (didAddMethod) {
-      class_replaceMethod(myClass, swizzledSelector,
-                          method_getImplementation(originalMethod),
-                          method_getTypeEncoding(originalMethod));
-    } else {
-      method_exchangeImplementations(originalMethod, swizzledMethod);
-    }
+    method_exchangeImplementations(originalMethod, swizzledMethod);
   });
 }
+
+#pragma mark - Entry point
 
 - (void)my_drawBackgroundForGlyphRange:(NSRange)glyphRange
                                atPoint:(CGPoint)origin {
   [self my_drawBackgroundForGlyphRange:glyphRange atPoint:origin];
 
-  EnrichedTextInputView *typedInput = (EnrichedTextInputView *)self.input;
-  if (typedInput == nullptr) {
+  EnrichedTextInputView *input = (EnrichedTextInputView *)self.input;
+  if (!input)
     return;
-  }
 
   NSRange visibleCharRange = [self characterRangeForGlyphRange:glyphRange
-                                              actualGlyphRange:NULL];
+                                              actualGlyphRange:nil];
 
-  [self drawBlockQuotes:typedInput
-                 origin:origin
-       visibleCharRange:visibleCharRange];
-  [self drawLists:typedInput origin:origin visibleCharRange:visibleCharRange];
-  [self drawCodeBlocks:typedInput
-                origin:origin
-      visibleCharRange:visibleCharRange];
-  [self drawChecklists:typedInput
-                origin:origin
-      visibleCharRange:visibleCharRange];
+  [self drawBlockQuotes:input origin:origin visibleCharRange:visibleCharRange];
+  [self drawLists:input origin:origin visibleCharRange:visibleCharRange];
+  [self drawCodeBlocks:input origin:origin visibleCharRange:visibleCharRange];
+  [self drawChecklists:input origin:origin visibleCharRange:visibleCharRange];
 }
 
-- (void)drawCodeBlocks:(EnrichedTextInputView *)typedInput
+#pragma mark - Code blocks
+
+- (void)drawCodeBlocks:(EnrichedTextInputView *)input
                 origin:(CGPoint)origin
       visibleCharRange:(NSRange)visibleCharRange {
-  CodeBlockStyle *codeBlockStyle =
-      typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
-  if (codeBlockStyle == nullptr) {
+
+  CodeBlockStyle *style = input->stylesDict[@([CodeBlockStyle getStyleType])];
+  if (!style)
     return;
-  }
 
-  NSArray<StylePair *> *allCodeBlocks =
-      [codeBlockStyle findAllOccurences:visibleCharRange];
-  NSArray<StylePair *> *mergedCodeBlocks =
-      [self mergeContiguousStylePairs:allCodeBlocks];
-  UIColor *bgColor = [[typedInput->config codeBlockBgColor]
-      colorWithAlphaIfNotTransparent:0.4];
-  CGFloat radius = [typedInput->config codeBlockBorderRadius];
-  [bgColor setFill];
+  NSArray<StylePair *> *blocks = [style findAllOccurences:visibleCharRange];
+  NSArray<StylePair *> *merged = [self mergeContiguousStylePairs:blocks];
 
-  for (StylePair *pair in mergedCodeBlocks) {
-    NSRange blockCharacterRange = [pair.rangeValue rangeValue];
-    if (blockCharacterRange.length == 0)
-      continue;
+  UIColor *bg =
+      [[input->config codeBlockBgColor] colorWithAlphaIfNotTransparent:0.4];
+  CGFloat radius = [input->config codeBlockBorderRadius];
+  [bg setFill];
+
+  NSUInteger textLength = input->textView.textStorage.length;
+
+  for (StylePair *pair in merged) {
+    NSRange blockRange =
+        NormalizeEmptyParagraph(pair.rangeValue.rangeValue, textLength);
 
     NSArray *paragraphs =
-        [ParagraphsUtils getSeparateParagraphsRangesIn:typedInput->textView
-                                                 range:blockCharacterRange];
-    if (paragraphs.count == 0)
-      continue;
+        [ParagraphsUtils getSeparateParagraphsRangesIn:input->textView
+                                                 range:blockRange];
 
-    NSRange firstParagraphRange =
-        [((NSValue *)[paragraphs firstObject]) rangeValue];
-    NSRange lastParagraphRange =
-        [((NSValue *)[paragraphs lastObject]) rangeValue];
+    for (NSValue *p in paragraphs) {
+      NSRange paragraph = NormalizeEmptyParagraph(p.rangeValue, textLength);
 
-    for (NSValue *paragraphValue in paragraphs) {
-      NSRange paragraphCharacterRange = [paragraphValue rangeValue];
+      NSRange glyphRange = [self glyphRangeForCharacterRange:paragraph
+                                        actualCharacterRange:nil];
 
-      BOOL isFirstParagraph =
-          NSEqualRanges(paragraphCharacterRange, firstParagraphRange);
-      BOOL isLastParagraph =
-          NSEqualRanges(paragraphCharacterRange, lastParagraphRange);
-
-      NSRange paragraphGlyphRange =
-          [self glyphRangeForCharacterRange:paragraphCharacterRange
-                       actualCharacterRange:NULL];
-
-      __block BOOL isFirstLineOfParagraph = YES;
+      __block BOOL isFirstLine = YES;
 
       [self
-          enumerateLineFragmentsForGlyphRange:paragraphGlyphRange
-                                   usingBlock:^(
-                                       CGRect rect, CGRect usedRect,
-                                       NSTextContainer *_Nonnull textContainer,
-                                       NSRange glyphRange,
-                                       BOOL *_Nonnull stop) {
-                                     CGRect lineBgRect = rect;
-                                     lineBgRect.origin.x = origin.x;
-                                     lineBgRect.origin.y += origin.y;
-                                     lineBgRect.size.width =
-                                         textContainer.size.width;
+          enumerateLineFragmentsForGlyphRange:glyphRange
+                                   usingBlock:^(CGRect rect, CGRect usedRect,
+                                                NSTextContainer *container,
+                                                NSRange lineGlyphRange,
+                                                BOOL *stop) {
+                                     CGRect r = rect;
+                                     r.origin.x = origin.x;
+                                     r.origin.y += origin.y;
+                                     r.size.width = container.size.width;
 
-                                     UIRectCorner cornersForThisLine = 0;
+                                     UIRectCorner corners = 0;
 
-                                     if (isFirstParagraph &&
-                                         isFirstLineOfParagraph) {
-                                       cornersForThisLine =
-                                           UIRectCornerTopLeft |
-                                           UIRectCornerTopRight;
+                                     if (isFirstLine) {
+                                       corners |= UIRectCornerTopLeft |
+                                                  UIRectCornerTopRight;
                                      }
 
-                                     BOOL isLastLineOfParagraph =
-                                         (NSMaxRange(glyphRange) >=
-                                          NSMaxRange(paragraphGlyphRange));
-
-                                     if (isLastParagraph &&
-                                         isLastLineOfParagraph) {
-                                       cornersForThisLine =
-                                           cornersForThisLine |
-                                           UIRectCornerBottomLeft |
-                                           UIRectCornerBottomRight;
+                                     if (NSMaxRange(lineGlyphRange) >=
+                                         NSMaxRange(glyphRange)) {
+                                       corners |= UIRectCornerBottomLeft |
+                                                  UIRectCornerBottomRight;
                                      }
 
                                      UIBezierPath *path = [UIBezierPath
-                                         bezierPathWithRoundedRect:lineBgRect
-                                                 byRoundingCorners:
-                                                     cornersForThisLine
+                                         bezierPathWithRoundedRect:r
+                                                 byRoundingCorners:corners
                                                        cornerRadii:CGSizeMake(
                                                                        radius,
                                                                        radius)];
                                      [path fill];
 
-                                     isFirstLineOfParagraph = NO;
+                                     isFirstLine = NO;
                                    }];
     }
   }
 }
 
-- (NSArray<StylePair *> *)mergeContiguousStylePairs:
-    (NSArray<StylePair *> *)pairs {
-  if (pairs.count == 0) {
-    return @[];
-  }
+#pragma mark - Block quotes
 
-  NSMutableArray<StylePair *> *mergedPairs = [[NSMutableArray alloc] init];
-  StylePair *currentPair = pairs[0];
-  NSRange currentRange = [currentPair.rangeValue rangeValue];
-  for (NSUInteger i = 1; i < pairs.count; i++) {
-    StylePair *nextPair = pairs[i];
-    NSRange nextRange = [nextPair.rangeValue rangeValue];
-
-    // The Gap Check:
-    // NSMaxRange(currentRange) is where the current block ends.
-    // nextRange.location is where the next block starts.
-    if (NSMaxRange(currentRange) == nextRange.location) {
-      // They touch perfectly (no gap). Merge them.
-      currentRange.length += nextRange.length;
-    } else {
-      // There is a gap (indices don't match).
-      // 1. Save the finished block.
-      StylePair *mergedPair = [[StylePair alloc] init];
-      mergedPair.rangeValue = [NSValue valueWithRange:currentRange];
-      mergedPair.styleValue = currentPair.styleValue;
-      [mergedPairs addObject:mergedPair];
-
-      // 2. Start a brand new block.
-      currentPair = nextPair;
-      currentRange = nextRange;
-    }
-  }
-
-  // Add the final block
-  StylePair *lastPair = [[StylePair alloc] init];
-  lastPair.rangeValue = [NSValue valueWithRange:currentRange];
-  lastPair.styleValue = currentPair.styleValue;
-  [mergedPairs addObject:lastPair];
-
-  return mergedPairs;
-}
-
-- (void)drawBlockQuotes:(EnrichedTextInputView *)typedInput
+- (void)drawBlockQuotes:(EnrichedTextInputView *)input
                  origin:(CGPoint)origin
        visibleCharRange:(NSRange)visibleCharRange {
 
-  BlockQuoteStyle *bqStyle =
-      typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
-  if (!bqStyle)
+  BlockQuoteStyle *style =
+      (BlockQuoteStyle *)input->stylesDict[@([BlockQuoteStyle getStyleType])];
+  if (!style)
     return;
 
-  NSString *text = typedInput->textView.textStorage.string;
+  NSString *text = input->textView.textStorage.string;
+  NSUInteger textLength = text.length;
 
   [text
       enumerateSubstringsInRange:visibleCharRange
                          options:NSStringEnumerationByParagraphs
                       usingBlock:^(NSString *substring, NSRange paragraphRange,
                                    NSRange enclosingRange, BOOL *stop) {
-                        if (paragraphRange.length == 0)
-                          return;
+                        NSRange safeRange =
+                            NormalizeEmptyParagraph(paragraphRange, textLength);
 
-                        NSUInteger firstChar = paragraphRange.location;
-                        NSDictionary *attrs = [typedInput->textView.textStorage
-                            attributesAtIndex:firstChar
+                        NSDictionary *attrs = [input->textView.textStorage
+                            attributesAtIndex:safeRange.location
                                effectiveRange:nil];
 
                         id value = attrs[[BlockQuoteStyle attributeKey]];
-                        if (![bqStyle styleCondition:value
-                                               range:NSMakeRange(firstChar, 1)])
+                        if (![style styleCondition:value
+                                             range:NSMakeRange(
+                                                       safeRange.location, 1)])
                           return;
 
                         NSRange glyphRange =
-                            [self glyphRangeForCharacterRange:paragraphRange
+                            [self glyphRangeForCharacterRange:safeRange
                                          actualCharacterRange:nil];
 
                         NSDictionary *drawAttrs = @{
-                          NSFontAttributeName : typedInput->textView.font,
                           NSForegroundColorAttributeName :
-                              typedInput->config.blockquoteBorderColor
+                              input->config.blockquoteBorderColor
                         };
-                        __block BOOL isFirstLine = YES;
+
+                        __block BOOL didDraw = NO;
+
                         [self
                             enumerateLineFragmentsForGlyphRange:glyphRange
                                                      usingBlock:^(
@@ -252,83 +190,104 @@ static void const *kInputKey = &kInputKey;
                                                              *container,
                                                          NSRange lineGlyphRange,
                                                          BOOL *stop) {
+                                                       if (didDraw) {
+                                                         *stop = YES;
+                                                         return;
+                                                       }
+
+                                                       CGFloat lineLeft =
+                                                           origin.x +
+                                                           rect.origin.x;
+                                                       CGFloat textLeft =
+                                                           lineLeft +
+                                                           usedRect.origin.x;
+                                                       CGFloat textRight =
+                                                           textLeft +
+                                                           usedRect.size.width;
+
                                                        CGFloat y =
                                                            origin.y +
-                                                           usedRect.origin.y;
-                                                       if (isFirstLine) {
-                                                         NSString *openQuote =
-                                                             @"“";
-                                                         CGSize qSize = [openQuote
-                                                             sizeWithAttributes:
-                                                                 drawAttrs];
-                                                         CGPoint openPoint =
-                                                             CGPointMake(
-                                                                 usedRect.origin
-                                                                         .x -
-                                                                     qSize
-                                                                         .width -
-                                                                     6,
-                                                                 y);
-                                                         [openQuote
-                                                                drawAtPoint:
-                                                                    openPoint
-                                                             withAttributes:
-                                                                 drawAttrs];
-                                                         isFirstLine = NO;
-                                                       }
-                                                       if (NSMaxRange(
-                                                               lineGlyphRange) >=
-                                                           NSMaxRange(
-                                                               glyphRange)) {
-                                                         NSString *closeQuote =
-                                                             @"”";
-                                                         CGPoint closePoint =
-                                                             CGPointMake(
-                                                                 CGRectGetMaxX(
-                                                                     usedRect) +
-                                                                     6,
-                                                                 y);
-                                                         [closeQuote
-                                                                drawAtPoint:
-                                                                    closePoint
-                                                             withAttributes:
-                                                                 drawAttrs];
-                                                       }
+                                                           rect.origin.y;
+
+                                                       NSString *open = @"“";
+                                                       NSString *close = @"”";
+
+                                                       CGSize openSize = [open
+                                                           sizeWithAttributes:
+                                                               drawAttrs];
+
+                                                       [open drawAtPoint:
+                                                                 CGPointMake(
+                                                                     textLeft -
+                                                                         openSize
+                                                                             .width,
+                                                                     y)
+                                                           withAttributes:
+                                                               drawAttrs];
+                                                       [close drawAtPoint:
+                                                                  CGPointMake(
+                                                                      textRight,
+                                                                      y)
+                                                           withAttributes:
+                                                               drawAttrs];
+
+                                                       didDraw = YES;
+                                                       *stop = YES;
                                                      }];
                       }];
 }
 
-- (void)drawLists:(EnrichedTextInputView *)typedInput
+#pragma mark - Lists
+- (void)drawLists:(EnrichedTextInputView *)input
               origin:(CGPoint)origin
     visibleCharRange:(NSRange)visibleCharRange {
-  UnorderedListStyle *ulStyle =
-      typedInput->stylesDict[@([UnorderedListStyle getStyleType])];
-  OrderedListStyle *olStyle =
-      typedInput->stylesDict[@([OrderedListStyle getStyleType])];
-  if (ulStyle == nullptr || olStyle == nullptr) {
+
+  UnorderedListStyle *ul =
+      input->stylesDict[@([UnorderedListStyle getStyleType])];
+  OrderedListStyle *ol = input->stylesDict[@([OrderedListStyle getStyleType])];
+
+  if (!ul && !ol)
     return;
-  }
 
-  NSMutableArray *allLists = [[NSMutableArray alloc] init];
-  [allLists addObjectsFromArray:[ulStyle findAllOccurences:visibleCharRange]];
-  [allLists addObjectsFromArray:[olStyle findAllOccurences:visibleCharRange]];
+  NSMutableArray<StylePair *> *pairs = [[NSMutableArray alloc] init];
+  if (ul)
+    [pairs addObjectsFromArray:[ul findAllOccurences:visibleCharRange]];
+  if (ol)
+    [pairs addObjectsFromArray:[ol findAllOccurences:visibleCharRange]];
 
-  for (StylePair *pair in allLists) {
-    NSParagraphStyle *pStyle = (NSParagraphStyle *)pair.styleValue;
-    NSDictionary *markerAttributes = @{
-      NSFontAttributeName : [typedInput->config orderedListMarkerFont],
-      NSForegroundColorAttributeName :
-          [typedInput->config orderedListMarkerColor]
-    };
+  NSTextStorage *textStorage = input->textView.textStorage;
+  NSUInteger textLength = textStorage.length;
 
-    NSArray *paragraphs = [ParagraphsUtils
-        getSeparateParagraphsRangesIn:typedInput->textView
+  for (StylePair *pair in pairs) {
+    NSArray<NSValue *> *paragraphs = [ParagraphsUtils
+        getSeparateParagraphsRangesIn:input->textView
                                 range:[pair.rangeValue rangeValue]];
 
     for (NSValue *paragraph in paragraphs) {
+      NSRange paragraphRange = [paragraph rangeValue];
+
+      NSParagraphStyle *pStyle =
+          [textStorage attribute:NSParagraphStyleAttributeName
+                         atIndex:paragraphRange.location
+                  effectiveRange:nil];
+
+      if (!pStyle || pStyle.textLists.count == 0) {
+        continue;
+      }
+
+      NSTextList *list = pStyle.textLists.firstObject;
+
+      NSRange glyphSourceRange = paragraphRange;
+      if (glyphSourceRange.length == 0 &&
+          glyphSourceRange.location < textLength) {
+        glyphSourceRange.length = 1;
+      }
+
       NSRange paragraphGlyphRange =
-          [self glyphRangeForCharacterRange:[paragraph rangeValue]
-                       actualCharacterRange:nullptr];
+          [self glyphRangeForCharacterRange:glyphSourceRange
+                       actualCharacterRange:nil];
+
+      __block BOOL didDrawMarker = NO;
 
       [self
           enumerateLineFragmentsForGlyphRange:paragraphGlyphRange
@@ -336,68 +295,80 @@ static void const *kInputKey = &kInputKey;
                                                 NSTextContainer *container,
                                                 NSRange lineGlyphRange,
                                                 BOOL *stop) {
-                                     NSString *marker = [self
-                                         markerForList:pStyle.textLists
-                                                           .firstObject
-                                             charIndex:
-                                                 [self
-                                                     characterIndexForGlyphAtIndex:
-                                                         lineGlyphRange
-                                                             .location]
-                                                 input:typedInput];
+                                     if (didDrawMarker) {
+                                       *stop = YES;
+                                       return;
+                                     }
+                                     CGFloat baseY = origin.y + rect.origin.y;
 
-                                     if (pStyle.textLists.firstObject
-                                             .markerFormat ==
-                                         NSTextListMarkerDecimal) {
-                                       CGFloat gapWidth =
-                                           [typedInput->config
-                                                   orderedListGapWidth];
+                                     CGFloat indentWidth =
+                                         pStyle.firstLineHeadIndent;
+
+                                     CGFloat baseX = origin.x;
+
+                                     if ([list.markerFormat
+                                             isEqualToString:
+                                                 NSTextListMarkerDisc]) {
+
+                                       CGFloat bulletSize =
+                                           [input->config
+                                                   unorderedListBulletSize];
+
+                                       CGFloat bulletX =
+                                           baseX + indentWidth / 2.0;
+
+                                       CGFloat bulletY =
+                                           origin.y + CGRectGetMidY(rect);
+
+                                       CGContextRef ctx =
+                                           UIGraphicsGetCurrentContext();
+                                       CGContextSaveGState(ctx);
+                                       [[input->config unorderedListBulletColor]
+                                           setFill];
+                                       CGContextAddArc(ctx, bulletX, bulletY,
+                                                       bulletSize / 2.0, 0,
+                                                       2 * M_PI, YES);
+                                       CGContextFillPath(ctx);
+                                       CGContextRestoreGState(ctx);
+
+                                     } else {
+                                       NSString *marker = [self
+                                           markerForList:list
+                                               charIndex:
+                                                   [self
+                                                       characterIndexForGlyphAtIndex:
+                                                           lineGlyphRange
+                                                               .location]
+                                                   input:input];
+
+                                       NSDictionary *markerAttributes = @{
+                                         NSFontAttributeName :
+                                             [input->config
+                                                     orderedListMarkerFont],
+                                         NSForegroundColorAttributeName :
+                                             [input->config
+                                                     orderedListMarkerColor]
+                                       };
+
                                        CGFloat markerWidth =
                                            [marker sizeWithAttributes:
                                                        markerAttributes]
                                                .width;
-                                       CGFloat markerX = usedRect.origin.x -
-                                                         gapWidth -
-                                                         markerWidth / 2;
 
-                                       [marker drawAtPoint:CGPointMake(
-                                                               markerX,
-                                                               usedRect.origin
-                                                                       .y +
-                                                                   origin.y)
+                                       CGFloat gap =
+                                           [input->config orderedListGapWidth];
+
+                                       CGFloat markerX = baseX + indentWidth -
+                                                         markerWidth - gap;
+
+                                       [marker drawAtPoint:CGPointMake(markerX,
+                                                                       baseY)
                                             withAttributes:markerAttributes];
-                                     } else if (pStyle.textLists.firstObject
-                                                    .markerFormat ==
-                                                NSTextListMarkerDisc) {
-                                       CGFloat gapWidth =
-                                           [typedInput->config
-                                                   unorderedListGapWidth];
-                                       CGFloat bulletSize =
-                                           [typedInput->config
-                                                   unorderedListBulletSize];
-                                       CGFloat bulletX =
-                                           origin.x + usedRect.origin.x -
-                                           bulletSize / 2 - gapWidth;
-                                       CGFloat centerY =
-                                           CGRectGetMidY(usedRect) + origin.y;
-
-                                       CGContextRef context =
-                                           UIGraphicsGetCurrentContext();
-                                       CGContextSaveGState(context);
-                                       {
-                                         [[typedInput->config
-                                                 unorderedListBulletColor]
-                                             setFill];
-                                         CGContextAddArc(
-                                             context, bulletX, centerY,
-                                             bulletSize / 2, 0, 2 * M_PI, YES);
-                                         CGContextFillPath(context);
-                                       }
-                                       CGContextRestoreGState(context);
                                      }
-                                     // only first line of a list gets its
-                                     // marker drawn
-                                     *stop = YES;
+
+                                     didDrawMarker = YES;
+                                     *stop =
+                                         YES; // only first line of paragraph
                                    }];
     }
   }
@@ -406,129 +377,142 @@ static void const *kInputKey = &kInputKey;
 - (NSString *)markerForList:(NSTextList *)list
                   charIndex:(NSUInteger)index
                       input:(EnrichedTextInputView *)input {
-  if (list.markerFormat == NSTextListMarkerDecimal) {
-    NSString *fullText = input->textView.textStorage.string;
-    NSInteger itemNumber = 1;
 
-    NSRange currentParagraph =
-        [fullText paragraphRangeForRange:NSMakeRange(index, 0)];
-    if (currentParagraph.location > 0) {
-      OrderedListStyle *olStyle =
-          input->stylesDict[@([OrderedListStyle getStyleType])];
+  if ([list.markerFormat isEqualToString:NSTextListMarkerDisc]) {
+    return @"•";
+  }
 
-      NSInteger prevParagraphsCount = 0;
-      NSInteger recentParagraphLocation =
-          [fullText
-              paragraphRangeForRange:NSMakeRange(currentParagraph.location - 1,
-                                                 0)]
-              .location;
+  NSTextStorage *ts = input->textView.textStorage;
+  NSString *text = ts.string;
 
-      // seek for previous lists
-      while (true) {
-        if ([olStyle detectStyle:NSMakeRange(recentParagraphLocation, 0)]) {
-          prevParagraphsCount += 1;
+  NSRange currentParagraph =
+      [text paragraphRangeForRange:NSMakeRange(index, 0)];
 
-          if (recentParagraphLocation > 0) {
-            recentParagraphLocation =
-                [fullText
-                    paragraphRangeForRange:NSMakeRange(
-                                               recentParagraphLocation - 1, 0)]
-                    .location;
-          } else {
-            break;
-          }
-        } else {
-          break;
-        }
-      }
+  if (currentParagraph.location == 0) {
+    return @"1.";
+  }
 
-      itemNumber = prevParagraphsCount + 1;
+  NSParagraphStyle *currentStyle = [ts attribute:NSParagraphStyleAttributeName
+                                         atIndex:currentParagraph.location
+                                  effectiveRange:nil];
+
+  NSInteger count = 1;
+  NSUInteger location = currentParagraph.location;
+
+  while (location > 0) {
+    NSRange prevParagraph =
+        [text paragraphRangeForRange:NSMakeRange(location - 1, 0)];
+
+    NSParagraphStyle *prevStyle = [ts attribute:NSParagraphStyleAttributeName
+                                        atIndex:prevParagraph.location
+                                 effectiveRange:nil];
+
+    BOOL isSameOrderedList = prevStyle.textLists.count > 0 &&
+                             [prevStyle.textLists.firstObject.markerFormat
+                                 isEqualToString:NSTextListMarkerDecimal] &&
+                             prevStyle.alignment == currentStyle.alignment;
+
+    if (!isSameOrderedList) {
+      break;
     }
 
-    return [NSString stringWithFormat:@"%ld.", (long)(itemNumber)];
-  } else {
-    return @"•";
+    count++;
+    location = prevParagraph.location;
+  }
+
+  return [@(count).stringValue stringByAppendingString:@"."];
+}
+
+#pragma mark - Checklists
+
+- (void)drawChecklists:(EnrichedTextInputView *)input
+                origin:(CGPoint)origin
+      visibleCharRange:(NSRange)visibleCharRange {
+
+  CheckBoxStyle *style = input->stylesDict[@([CheckBoxStyle getStyleType])];
+  if (!style)
+    return;
+
+  NSUInteger textLength = input->textView.textStorage.length;
+
+  NSArray<StylePair *> *pairs = [style findAllOccurences:visibleCharRange];
+
+  for (StylePair *pair in pairs) {
+    NSArray *paragraphs = [ParagraphsUtils
+        getSeparateParagraphsRangesIn:input->textView
+                                range:pair.rangeValue.rangeValue];
+
+    for (NSValue *p in paragraphs) {
+      NSRange paragraph = NormalizeEmptyParagraph(p.rangeValue, textLength);
+
+      NSRange glyphRange = [self glyphRangeForCharacterRange:paragraph
+                                        actualCharacterRange:nil];
+
+      BOOL checked = [style isCheckedAt:paragraph.location];
+
+      UIImage *img =
+          checked ? input->config.checkedImage : input->config.uncheckedImage;
+
+      if (!img) {
+        NSString *name = checked ? @"checkmark.square.fill" : @"square";
+        img = [UIImage systemImageNamed:name];
+      }
+
+      CGFloat checkBoxWidth = input->config.checkBoxWidth;
+      CGFloat checkBoxHeight = input->config.checkBoxHeight;
+      CGFloat x = origin.x + input->config.checkboxListMarginLeft;
+
+      [self enumerateLineFragmentsForGlyphRange:glyphRange
+                                     usingBlock:^(CGRect rect, CGRect usedRect,
+                                                  NSTextContainer *container,
+                                                  NSRange lineGlyphRange,
+                                                  BOOL *stop) {
+                                       CGFloat y =
+                                           origin.y + rect.origin.y +
+                                           (rect.size.height - checkBoxHeight) /
+                                               2.0;
+
+                                       [img drawInRect:CGRectMake(
+                                                           x, y, checkBoxWidth,
+                                                           checkBoxHeight)];
+                                       *stop = YES;
+                                     }];
+    }
   }
 }
 
-- (void)drawChecklists:(EnrichedTextInputView *)typedInput
-                origin:(CGPoint)origin
-      visibleCharRange:(NSRange)visibleCharRange {
-  CheckBoxStyle *cStyle =
-      typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
-  if (cStyle == nil)
-    return;
+#pragma mark - Merge helpers
 
-  NSArray<StylePair *> *allCheckBoxes =
-      [cStyle findAllOccurences:visibleCharRange];
-  if (allCheckBoxes.count == 0)
-    return;
+- (NSArray<StylePair *> *)mergeContiguousStylePairs:
+    (NSArray<StylePair *> *)pairs {
 
-  CGFloat iconWidth = [typedInput->config checkBoxWidth];
-  CGFloat iconHeight = [typedInput->config checkBoxHeight];
-  CGFloat marginLeft = [typedInput->config checkboxListMarginLeft];
+  if (pairs.count == 0)
+    return @[];
 
-  UIImage *uncheckedImg = typedInput->config.uncheckedImage;
-  UIImage *checkedImg = typedInput->config.checkedImage;
+  NSMutableArray *result = [NSMutableArray new];
+  NSRange current = pairs[0].rangeValue.rangeValue;
+  StylePair *base = pairs[0];
 
-  for (StylePair *pair in allCheckBoxes) {
-    NSArray *paragraphs = [ParagraphsUtils
-        getSeparateParagraphsRangesIn:typedInput->textView
-                                range:[pair.rangeValue rangeValue]];
-
-    for (NSValue *p in paragraphs) {
-      NSRange paragraphRange = [p rangeValue];
-      NSRange paragraphGlyphRange =
-          [self glyphRangeForCharacterRange:paragraphRange
-                       actualCharacterRange:nil];
-
-      BOOL isChecked = [cStyle isCheckedAt:paragraphRange.location];
-
-      [self
-          enumerateLineFragmentsForGlyphRange:paragraphGlyphRange
-                                   usingBlock:^(
-                                       CGRect rect, CGRect usedRect,
-                                       NSTextContainer *_Nonnull textContainer,
-                                       NSRange lineGlyphRange,
-                                       BOOL *_Nonnull stop) {
-                                     CGFloat drawX = origin.x + marginLeft;
-                                     CGFloat drawY =
-                                         origin.y + rect.origin.y +
-                                         (rect.size.height - iconHeight) / 2.0;
-
-                                     CGRect iconRect = CGRectMake(
-                                         drawX, drawY, iconWidth, iconHeight);
-
-                                     UIImage *img =
-                                         isChecked ? checkedImg : uncheckedImg;
-                                     if (img == nil) {
-                                       // Fallback to SF Symbols if React images
-                                       // not provided
-                                       NSString *name =
-                                           isChecked ? @"checkmark.square.fill"
-                                                     : @"square";
-                                       img = [UIImage systemImageNamed:name];
-                                       img = [img
-                                           imageWithTintColor:[UIColor
-                                                                  blueColor]];
-                                     }
-                                     UIGraphicsBeginImageContextWithOptions(
-                                         iconRect.size, NO, 0);
-                                     [img drawInRect:CGRectMake(
-                                                         0, 0,
-                                                         iconRect.size.width,
-                                                         iconRect.size.height)];
-                                     UIImage *scaled =
-                                         UIGraphicsGetImageFromCurrentImageContext();
-                                     UIGraphicsEndImageContext();
-
-                                     [scaled drawInRect:iconRect];
-
-                                     // Stop after first line of the paragraph
-                                     *stop = YES;
-                                   }];
+  for (NSUInteger i = 1; i < pairs.count; i++) {
+    NSRange next = pairs[i].rangeValue.rangeValue;
+    if (NSMaxRange(current) == next.location) {
+      current.length += next.length;
+    } else {
+      StylePair *p = [StylePair new];
+      p.rangeValue = [NSValue valueWithRange:current];
+      p.styleValue = base.styleValue;
+      [result addObject:p];
+      base = pairs[i];
+      current = next;
     }
   }
+
+  StylePair *last = [StylePair new];
+  last.rangeValue = [NSValue valueWithRange:current];
+  last.styleValue = base.styleValue;
+  [result addObject:last];
+
+  return result;
 }
 
 @end

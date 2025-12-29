@@ -89,13 +89,11 @@ const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
 const contentHtml = Array(1)
   .fill(
-    `<p><u>Test</u></p><checklist checked="false">This is a checklist item</checklist>`
+    `<p alignment="center"><u>Test</u></p><checklist alignment="center" checked="false">This is a checklist item</checklist>`
   )
   .join('');
 
 const html = '<html>' + contentHtml + '</html>';
-
-console.log(html);
 
 export default function App() {
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);
@@ -337,9 +335,13 @@ export default function App() {
             onChangeText={(e) => handleChangeText(e.nativeEvent)}
             onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
+            defaultValue={html}
             onColorChangeInSelection={(e) => {
               handleSelectionColorChange(e.nativeEvent);
             }}
+            onParagraphAlignmentChange={(e) =>
+              console.log(e.nativeEvent.alignment)
+            }
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}
@@ -381,6 +383,22 @@ export default function App() {
         <Button
           title="remove color"
           onPress={() => ref.current?.removeColor()}
+        />
+        <Button
+          title="set right alignment"
+          onPress={() => ref.current?.setParagraphAlignment('right')}
+        />
+        <Button
+          title="set left alignment"
+          onPress={() => ref.current?.setParagraphAlignment('left')}
+        />
+        <Button
+          title="set center alignment"
+          onPress={() => ref.current?.setParagraphAlignment('center')}
+        />
+        <Button
+          title="set default alignment"
+          onPress={() => ref.current?.setParagraphAlignment('default')}
         />
         <Text>is Check list {stylesState.isCheckList ? 'true' : 'false'}</Text>
         <HtmlSection currentHtml={currentHtml} />

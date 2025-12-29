@@ -384,6 +384,13 @@ class EnrichedTextInputViewManager :
     // no-op
   }
 
+  override fun setParagraphAlignment(
+    view: EnrichedTextInputView?,
+    alignment: String,
+  ) {
+    // no-op
+  }
+
   override fun measure(
     context: Context,
     localData: ReadableMap?,

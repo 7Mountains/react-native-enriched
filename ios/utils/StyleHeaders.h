@@ -5,6 +5,7 @@
 #import "ImageData.h"
 #import "LinkData.h"
 #import "MentionParams.h"
+#import "ParagraphModifierStyle.h"
 #import "ParameterizedStyleProtocol.h"
 
 static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
@@ -140,4 +141,9 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
     : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (void)addContentAtRange:(NSRange)range params:(ContentParams *)params;
 - (ContentParams *)getContentParams:(NSUInteger)location;
+@end
+
+@interface ParagraphAlignmentStyle
+    : NSObject <BaseStyleProtocol, ParagraphModifierStyle>
+- (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment;
 @end

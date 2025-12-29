@@ -1,8 +1,10 @@
 #import "ColorExtension.h"
 #import "EnrichedTextInputView.h"
 #import "FontExtension.h"
+#import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
 #import "ParagraphsUtils.h"
+#import "StyleConstants.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
@@ -43,8 +45,8 @@ static NSString *const UnckedValueString = @"false";
   NSParagraphStyle *paragraphStyle = (NSParagraphStyle *)value;
   NSString *marker = paragraphStyle.textLists.firstObject.markerFormat;
   return @{
-    @"checked" : marker == NSTextListMarkerCheck ? CheckedValueString
-                                                 : UnckedValueString
+    CheckedAttributeName : marker == NSTextListMarkerCheck ? CheckedValueString
+                                                           : UnckedValueString
   };
 }
 
@@ -124,9 +126,9 @@ static NSString *const UnckedValueString = @"false";
     return;
 
   BOOL isChecked = NO;
-  NSString *checked = attributes[@"checked"];
+  NSString *checked = attributes[CheckedAttributeName];
   if ([checked isKindOfClass:[NSString class]]) {
-    isChecked = [checked.lowercaseString isEqualToString:@"true"];
+    isChecked = [checked.lowercaseString isEqualToString:CheckedValueString];
   }
 
   NSTextList *list = [self listForChecked:isChecked];
@@ -140,6 +142,7 @@ static NSString *const UnckedValueString = @"false";
   pStyle.lineHeightMultiple = 1.0;
   pStyle.headIndent = [self getHeadIndent];
   pStyle.firstLineHeadIndent = [self getHeadIndent];
+  pStyle.tailIndent = DefaultListTailIndent;
 
   CGFloat baselineShift = (checkBoxHeight - font.lineHeight) / 2.0;
 
@@ -404,7 +407,7 @@ static NSString *const UnckedValueString = @"false";
                   paragraphStyle.minimumLineHeight = checBoxHeight;
                   paragraphStyle.maximumLineHeight = checBoxHeight;
                   paragraphStyle.lineHeightMultiple = 1.0;
-
+                  paragraphStyle.tailIndent = DefaultListTailIndent;
                   paragraphStyle.headIndent = [self getHeadIndent];
                   paragraphStyle.firstLineHeadIndent = [self getHeadIndent];
                   UIFont *font = [_input->config primaryFont];

@@ -16,6 +16,7 @@ typedef NS_ENUM(NSInteger, StyleType) {
   Checkbox,
   Divider,
   Content,
+  ParagraphAlignment,
   Link,
   Mention,
   Image,

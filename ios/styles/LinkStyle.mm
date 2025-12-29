@@ -1,4 +1,5 @@
 #import "EnrichedTextInputView.h"
+#import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
@@ -42,7 +43,7 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   NSString *url = value;
   if (!url)
     return nil;
-  return @{@"href" : url};
+  return @{HrefAttributeName : url};
 }
 
 + (BOOL)isSelfClosing {
@@ -70,9 +71,8 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
                                             attributes {
   if (range.length == 0)
     return;
-
-  NSString *href = attributes[@"href"];
-  if (href.length == 0)
+  NSString *href = attributes[HrefAttributeName];
+  if (href == nullptr || href.length == 0)
     return;
 
   UIColor *linkColor = _input->config.linkColor;

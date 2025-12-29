@@ -7,6 +7,7 @@
 @implementation EnrichedHTMLToAttributedStringParser {
   NSMutableAttributedString *_result;
   StylesStack *_styleStack;
+  NSArray<id> *_paragraphModifiers;
 }
 
 - (instancetype)initWithStyles:
@@ -20,15 +21,22 @@
   _styleStack = [StylesStack new];
 
   NSMutableDictionary *tags = [NSMutableDictionary dictionary];
+  NSMutableArray<id> *paragraphModifiers = [NSMutableArray new];
 
   [styles enumerateKeysAndObjectsUsingBlock:^(
               NSNumber *key, id<BaseStyleProtocol> style, BOOL *stop) {
-    NSString *tag = [[NSString stringWithUTF8String:[[style class] tagName]]
-        lowercaseString];
-    tags[tag] = style;
+    const char *tagName = [[style class] tagName];
+    if (!tagName && [style.class isParagraphStyle]) {
+      [paragraphModifiers addObject:style];
+    }
+    if (tagName) {
+      NSString *tag = [NSString stringWithUTF8String:tagName];
+      tags[tag] = style;
+    }
   }];
 
   _tagsRegistry = tags.copy;
+  _paragraphModifiers = paragraphModifiers.copy;
   return self;
 }
 
@@ -83,7 +91,7 @@
                       : @"";
 
   id<BaseStyleProtocol> style = self.tagsRegistry[tag];
-  NSDictionary *attributes = HTMLAttributesFromNode(cur);
+  NSDictionary *attributes = HTMLAttributesFromNodeAndParents(cur);
 
   BOOL isBlock = isBlockTag(tag);
 
@@ -114,13 +122,17 @@
   }
 
   if (isTopLevelNode(cur) && isLastRenderable) {
+    [self applyParagraphModifiersIfNeeded:attributes];
     return;
   }
 
-  if (isBlock && !HTMLIsLastParagraphInBlockContext(
-                     cur, cur->name, cur->parent ? cur->parent->name : NULL,
-                     isLastRenderable)) {
-    [self appendText:@"\n"];
+  if (isBlockTag(tag)) {
+    [self applyParagraphModifiersIfNeeded:attributes];
+    if (!HTMLIsLastParagraphInBlockContext(
+            cur, cur->name, cur->parent ? cur->parent->name : NULL,
+            isLastRenderable)) {
+      [self appendText:@"\n"];
+    }
   }
 }
 
@@ -232,6 +244,21 @@
 - (void)appendEmptyBlockPlaceholder {
   NSString *placeholder = @"\u200B";
   [self appendText:placeholder];
+}
+
+- (void)applyParagraphModifiersIfNeeded:(NSDictionary *)attributes {
+  if (_result.length == 0 || attributes.count == 0)
+    return;
+
+  NSRange paragraphRange = [_result.string
+      paragraphRangeForRange:NSMakeRange(MAX((NSInteger)_result.length - 1, 0),
+                                         0)];
+
+  for (id<BaseStyleProtocol> modifier in _paragraphModifiers) {
+    [modifier addAttributesInAttributedString:_result
+                                        range:paragraphRange
+                                   attributes:attributes];
+  }
 }
 
 @end

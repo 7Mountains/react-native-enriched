@@ -83,9 +83,10 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   ImageAttachment *attachment =
       [[ImageAttachment alloc] initWithImageData:imageData];
   attachment.delegate = _input;
+  NSMutableDictionary *attrs = [_input->defaultTypingAttributes mutableCopy];
 
-  NSDictionary *attrs =
-      @{NSAttachmentAttributeName : attachment, ImageAttributeName : imageData};
+  attrs[NSAttachmentAttributeName] = attachment;
+  attrs[ImageAttributeName] = imageData;
 
   NSString *placeholderChar = @"\uFFFC";
   NSAttributedString *replacement =

@@ -1,4 +1,5 @@
 #import "EnrichedTextInputView.h"
+#import "AlignmentConverter.h"
 #import "BaseLabelAttachment.h"
 #import "CheckboxHitTestUtils.h"
 #import "ColorExtension.h"
@@ -45,6 +46,7 @@ using namespace facebook::react;
   UIColor *_placeholderColor;
   BOOL _emitFocusBlur;
   UITapGestureRecognizer *tapRecognizer;
+  NSString *_recentlyEmittedAlignment;
 }
 
 // MARK: - Component utils
@@ -88,6 +90,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _recentlyEmittedColor = nil;
   blockEmitting = NO;
   _emitFocusBlur = YES;
+  _recentlyEmittedAlignment = nil;
 
   defaultTypingAttributes =
       [[NSMutableDictionary<NSAttributedStringKey, id> alloc] init];
@@ -122,7 +125,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     @([CheckBoxStyle getStyleType]) :
         [[CheckBoxStyle alloc] initWithInput:self],
     @([DividerStyle getStyleType]) : [[DividerStyle alloc] initWithInput:self],
-    @([ContentStyle getStyleType]) : [[ContentStyle alloc] initWithInput:self]
+    @([ContentStyle getStyleType]) : [[ContentStyle alloc] initWithInput:self],
+    @([ParagraphAlignmentStyle getStyleType]) :
+        [[ParagraphAlignmentStyle alloc] initWithInput:self]
   };
 
   conflictingStyles = @{
@@ -1193,6 +1198,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   [self emitCurrentSelectionColorIfChanged];
+  [self emitParagraphAlignmentIfChanged];
 
   // emit onChangeHtml event if needed
   [self tryEmittingOnChangeHtmlEvent];
@@ -1268,7 +1274,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     NSString *uri = (NSString *)args[0];
     CGFloat imgWidth = [(NSNumber *)args[1] floatValue];
     CGFloat imgHeight = [(NSNumber *)args[2] floatValue];
-
     [self addImage:uri width:imgWidth height:imgHeight];
   } else if ([commandName isEqualToString:@"setSelection"]) {
     NSInteger start = [((NSNumber *)args[0]) integerValue];
@@ -1281,6 +1286,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
   } else if ([commandName isEqualToString:@"addDividerAtNewLine"]) {
     [self addDividerAtNewLine];
+  } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
+    NSString *alignment = (NSString *)args[0];
+    [self setParagraphAlignment:alignment];
+    [self anyTextMayHaveBeenModified];
   }
 }
 
@@ -1412,6 +1421,54 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       emitter->onColorChangeInSelection({.color = [hexColor toCppString]});
     }
     _recentlyEmittedColor = hexColor;
+  }
+}
+
+- (void)emitParagraphAlignmentIfChanged {
+  NSRange selectedRange = textView.selectedRange;
+  NSTextAlignment alignment = NSTextAlignmentNatural;
+
+  if (selectedRange.length == 0) {
+    NSParagraphStyle *style =
+        textView.typingAttributes[NSParagraphStyleAttributeName];
+    alignment = style ? style.alignment : NSTextAlignmentNatural;
+  } else {
+    NSTextStorage *storage = textView.textStorage;
+
+    NSUInteger start = selectedRange.location;
+
+    if (storage.length == 0 || start >= storage.length) {
+      alignment = NSTextAlignmentNatural;
+    } else {
+      NSRange effectiveRange = NSMakeRange(0, 0);
+      NSParagraphStyle *style = [storage attribute:NSParagraphStyleAttributeName
+                                           atIndex:start
+                             longestEffectiveRange:&effectiveRange
+                                           inRange:selectedRange];
+
+      BOOL coversWholeSelection =
+          (NSMaxRange(effectiveRange) >= NSMaxRange(selectedRange));
+
+      if (coversWholeSelection) {
+        alignment = style ? style.alignment : NSTextAlignmentNatural;
+      } else {
+        alignment = NSTextAlignmentNatural;
+      }
+    }
+  }
+
+  NSString *stringAlignment =
+      [AlignmentConverter stringFromAlignment:alignment];
+
+  if ([stringAlignment isEqualToString:_recentlyEmittedAlignment]) {
+    return;
+  }
+
+  auto emitter = [self getEventEmitter];
+  if (emitter != nullptr) {
+    emitter->onParagraphAlignmentChange(
+        {.alignment = [stringAlignment toCppString]});
+    _recentlyEmittedAlignment = stringAlignment;
   }
 }
 
@@ -1599,6 +1656,19 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [mentionStyleClass startMentionWithIndicator:indicator];
     [self anyTextMayHaveBeenModified];
   }
+}
+
+- (void)setParagraphAlignment:(NSString *)alignment {
+  ParagraphAlignmentStyle *paragraphAlignmentStyle = (ParagraphAlignmentStyle *)
+      stylesDict[@([ParagraphAlignmentStyle getStyleType])];
+  if (paragraphAlignmentStyle == nullptr)
+    return;
+
+  NSTextAlignment convertedAlignment =
+      [AlignmentConverter alignmentFromString:alignment];
+
+  [paragraphAlignmentStyle applyStyle:textView.selectedRange
+                            alignment:convertedAlignment];
 }
 
 // returns false when style shouldn't be applied and true when it can be
@@ -1887,7 +1957,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     return NO;
   }
   recentlyChangedRange = NSMakeRange(range.location, text.length);
-
   UnorderedListStyle *uStyle = stylesDict[@([UnorderedListStyle getStyleType])];
   OrderedListStyle *oStyle = stylesDict[@([OrderedListStyle getStyleType])];
   BlockQuoteStyle *bqStyle = stylesDict[@([BlockQuoteStyle getStyleType])];
