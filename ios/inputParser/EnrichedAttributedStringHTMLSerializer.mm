@@ -301,8 +301,15 @@
     Class styleClass = styleObject.class;
     NSAttributedStringKey key = [styleClass attributeKey];
     id value = attrs[key];
+    // very specific case since we have to manage different colors.
+    // Maybe we can avoid it in the future
+    BOOL isColorStyleWithAttributes =
+        [styleClass getStyleType] == Colored &&
+        [(ColorStyle *)styleObject styleConditionWithAttributes:attrs
+                                                          range:range];
 
-    if (!value || ![styleObject styleCondition:value range:range])
+    if (!isColorStyleWithAttributes && ![styleObject styleCondition:value
+                                                              range:range])
       continue;
 
     HTMLElement *wrap = [HTMLElement new];

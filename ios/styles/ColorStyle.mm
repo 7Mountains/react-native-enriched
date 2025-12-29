@@ -10,6 +10,21 @@
   EnrichedTextInputView *_input;
 }
 
+- (NSArray<NSNumber *> *)coloredStyleTypes {
+  static NSArray<NSNumber *> *types = nil;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    types = @[
+      @(Link),
+      @(InlineCode),
+      @(BlockQuote),
+      @(CodeBlock),
+      @(Mention),
+    ];
+  });
+  return types;
+}
+
 + (StyleType)getStyleType {
   return Colored;
 }
@@ -64,6 +79,7 @@
 }
 
 #pragma mark - Add attributes
+
 - (void)addAttributes:(NSRange)range color:(UIColor *)color {
   if (color == nil)
     return;
@@ -93,38 +109,30 @@
 #pragma mark - Remove attributes
 
 - (void)removeAttributes:(NSRange)range {
-  NSTextStorage *ts = _input->textView.textStorage;
+  NSTextStorage *textStorage = _input->textView.textStorage;
   if (range.length == 0)
     return;
 
-  NSUInteger len = ts.length;
+  NSUInteger len = textStorage.length;
   if (range.location >= len)
     return;
 
   NSUInteger max = MIN(NSMaxRange(range), len);
 
-  [ts beginEditing];
+  [textStorage beginEditing];
 
   for (NSUInteger i = range.location; i < max; i++) {
     UIColor *restoreColor = [self originalColorAtIndex:i];
-
-    [ts addAttribute:NSForegroundColorAttributeName
-               value:restoreColor
-               range:NSMakeRange(i, 1)];
-
-    [ts addAttribute:NSUnderlineColorAttributeName
-               value:restoreColor
-               range:NSMakeRange(i, 1)];
-
-    [ts addAttribute:NSStrikethroughColorAttributeName
-               value:restoreColor
-               range:NSMakeRange(i, 1)];
+    NSDictionary *newAttributes = @{
+      NSForegroundColorAttributeName : restoreColor,
+      NSUnderlineColorAttributeName : restoreColor,
+      NSForegroundColorAttributeName : restoreColor,
+    };
+    [textStorage addAttributes:newAttributes range:NSMakeRange(i, 1)];
   }
 
-  [ts endEditing];
+  [textStorage endEditing];
 }
-
-#pragma mark - Add Attributes (HTML → AttributedString)
 
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
@@ -134,12 +142,15 @@
   if (range.length == 0)
     return;
 
-  NSString *colorAttribute = attributes[ColorAttributeName] ?: @"";
+  NSString *colorAttribute =
+      attributes.count > 0 ? attributes[ColorAttributeName] : nil;
 
   UIColor *color = nil;
-  if ([colorAttribute isKindOfClass:[NSString class]]) {
-    color = [UIColor colorFromString:(NSString *)colorAttribute];
+  if (!colorAttribute) {
+    return;
   }
+
+  color = [UIColor colorFromString:(NSString *)colorAttribute];
 
   if (!color)
     return;
@@ -166,103 +177,35 @@
   _input->textView.typingAttributes = newTypingAttrs;
 }
 
-#pragma mark - Detection
-
-+ (BOOL)isInLink:(NSDictionary *)attrs
-       sameColor:(UIColor *)color
-           input:(EnrichedTextInputView *)input {
-  id<BaseStyleProtocol> link = input->stylesDict[@(Link)];
-  NSAttributedStringKey key = [[link class] attributeKey];
-  return attrs[key] && [color isEqual:input->config.linkColor];
-}
-
-+ (BOOL)isInInlineCode:(NSDictionary *)attrs
-             sameColor:(UIColor *)color
-                 input:(EnrichedTextInputView *)input {
-  id<BaseStyleProtocol> inlineCode = input->stylesDict[@(InlineCode)];
-  NSAttributedStringKey key = [[inlineCode class] attributeKey];
-  return attrs[key] && [color isEqual:input->config.inlineCodeFgColor];
-}
-
-+ (BOOL)isInBlockQuote:(NSDictionary *)attrs
-             sameColor:(UIColor *)color
-                 input:(EnrichedTextInputView *)input {
-  id<BaseStyleProtocol> bq = input->stylesDict[@(BlockQuote)];
-  NSAttributedStringKey key = [[bq class] attributeKey];
-  return attrs[key] && [color isEqual:input->config.blockquoteColor];
-}
-
-+ (BOOL)isInMention:(NSDictionary *)attrs
-           location:(NSUInteger)loc
-          sameColor:(UIColor *)color
-              input:(EnrichedTextInputView *)input {
-  id<BaseStyleProtocol> mention = input->stylesDict[@(Mention)];
-  NSAttributedStringKey key = [[mention class] attributeKey];
-  if (!attrs[key])
-    return NO;
-
-  MentionStyle *mentionStyle = (MentionStyle *)mention;
-  MentionParams *params = [mentionStyle getMentionParamsAt:loc];
-  if (!params)
-    return NO;
-
-  MentionStyleProps *props =
-      [input->config mentionStylePropsForIndicator:params.indicator];
-
-  return [color isEqual:props.color];
-}
-
-+ (BOOL)isInCodeBlock:(NSDictionary *)attrs
-            sameColor:(UIColor *)color
-                input:(EnrichedTextInputView *)input {
-  id<BaseStyleProtocol> code = input->stylesDict[@(CodeBlock)];
-  NSAttributedStringKey key = [[code class] attributeKey];
-  return attrs[key] && [color isEqual:input->config.codeBlockFgColor];
-}
-
 #pragma mark - Main detection entry
-
-- (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
-  if (!value)
+- (BOOL)styleConditionWithAttributes:(NSDictionary *)attrs
+                               range:(NSRange)range {
+  UIColor *color = attrs[NSForegroundColorAttributeName];
+  if (!color)
     return NO;
-
-  UIColor *color = (UIColor *)value;
 
   if ([color isEqual:_input->config.primaryColor])
+    return NO;
+
+  return ![self isColorOwnedByOtherStyle:color attributes:attrs range:range];
+}
+
+- (BOOL)styleCondition:(id)value range:(NSRange)range {
+  if (!value)
     return NO;
 
   NSTextStorage *ts = _input->textView.textStorage;
   NSUInteger len = ts.length;
 
-  BOOL useTypingAttributes =
-      (range.length == 0) || (range.location == 0) || (range.location >= len);
-
-  NSDictionary *attrs = nil;
-
-  NSUInteger loc = range.location;
-  if (loc >= len && len > 0)
-    loc = len - 1;
-
-  if (useTypingAttributes) {
+  NSDictionary *attrs;
+  if (range.length == 0 || range.location >= len) {
     attrs = _input->textView.typingAttributes;
   } else {
+    NSUInteger loc = MIN(range.location, len - 1);
     attrs = [ts attributesAtIndex:loc effectiveRange:nil];
   }
 
-  if ([ColorStyle isInLink:attrs sameColor:color input:_input])
-    return NO;
-  if ([ColorStyle isInInlineCode:attrs sameColor:color input:_input])
-    return NO;
-  if ([ColorStyle isInBlockQuote:attrs sameColor:color input:_input])
-    return NO;
-
-  if ([ColorStyle isInMention:attrs location:loc sameColor:color input:_input])
-    return NO;
-
-  if ([ColorStyle isInCodeBlock:attrs sameColor:color input:_input])
-    return NO;
-
-  return YES;
+  return [self styleConditionWithAttributes:attrs range:range];
 }
 
 - (BOOL)detectStyle:(NSRange)range {
@@ -301,14 +244,6 @@
   }
 }
 
-- (BOOL)detectExcludingColor:(UIColor *)excludedColor inRange:(NSRange)range {
-  if (![self detectStyle:range]) {
-    return NO;
-  }
-  UIColor *currentColor = [self getColorInRange:range];
-  return currentColor != nil && ![currentColor isEqualToColor:excludedColor];
-}
-
 - (BOOL)anyOccurence:(NSRange)range {
   return [OccurenceUtils any:NSForegroundColorAttributeName
                    withInput:_input
@@ -325,6 +260,10 @@
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];
                }];
+}
+
+- (void)addAttributes:(NSRange)range {
+  // no-op
 }
 
 - (UIColor *)getColorAt:(NSUInteger)location {
@@ -370,6 +309,19 @@
   return color;
 }
 
+- (UIColor *)naturalColorForAttributes:(NSDictionary *)attrs
+                                 index:(NSUInteger)index {
+  for (NSNumber *num in self.coloredStyleTypes) {
+    UIColor *color = [self colorForStyle:(StyleType)num.integerValue
+                              attributes:attrs
+                                   index:index];
+    if (color)
+      return color;
+  }
+
+  return _input->config.primaryColor;
+}
+
 - (UIColor *)originalColorAtIndex:(NSUInteger)index {
   NSTextStorage *ts = _input->textView.textStorage;
   NSUInteger len = ts.length;
@@ -382,34 +334,7 @@
 
   NSDictionary *attrs = [ts attributesAtIndex:index effectiveRange:nil];
 
-  UIColor *color = attrs[NSForegroundColorAttributeName];
-
-  if (!color)
-    return _input->config.primaryColor;
-
-  if ([ColorStyle isInLink:attrs sameColor:color input:_input])
-    return _input->config.linkColor;
-
-  if ([ColorStyle isInInlineCode:attrs sameColor:color input:_input])
-    return _input->config.inlineCodeFgColor;
-
-  if ([ColorStyle isInBlockQuote:attrs sameColor:color input:_input])
-    return _input->config.blockquoteColor;
-
-  if ([ColorStyle isInMention:attrs
-                     location:index
-                    sameColor:color
-                        input:_input]) {
-    MentionStyle *mention = (MentionStyle *)_input->stylesDict[@(Mention)];
-    MentionParams *p = [mention getMentionParamsAt:index];
-    if (p) {
-      MentionStyleProps *props =
-          [_input->config mentionStylePropsForIndicator:p.indicator];
-      return props.color;
-    }
-  }
-
-  return _input->config.primaryColor;
+  return [self naturalColorForAttributes:attrs index:index];
 }
 
 - (void)removeColorInSelectedRange {
@@ -419,6 +344,66 @@
     [self removeAttributes:selectedRange];
   } else {
     [self removeTypingAttributes];
+  }
+}
+
+- (BOOL)isColorOwnedByOtherStyle:(UIColor *)color
+                      attributes:(NSDictionary *)attrs
+                           range:(NSRange)range {
+  NSUInteger index = range.location;
+
+  for (NSNumber *num in self.coloredStyleTypes) {
+    UIColor *styleColor = [self colorForStyle:(StyleType)num.integerValue
+                                   attributes:attrs
+                                        index:index];
+
+    if (styleColor && [styleColor isEqual:color]) {
+      return YES;
+    }
+  }
+
+  return NO;
+}
+
+- (UIColor *)colorForStyle:(StyleType)type
+                attributes:(NSDictionary *)attrs
+                     index:(NSUInteger)index {
+  id<BaseStyleProtocol> style = _input->stylesDict[@(type)];
+  if (!style)
+    return nil;
+
+  NSAttributedStringKey key = [[style class] attributeKey];
+  if (![style styleCondition:attrs[key] range:NSMakeRange(index, 0)])
+    return nil;
+
+  InputConfig *config = _input->config;
+
+  switch (type) {
+  case Link:
+    return config.linkColor;
+
+  case InlineCode:
+    return config.inlineCodeFgColor;
+
+  case BlockQuote:
+    return config.blockquoteColor;
+
+  case CodeBlock:
+    return config.codeBlockFgColor;
+
+  case Mention: {
+    MentionStyle *mention = (MentionStyle *)style;
+    MentionParams *params = [mention getMentionParamsAt:index];
+    if (!params)
+      return nil;
+
+    MentionStyleProps *props =
+        [config mentionStylePropsForIndicator:params.indicator];
+    return props.color;
+  }
+
+  default:
+    return nil;
   }
 }
 

@@ -37,16 +37,18 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 }
 
 + (NSDictionary *)getParametersFromValue:(id)value {
-  MentionParams *mp = value;
-  if (!mp)
+  MentionParams *mentionParams = value;
+  if (!mentionParams)
     return nil;
 
-  NSMutableDictionary *params =
-      [@{@"text" : mp.text ?: @"", @"indicator" : mp.indicator ?: @""}
-          mutableCopy];
+  NSMutableDictionary *params = [@{
+    @"text" : mentionParams.text ?: @"",
+    @"indicator" : mentionParams.indicator ?: @""
+  } mutableCopy];
 
-  if (mp.attributes) {
-    NSData *data = [mp.attributes dataUsingEncoding:NSUTF8StringEncoding];
+  if (mentionParams.attributes) {
+    NSData *data =
+        [mentionParams.attributes dataUsingEncoding:NSUTF8StringEncoding];
     NSDictionary *extraAttrs = [NSJSONSerialization JSONObjectWithData:data
                                                                options:0
                                                                  error:nil];

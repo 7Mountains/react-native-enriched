@@ -240,14 +240,15 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   newAttrs[NSForegroundColorAttributeName] = [_input->config linkColor];
   newAttrs[NSUnderlineColorAttributeName] = [_input->config linkColor];
   newAttrs[NSStrikethroughColorAttributeName] = [_input->config linkColor];
-  newAttrs[LinkAttributeName] = [url copy];
+  NSString *copiedUrl = [url copy];
+  newAttrs[LinkAttributeName] = copiedUrl;
   if ([_input->config linkDecorationLine] == DecorationUnderline) {
     newAttrs[NSUnderlineStyleAttributeName] = @(NSUnderlineStyleSingle);
   }
   if (manual) {
-    newAttrs[ManualLinkAttributeName] = [url copy];
+    newAttrs[ManualLinkAttributeName] = copiedUrl;
   } else {
-    newAttrs[AutomaticLinkAttributeName] = [url copy];
+    newAttrs[AutomaticLinkAttributeName] = copiedUrl;
   }
 
   if (range.length == 0) {

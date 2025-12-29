@@ -30,8 +30,9 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 @property(nonatomic, strong) UIColor *color;
 - (UIColor *)getColorAt:(NSUInteger)location;
 - (void)applyStyle:(NSRange)range color:(UIColor *)color;
-- (BOOL)detectExcludingColor:(UIColor *)excludedColor inRange:(NSRange)range;
 - (void)removeColorInSelectedRange;
+- (BOOL)styleConditionWithAttributes:(NSDictionary *_Nullable)attributes
+                               range:(NSRange)range;
 @end
 
 @interface LinkStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
