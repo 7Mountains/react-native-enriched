@@ -19,6 +19,7 @@
     "cpp",
     "tsconfig.build.json",
     "tsconfig.json",
+     "lib",
     "*.podspec",
     "react-native.config.js",
     "!ios/build",
@@ -135,14 +136,7 @@
           "name": "angular"
         }
       }
-    },
-    "hooks": {
-    "before:release": [
-      "yarn prepare",
-      "git add lib -f",
-      "git commit -m \"chore: build lib\" || true"
-    ]
-  }
+    }
   },
   "prettier": {
     "quoteProps": "consistent",
