@@ -1,6 +1,6 @@
 {
   "name": "react-native-enriched",
-  "version": "0.2.1",
+  "version": "0.0.7",
   "description": "Rich Text Editor component for React Native",
   "source": "./src/index.tsx",
   "main": "./lib/module/index.js",
@@ -123,10 +123,10 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": true
+      "publish": false
     },
     "github": {
-      "release": true
+      "release": false
     },
     "plugins": {
       "@release-it/conventional-changelog": {
@@ -134,7 +134,14 @@
           "name": "angular"
         }
       }
-    }
+    },
+    "hooks": {
+    "before:release": [
+      "yarn prepare",
+      "git add lib -f",
+      "git commit -m \"chore: build lib\" || true"
+    ]
+  }
   },
   "prettier": {
     "quoteProps": "consistent",
