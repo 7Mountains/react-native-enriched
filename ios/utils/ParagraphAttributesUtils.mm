@@ -23,7 +23,7 @@
   CodeBlockStyle *cbStyle =
       typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
   CheckBoxStyle *checkBoxStyle =
-      typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
+      (CheckBoxStyle *)typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
 
   if (typedInput == nullptr) {
     return NO;

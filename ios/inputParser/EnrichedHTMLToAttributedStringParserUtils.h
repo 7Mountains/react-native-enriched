@@ -73,9 +73,9 @@ MakeBlockTags(NSDictionary<NSNumber *, id<BaseStyleProtocol>> *styles) {
   return tags.copy;
 }
 
+static NSSet<NSString *> *blockTags;
+static dispatch_once_t onceToken;
 static inline BOOL isBlockTag(NSString *tag) {
-  static NSSet<NSString *> *blockTags;
-  static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     blockTags = [NSSet setWithArray:@[
       @"p", @"ul", @"ol", @"li", @"h1", @"h2", @"h3", @"h4", @"h5", @"h6",

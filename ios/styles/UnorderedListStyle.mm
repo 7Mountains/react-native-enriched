@@ -68,7 +68,7 @@
   pStyle.textLists = @[ bullet ];
   pStyle.headIndent = headIndent;
   pStyle.firstLineHeadIndent = headIndent;
-   pStyle.tailIndent = DefaultListTailIndent;
+  pStyle.tailIndent = DefaultListTailIndent;
   NSMutableDictionary *typingAttrs =
       [_input->defaultTypingAttributes mutableCopy];
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;

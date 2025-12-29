@@ -122,14 +122,12 @@
   }
 
   if (isTopLevelNode(cur) && isLastRenderable) {
+    [self applyParagraphModifiersIfNeeded:attributes];
     return;
   }
 
   if (isBlockTag(tag)) {
-    if (attributes.count > 0) {
-      [self applyParagraphModifiersIfNeeded:attributes];
-    }
-
+    [self applyParagraphModifiersIfNeeded:attributes];
     if (!HTMLIsLastParagraphInBlockContext(
             cur, cur->name, cur->parent ? cur->parent->name : NULL,
             isLastRenderable)) {
@@ -249,7 +247,7 @@
 }
 
 - (void)applyParagraphModifiersIfNeeded:(NSDictionary *)attributes {
-  if (_result.length == 0)
+  if (_result.length == 0 || attributes.count == 0)
     return;
 
   NSRange paragraphRange = [_result.string

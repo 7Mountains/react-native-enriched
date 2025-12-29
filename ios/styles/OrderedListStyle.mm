@@ -71,7 +71,7 @@ static NSArray *const TextLists = @[ NumberBulletList ];
   pStyle.textLists = TextLists;
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
-   pStyle.tailIndent = DefaultListTailIndent;
+  pStyle.tailIndent = DefaultListTailIndent;
   NSMutableDictionary *typingAttrs =
       [_input->defaultTypingAttributes mutableCopy];
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
