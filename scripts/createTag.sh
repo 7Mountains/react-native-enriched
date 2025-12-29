@@ -17,5 +17,6 @@ git commit -m "chore: build lib for v$VERSION" || echo "nothing to commit"
 
 echo "→ create tag v$VERSION"
 git tag "v$VERSION"
+git push origin "v$VERSION"
 
 echo "✓ done"
