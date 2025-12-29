@@ -50,7 +50,8 @@
     "prepare": "bob build",
     "release": "release-it",
     "android-studio": "open -a 'Android Studio' apps/example/android",
-    "xcode": "open -a 'Xcode' apps/example/ios/EnrichedTextInputExample.xcworkspace"
+    "xcode": "open -a 'Xcode' apps/example/ios/EnrichedTextInputExample.xcworkspace",
+    "create-tag": "sh ./scripts/createTag.sh"
   },
   "keywords": [
     "react-native",

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-VERSION=$(node -p "require('../package.json').version")
+VERSION=$(node -p "require('./package.json').version")
 
 if [ -z "$VERSION" ]; then
   echo "Usage: ./scripts/release.sh <version>"
