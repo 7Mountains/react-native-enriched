@@ -5,6 +5,11 @@
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
+static NSTextList *const NumberBulletList =
+    [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDecimal options:0];
+
+static NSArray *const TextLists = @[ NumberBulletList ];
+
 @implementation OrderedListStyle {
   EnrichedTextInputView *_input;
 }
@@ -60,14 +65,11 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  NSTextList *numberBullet =
-      [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDecimal
-                                       options:0];
   NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-
-  pStyle.textLists = @[ numberBullet ];
-  pStyle.headIndent = [self getHeadIndent];
-  pStyle.firstLineHeadIndent = [self getHeadIndent];
+  CGFloat headIntent = [self getHeadIndent];
+  pStyle.textLists = TextLists;
+  pStyle.headIndent = headIntent;
+  pStyle.firstLineHeadIndent = headIntent;
   NSMutableDictionary *typingAttrs =
       [_input->defaultTypingAttributes mutableCopy];
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
@@ -151,9 +153,10 @@
       [_input->textView.typingAttributes mutableCopy];
   NSMutableParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
-  pStyle.textLists = @[ numberBullet ];
-  pStyle.headIndent = [self getHeadIndent];
-  pStyle.firstLineHeadIndent = [self getHeadIndent];
+  pStyle.textLists = TextLists;
+  CGFloat headIntent = [self getHeadIndent];
+  pStyle.headIndent = headIntent;
+  pStyle.firstLineHeadIndent = headIntent;
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
   _input->textView.typingAttributes = typingAttrs;
 }

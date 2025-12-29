@@ -1457,15 +1457,29 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)requestHTML:(NSInteger)requestId {
-  auto emitter = [self getEventEmitter];
-  if (emitter != nullptr) {
-    @try {
-      NSString *htmlOutput = [parser
-          parseToHtmlFromRange:NSMakeRange(0,
-                                           textView.textStorage.string.length)];
-      emitter->onRequestHtmlResult({.requestId = static_cast<int>(requestId),
-                                    .html = [htmlOutput toCppString]});
-    } @catch (NSException *exception) {
+  @try {
+    NSRange fullRange = NSMakeRange(0, textView.textStorage.length);
+
+    [parser parseToHtmlFromRangeAsync:fullRange
+                           completion:^(NSString *html) {
+                             auto eventEmitter = [self getEventEmitter];
+                             if (eventEmitter == nullptr) {
+                               return;
+                             }
+
+                             if (html) {
+                               eventEmitter->onRequestHtmlResult(
+                                   {.requestId = static_cast<int>(requestId),
+                                    .html = [html toCppString]});
+                             } else {
+                               eventEmitter->onRequestHtmlResult(
+                                   {.requestId = static_cast<int>(requestId),
+                                    .html = folly::dynamic(nullptr)});
+                             }
+                           }];
+  } @catch (NSException *exception) {
+    auto emitter = [self getEventEmitter];
+    if (emitter != nullptr) {
       emitter->onRequestHtmlResult({.requestId = static_cast<int>(requestId),
                                     .html = folly::dynamic(nullptr)});
     }

@@ -66,42 +66,38 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
                                   range:(NSRange)range
-                             attributes:(NSDictionary<NSString *, NSString *>
-                                             *_Nullable)attributes {
+                             attributes:(NSDictionary<NSString *, NSString *> *)
+                                            attributes {
   if (range.length == 0)
     return;
+
   NSString *href = attributes[@"href"];
-  if (href == nullptr || href.length == 0)
+  if (href.length == 0)
     return;
-  UIColor *linkColor = [_input->config linkColor];
 
-  [attributedString addAttribute:NSForegroundColorAttributeName
-                           value:linkColor
-                           range:range];
+  UIColor *linkColor = _input->config.linkColor;
 
-  [attributedString addAttribute:NSUnderlineColorAttributeName
-                           value:linkColor
-                           range:range];
-
-  [attributedString addAttribute:NSStrikethroughColorAttributeName
-                           value:linkColor
-                           range:range];
+  NSMutableDictionary *attrs = [NSMutableDictionary dictionaryWithCapacity:5];
+  attrs[NSForegroundColorAttributeName] = linkColor;
+  attrs[NSUnderlineColorAttributeName] = linkColor;
+  attrs[NSStrikethroughColorAttributeName] = linkColor;
 
   if ([_input->config linkDecorationLine] == DecorationUnderline) {
-    [attributedString addAttribute:NSUnderlineStyleAttributeName
-                             value:@(NSUnderlineStyleSingle)
-                             range:range];
+    attrs[NSUnderlineStyleAttributeName] = @(NSUnderlineStyleSingle);
   }
 
-  NSString *subscrting =
-      [attributedString.string substringFromIndex:range.location];
+  NSString *string = attributedString.string;
 
-  NSAttributedStringKey attributeName = [subscrting isEqualToString:href]
-                                            ? AutomaticLinkAttributeName
-                                            : ManualLinkAttributeName;
+  BOOL isAuto = NO;
+  if (range.length == href.length &&
+      range.location + range.length <= string.length) {
+    isAuto = ([string compare:href options:0 range:range] == NSOrderedSame);
+  }
 
-  [attributedString addAttribute:LinkAttributeName value:href range:range];
-  [attributedString addAttribute:attributeName value:href range:range];
+  attrs[LinkAttributeName] = href;
+  attrs[isAuto ? AutomaticLinkAttributeName : ManualLinkAttributeName] = href;
+
+  [attributedString addAttributes:attrs range:range];
 }
 
 - (void)addTypingAttributes {

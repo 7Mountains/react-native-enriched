@@ -4,9 +4,10 @@
 #import "TextInsertionUtils.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
-static inline BOOL CGSizeAlmostEqual(CGSize a, CGSize b, CGFloat epsilon) {
-  return fabs(a.width - b.width) < epsilon &&
-         fabs(a.height - b.height) < epsilon;
+static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
+                                     CGFloat epsilon) {
+  return fabs(firstSize.width - secondSize.width) < epsilon &&
+         fabs(firstSize.height - secondSize.height) < epsilon;
 }
 
 @implementation InputTextView {

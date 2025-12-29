@@ -72,8 +72,8 @@ static inline BOOL isBlockTag(NSString *tag) {
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     blockTags = [NSSet setWithArray:@[
-      @"p", @"div", @"ul", @"ol", @"li", @"h1", @"h2", @"h3", @"h4", @"h5",
-      @"h6", @"blockquote", @"checklist", @"codeblock", @"hr"
+      @"p", @"ul", @"ol", @"li", @"h1", @"h2", @"h3", @"h4", @"h5", @"h6",
+      @"blockquote", @"checklist", @"codeblock", @"hr"
     ]];
   });
 
@@ -85,31 +85,52 @@ static inline BOOL isHTMLWhitespace(unsigned char c) {
 }
 
 static inline NSString *collapseWhiteSpace(NSString *text) {
-  if (text.length == 0)
+  CFIndex len = CFStringGetLength((CFStringRef)text);
+  if (len == 0)
     return text;
 
-  NSMutableString *out = [NSMutableString stringWithCapacity:text.length];
+  CFMutableStringRef out = CFStringCreateMutable(kCFAllocatorDefault, len);
+
+  CFStringInlineBuffer buffer;
+  CFStringInitInlineBuffer((CFStringRef)text, &buffer, CFRangeMake(0, len));
 
   BOOL lastWasWhitespace = NO;
 
-  for (NSUInteger i = 0; i < text.length; i++) {
-    unichar c = [text characterAtIndex:i];
+  for (CFIndex i = 0; i < len; i++) {
+    unichar c = CFStringGetCharacterFromInlineBuffer(&buffer, i);
 
     BOOL isWhitespace = (c == ' ' || c == '\n' || c == '\t' || c == '\r' ||
                          c == '\f' || c == 0x00A0);
 
     if (isWhitespace) {
       if (!lastWasWhitespace) {
-        [out appendString:@" "];
+        UniChar space = ' ';
+        CFStringAppendCharacters(out, &space, 1);
         lastWasWhitespace = YES;
       }
     } else {
-      [out appendFormat:@"%C", c];
+      CFStringAppendCharacters(out, &c, 1);
       lastWasWhitespace = NO;
     }
   }
 
-  return out;
+  return CFBridgingRelease(out);
+}
+
+static inline NSString *collapseWhiteSpaceIfNeeded(NSString *text) {
+  if (text.length == 0)
+    return text;
+
+  static NSCharacterSet *ws;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    ws = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+  });
+
+  if ([text rangeOfCharacterFromSet:ws].location == NSNotFound)
+    return text;
+
+  return collapseWhiteSpace(text);
 }
 
 static inline BOOL isWhiteSpaceOnly(NSString *text) {

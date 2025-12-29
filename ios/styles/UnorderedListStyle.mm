@@ -60,11 +60,11 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  NSTextList *numberBullet =
+  NSTextList *bullet =
       [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDisc options:0];
   NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
 
-  pStyle.textLists = @[ numberBullet ];
+  pStyle.textLists = @[ bullet ];
   pStyle.headIndent = [self getHeadIndent];
   pStyle.firstLineHeadIndent = [self getHeadIndent];
   NSMutableDictionary *typingAttrs =

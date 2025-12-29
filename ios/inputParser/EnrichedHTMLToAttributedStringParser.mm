@@ -85,6 +85,10 @@
   id<BaseStyleProtocol> style = self.tagsRegistry[tag];
   NSDictionary *attributes = HTMLAttributesFromNode(cur);
 
+  BOOL isBlock = isBlockTag(tag);
+
+  NSUInteger lengthBefore = _result.length;
+
   if (style && [[style class] isSelfClosing]) {
     [self traverseSelfClosing:style attributes:attributes tag:tag];
     return;
@@ -98,6 +102,13 @@
     [self traverseChildren:cur];
   }
 
+  BOOL hasContent = _result.length > lengthBefore;
+
+  if (!hasContent && isBlock) {
+    // Append ZWS for empty lists/blockquotes
+    [self appendEmptyBlockPlaceholder];
+  }
+
   if (style) {
     [_styleStack popStyle:style];
   }
@@ -106,10 +117,9 @@
     return;
   }
 
-  if (isBlockTag(tag) &&
-      !HTMLIsLastParagraphInBlockContext(cur, cur->name,
-                                         cur->parent ? cur->parent->name : NULL,
-                                         isLastRenderable)) {
+  if (isBlock && !HTMLIsLastParagraphInBlockContext(
+                     cur, cur->name, cur->parent ? cur->parent->name : NULL,
+                     isLastRenderable)) {
     [self appendText:@"\n"];
   }
 }
@@ -123,7 +133,7 @@
     return;
 
   // Collapse whitespace
-  NSString *collapsed = collapseWhiteSpace(text);
+  NSString *collapsed = collapseWhiteSpaceIfNeeded(text);
   if (collapsed.length == 0)
     return;
 
@@ -217,6 +227,13 @@
 
   return [[NSCharacterSet whitespaceAndNewlineCharacterSet]
       characterIsMember:last];
+}
+
+- (void)appendEmptyBlockPlaceholder {
+  unichar zws = 0x200B;
+  NSString *placeholder = [NSString stringWithCharacters:&zws length:1];
+
+  [self appendText:placeholder];
 }
 
 @end

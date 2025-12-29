@@ -44,6 +44,26 @@
                                                                 pretify:NO];
 }
 
+- (void)parseToHtmlFromRangeAsync:(NSRange)range
+                       completion:(void (^)(NSString *html))completion {
+  NSAttributedString *snapshot =
+      [_input->textView.textStorage attributedSubstringFromRange:range];
+
+  NSAttributedString *safeCopy = [snapshot copy];
+
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    NSString *html = [self->_attributedStringHTMLSerializer
+        buildHtmlFromAttributedString:safeCopy
+                              pretify:NO];
+
+    if (completion) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+        completion(html);
+      });
+    }
+  });
+}
+
 - (void)replaceWholeFromHtml:(NSString *)html
     notifyAnyTextMayHaveBeenModified:(BOOL)notify {
   NSMutableAttributedString *inserted = [self attributedFromHtml:html];
