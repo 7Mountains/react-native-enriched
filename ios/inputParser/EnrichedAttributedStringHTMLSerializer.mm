@@ -303,13 +303,15 @@
     id value = attrs[key];
     // very specific case since we have to manage different colors.
     // Maybe we can avoid it in the future
-    BOOL isColorStyleWithAttributes =
-        [styleClass getStyleType] == Colored &&
-        [(ColorStyle *)styleObject styleConditionWithAttributes:attrs
-                                                          range:range];
+    BOOL isColorStyle = [styleClass getStyleType] == Colored;
 
-    if (!isColorStyleWithAttributes && ![styleObject styleCondition:value
-                                                              range:range])
+    BOOL hasStyle =
+        isColorStyle
+            ? [(ColorStyle *)styleObject styleConditionWithAttributes:attrs
+                                                                range:range]
+            : [styleObject styleCondition:value range:range];
+
+    if (!hasStyle)
       continue;
 
     HTMLElement *wrap = [HTMLElement new];

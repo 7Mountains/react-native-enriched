@@ -11,6 +11,13 @@
 static NSString *const CheckedValueString = @"true";
 static NSString *const UnckedValueString = @"false";
 
+static NSArray *const CheckedLists =
+    @[ [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerCheck
+                                        options:0] ];
+static NSArray *const UncheckedLists =
+    @[ [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerBox
+                                        options:0] ];
+
 @implementation CheckBoxStyle {
   EnrichedTextInputView *_input;
 }
@@ -67,11 +74,8 @@ static NSString *const UnckedValueString = @"false";
          [_input->config checkboxListGapWidth] + [_input->config checkBoxWidth];
 }
 
-- (NSTextList *)listForChecked:(BOOL)checked {
-  return
-      [[NSTextList alloc] initWithMarkerFormat:(checked ? NSTextListMarkerCheck
-                                                        : NSTextListMarkerBox)
-                                       options:0];
+- (NSArray *)listForChecked:(BOOL)checked {
+  return checked ? CheckedLists : UncheckedLists;
 }
 
 - (void)resetParagraphStyle:(NSMutableParagraphStyle *)pStyle {
@@ -131,12 +135,12 @@ static NSString *const UnckedValueString = @"false";
     isChecked = [checked.lowercaseString isEqualToString:CheckedValueString];
   }
 
-  NSTextList *list = [self listForChecked:isChecked];
+  auto *lists = [self listForChecked:isChecked];
   CGFloat checkBoxHeight = _input->config.checkBoxHeight;
   UIFont *font = _input->config.primaryFont;
 
   NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-  pStyle.textLists = @[ list ];
+  pStyle.textLists = lists;
   pStyle.minimumLineHeight = checkBoxHeight;
   pStyle.maximumLineHeight = checkBoxHeight;
   pStyle.lineHeightMultiple = 1.0;
@@ -324,7 +328,7 @@ static NSString *const UnckedValueString = @"false";
     return;
 
   BOOL currentChecked = [self isCheckedAt:pRange.location];
-  NSTextList *newList = [self listForChecked:!currentChecked];
+  auto *newList = [self listForChecked:!currentChecked];
 
   [_input->textView.textStorage beginEditing];
 
@@ -335,7 +339,7 @@ static NSString *const UnckedValueString = @"false";
               usingBlock:^(id value, NSRange sub, BOOL *stop) {
                 NSMutableParagraphStyle *pStyle =
                     [(NSParagraphStyle *)value mutableCopy];
-                pStyle.textLists = @[ newList ];
+                pStyle.textLists = newList;
                 [_input->textView.textStorage
                     addAttribute:NSParagraphStyleAttributeName
                            value:pStyle
@@ -361,7 +365,7 @@ static NSString *const UnckedValueString = @"false";
 #pragma mark - Adding Checkboxes
 
 - (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked {
-  NSTextList *list = [self listForChecked:isChecked];
+  auto *list = [self listForChecked:isChecked];
   CGFloat checBoxHeight = [_input->config checkBoxHeight];
 
   NSArray *paragraphs =
@@ -403,7 +407,7 @@ static NSString *const UnckedValueString = @"false";
                   NSMutableParagraphStyle *paragraphStyle =
                       value == nil ? [NSMutableParagraphStyle new]
                                    : [(NSParagraphStyle *)value mutableCopy];
-                  paragraphStyle.textLists = @[ list ];
+                  paragraphStyle.textLists = list;
                   paragraphStyle.minimumLineHeight = checBoxHeight;
                   paragraphStyle.maximumLineHeight = checBoxHeight;
                   paragraphStyle.lineHeightMultiple = 1.0;
@@ -435,7 +439,7 @@ static NSString *const UnckedValueString = @"false";
         NSMakeRange(preRange.location, preRange.length + offset);
   }
   NSMutableParagraphStyle *paragraphStyle = [self currentTypingParagraphStyle];
-  paragraphStyle.textLists = @[ list ];
+  paragraphStyle.textLists = list;
   paragraphStyle.minimumLineHeight = checBoxHeight;
   paragraphStyle.maximumLineHeight = checBoxHeight;
   paragraphStyle.lineHeightMultiple = 1.0;

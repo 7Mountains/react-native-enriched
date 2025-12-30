@@ -91,12 +91,7 @@ static NSString *const placeholder = @"\uFFFC";
   attrs[ContentAttributeName] = params;
   attrs[ReadOnlyParagraphKey] = @(YES);
 
-  NSString *ph = placeholder;
-  NSAttributedString *replacement =
-      [[NSAttributedString alloc] initWithString:ph attributes:attrs];
-
-  [attributedString replaceCharactersInRange:range
-                        withAttributedString:replacement];
+  [attributedString addAttributes:attrs range:range];
 }
 
 #pragma mark - Init

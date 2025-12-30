@@ -51,12 +51,7 @@ static NSString *const placeholder = @"\uFFFC";
 
   NSDictionary *attrs = [self prepareAttributes];
 
-  NSString *ph = placeholder;
-  NSAttributedString *replacement =
-      [[NSAttributedString alloc] initWithString:ph attributes:attrs];
-
-  [attributedString replaceCharactersInRange:range
-                        withAttributedString:replacement];
+  [attributedString addAttributes:attrs range:range];
 }
 
 #pragma mark - Style Application

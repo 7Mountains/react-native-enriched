@@ -44,7 +44,11 @@
   _result = [[NSMutableAttributedString alloc]
       initWithString:@""
           attributes:_defaultTypingAttributes];
-  [_result beginEditing];
+
+  if (html.length == 0) {
+    return _result;
+  }
+
   const char *cHtml = html.UTF8String ?: "";
 
   htmlDocPtr htmlDocumentPtr = htmlReadMemory(
@@ -53,6 +57,8 @@
 
   if (!htmlDocumentPtr)
     return _result;
+
+  [_result beginEditing];
 
   xmlNodePtr root = xmlDocGetRootElement(htmlDocumentPtr);
   if (root) {

@@ -134,6 +134,8 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (BOOL)isCheckedAt:(NSUInteger)location;
 - (void)toggleCheckedAt:(NSUInteger)location;
 - (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked;
+@property(nonatomic, strong)
+    NSCache<NSNumber *, NSDictionary *> *attributesCache;
 @end
 
 @interface DividerStyle : NSObject <BaseStyleProtocol>

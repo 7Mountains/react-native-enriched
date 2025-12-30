@@ -6,6 +6,11 @@
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
+static NSTextList *const bullet =
+    [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDisc options:0];
+
+static NSArray *const TextLists = @[ bullet ];
+
 @implementation UnorderedListStyle {
   EnrichedTextInputView *_input;
 }
@@ -61,17 +66,12 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  NSTextList *bullet =
-      [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDisc options:0];
   NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
   CGFloat headIndent = [self getHeadIndent];
-  pStyle.textLists = @[ bullet ];
+  pStyle.textLists = TextLists;
   pStyle.headIndent = headIndent;
   pStyle.firstLineHeadIndent = headIndent;
   pStyle.tailIndent = DefaultListTailIndent;
-  NSMutableDictionary *typingAttrs =
-      [_input->defaultTypingAttributes mutableCopy];
-  typingAttrs[NSParagraphStyleAttributeName] = pStyle;
   [attributedString addAttribute:NSParagraphStyleAttributeName
                            value:pStyle
                            range:range];
@@ -79,8 +79,6 @@
 
 // we assume correct paragraph range is already given
 - (void)addAttributes:(NSRange)range {
-  NSTextList *bullet =
-      [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDisc options:0];
   NSArray *paragraphs =
       [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
                                                range:range];
@@ -123,7 +121,7 @@
                   NSMutableParagraphStyle *pStyle =
                       value == nil ? [NSMutableParagraphStyle new]
                                    : [(NSParagraphStyle *)value mutableCopy];
-                  pStyle.textLists = @[ bullet ];
+                  pStyle.textLists = TextLists;
                   CGFloat headIntet = [self getHeadIndent];
                   pStyle.headIndent = headIntet;
                   pStyle.firstLineHeadIndent = headIntet;
@@ -153,7 +151,7 @@
       [_input->textView.typingAttributes mutableCopy];
   NSMutableParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
-  pStyle.textLists = @[ bullet ];
+  pStyle.textLists = TextLists;
   pStyle.headIndent = [self getHeadIndent];
   pStyle.firstLineHeadIndent = [self getHeadIndent];
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;

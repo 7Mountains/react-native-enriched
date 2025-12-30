@@ -73,23 +73,25 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  [attributedString
-      enumerateAttribute:NSFontAttributeName
-                 inRange:range
-                 options:0
-              usingBlock:^(id _Nullable value, NSRange range,
-                           BOOL *_Nonnull stop) {
-                UIFont *font = (UIFont *)value;
-                if (font != nullptr) {
-                  UIFont *newFont = [font setSize:[self getHeadingFontSize]];
-                  if ([self isHeadingBold]) {
-                    newFont = [newFont setBold];
-                  }
-                  [attributedString addAttribute:NSFontAttributeName
+  auto fontSize = [self getHeadingFontSize];
+  BOOL isHeadingBold = [self isHeadingBold];
+  [attributedString enumerateAttribute:NSFontAttributeName
+                               inRange:range
+                               options:0
+                            usingBlock:^(id _Nullable value, NSRange range,
+                                         BOOL *_Nonnull stop) {
+                              UIFont *font = (UIFont *)value;
+                              if (font != nullptr) {
+                                UIFont *newFont = [font setSize:fontSize];
+                                if (isHeadingBold) {
+                                  newFont = [newFont setBold];
+                                }
+                                [attributedString
+                                    addAttribute:NSFontAttributeName
                                            value:newFont
                                            range:range];
-                }
-              }];
+                              }
+                            }];
 }
 
 // will always be called on empty paragraphs so only typing attributes can be

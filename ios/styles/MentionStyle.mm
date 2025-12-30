@@ -98,23 +98,20 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   MentionStyleProps *props =
       [_input->config mentionStylePropsForIndicator:params.indicator];
 
-  NSMutableDictionary<NSAttributedStringKey, id> *attrs =
-      [[NSMutableDictionary alloc] initWithCapacity:5];
+  NSUnderlineStyle underlineStyle = props.decorationLine == DecorationUnderline
+                                        ? NSUnderlineStyleSingle
+                                        : NSUnderlineStyleNone;
 
-  attrs[MentionAttributeName] = params;
+  NSDictionary<NSAttributedStringKey, id> *attrs = @{
+    MentionAttributeName : params,
+    NSForegroundColorAttributeName : props.color,
+    NSUnderlineColorAttributeName : props.color,
+    NSStrikethroughColorAttributeName : props.color,
+    NSBackgroundColorAttributeName :
+        [props.backgroundColor colorWithAlphaIfNotTransparent:0.4],
+    NSUnderlineStyleAttributeName : @(underlineStyle)
 
-  attrs[NSForegroundColorAttributeName] = props.color;
-  attrs[NSUnderlineColorAttributeName] = props.color;
-  attrs[NSStrikethroughColorAttributeName] = props.color;
-  attrs[NSBackgroundColorAttributeName] =
-      [props.backgroundColor colorWithAlphaIfNotTransparent:0.4];
-
-  if (props.decorationLine == DecorationUnderline) {
-    attrs[NSUnderlineStyleAttributeName] = @(NSUnderlineStyleSingle);
-  } else {
-    [attrs removeObjectForKey:NSUnderlineStyleAttributeName];
-  }
-
+  };
   [attributedString addAttributes:attrs range:range];
 }
 

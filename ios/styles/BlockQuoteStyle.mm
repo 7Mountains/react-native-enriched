@@ -65,14 +65,17 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)_ {
-  NSMutableDictionary *attributes =
-      [_input->defaultTypingAttributes mutableCopy];
-  attributes[NSForegroundColorAttributeName] = _input->config.blockquoteColor;
   NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-  pStyle.headIndent = [self getHeadIndent];
-  pStyle.firstLineHeadIndent = [self getHeadIndent];
+  auto headIntent = [self getHeadIndent];
+  pStyle.headIndent = headIntent;
+  pStyle.firstLineHeadIndent = headIntent;
   pStyle.tailIndent = DefaultListTailIndent;
-  attributes[NSParagraphStyleAttributeName] = pStyle;
+  NSDictionary *attributes = @{
+    NSForegroundColorAttributeName : _input->config.blockquoteColor,
+    NSParagraphStyleAttributeName : pStyle,
+    NSForegroundColorAttributeName : _input->config.blockquoteColor
+  };
+
   [attributedString addAttributes:attributes range:range];
 }
 

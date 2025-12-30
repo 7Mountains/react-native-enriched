@@ -74,25 +74,9 @@ Size EnrichedTextInputViewShadowNode::measureContent(
       _prevContentSize = size;
       return constraints.clamp(size);
     }
-  } else {
-    __block CGSize estimatedSize;
-    // synchronously dispatch to main thread if needed
-    if ([NSThread isMainThread]) {
-      EnrichedTextInputView *mockTextInputView = setupMockTextInputView_();
-      estimatedSize = [mockTextInputView
-          measureInitialSizeWithMaxWidth:constraints.maximumSize.width];
-    } else {
-      dispatch_sync(dispatch_get_main_queue(), ^{
-        EnrichedTextInputView *mockTextInputView = setupMockTextInputView_();
-        estimatedSize = [mockTextInputView
-            measureInitialSizeWithMaxWidth:constraints.maximumSize.width];
-      });
-    }
-
-    return constraints.clamp(Size(estimatedSize.width, estimatedSize.height));
   }
 
-  return Size();
+  return constraints.clamp(Size());
 }
 
 } // namespace facebook::react
