@@ -37,24 +37,24 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 }
 
 + (NSDictionary *)getParametersFromValue:(id)value {
-  MentionParams *mentionParams = value;
-  if (!mentionParams)
+  if (![value isKindOfClass:[MentionParams class]]) {
     return nil;
+  }
 
-  NSMutableDictionary *params = [@{
-    @"text" : mentionParams.text ?: @"",
-    @"indicator" : mentionParams.indicator ?: @""
-  } mutableCopy];
+  MentionParams *mentionParams = (MentionParams *)value;
 
-  if (mentionParams.attributes) {
-    NSData *data =
-        [mentionParams.attributes dataUsingEncoding:NSUTF8StringEncoding];
-    NSDictionary *extraAttrs = [NSJSONSerialization JSONObjectWithData:data
-                                                               options:0
-                                                                 error:nil];
-    if ([extraAttrs isKindOfClass:[NSDictionary class]]) {
-      [params addEntriesFromDictionary:extraAttrs];
-    }
+  NSMutableDictionary *params = [NSMutableDictionary dictionary];
+
+  if (mentionParams.text.length > 0) {
+    params[@"text"] = mentionParams.text;
+  }
+
+  if (mentionParams.indicator.length > 0) {
+    params[@"indicator"] = mentionParams.indicator;
+  }
+
+  if (mentionParams.extraAttributes.count > 0) {
+    [params addEntriesFromDictionary:mentionParams.extraAttributes];
   }
 
   return params;
@@ -84,21 +84,25 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
                                   range:(NSRange)range
-                             attributes:(NSDictionary<NSString *, NSString *>
-                                             *_Nullable)attributes {
-  if (!attributedString || !attributes || attributes.count == 0)
+                             attributes:(NSDictionary<NSString *, NSString *> *)
+                                            attributes {
+  if (!attributedString || attributes.count == 0) {
     return;
+  }
 
-  NSString *indicator = attributes[@"indicator"];
-  NSString *text = attributes[@"text"] ?: @"";
+  MentionParams *params = [MentionParams fromAttributes:attributes];
+  if (!params) {
+    return;
+  }
 
   MentionStyleProps *props =
-      [_input->config mentionStylePropsForIndicator:indicator];
+      [_input->config mentionStylePropsForIndicator:params.indicator];
 
   NSMutableDictionary<NSAttributedStringKey, id> *attrs =
       [_input->textView.typingAttributes mutableCopy];
 
-  attrs[MentionAttributeName] = attributes;
+  attrs[MentionAttributeName] = params;
+
   attrs[NSForegroundColorAttributeName] = props.color;
   attrs[NSUnderlineColorAttributeName] = props.color;
   attrs[NSStrikethroughColorAttributeName] = props.color;
@@ -112,7 +116,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   }
 
   NSAttributedString *mention =
-      [[NSAttributedString alloc] initWithString:text attributes:attrs];
+      [[NSAttributedString alloc] initWithString:params.text attributes:attrs];
 
   if (range.length == 0) {
     [attributedString insertAttributedString:mention atIndex:range.location];
@@ -257,7 +261,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 
 - (void)addMention:(NSString *)indicator
               text:(NSString *)text
-        attributes:(NSString *)attributes {
+        attributes:(NSDictionary<NSString *, id> *)attributes {
   if (_activeMentionRange == nullptr) {
     return;
   }
@@ -269,7 +273,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   MentionParams *params = [[MentionParams alloc] init];
   params.text = text;
   params.indicator = indicator;
-  params.attributes = attributes;
+  params.extraAttributes = attributes;
 
   MentionStyleProps *styleProps =
       [_input->config mentionStylePropsForIndicator:indicator];

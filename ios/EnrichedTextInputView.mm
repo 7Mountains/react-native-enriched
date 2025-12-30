@@ -1123,10 +1123,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
         // selection was changed from a non-mention to a mention
         detectedMentionParams = candidateMentionParams;
         detectedMentionRange = candidateMentionRange;
-      } else if (![_recentlyActiveMentionParams.text
-                     isEqualToString:candidateMentionParams.text] ||
-                 ![_recentlyActiveMentionParams.attributes
-                     isEqualToString:candidateMentionParams.attributes] ||
+      } else if (![_recentlyActiveMentionParams
+                     isEqualToMentionParams:candidateMentionParams] ||
                  !NSEqualRanges(_recentlyActiveMentionRange,
                                 candidateMentionRange)) {
         // selection changed from one mention to another
@@ -1189,9 +1187,15 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   if (detectedMentionParams != nullptr) {
     // emit onMentionDetected event
+    auto data = [NSJSONSerialization
+        dataWithJSONObject:detectedMentionParams.extraAttributes
+                   options:0
+                     error:nil];
     [self emitOnMentionDetectedEvent:detectedMentionParams.text
                            indicator:detectedMentionParams.indicator
-                          attributes:detectedMentionParams.attributes];
+                          attributes:[[NSString alloc]
+                                         initWithData:data
+                                             encoding:NSUTF8StringEncoding]];
 
     _recentlyActiveMentionParams = detectedMentionParams;
     _recentlyActiveMentionRange = detectedMentionRange;
