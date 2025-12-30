@@ -89,8 +89,7 @@ Size EnrichedTextInputViewShadowNode::measureContent(
       });
     }
 
-    return {estimatedSize.width,
-            MIN(estimatedSize.height, constraints.maximumSize.height)};
+    return constraints.clamp(Size(estimatedSize.width, estimatedSize.height));
   }
 
   return Size();

@@ -99,7 +99,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
       [_input->config mentionStylePropsForIndicator:params.indicator];
 
   NSMutableDictionary<NSAttributedStringKey, id> *attrs =
-      [_input->textView.typingAttributes mutableCopy];
+      [[NSMutableDictionary alloc] initWithCapacity:5];
 
   attrs[MentionAttributeName] = params;
 
@@ -115,15 +115,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
     [attrs removeObjectForKey:NSUnderlineStyleAttributeName];
   }
 
-  NSAttributedString *mention =
-      [[NSAttributedString alloc] initWithString:params.text attributes:attrs];
-
-  if (range.length == 0) {
-    [attributedString insertAttributedString:mention atIndex:range.location];
-  } else {
-    [attributedString replaceCharactersInRange:range
-                          withAttributedString:mention];
-  }
+  [attributedString addAttributes:attrs range:range];
 }
 
 - (void)addTypingAttributes {
