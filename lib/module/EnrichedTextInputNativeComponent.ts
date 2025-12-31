@@ -131,6 +131,8 @@ export interface ContentStyleProperties {
   fontSize?: number;
   fontWeight?: TextStyle['fontWeight'];
   fallbackImageURI?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface HtmlStyleInternal {
