@@ -127,7 +127,7 @@
 
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    return [OccurenceUtils detect:NSStrikethroughStyleAttributeName
+    return [OccurenceUtils detect:NSUnderlineStyleAttributeName
                         withInput:_input
                           inRange:range
                     withCondition:^BOOL(id _Nullable value, NSRange range) {
