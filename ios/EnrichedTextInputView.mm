@@ -1,5 +1,6 @@
 #import "EnrichedTextInputView.h"
 #import "AlignmentConverter.h"
+#import "AttachmentInvalidationBatcher.h"
 #import "BaseLabelAttachment.h"
 #import "CheckboxHitTestUtils.h"
 #import "ColorExtension.h"
@@ -27,7 +28,7 @@ using namespace facebook::react;
 
 @interface EnrichedTextInputView () <RCTEnrichedTextInputViewViewProtocol,
                                      UITextViewDelegate, NSObject>
-
+@property(nonatomic, strong) AttachmentInvalidationBatcher *attachmentBatcher;
 @end
 
 @implementation EnrichedTextInputView {
@@ -74,6 +75,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self setDefaults];
     [self setupTextView];
     [self addSubview:textView];
+    self.attachmentBatcher =
+        [[AttachmentInvalidationBatcher alloc] initWithTextView:textView];
   }
   return self;
 }
@@ -825,11 +828,14 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     if (newSingleProps) {
       [newConfig setContentStyleProps:
                      [ContentStyleProps
-                         getSinglePropsFromFollyDynamic:newContentStyle]];
+                         getSinglePropsFromFollyDynamic:newContentStyle
+                                            defaultFont:newConfig.primaryFont]];
     } else {
-      [newConfig setContentStyleProps:
-                     [ContentStyleProps
-                         getComplexPropsFromFollyDynamic:newContentStyle]];
+      [newConfig
+          setContentStyleProps:
+              [ContentStyleProps
+                  getComplexPropsFromFollyDynamic:newContentStyle
+                                      defaultFont:newConfig.primaryFont]];
     }
 
     stylePropChanged = YES;
@@ -1187,15 +1193,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   if (detectedMentionParams != nullptr) {
     // emit onMentionDetected event
-    auto data = [NSJSONSerialization
-        dataWithJSONObject:detectedMentionParams.extraAttributes
-                   options:0
-                     error:nil];
     [self emitOnMentionDetectedEvent:detectedMentionParams.text
                            indicator:detectedMentionParams.indicator
-                          attributes:[[NSString alloc]
-                                         initWithData:data
-                                             encoding:NSUTF8StringEncoding]];
+                          attributes:detectedMentionParams.extraAttributes];
 
     _recentlyActiveMentionParams = detectedMentionParams;
     _recentlyActiveMentionRange = detectedMentionRange;
@@ -1478,12 +1478,17 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)emitOnMentionDetectedEvent:(NSString *)text
                          indicator:(NSString *)indicator
-                        attributes:(NSString *)attributes {
+                        attributes:(NSDictionary<NSString *, id> *_Nullable)
+                                       attributes {
   auto emitter = [self getEventEmitter];
   if (emitter != nullptr) {
+    auto data = [NSJSONSerialization dataWithJSONObject:attributes
+                                                options:0
+                                                  error:nil];
+    std::string json((const char *)data.bytes, data.length);
     emitter->onMentionDetected({.text = [text toCppString],
                                 .indicator = [indicator toCppString],
-                                .payload = [attributes toCppString]});
+                                .payload = json});
   }
 }
 
@@ -1617,7 +1622,26 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                                     range:[[mentionStyleClass
                                               getActiveMentionRange]
                                               rangeValue]]) {
-    [mentionStyleClass addMention:indicator text:text attributes:attributes];
+    NSDictionary<NSString *, id> *parsedAttributes = nil;
+    if (attributes.length > 0) {
+      NSData *data = [attributes dataUsingEncoding:NSUTF8StringEncoding];
+
+      if (data) {
+        NSError *error = nil;
+        id json = [NSJSONSerialization
+            JSONObjectWithData:data
+                       options:NSJSONReadingMutableContainers
+                         error:&error];
+
+        if (!error && [json isKindOfClass:[NSDictionary class]]) {
+          parsedAttributes = (NSDictionary *)json;
+        }
+      }
+    }
+
+    [mentionStyleClass addMention:indicator
+                             text:text
+                       attributes:parsedAttributes ?: @{}];
     [self anyTextMayHaveBeenModified];
   }
 }
@@ -2040,28 +2064,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 // MARK: - Media attachments delegate
 
 - (void)mediaAttachmentDidUpdate:(NSTextAttachment *)attachment {
-  NSTextStorage *storage = textView.textStorage;
-  NSRange fullRange = NSMakeRange(0, storage.length);
-
-  __block NSRange foundRange = NSMakeRange(NSNotFound, 0);
-
-  [storage enumerateAttribute:NSAttachmentAttributeName
-                      inRange:fullRange
-                      options:0
-                   usingBlock:^(id value, NSRange range, BOOL *stop) {
-                     if (value == attachment) {
-                       foundRange = range;
-                       *stop = YES;
-                     }
-                   }];
-
-  if (foundRange.location == NSNotFound) {
-    return;
-  }
-
-  [storage edited:NSTextStorageEditedAttributes
-               range:foundRange
-      changeInLength:0];
+  [self.attachmentBatcher enqueueAttachment:attachment];
 }
 
 - (CGPoint)adjustedPointForViewPoint:(CGPoint)pt {

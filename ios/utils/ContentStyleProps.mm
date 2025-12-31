@@ -1,10 +1,12 @@
 #import "ContentStyleProps.h"
 #import "StringExtension.h"
 #import <React/RCTConversions.h>
+#import <React/RCTFont.h>
 
 @implementation ContentStyleProps
 
-+ (ContentStyleProps *)fromFolly:(folly::dynamic)folly {
++ (ContentStyleProps *)fromFolly:(folly::dynamic)folly
+                     defaultFont:(UIFont *)defaultFont {
   ContentStyleProps *props = [[ContentStyleProps alloc] init];
 
   if (folly["backgroundColor"].isNumber()) {
@@ -145,18 +147,6 @@
     props.imageResizeMode = @"cover";
   }
 
-  if (folly["fontSize"].isNumber()) {
-    props.fontSize = folly["fontSize"].asDouble();
-  } else {
-    props.fontSize = 14.0;
-  }
-
-  if (folly["fontWeight"].isString()) {
-    props.fontWeight = [NSString fromCppString:folly["fontWeight"].asString()];
-  } else {
-    props.fontWeight = @"500";
-  }
-
   if (folly["fallbackImageURI"].isString()) {
     props.fallbackImageURI =
         [NSString fromCppString:folly["fallbackImageURI"].asString()];
@@ -164,21 +154,53 @@
     props.fallbackImageURI = nil;
   }
 
+  if (folly["width"].isNumber()) {
+    props.width = folly["width"].asDouble();
+  } else {
+    props.width = 0.0;
+  }
+
+  if (folly["height"].isNumber()) {
+    props.height = folly["height"].asDouble();
+  } else {
+    props.height = props.imageHeight > 0 ? props.imageHeight : 50.0;
+  }
+
+  NSString *fontWeight =
+      folly["fontWeight"].isString()
+          ? [NSString fromCppString:folly["fontWeight"].asString()]
+          : @"400";
+
+  CGFloat fontSize =
+      folly["fontSize"].isNumber() ? folly["fontSize"].asDouble() : 14.0;
+
+  props.font = [RCTFont updateFont:defaultFont
+                        withFamily:nil
+                              size:@(fontSize)
+                            weight:fontWeight
+                             style:nil
+                           variant:nil
+                   scaleMultiplier:1.0];
+
   return props;
 }
 
-+ (NSDictionary *)getSinglePropsFromFollyDynamic:(folly::dynamic)folly {
-  ContentStyleProps *props = [ContentStyleProps fromFolly:folly];
++ (NSDictionary *)getSinglePropsFromFollyDynamic:(folly::dynamic)folly
+                                     defaultFont:(UIFont *)defaultFont {
+  ContentStyleProps *props = [ContentStyleProps fromFolly:folly
+                                              defaultFont:defaultFont];
   return @{@"all" : props};
 }
 
-+ (NSDictionary *)getComplexPropsFromFollyDynamic:(folly::dynamic)folly {
++ (NSDictionary *)getComplexPropsFromFollyDynamic:(folly::dynamic)folly
+                                      defaultFont:(UIFont *)defaultFont {
   NSMutableDictionary *dict = [NSMutableDictionary new];
 
   for (const auto &obj : folly.items()) {
     if (obj.first.isString() && obj.second.isObject()) {
       NSString *key = [NSString fromCppString:obj.first.asString()];
-      ContentStyleProps *props = [ContentStyleProps fromFolly:obj.second];
+      ContentStyleProps *props = [ContentStyleProps fromFolly:obj.second
+                                                  defaultFont:defaultFont];
       dict[key] = props;
     }
   }

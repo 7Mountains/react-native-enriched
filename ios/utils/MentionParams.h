@@ -11,6 +11,6 @@
 + (nullable instancetype)fromAttributes:
     (NSDictionary<NSString *, id> *_Nullable)attributes;
 
-- (BOOL)isEqualToMentionParams:(MentionParams *)other;
+- (BOOL)isEqualToMentionParams:(MentionParams *_Nullable)other;
 
 @end

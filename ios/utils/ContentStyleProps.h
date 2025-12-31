@@ -8,8 +8,6 @@
 @property CGFloat borderWidth;
 @property NSString *borderStyle;
 @property CGFloat borderRadius;
-@property CGFloat fontSize;
-@property NSString *fontWeight;
 
 @property UIColor *textColor;
 @property UIColor *backgroundColor;
@@ -24,6 +22,11 @@
 @property CGFloat marginRight;
 @property CGFloat marginLeft;
 
+@property CGFloat width;
+@property CGFloat height;
+
+@property(nonatomic, strong) UIFont *font;
+
 @property(nonatomic) CGFloat imageBorderRadius;
 @property(nonatomic) CGFloat imageBorderRadiusTopLeft;
 @property(nonatomic) CGFloat imageBorderRadiusTopRight;
@@ -35,8 +38,11 @@
 
 @property(nonatomic, strong) NSString *fallbackImageURI;
 
-+ (ContentStyleProps *)fromFolly:(folly::dynamic)folly;
-+ (NSDictionary *)getSinglePropsFromFollyDynamic:(folly::dynamic)folly;
-+ (NSDictionary *)getComplexPropsFromFollyDynamic:(folly::dynamic)folly;
++ (ContentStyleProps *)fromFolly:(folly::dynamic)folly
+                     defaultFont:(UIFont *)font;
++ (NSDictionary *)getSinglePropsFromFollyDynamic:(folly::dynamic)folly
+                                     defaultFont:(UIFont *)defaultFont;
++ (NSDictionary *)getComplexPropsFromFollyDynamic:(folly::dynamic)folly
+                                      defaultFont:(UIFont *)defaultFont;
 
 @end

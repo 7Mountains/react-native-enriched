@@ -18,6 +18,14 @@ static NSString *const placeholder = @"\uFFFC";
   EnrichedTextInputView *_input;
 }
 
+#pragma mark - Init
+
+- (instancetype)initWithInput:(id)input {
+  self = [super init];
+  _input = (EnrichedTextInputView *)input;
+  return self;
+}
+
 + (StyleType)getStyleType {
   return Content;
 }
@@ -42,64 +50,75 @@ static NSString *const placeholder = @"\uFFFC";
   return ContentAttributeName;
 }
 
-+ (NSDictionary<NSString *, NSString *> *_Nullable)getParametersFromValue:
-    (id)value {
++ (NSDictionary<NSString *, id> *_Nullable)getParametersFromValue:(id)value {
   ContentParams *contentParams = value;
-
-  NSMutableDictionary *params = [@{
-    ContentTypeAttributeName : contentParams.type,
-    ContentSrcAttributeName : contentParams.url,
-    ContentTextAttributeName : contentParams.text,
-  } mutableCopy];
-
-  if (contentParams.attributes) {
-    NSData *data =
-        [contentParams.attributes dataUsingEncoding:NSUTF8StringEncoding];
-    NSDictionary *extraAttrs = [NSJSONSerialization JSONObjectWithData:data
-                                                               options:0
-                                                                 error:nil];
-    if ([extraAttrs isKindOfClass:[NSDictionary class]]) {
-      [params addEntriesFromDictionary:extraAttrs];
-    }
+  if (![contentParams isKindOfClass:[ContentParams class]]) {
+    return nil;
   }
 
-  return params;
+  NSUInteger capacity = contentParams.attributes.count + 3;
+
+  NSMutableDictionary *params =
+      [NSMutableDictionary dictionaryWithCapacity:capacity];
+
+  if (contentParams.type) {
+    params[ContentTypeAttributeName] = contentParams.type;
+  }
+
+  if (contentParams.url) {
+    params[ContentSrcAttributeName] = contentParams.url;
+  }
+
+  if (contentParams.text) {
+    params[ContentTextAttributeName] = contentParams.text;
+  }
+
+  if (contentParams.attributes.count > 0) {
+    [params addEntriesFromDictionary:contentParams.attributes];
+  }
+
+  return params.count ? params : nil;
 }
 
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
                                   range:(NSRange)range
-                             attributes:(NSDictionary<NSString *, NSString *>
-                                             *_Nullable)attributes {
-  if (range.length == 0)
-    return;
-  if (!attributes.count)
+                             attributes:
+                                 (NSDictionary<NSString *, id> *)attributes {
+  if (range.length == 0 || attributes.count == 0)
     return;
 
   ContentParams *params = [ContentParams new];
-  params.text = attributes[ContentTextAttributeName] ?: @"";
-  params.type = attributes[ContentTypeAttributeName] ?: @"";
-  params.url = attributes[ContentSrcAttributeName] ?: @"";
-  params.headers = [ContentParams
-      parseHeaderFromString:attributes[ContentHeadersAttributeName]];
 
-  BaseLabelAttachment *attachment = [self prepareAttachment:params];
+  id text = attributes[ContentTextAttributeName];
+  if ([text isKindOfClass:NSString.class]) {
+    params.text = text;
+  }
 
-  NSMutableDictionary *attrs = [[self prepareAttributes:params] mutableCopy];
+  id type = attributes[ContentTypeAttributeName];
+  if ([type isKindOfClass:NSString.class]) {
+    params.type = type;
+  }
 
-  attrs[NSAttachmentAttributeName] = attachment;
-  attrs[ContentAttributeName] = params;
-  attrs[ReadOnlyParagraphKey] = @(YES);
+  id url = attributes[ContentSrcAttributeName];
+  if ([url isKindOfClass:NSString.class]) {
+    params.url = url;
+  }
 
-  [attributedString addAttributes:attrs range:range];
-}
+  id headers = attributes[ContentHeadersAttributeName];
+  if ([headers isKindOfClass:NSDictionary.class]) {
+    params.headers = headers;
+  }
 
-#pragma mark - Init
+  NSMutableDictionary *extra = [attributes mutableCopy];
+  [extra removeObjectsForKeys:@[
+    ContentSrcAttributeName, ContentTypeAttributeName, ContentTextAttributeName
+  ]];
+  if ([extra isKindOfClass:NSDictionary.class]) {
+    params.attributes = extra;
+  }
 
-- (instancetype)initWithInput:(id)input {
-  self = [super init];
-  _input = (EnrichedTextInputView *)input;
-  return self;
+  [attributedString addAttributes:[self prepareAttributes:params] range:range];
 }
 
 #pragma mark - NO-OP STYLE METHODS
@@ -120,61 +139,6 @@ static NSString *const placeholder = @"\uFFFC";
 }
 - (void)removeTypingAttributes {
   CONTENTSTYLE_NOOP();
-}
-
-#pragma mark - Public API
-
-- (void)addContentAtRange:(NSRange)range params:(ContentParams *)params {
-  if (range.location == NSNotFound)
-    return;
-
-  NSTextStorage *textStorage = _input->textView.textStorage;
-  NSString *string = textStorage.string;
-
-  _input->blockEmitting = YES;
-
-  BOOL needsLeadingNewline =
-      (range.location > 0 &&
-       ![[string substringWithRange:NSMakeRange(range.location - 1, 1)]
-           isEqualToString:@"\n"]);
-
-  if (needsLeadingNewline) {
-    [TextInsertionUtils replaceText:@"\n"
-                                 at:NSMakeRange(range.location, 0)
-               additionalAttributes:nil
-                              input:_input
-                      withSelection:NO];
-
-    range.location += 1;
-  }
-  NSMutableDictionary *attrs = [_input->defaultTypingAttributes mutableCopy];
-  attrs[NSAttachmentAttributeName] = [self prepareAttachment:params];
-  attrs[ContentAttributeName] = params;
-  attrs[ReadOnlyParagraphKey] = @(YES);
-
-  [TextInsertionUtils replaceText:placeholder
-                               at:range
-             additionalAttributes:attrs
-                            input:_input
-                    withSelection:NO];
-
-  NSUInteger afterLocation = range.location + 1; // FFFC takes 1 char
-  string = textStorage.string;                   // refresh after insertion
-
-  BOOL isLastChar = (afterLocation >= string.length);
-  BOOL needsTrailingNewline =
-      isLastChar || ![[string substringWithRange:NSMakeRange(afterLocation, 1)]
-                        isEqualToString:@"\n"];
-
-  if (needsTrailingNewline) {
-    [TextInsertionUtils insertText:@"\n"
-                                at:afterLocation
-              additionalAttributes:nil
-                             input:_input
-                     withSelection:NO];
-  }
-
-  _input->blockEmitting = NO;
 }
 
 - (void)removeAttributes:(NSRange)range {
@@ -200,12 +164,12 @@ static NSString *const placeholder = @"\uFFFC";
   auto condition = [self contentCondition];
 
   if (range.length >= 1) {
-    return [OccurenceUtils detect:NSAttachmentAttributeName
+    return [OccurenceUtils detect:ContentAttributeName
                         withInput:_input
                           inRange:range
                     withCondition:condition];
   } else {
-    return [OccurenceUtils detect:NSAttachmentAttributeName
+    return [OccurenceUtils detect:ContentAttributeName
                         withInput:_input
                           atIndex:range.location
                     checkPrevious:NO
@@ -214,14 +178,14 @@ static NSString *const placeholder = @"\uFFFC";
 }
 
 - (BOOL)anyOccurence:(NSRange)range {
-  return [OccurenceUtils any:NSAttachmentAttributeName
+  return [OccurenceUtils any:ContentAttributeName
                    withInput:_input
                      inRange:range
                withCondition:[self contentCondition]];
 }
 
 - (NSArray<StylePair *> *)findAllOccurences:(NSRange)range {
-  return [OccurenceUtils all:NSAttachmentAttributeName
+  return [OccurenceUtils all:ContentAttributeName
                    withInput:_input
                      inRange:range
                withCondition:[self contentCondition]];
@@ -252,79 +216,20 @@ static NSString *const placeholder = @"\uFFFC";
   return [_input->config contentStylePropsForType:params.type];
 }
 
-- (BaseLabelAttachment *)prepareAttachment:(ContentParams *)params {
+- (ImageLabelAttachment *)prepareAttachment:(ContentParams *)params {
   ContentStyleProps *styles = [self stylePropsWithParams:params];
 
-  BaseLabelAttachment *attachment;
+  ImageLabelAttachment *attachment;
 
   BOOL hasImageURL = params.url != nil && params.url.length > 0;
 
   if (hasImageURL) {
-    attachment = [[ImageLabelAttachment alloc] init];
-  } else {
-    attachment = [[TextOnlyLabelAttachment alloc] init];
-  }
-  UIFont *font = [RCTFont updateFont:nullptr
-                          withFamily:[_input->config primaryFontFamily]
-                                size:@(styles.fontSize)
-                              weight:styles.fontWeight
-                               style:nullptr
-                             variant:nullptr
-                     scaleMultiplier:1];
-
-  attachment.labelText = params.text;
-  attachment.font = font;
-  attachment.bgColor = styles.backgroundColor;
-  attachment.textColor = styles.textColor;
-  attachment.inset =
-      UIEdgeInsetsMake(styles.paddingTop, styles.paddingLeft,
-                       styles.paddingBottom, styles.paddingRight);
-  attachment.margin = UIEdgeInsetsMake(styles.marginTop, styles.marginLeft,
-                                       styles.marginBottom, styles.marginRight);
-  attachment.cornerRadius = styles.borderRadius;
-  attachment.borderWidth = styles.borderWidth;
-  attachment.borderColor = styles.borderColor;
-  attachment.borderStyle = styles.borderStyle;
-
-  if ([attachment isKindOfClass:[ImageLabelAttachment class]]) {
-    ImageLabelAttachment *imgAtt = (ImageLabelAttachment *)attachment;
-
-    imgAtt.imageWidth = styles.imageWidth;
-    imgAtt.imageHeight = styles.imageHeight;
-
-    imgAtt.imageCornerRadiusTopLeft = styles.imageBorderRadiusTopLeft;
-    imgAtt.imageCornerRadiusTopRight = styles.imageBorderRadiusTopRight;
-    imgAtt.imageCornerRadiusBottomLeft = styles.imageBorderRadiusBottomLeft;
-    imgAtt.imageCornerRadiusBottomRight = styles.imageBorderRadiusBottomRight;
-    imgAtt.imageResizeMode = styles.imageResizeMode;
-
-    imgAtt.isLoading = YES;
-    imgAtt.uri = params.url;
-    imgAtt.fallbackUri = styles.fallbackImageURI ?: @"";
-    [imgAtt loadAsync];
+    attachment = [[ImageLabelAttachment alloc] initWithParams:params
+                                                       styles:styles];
+    attachment.delegate = _input;
   }
 
   return attachment;
-}
-- (void)refreshAttachment:(BaseLabelAttachment *)attachment {
-  UITextView *tv = _input->textView;
-  NSTextStorage *storage = tv.textStorage;
-  for (NSUInteger i = 0; i < storage.length; i++) {
-    id att = [storage attribute:NSAttachmentAttributeName
-                        atIndex:i
-                 effectiveRange:nil];
-    if (att == attachment) {
-      NSRange r = NSMakeRange(i, 1);
-
-      [tv.layoutManager invalidateDisplayForCharacterRange:r];
-      [tv.layoutManager invalidateLayoutForCharacterRange:r
-                                     actualCharacterRange:nil];
-      [tv setNeedsLayout];
-      [tv layoutIfNeeded];
-
-      break;
-    }
-  }
 }
 
 - (NSDictionary *)prepareAttributes:(ContentParams *)params {
@@ -334,7 +239,9 @@ static NSString *const placeholder = @"\uFFFC";
     NSParagraphStyleAttributeName : [NSParagraphStyle new],
     NSAttachmentAttributeName : [self prepareAttachment:params],
     NSFontAttributeName : config.primaryFont,
-    NSForegroundColorAttributeName : config.primaryColor
+    NSForegroundColorAttributeName : config.primaryColor,
+    ContentAttributeName : params,
+    ReadOnlyParagraphKey : @(YES)
   };
 }
 

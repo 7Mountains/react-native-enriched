@@ -1,4 +1,5 @@
 #import "ImageAttachment.h"
+#import "EnrichedImageLoader.h"
 
 @implementation ImageAttachment
 
@@ -21,16 +22,15 @@
     return;
   }
 
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-    NSData *bytes = [NSData dataWithContentsOfURL:url];
-    UIImage *img = bytes ? [UIImage imageWithData:bytes]
-                         : [UIImage systemImageNamed:@"file"];
-
-    dispatch_async(dispatch_get_main_queue(), ^{
-      self.image = img;
-      [self notifyUpdate];
-    });
-  });
+  [[EnrichedImageLoader shared] loadImage:url
+                               completion:^(UIImage *img) {
+                                 if (img) {
+                                   dispatch_async(dispatch_get_main_queue(), ^{
+                                     self.image = img;
+                                     [self notifyUpdate];
+                                   });
+                                 }
+                               }];
 }
 
 @end

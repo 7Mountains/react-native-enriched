@@ -18,9 +18,11 @@
 @property(nonatomic, copy) NSString *borderStyle;
 @property(nonatomic) CGFloat cornerRadius;
 
+- (CGSize)requiredSizeForLineFragment:(CGSize)lineSize;
+- (UIImage *)renderAttachmentInSize:(CGSize)containerSize;
+// internal helpers
 - (CGSize)textSize;
 - (CGRect)contentRectForContainer:(CGSize)containerSize;
 - (void)drawBackgroundInRect:(CGRect)rect context:(CGContextRef)ctx;
 - (void)drawBorderInRect:(CGRect)rect context:(CGContextRef)ctx;
-
 @end

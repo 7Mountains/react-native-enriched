@@ -2,14 +2,13 @@
 #import <UIKit/UIKit.h>
 
 @interface ContentParams : NSObject
+@property(nonatomic, strong, nullable) NSString *type;
+@property(nonatomic, strong, nullable) NSString *text;
+@property(nonatomic, strong, nullable) NSString *url;
+@property(nonatomic, strong, nullable)
+    NSDictionary<NSString *, NSString *> *headers;
+@property(nonatomic, strong, nullable) NSDictionary<NSString *, id> *attributes;
 
-@property NSString *type;
-@property NSString *text;
-@property NSString *url;
-@property NSDictionary<NSString *, NSString *> *headers;
-@property NSString *attributes;
-
-+ (NSDictionary<NSString *, NSString *> *)parseHeaderFromString:
-    (NSString *)headerString;
-
++ (NSDictionary<NSString *, NSString *> *_Nullable)parseHeaderFromString:
+    (NSString *_Nullable)headerString;
 @end

@@ -1,7 +1,7 @@
 #import "ContentParams.h"
 
 @implementation ContentParams
-+ (NSDictionary<NSString *, NSString *> *)parseHeaderFromString:
++ (NSDictionary<NSString *, NSString *> *_Nullable)parseHeaderFromString:
     (NSString *)headerString {
   if (!headerString || headerString.length == 0)
     return @{};

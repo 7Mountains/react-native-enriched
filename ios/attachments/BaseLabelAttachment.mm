@@ -1,5 +1,10 @@
 #import "BaseLabelAttachment.h"
 
+@interface BaseLabelAttachment ()
+@property(nonatomic) CGSize lastRenderedSize;
+@property(nonatomic) CGSize cachedTextSize;
+@end
+
 @implementation BaseLabelAttachment
 
 - (instancetype)init {
@@ -21,10 +26,13 @@
   _borderWidth = 0.0;
   _borderStyle = @"solid";
 
+  _lastRenderedSize = CGSizeZero;
+
   return self;
 }
 
-// shared text size
+#pragma mark - Shared helpers
+
 - (CGSize)textSize {
   NSDictionary *attrs = @{NSFontAttributeName : self.font};
   return [self.labelText sizeWithAttributes:attrs];
@@ -53,6 +61,7 @@
 
   CGRect borderRect =
       CGRectInset(rect, self.borderWidth / 2, self.borderWidth / 2);
+
   UIBezierPath *path =
       [UIBezierPath bezierPathWithRoundedRect:borderRect
                                  cornerRadius:self.cornerRadius];
@@ -73,14 +82,21 @@
 }
 
 #pragma mark - NSTextAttachment overrides
-
 - (UIImage *)imageForBounds:(CGRect)bounds
               textContainer:(NSTextContainer *)textContainer
              characterIndex:(NSUInteger)charIndex {
 
   if (!textContainer)
-    return nil;
-  return [self renderAttachmentInSize:textContainer.size];
+    return self.image;
+
+  CGSize size = CGSizeMake(round(bounds.size.width), round(bounds.size.height));
+
+  if (!CGSizeEqualToSize(size, self.lastRenderedSize)) {
+    self.lastRenderedSize = size;
+    self.image = [self renderAttachmentInSize:size];
+  }
+
+  return self.image;
 }
 
 - (CGRect)attachmentBoundsForTextContainer:(NSTextContainer *)textContainer
@@ -92,16 +108,20 @@
                   .size = [self requiredSizeForLineFragment:lineFrag.size]};
 }
 
+#pragma mark - Overridable API
+
 - (CGSize)requiredSizeForLineFragment:(CGSize)lineSize {
-  return CGSize(0.0, 0.0);
+  return CGSizeZero;
 }
 
 - (UIImage *)renderAttachmentInSize:(CGSize)containerSize {
   return nil;
 }
 
+#pragma mark - Async entry
+
 - (void)loadAsync {
-  self.image = [self renderAttachmentInSize:CGSizeZero];
+  self.lastRenderedSize = CGSizeZero;
   [self notifyUpdate];
 }
 

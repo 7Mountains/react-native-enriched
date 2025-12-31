@@ -10,7 +10,6 @@
     _color = [UIColor grayColor];
     _height = 20.0;
     _thickness = 2.0;
-    _imageCache = [NSMutableDictionary new];
   }
   return self;
 }
@@ -21,15 +20,7 @@
   CGFloat width = bounds.size.width;
   CGFloat height = bounds.size.height;
 
-  NSNumber *cacheKey = @(width);
-
-  UIImage *cached = self.imageCache[cacheKey];
-  if (cached) {
-    return cached;
-  }
-
   UIImage *generated = [self drawDividerWithWidth:width height:height];
-  self.imageCache[cacheKey] = generated;
 
   return generated;
 }
@@ -56,17 +47,14 @@
 
 - (void)setDividerColor:(UIColor *)color {
   _color = color;
-  [self.imageCache removeAllObjects];
 }
 
 - (void)setDividerHeight:(CGFloat)height {
   _height = height;
-  [self.imageCache removeAllObjects];
 }
 
 - (void)setDividerThickness:(CGFloat)thickness {
   _thickness = thickness;
-  [self.imageCache removeAllObjects];
 }
 
 #pragma mark - Attachment size

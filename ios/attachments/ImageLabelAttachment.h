@@ -1,22 +1,10 @@
 #import "BaseLabelAttachment.h"
 
-@interface ImageLabelAttachment : BaseLabelAttachment
+@class ContentParams, ContentStyleProps;
 
-@property(nonatomic) UIImage *contentImage;
-@property(nonatomic) BOOL isLoading;
-@property NSDictionary<NSString *, NSString *> *headers;
-@property(nonatomic, strong) NSString *fallbackUri;
+@interface ImageLabelAttachment : MediaAttachment
 
-// layout
-@property(nonatomic) CGFloat imageSpacing;
-@property(nonatomic) CGFloat imageWidth;
-@property(nonatomic) CGFloat imageHeight;
-@property(nonatomic, strong) NSString *imageResizeMode;
-
-// corner radii for image
-@property(nonatomic) CGFloat imageCornerRadiusTopLeft;
-@property(nonatomic) CGFloat imageCornerRadiusTopRight;
-@property(nonatomic) CGFloat imageCornerRadiusBottomLeft;
-@property(nonatomic) CGFloat imageCornerRadiusBottomRight;
+- (instancetype)initWithParams:(ContentParams *)params
+                        styles:(ContentStyleProps *)styles;
 
 @end
