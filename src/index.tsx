@@ -7,4 +7,5 @@ export type {
   OnMentionDetected,
   OnChangeSelectionEvent,
   OnChangeColorEvent,
+  OnParagraphAlignmentChangeEvent,
 } from './EnrichedTextInputNativeComponent';

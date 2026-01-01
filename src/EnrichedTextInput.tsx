@@ -1,6 +1,7 @@
 import {
   type Component,
   type RefObject,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -388,49 +389,57 @@ export const EnrichedTextInput = ({
     },
   }));
 
-  const handleMentionEvent = (e: NativeSyntheticEvent<OnMentionEvent>) => {
-    const mentionText = e.nativeEvent.text;
-    const mentionIndicator = e.nativeEvent.indicator;
+  const handleMentionEvent = useCallback(
+    (e: NativeSyntheticEvent<OnMentionEvent>) => {
+      const mentionText = e.nativeEvent.text;
+      const mentionIndicator = e.nativeEvent.indicator;
 
-    if (typeof mentionText === 'string') {
-      if (mentionText === '') {
-        onStartMention?.(mentionIndicator);
-      } else {
-        onChangeMention?.({ indicator: mentionIndicator, text: mentionText });
+      if (typeof mentionText === 'string') {
+        if (mentionText === '') {
+          onStartMention?.(mentionIndicator);
+        } else {
+          onChangeMention?.({ indicator: mentionIndicator, text: mentionText });
+        }
+      } else if (mentionText === null) {
+        onEndMention?.(mentionIndicator);
       }
-    } else if (mentionText === null) {
-      onEndMention?.(mentionIndicator);
-    }
-  };
+    },
+    [onStartMention, onChangeMention, onEndMention]
+  );
 
-  const handleLinkDetected = (e: NativeSyntheticEvent<OnLinkDetected>) => {
-    const { text, url, start, end } = e.nativeEvent;
-    onLinkDetected?.({ text, url, start, end });
-  };
+  const handleLinkDetected = useCallback(
+    (e: NativeSyntheticEvent<OnLinkDetected>) => {
+      const { text, url, start, end } = e.nativeEvent;
+      onLinkDetected?.({ text, url, start, end });
+    },
+    [onLinkDetected]
+  );
 
-  const handleMentionDetected = (
-    e: NativeSyntheticEvent<OnMentionDetectedInternal>
-  ) => {
-    const { text, indicator, payload } = e.nativeEvent;
-    const attributes = JSON.parse(payload) as Record<string, string>;
-    onMentionDetected?.({ text, indicator, attributes });
-  };
+  const handleMentionDetected = useCallback(
+    (e: NativeSyntheticEvent<OnMentionDetectedInternal>) => {
+      const { text, indicator, payload } = e.nativeEvent;
+      const attributes = JSON.parse(payload) as Record<string, string>;
+      onMentionDetected?.({ text, indicator, attributes });
+    },
+    [onMentionDetected]
+  );
 
-  const handleRequestHtmlResult = (
-    e: NativeSyntheticEvent<OnRequestHtmlResultEvent>
-  ) => {
-    const { requestId, html } = e.nativeEvent;
-    const pending = pendingHtmlRequests.current.get(requestId);
-    if (!pending) return;
+  const handleRequestHtmlResult = useCallback(
+    (e: NativeSyntheticEvent<OnRequestHtmlResultEvent>) => {
+      const { requestId, html } = e.nativeEvent;
+      const pending = pendingHtmlRequests.current.get(requestId);
+      if (!pending) return;
 
-    if (html === null || typeof html !== 'string') {
-      pending.reject(new Error('Failed to parse HTML'));
-    } else {
-      pending.resolve(html);
-    }
+      if (html === null || typeof html !== 'string') {
+        pending.reject(new Error('Failed to parse HTML'));
+      } else {
+        pending.resolve(html);
+      }
 
-    pendingHtmlRequests.current.delete(requestId);
-  };
+      pendingHtmlRequests.current.delete(requestId);
+    },
+    []
+  );
 
   return (
     <EnrichedTextInputNativeComponent
