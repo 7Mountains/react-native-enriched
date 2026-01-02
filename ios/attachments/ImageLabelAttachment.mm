@@ -206,24 +206,31 @@
 }
 
 - (void)loadAsync {
-  NSURL *url = [NSURL URLWithString:self.uri];
+  __weak __typeof__(self) weakSelf = self;
 
-  void (^onLoadEnd)(UIImage *) = ^(UIImage *img) {
-    img ? [self updateImage:img] : [self loadFallbackAsync];
-  };
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+    __strong __typeof__(weakSelf) strongSelf = weakSelf;
+    if (!strongSelf)
+      return;
 
-  if (self->_headers.count == 0) {
-    [[EnrichedImageLoader shared] loadImage:url
-                                 completion:^(UIImage *img) {
-                                   onLoadEnd(img);
-                                 }];
-  } else {
-    [[EnrichedImageLoader shared] loadImage:url
-                                    headers:self->_headers
-                                 completion:^(UIImage *img) {
-                                   onLoadEnd(img);
-                                 }];
-  }
+    NSDictionary *headers = strongSelf->_headers;
+    NSURL *url = [NSURL URLWithString:strongSelf.uri];
+
+    void (^completion)(UIImage *) = ^(UIImage *img) {
+      if (!strongSelf)
+        return;
+
+      img ? [strongSelf updateImage:img] : [strongSelf loadFallbackAsync];
+    };
+
+    if (headers.count == 0) {
+      [[EnrichedImageLoader shared] loadImage:url completion:completion];
+    } else {
+      [[EnrichedImageLoader shared] loadImage:url
+                                      headers:headers
+                                   completion:completion];
+    }
+  });
 }
 
 - (void)loadFallbackAsync {
