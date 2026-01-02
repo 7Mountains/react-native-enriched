@@ -2,7 +2,25 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-@implementation DividerAttachment
+@implementation DividerAttachment {
+  UIColor *_color;
+  CGFloat _height;
+  CGFloat _thickness;
+  CGFloat _paddingHorizontal;
+}
+
+- (instancetype)initWithStyles:(UIColor *)color
+                        height:(CGFloat)height
+                     thickness:(CGFloat)thickness {
+  self = [super init];
+  if (self) {
+    _color = color ?: [UIColor grayColor];
+    _height = height ?: 20.0;
+    _thickness = thickness ?: 2.0;
+  }
+
+  return self;
+};
 
 - (instancetype)init {
   self = [super init];
@@ -33,17 +51,15 @@
       [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(width, height)];
 
   return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
-    [self.color setStroke];
+    [_color setStroke];
     UIBezierPath *path = [UIBezierPath bezierPath];
-    path.lineWidth = self.thickness;
+    path.lineWidth = _thickness;
     CGFloat centerY = height / 2.0;
     [path moveToPoint:CGPointMake(0, centerY)];
     [path addLineToPoint:CGPointMake(width, centerY)];
     [path stroke];
   }];
 }
-
-#pragma mark - Cache invalidation when style changes
 
 - (void)setDividerColor:(UIColor *)color {
   _color = color;
@@ -56,8 +72,6 @@
 - (void)setDividerThickness:(CGFloat)thickness {
   _thickness = thickness;
 }
-
-#pragma mark - Attachment size
 
 - (CGRect)attachmentBoundsForTextContainer:(NSTextContainer *)textContainer
                       proposedLineFragment:(CGRect)lineFrag

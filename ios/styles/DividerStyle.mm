@@ -130,10 +130,11 @@ static NSString *const placeholder = @"\uFFFC";
 #pragma mark - Attachment & Attributes
 
 - (DividerAttachment *)prepareAttachment {
-  DividerAttachment *attachment = [[DividerAttachment alloc] init];
-  attachment.color = _input->config.dividerColor;
-  attachment.height = _input->config.dividerHeight;
-  attachment.thickness = _input->config.dividerThickness;
+  InputConfig *config = _input->config;
+  DividerAttachment *attachment =
+      [[DividerAttachment alloc] initWithStyles:config.dividerColor
+                                         height:config.dividerHeight
+                                      thickness:config.dividerThickness];
   return attachment;
 }
 

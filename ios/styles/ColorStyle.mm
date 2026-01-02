@@ -373,7 +373,8 @@
     return nil;
 
   NSAttributedStringKey key = [[style class] attributeKey];
-  if (![style styleCondition:attrs[key] range:NSMakeRange(index, 0)])
+  id attr = attrs[key];
+  if (![style styleCondition:attr range:NSMakeRange(index, 0)])
     return nil;
 
   InputConfig *config = _input->config;
@@ -392,8 +393,7 @@
     return config.codeBlockFgColor;
 
   case Mention: {
-    MentionStyle *mention = (MentionStyle *)style;
-    MentionParams *params = [mention getMentionParamsAt:index];
+    MentionParams *params = (MentionParams *)attr;
     if (!params)
       return nil;
 

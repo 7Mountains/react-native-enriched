@@ -1,28 +1,9 @@
 #import "MediaAttachment.h"
 #import <UIKit/UIKit.h>
 
+@class ContentParams, ContentStyleProps;
+
 @interface BaseLabelAttachment : MediaAttachment
-
-@property(nonatomic, copy) NSString *labelText;
-@property(nonatomic, strong) UIFont *font;
-@property(nonatomic, strong) UIColor *textColor;
-
-// container paddings
-@property(nonatomic) UIEdgeInsets inset;
-@property(nonatomic) UIEdgeInsets margin;
-
-// background & border
-@property(nonatomic, strong) UIColor *bgColor;
-@property(nonatomic, strong) UIColor *borderColor;
-@property(nonatomic) CGFloat borderWidth;
-@property(nonatomic, copy) NSString *borderStyle;
-@property(nonatomic) CGFloat cornerRadius;
-
-- (CGSize)requiredSizeForLineFragment:(CGSize)lineSize;
-- (UIImage *)renderAttachmentInSize:(CGSize)containerSize;
-// internal helpers
-- (CGSize)textSize;
-- (CGRect)contentRectForContainer:(CGSize)containerSize;
-- (void)drawBackgroundInRect:(CGRect)rect context:(CGContextRef)ctx;
-- (void)drawBorderInRect:(CGRect)rect context:(CGContextRef)ctx;
+- (instancetype)initWithParams:(ContentParams *)params
+                        styles:(ContentStyleProps *)styles;
 @end

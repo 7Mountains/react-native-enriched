@@ -8,6 +8,8 @@
   NSMutableAttributedString *_result;
   StylesStack *_styleStack;
   NSArray<id> *_paragraphModifiers;
+  NSDictionary *_defaultTypingAttributes;
+  NSDictionary *_tagsRegistry;
 }
 
 - (instancetype)initWithStyles:
@@ -96,7 +98,7 @@
                             .lowercaseString
                       : @"";
 
-  id<BaseStyleProtocol> style = self.tagsRegistry[tag];
+  id<BaseStyleProtocol> style = _tagsRegistry[tag];
   NSDictionary *attributes = HTMLAttributesFromNodeAndParents(cur);
 
   BOOL isBlock = isBlockTag(tag);

@@ -5,38 +5,34 @@
 #import "ImageLabelAttachmentUtils.h"
 #import "ImageLayoutUtils.h"
 
-@interface ImageLabelAttachment ()
+@implementation ImageLabelAttachment {
+  NSDictionary *_headers;
+  NSString *_labelText;
+  UIFont *_font;
+  UIColor *_textColor;
+  NSString *_fallbackUri;
 
-@property(nonatomic, copy) NSString *labelText;
-@property(nonatomic, strong) UIFont *font;
-@property(nonatomic, strong) UIColor *textColor;
-@property(nonatomic, strong) NSString *fallbackUri;
+  UIColor *_bgColor;
+  UIColor *_borderColor;
 
-@property(nonatomic) UIEdgeInsets inset;
-@property(nonatomic) UIEdgeInsets margin;
+  CGFloat _borderWidth;
+  CGFloat _cornerRadius;
 
-@property(nonatomic, strong) UIColor *bgColor;
-@property(nonatomic, strong) UIColor *borderColor;
-@property(nonatomic) CGFloat borderWidth;
-@property(nonatomic) CGFloat cornerRadius;
+  UIEdgeInsets _inset;
+  UIEdgeInsets _margin;
 
-@property(nonatomic) CGFloat imageWidth;
-@property(nonatomic) CGFloat imageHeight;
-@property(nonatomic) CGFloat imageSpacing;
-@property(nonatomic) ImageResizeMode imageResizeMode;
+  CGFloat _imageWidth;
+  CGFloat _imageHeight;
+  CGFloat _imageSpacing;
 
-@property(nonatomic) CGFloat imageCornerRadiusTopLeft;
-@property(nonatomic) CGFloat imageCornerRadiusTopRight;
-@property(nonatomic) CGFloat imageCornerRadiusBottomLeft;
-@property(nonatomic) CGFloat imageCornerRadiusBottomRight;
-@property(nonatomic, strong) NSDictionary *headers;
-@property(nonatomic, strong) UIGraphicsImageRenderer *renderer;
+  ImageResizeMode _imageResizeMode;
 
-@property(nonatomic) BorderStyle borderStyleEnum;
-
-@end
-
-@implementation ImageLabelAttachment
+  CGFloat _imageCornerRadiusTopLeft;
+  CGFloat _imageCornerRadiusTopRight;
+  CGFloat _imageCornerRadiusBottomLeft;
+  CGFloat _imageCornerRadiusBottomRight;
+  BorderStyle _borderStyleEnum;
+}
 
 #pragma mark - Init
 
@@ -86,49 +82,47 @@
 
 - (CGFloat)calculateHeight {
   CGFloat textHeight =
-      [self.labelText sizeWithAttributes:@{NSFontAttributeName : self.font}]
-          .height;
+      [_labelText sizeWithAttributes:@{NSFontAttributeName : _font}].height;
 
-  CGFloat imageH = self.imageHeight > 0 ? self.imageHeight : textHeight;
+  CGFloat imageH = _imageHeight > 0 ? _imageHeight : textHeight;
 
-  return MAX(textHeight, imageH) + self.margin.top + self.margin.bottom;
+  return MAX(textHeight, imageH) + _margin.top + _margin.bottom;
 }
 
 #pragma mark - Drawing helpers
 
 - (CGSize)textSize {
-  return [self.labelText sizeWithAttributes:@{NSFontAttributeName : self.font}];
+  return [_labelText sizeWithAttributes:@{NSFontAttributeName : _font}];
 }
 
 - (CGRect)imageRectForContentRect:(CGRect)contentRect {
-  return ImageRect(contentRect, self.imageWidth, self.imageHeight);
+  return ImageRect(contentRect, _imageWidth, _imageHeight);
 }
 
 - (void)drawBackgroundInRect:(CGRect)contentRect {
-  if (!self.bgColor)
+  if (!_bgColor)
     return;
 
   UIBezierPath *bg = [UIBezierPath bezierPathWithRoundedRect:contentRect
-                                                cornerRadius:self.cornerRadius];
-  [self.bgColor setFill];
+                                                cornerRadius:_cornerRadius];
+  [_bgColor setFill];
   [bg fill];
 }
 
 - (void)drawBorderInRect:(CGRect)contentRect {
-  if (self.borderWidth <= 0 || !self.borderColor)
+  if (_borderWidth <= 0 || !_borderColor)
     return;
 
   CGRect borderRect =
-      CGRectInset(contentRect, self.borderWidth * 0.5, self.borderWidth * 0.5);
+      CGRectInset(contentRect, _borderWidth * 0.5, _borderWidth * 0.5);
 
-  UIBezierPath *border =
-      [UIBezierPath bezierPathWithRoundedRect:borderRect
-                                 cornerRadius:self.cornerRadius];
+  UIBezierPath *border = [UIBezierPath bezierPathWithRoundedRect:borderRect
+                                                    cornerRadius:_cornerRadius];
 
-  border.lineWidth = self.borderWidth;
-  ApplyBorderStyle(border, self.borderStyleEnum);
+  border.lineWidth = _borderWidth;
+  ApplyBorderStyle(border, _borderStyleEnum);
 
-  [self.borderColor setStroke];
+  [_borderColor setStroke];
   [border stroke];
 }
 
@@ -142,7 +136,7 @@
 
   CGRect target = [ImageLayoutUtils rectForImage:self.image
                                           inRect:imageRect
-                                      resizeMode:self.imageResizeMode];
+                                      resizeMode:_imageResizeMode];
 
   [self.image drawInRect:target];
 
@@ -154,18 +148,17 @@
 
   CGRect imageRect = [self imageRectForContentRect:contentRect];
 
-  CGFloat textX =
-      CGRectGetMaxX(imageRect) + self.imageSpacing + self.inset.left;
+  CGFloat textX = CGRectGetMaxX(imageRect) + _imageSpacing + _inset.left;
 
   CGFloat textY =
       contentRect.origin.y + (contentRect.size.height - textSize.height) * 0.5;
 
   NSDictionary *attrs = @{
-    NSFontAttributeName : self.font,
-    NSForegroundColorAttributeName : self.textColor
+    NSFontAttributeName : _font,
+    NSForegroundColorAttributeName : _textColor
   };
 
-  [self.labelText drawAtPoint:CGPointMake(textX, textY) withAttributes:attrs];
+  [_labelText drawAtPoint:CGPointMake(textX, textY) withAttributes:attrs];
 }
 
 #pragma mark - Size
@@ -189,17 +182,15 @@
   if (bounds.size.width <= 0 || bounds.size.height <= 0)
     return nil;
 
-  if (!_renderer) {
-    UIGraphicsImageRendererFormat *format =
-        [UIGraphicsImageRendererFormat defaultFormat];
-    format.opaque = NO;
+  UIGraphicsImageRendererFormat *format =
+      [UIGraphicsImageRendererFormat defaultFormat];
+  format.opaque = NO;
 
-    _renderer = [[UIGraphicsImageRenderer alloc] initWithSize:bounds.size
-                                                       format:format];
-  }
+  auto renderer = [[UIGraphicsImageRenderer alloc] initWithSize:bounds.size
+                                                         format:format];
 
-  return [_renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
-    CGRect contentRect = ContentRect(bounds, self.margin);
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+    CGRect contentRect = ContentRect(bounds, _margin);
 
     [self drawBackgroundInRect:contentRect];
     [self drawBorderInRect:contentRect];
@@ -239,10 +230,10 @@
 }
 
 - (void)loadFallbackAsync {
-  if (!self.fallbackUri)
+  if (!_fallbackUri)
     return;
 
-  NSURL *url = [NSURL URLWithString:self.fallbackUri];
+  NSURL *url = [NSURL URLWithString:_fallbackUri];
 
   [[EnrichedImageLoader shared] loadImage:url
                                completion:^(UIImage *img) {
@@ -255,10 +246,10 @@
 #pragma mark - Clip path
 
 - (UIBezierPath *)imageClipPath:(CGRect)rect {
-  CGFloat tl = self.imageCornerRadiusTopLeft;
-  CGFloat tr = self.imageCornerRadiusTopRight;
-  CGFloat bl = self.imageCornerRadiusBottomLeft;
-  CGFloat br = self.imageCornerRadiusBottomRight;
+  CGFloat tl = _imageCornerRadiusTopLeft;
+  CGFloat tr = _imageCornerRadiusTopRight;
+  CGFloat bl = _imageCornerRadiusBottomLeft;
+  CGFloat br = _imageCornerRadiusBottomRight;
 
   UIBezierPath *path = [UIBezierPath bezierPath];
 

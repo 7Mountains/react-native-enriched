@@ -6,7 +6,6 @@
 #import "OccurenceUtils.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
-#import "TextOnlyLabelAttachment.h"
 #import "UIView+React.h"
 #import "WordsUtils.h"
 #import <React/RCTFont.h>
@@ -216,16 +215,20 @@ static NSString *const placeholder = @"\uFFFC";
   return [_input->config contentStylePropsForType:params.type];
 }
 
-- (ImageLabelAttachment *)prepareAttachment:(ContentParams *)params {
+- (MediaAttachment *)prepareAttachment:(ContentParams *)params {
   ContentStyleProps *styles = [self stylePropsWithParams:params];
 
-  ImageLabelAttachment *attachment;
+  MediaAttachment *attachment;
 
   BOOL hasImageURL = params.url != nil && params.url.length > 0;
 
   if (hasImageURL) {
     attachment = [[ImageLabelAttachment alloc] initWithParams:params
                                                        styles:styles];
+    attachment.delegate = _input;
+  } else {
+    attachment = [[BaseLabelAttachment alloc] initWithParams:params
+                                                      styles:styles];
     attachment.delegate = _input;
   }
 

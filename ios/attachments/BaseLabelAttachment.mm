@@ -1,100 +1,158 @@
 #import "BaseLabelAttachment.h"
+#import "ContentParams.h"
+#import "ContentStyleProps.h"
+#import "ImageLabelAttachmentUtils.h"
 
-@interface BaseLabelAttachment ()
-@property(nonatomic) CGSize lastRenderedSize;
-@property(nonatomic) CGSize cachedTextSize;
-@end
+@implementation BaseLabelAttachment {
+  NSString *_labelText;
+  UIFont *_font;
+  UIColor *_textColor;
 
-@implementation BaseLabelAttachment
+  UIColor *_bgColor;
+  UIColor *_borderColor;
 
-- (instancetype)init {
+  CGFloat _borderWidth;
+  CGFloat _cornerRadius;
+
+  UIEdgeInsets _inset;
+  UIEdgeInsets _margin;
+
+  BorderStyle _borderStyleEnum;
+
+  CGSize _textSize;
+}
+
+- (instancetype)initWithParams:(ContentParams *)params
+                        styles:(ContentStyleProps *)styles {
   self = [super init];
   if (!self)
     return nil;
 
-  _labelText = @"";
-  _font = [UIFont systemFontOfSize:14];
-  _textColor = UIColor.whiteColor;
+  _labelText = params.text ?: @"";
+  _font = styles.font ?: [UIFont systemFontOfSize:12];
+  _textColor = styles.textColor ?: UIColor.blackColor;
 
-  _inset = UIEdgeInsetsMake(10, 12, 10, 12);
-  _margin = UIEdgeInsetsMake(6, 0, 6, 0);
+  _bgColor = styles.backgroundColor;
+  _borderColor = styles.borderColor;
+  _borderWidth = styles.borderWidth;
+  _borderStyleEnum = ParseBorderStyle(styles.borderStyle);
+  _cornerRadius = styles.borderRadius;
 
-  _bgColor = UIColor.clearColor;
-  _cornerRadius = 8.0;
+  _margin = UIEdgeInsetsMake(styles.marginTop, styles.marginLeft,
+                             styles.marginBottom, styles.marginRight);
 
-  _borderColor = UIColor.separatorColor;
-  _borderWidth = 0.0;
-  _borderStyle = @"solid";
+  _inset = UIEdgeInsetsMake(styles.paddingTop, styles.paddingLeft,
+                            styles.paddingBottom, styles.paddingRight);
 
-  _lastRenderedSize = CGSizeZero;
+  NSDictionary *attrs = @{NSFontAttributeName : _font};
+  _textSize = [_labelText sizeWithAttributes:attrs];
+
+  self.image = nil;
 
   return self;
 }
 
-#pragma mark - Shared helpers
-
-- (CGSize)textSize {
-  NSDictionary *attrs = @{NSFontAttributeName : self.font};
-  return [self.labelText sizeWithAttributes:attrs];
-}
-
 - (CGRect)contentRectForContainer:(CGSize)containerSize {
-  return CGRectMake(self.margin.left, self.margin.top,
-                    containerSize.width - self.margin.left - self.margin.right,
-                    containerSize.height - self.margin.top -
-                        self.margin.bottom);
+  return CGRectMake(_margin.left, _margin.top,
+                    containerSize.width - _margin.left - _margin.right,
+                    containerSize.height - _margin.top - _margin.bottom);
 }
 
-- (void)drawBackgroundInRect:(CGRect)rect context:(CGContextRef)ctx {
-  UIBezierPath *path =
-      [UIBezierPath bezierPathWithRoundedRect:rect
-                                 cornerRadius:self.cornerRadius];
-  [self.bgColor setFill];
-  [path fill];
-}
-
-- (void)drawBorderInRect:(CGRect)rect context:(CGContextRef)ctx {
-  if (self.borderWidth <= 0 || !self.borderColor)
+- (void)drawBackgroundAndBorderInRect:(CGRect)rect context:(CGContextRef)ctx {
+  if (!_bgColor && (_borderWidth <= 0 || !_borderColor))
     return;
 
-  CGContextSaveGState(ctx);
+  CGRect drawRect = rect;
 
-  CGRect borderRect =
-      CGRectInset(rect, self.borderWidth / 2, self.borderWidth / 2);
-
-  UIBezierPath *path =
-      [UIBezierPath bezierPathWithRoundedRect:borderRect
-                                 cornerRadius:self.cornerRadius];
-  path.lineWidth = self.borderWidth;
-
-  if ([self.borderStyle isEqualToString:@"dashed"]) {
-    CGFloat dash[] = {6, 3};
-    [path setLineDash:dash count:2 phase:0];
-  } else if ([self.borderStyle isEqualToString:@"dotted"]) {
-    CGFloat dot[] = {2, 2};
-    [path setLineDash:dot count:2 phase:0];
+  if (_borderWidth > 0) {
+    drawRect = CGRectInset(drawRect, _borderWidth / 2.0, _borderWidth / 2.0);
   }
 
-  [self.borderColor setStroke];
-  [path stroke];
+  UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:drawRect
+                                                  cornerRadius:_cornerRadius];
 
-  CGContextRestoreGState(ctx);
+  if (_bgColor) {
+    [_bgColor setFill];
+    [path fill];
+  }
+
+  if (_borderWidth > 0 && _borderColor) {
+    path.lineWidth = _borderWidth;
+    ApplyBorderStyle(path, _borderStyleEnum);
+    [_borderColor setStroke];
+    [path stroke];
+  }
+}
+
+- (void)drawTextInRect:(CGRect)rect context:(CGContextRef)ctx {
+  if (_labelText.length == 0)
+    return;
+
+  CGRect contentRect = UIEdgeInsetsInsetRect(rect, _inset);
+
+  NSMutableParagraphStyle *style = [NSMutableParagraphStyle new];
+  style.alignment = NSTextAlignmentCenter;
+  style.lineBreakMode = NSLineBreakByTruncatingTail;
+
+  NSDictionary *attrs = @{
+    NSFontAttributeName : _font,
+    NSForegroundColorAttributeName : _textColor,
+    NSParagraphStyleAttributeName : style
+  };
+
+  CGRect textRect =
+      CGRectMake(CGRectGetMidX(contentRect) - _textSize.width / 2.0,
+                 CGRectGetMidY(contentRect) - _textSize.height / 2.0,
+                 _textSize.width, _textSize.height);
+
+  [_labelText drawInRect:CGRectIntegral(textRect) withAttributes:attrs];
+}
+
+#pragma mark - Renderer
+
+- (UIImage *)renderImageWithSize:(CGSize)size {
+  if (size.width <= 0 || size.height <= 0)
+    return nil;
+
+  UIGraphicsImageRendererFormat *format =
+      [UIGraphicsImageRendererFormat preferredFormat];
+  format.opaque = NO;
+  format.scale = UIScreen.mainScreen.scale;
+
+  UIGraphicsImageRenderer *renderer =
+      [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+    [self drawAttachmentInRendererContext:context size:size];
+  }];
+}
+
+- (void)drawAttachmentInRendererContext:
+            (UIGraphicsImageRendererContext *)context
+                                   size:(CGSize)size {
+  CGContextRef ctx = context.CGContext;
+
+  CGRect contentRect = [self contentRectForContainer:size];
+
+  [self drawBackgroundAndBorderInRect:contentRect context:ctx];
+  [self drawTextInRect:contentRect context:ctx];
 }
 
 #pragma mark - NSTextAttachment overrides
+
 - (UIImage *)imageForBounds:(CGRect)bounds
               textContainer:(NSTextContainer *)textContainer
              characterIndex:(NSUInteger)charIndex {
 
-  if (!textContainer)
-    return self.image;
-
   CGSize size = CGSizeMake(round(bounds.size.width), round(bounds.size.height));
 
-  if (!CGSizeEqualToSize(size, self.lastRenderedSize)) {
-    self.lastRenderedSize = size;
-    self.image = [self renderAttachmentInSize:size];
+  if (self.image) {
+    return self.image;
   }
+
+  UIImage *img = [self renderImageWithSize:size];
+
+  self.image = img;
 
   return self.image;
 }
@@ -103,26 +161,11 @@
                       proposedLineFragment:(CGRect)lineFrag
                              glyphPosition:(CGPoint)position
                             characterIndex:(NSUInteger)charIndex {
+  CGFloat height = _textSize.height + _inset.top + _inset.bottom +
+                   _borderWidth * 2 + _margin.top + _margin.bottom;
 
   return (CGRect){.origin = CGPointZero,
-                  .size = [self requiredSizeForLineFragment:lineFrag.size]};
-}
-
-#pragma mark - Overridable API
-
-- (CGSize)requiredSizeForLineFragment:(CGSize)lineSize {
-  return CGSizeZero;
-}
-
-- (UIImage *)renderAttachmentInSize:(CGSize)containerSize {
-  return nil;
-}
-
-#pragma mark - Async entry
-
-- (void)loadAsync {
-  self.lastRenderedSize = CGSizeZero;
-  [self notifyUpdate];
+                  .size = CGSizeMake(lineFrag.size.width, ceil(height))};
 }
 
 @end

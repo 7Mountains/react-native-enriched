@@ -28,7 +28,6 @@ using namespace facebook::react;
 
 @interface EnrichedTextInputView () <RCTEnrichedTextInputViewViewProtocol,
                                      UITextViewDelegate, NSObject>
-@property(nonatomic, strong) AttachmentInvalidationBatcher *attachmentBatcher;
 @end
 
 @implementation EnrichedTextInputView {
@@ -48,6 +47,7 @@ using namespace facebook::react;
   BOOL _emitFocusBlur;
   UITapGestureRecognizer *tapRecognizer;
   NSString *_recentlyEmittedAlignment;
+  AttachmentInvalidationBatcher *_attachmentBatcher;
 }
 
 // MARK: - Component utils
@@ -75,7 +75,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self setDefaults];
     [self setupTextView];
     [self addSubview:textView];
-    self.attachmentBatcher =
+    _attachmentBatcher =
         [[AttachmentInvalidationBatcher alloc] initWithTextView:textView];
   }
   return self;
@@ -2064,7 +2064,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 // MARK: - Media attachments delegate
 
 - (void)mediaAttachmentDidUpdate:(NSTextAttachment *)attachment {
-  [self.attachmentBatcher enqueueAttachment:attachment];
+  [_attachmentBatcher enqueueAttachment:attachment];
 }
 
 - (CGPoint)adjustedPointForViewPoint:(CGPoint)pt {
