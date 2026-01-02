@@ -1,4 +1,5 @@
 #import "DividerAttachment.h"
+#import "DividerRenderCache.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
@@ -32,33 +33,47 @@
   return self;
 }
 
+- (NSString *)cacheKeyForWidth:(CGFloat)width height:(CGFloat)height {
+  return [NSString stringWithFormat:@"%.1f|%.1f|%.2f|%@", width, height,
+                                    _thickness, _color.description];
+}
+
 - (UIImage *)imageForBounds:(CGRect)bounds
               textContainer:(NSTextContainer *)textContainer
              characterIndex:(NSUInteger)charIndex {
   CGFloat width = bounds.size.width;
   CGFloat height = bounds.size.height;
 
-  UIImage *generated = [self drawDividerWithWidth:width height:height];
-
-  return generated;
-}
-
-- (UIImage *)drawDividerWithWidth:(CGFloat)width height:(CGFloat)height {
   if (width <= 0 || height <= 0)
     return nil;
+
+  NSString *key = [self cacheKeyForWidth:width height:height];
+
+  CGImageRef cached = [[DividerRenderCache shared] cachedImageForKey:key];
+  if (cached) {
+    return [UIImage imageWithCGImage:cached];
+  }
 
   UIGraphicsImageRenderer *renderer =
       [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(width, height)];
 
-  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
-    [_color setStroke];
-    UIBezierPath *path = [UIBezierPath bezierPath];
-    path.lineWidth = _thickness;
-    CGFloat centerY = height / 2.0;
-    [path moveToPoint:CGPointMake(0, centerY)];
-    [path addLineToPoint:CGPointMake(width, centerY)];
-    [path stroke];
-  }];
+  UIImage *image =
+      [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+        [_color setStroke];
+
+        UIBezierPath *path = [UIBezierPath bezierPath];
+        path.lineWidth = _thickness;
+
+        CGFloat centerY = height * 0.5;
+        [path moveToPoint:CGPointMake(0, centerY)];
+        [path addLineToPoint:CGPointMake(width, centerY)];
+        [path stroke];
+      }];
+
+  CGImageRef cg = CGImageRetain(image.CGImage);
+  [[DividerRenderCache shared] setImage:cg forKey:key];
+
+  return image;
 }
 
 - (void)setDividerColor:(UIColor *)color {

@@ -146,15 +146,7 @@
 
   CGSize size = CGSizeMake(round(bounds.size.width), round(bounds.size.height));
 
-  if (self.image) {
-    return self.image;
-  }
-
-  UIImage *img = [self renderImageWithSize:size];
-
-  self.image = img;
-
-  return self.image;
+  return [self renderImageWithSize:size];
 }
 
 - (CGRect)attachmentBoundsForTextContainer:(NSTextContainer *)textContainer

@@ -32,6 +32,7 @@
   CGFloat _imageCornerRadiusBottomLeft;
   CGFloat _imageCornerRadiusBottomRight;
   BorderStyle _borderStyleEnum;
+  CGSize _textSize;
 }
 
 #pragma mark - Init
@@ -74,6 +75,7 @@
 
   self.image = MakeLoaderImage();
   self.height = [self calculateHeight];
+  _textSize = [_labelText sizeWithAttributes:@{NSFontAttributeName : _font}];
 
   [self loadAsync];
 
@@ -90,11 +92,6 @@
 }
 
 #pragma mark - Drawing helpers
-
-- (CGSize)textSize {
-  return [_labelText sizeWithAttributes:@{NSFontAttributeName : _font}];
-}
-
 - (CGRect)imageRectForContentRect:(CGRect)contentRect {
   return ImageRect(contentRect, _imageWidth, _imageHeight);
 }
@@ -131,7 +128,9 @@
 
   CGContextSaveGState(ctx);
 
-  UIBezierPath *clip = [self imageClipPath:imageRect];
+  UIBezierPath *clip = MakeImageClipPath(
+      imageRect, _imageCornerRadiusTopLeft, _imageCornerRadiusTopRight,
+      _imageCornerRadiusBottomLeft, _imageCornerRadiusBottomRight);
   [clip addClip];
 
   CGRect target = [ImageLayoutUtils rectForImage:self.image
@@ -144,14 +143,12 @@
 }
 
 - (void)drawTextInRect:(CGRect)contentRect {
-  CGSize textSize = [self textSize];
-
   CGRect imageRect = [self imageRectForContentRect:contentRect];
 
   CGFloat textX = CGRectGetMaxX(imageRect) + _imageSpacing + _inset.left;
 
   CGFloat textY =
-      contentRect.origin.y + (contentRect.size.height - textSize.height) * 0.5;
+      contentRect.origin.y + (contentRect.size.height - _textSize.height) * 0.5;
 
   NSDictionary *attrs = @{
     NSFontAttributeName : _font,
@@ -241,59 +238,6 @@
                                    return;
                                  [self updateImage:img];
                                }];
-}
-
-#pragma mark - Clip path
-
-- (UIBezierPath *)imageClipPath:(CGRect)rect {
-  CGFloat tl = _imageCornerRadiusTopLeft;
-  CGFloat tr = _imageCornerRadiusTopRight;
-  CGFloat bl = _imageCornerRadiusBottomLeft;
-  CGFloat br = _imageCornerRadiusBottomRight;
-
-  UIBezierPath *path = [UIBezierPath bezierPath];
-
-  CGFloat minX = CGRectGetMinX(rect);
-  CGFloat minY = CGRectGetMinY(rect);
-  CGFloat maxX = CGRectGetMaxX(rect);
-  CGFloat maxY = CGRectGetMaxY(rect);
-
-  [path moveToPoint:CGPointMake(minX + tl, minY)];
-
-  [path addLineToPoint:CGPointMake(maxX - tr, minY)];
-  if (tr > 0)
-    [path addArcWithCenter:CGPointMake(maxX - tr, minY + tr)
-                    radius:tr
-                startAngle:-M_PI_2
-                  endAngle:0
-                 clockwise:YES];
-
-  [path addLineToPoint:CGPointMake(maxX, maxY - br)];
-  if (br > 0)
-    [path addArcWithCenter:CGPointMake(maxX - br, maxY - br)
-                    radius:br
-                startAngle:0
-                  endAngle:M_PI_2
-                 clockwise:YES];
-
-  [path addLineToPoint:CGPointMake(minX + bl, maxY)];
-  if (bl > 0)
-    [path addArcWithCenter:CGPointMake(minX + bl, maxY - bl)
-                    radius:bl
-                startAngle:M_PI_2
-                  endAngle:M_PI
-                 clockwise:YES];
-
-  [path addLineToPoint:CGPointMake(minX, minY + tl)];
-  if (tl > 0)
-    [path addArcWithCenter:CGPointMake(minX + tl, minY + tl)
-                    radius:tl
-                startAngle:M_PI
-                  endAngle:3 * M_PI_2
-                 clockwise:YES];
-
-  [path closePath];
-  return path;
 }
 
 @end

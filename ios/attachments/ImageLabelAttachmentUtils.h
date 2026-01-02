@@ -55,7 +55,8 @@ static inline CGFloat TextHeight(NSString *text, UIFont *font) {
 #pragma mark - Clip path
 
 static inline UIBezierPath *
-MakeImageClipPath(CGRect rect, CGFloat tl, CGFloat tr, CGFloat bl, CGFloat br) {
+MakeImageClipPath(CGRect rect, CGFloat topLeftRadius, CGFloat topRightRadius,
+                  CGFloat bottomLeftRadius, CGFloat bottomRightRadius) {
   UIBezierPath *path = [UIBezierPath bezierPath];
 
   CGFloat minX = CGRectGetMinX(rect);
@@ -63,39 +64,43 @@ MakeImageClipPath(CGRect rect, CGFloat tl, CGFloat tr, CGFloat bl, CGFloat br) {
   CGFloat maxX = CGRectGetMaxX(rect);
   CGFloat maxY = CGRectGetMaxY(rect);
 
-  [path moveToPoint:CGPointMake(minX + tl, minY)];
+  [path moveToPoint:CGPointMake(minX + topLeftRadius, minY)];
 
-  [path addLineToPoint:CGPointMake(maxX - tr, minY)];
-  if (tr > 0)
-    [path addArcWithCenter:CGPointMake(maxX - tr, minY + tr)
-                    radius:tr
+  [path addLineToPoint:CGPointMake(maxX - topRightRadius, minY)];
+  if (topRightRadius > 0)
+    [path addArcWithCenter:CGPointMake(maxX - topRightRadius,
+                                       minY + topRightRadius)
+                    radius:topRightRadius
                 startAngle:-M_PI_2
                   endAngle:0
                  clockwise:YES];
 
-  [path addLineToPoint:CGPointMake(maxX, maxY - br)];
-  if (br > 0)
-    [path addArcWithCenter:CGPointMake(maxX - br, maxY - br)
-                    radius:br
+  [path addLineToPoint:CGPointMake(maxX, maxY - bottomRightRadius)];
+  if (bottomRightRadius > 0)
+    [path addArcWithCenter:CGPointMake(maxX - bottomRightRadius,
+                                       maxY - bottomRightRadius)
+                    radius:bottomRightRadius
                 startAngle:0
                   endAngle:M_PI_2
                  clockwise:YES];
 
-  [path addLineToPoint:CGPointMake(minX + bl, maxY)];
-  if (bl > 0)
-    [path addArcWithCenter:CGPointMake(minX + bl, maxY - bl)
-                    radius:bl
+  [path addLineToPoint:CGPointMake(minX + bottomLeftRadius, maxY)];
+  if (bottomLeftRadius > 0)
+    [path addArcWithCenter:CGPointMake(minX + bottomLeftRadius,
+                                       maxY - bottomLeftRadius)
+                    radius:bottomLeftRadius
                 startAngle:M_PI_2
                   endAngle:M_PI
                  clockwise:YES];
 
-  [path addLineToPoint:CGPointMake(minX, minY + tl)];
-  if (tl > 0)
-    [path addArcWithCenter:CGPointMake(minX + tl, minY + tl)
-                    radius:tl
-                startAngle:M_PI
-                  endAngle:3 * M_PI_2
-                 clockwise:YES];
+  [path addLineToPoint:CGPointMake(minX, minY + topLeftRadius)];
+  if (topLeftRadius > 0)
+    [path
+        addArcWithCenter:CGPointMake(minX + topLeftRadius, minY + topLeftRadius)
+                  radius:topLeftRadius
+              startAngle:M_PI
+                endAngle:3 * M_PI_2
+               clockwise:YES];
 
   [path closePath];
   return path;
