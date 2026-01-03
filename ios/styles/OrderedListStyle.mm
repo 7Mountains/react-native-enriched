@@ -9,7 +9,7 @@
 static NSTextList *const NumberBulletList =
     [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDecimal options:0];
 
-static NSArray *const TextLists = @[ NumberBulletList ];
+static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
 
 @implementation OrderedListStyle {
   EnrichedTextInputView *_input;
@@ -124,7 +124,7 @@ static NSArray *const TextLists = @[ NumberBulletList ];
                   NSMutableParagraphStyle *pStyle =
                       value == nil ? [NSMutableParagraphStyle new]
                                    : [(NSParagraphStyle *)value mutableCopy];
-                  pStyle.textLists = @[ numberBullet ];
+                  pStyle.textLists = TextLists;
                   CGFloat headIntet = [self getHeadIndent];
                   pStyle.headIndent = headIntet;
                   pStyle.firstLineHeadIndent = headIntet;
@@ -275,9 +275,7 @@ static NSArray *const TextLists = @[ NumberBulletList ];
 
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
   NSParagraphStyle *paragraph = (NSParagraphStyle *)value;
-  return paragraph != nullptr && paragraph.textLists.count == 1 &&
-         paragraph.textLists.firstObject.markerFormat ==
-             NSTextListMarkerDecimal;
+  return paragraph != nullptr && paragraph.textLists == TextLists;
 }
 
 - (BOOL)detectStyle:(NSRange)range {

@@ -84,10 +84,7 @@ static NSString *const placeholder = @"\uFFFC";
 #pragma mark - Style Detection Helpers
 
 - (BOOL)styleCondition:(id)value range:(NSRange)range {
-  NSString *charStr =
-      [_input->textView.textStorage.string substringWithRange:range];
-  return [value isKindOfClass:[DividerAttachment class]] &&
-         [charStr isEqualToString:placeholder];
+  return [value isKindOfClass:[DividerAttachment class]];
 }
 
 - (BOOL)detectStyle:(NSRange)range {

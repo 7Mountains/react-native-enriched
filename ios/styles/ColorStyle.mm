@@ -184,7 +184,7 @@
   if (!color)
     return NO;
 
-  if ([color isEqual:_input->config.primaryColor])
+  if (color == _input->config.primaryColor)
     return NO;
 
   return ![self isColorOwnedByOtherStyle:color attributes:attrs range:range];
@@ -374,7 +374,7 @@
 
   NSAttributedStringKey key = [[style class] attributeKey];
   id attr = attrs[key];
-  if (![style styleCondition:attr range:NSMakeRange(index, 0)])
+  if (!attr)
     return nil;
 
   InputConfig *config = _input->config;

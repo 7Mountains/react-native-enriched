@@ -1521,23 +1521,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
   }
 }
-
 - (void)requestHTML:(NSInteger)requestId {
   auto emitter = [self getEventEmitter];
   if (!emitter) {
     return;
   }
 
-  @try {
-    NSRange fullRange = NSMakeRange(0, textView.textStorage.length);
+  [self->parser parseToHTMLAsync:^(NSString *_Nullable html,
+                                   NSError *_Nullable error) {
+    if (error || !html) {
+      emitter->onRequestHtmlResult({.requestId = static_cast<int>(requestId),
+                                    .html = folly::dynamic(nullptr)});
+      return;
+    }
 
-    NSString *htmlResult = [parser parseToHtmlFromRange:fullRange];
-    emitter->onRequestHtmlResult({.requestId = static_cast<int>(requestId),
-                                  .html = [htmlResult toCppString]});
-  } @catch (NSException *exception) {
-    emitter->onRequestHtmlResult({.requestId = static_cast<int>(requestId),
-                                  .html = folly::dynamic(nullptr)});
-  }
+    emitter->onRequestHtmlResult(
+        {.requestId = static_cast<int>(requestId), .html = [html toCppString]});
+  }];
 }
 
 // MARK: - Styles manipulation

@@ -174,6 +174,19 @@
   }
 }
 
+- (BOOL)styleConditionWithAttributes:(NSDictionary *)attrs
+                               range:(NSRange)range {
+  UIColor *bgColor = attrs[NSBackgroundColorAttributeName];
+  if (!bgColor) {
+    return NO;
+  }
+
+  MentionStyle *mStyle =
+      (MentionStyle *)_input->stylesDict[@([MentionStyle getStyleType])];
+  id mentionAttribute = attrs [[mStyle.class attributeKey]];
+  return ![mStyle styleCondition:mentionAttribute range:range];
+}
+
 // emojis don't retain monospace font attribute so we check for the background
 // color if there is no mention
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {

@@ -11,10 +11,10 @@
 static NSString *const CheckedValueString = @"true";
 static NSString *const UnckedValueString = @"false";
 
-static NSArray *const CheckedLists =
+static NSArray<NSTextList *> *const CheckedLists =
     @[ [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerCheck
                                         options:0] ];
-static NSArray *const UncheckedLists =
+static NSArray<NSTextList *> *const UncheckedLists =
     @[ [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerBox
                                         options:0] ];
 
@@ -253,11 +253,11 @@ static NSArray *const UncheckedLists =
 
 - (BOOL)styleCondition:(id)value range:(NSRange)range {
   NSParagraphStyle *paragraphStyle = (NSParagraphStyle *)value;
-  if (!paragraphStyle || paragraphStyle.textLists.count != 1)
+  if (!paragraphStyle)
     return NO;
 
-  NSString *marker = paragraphStyle.textLists.firstObject.markerFormat;
-  return marker == NSTextListMarkerBox || marker == NSTextListMarkerCheck;
+  const NSArray<NSTextList *> *textLists = paragraphStyle.textLists;
+  return textLists == CheckedLists || textLists == UncheckedLists;
 }
 
 - (BOOL)detectStyle:(NSRange)range {

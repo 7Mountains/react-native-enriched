@@ -192,13 +192,13 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 
 - (BOOL)detectStyle:(NSRange)range {
   if (range.length >= 1) {
-    BOOL onlyLinks = [OccurenceUtils
-        detectMultiple:@[ ManualLinkAttributeName, AutomaticLinkAttributeName ]
-             withInput:_input
-               inRange:range
-         withCondition:^BOOL(id _Nullable value, NSRange range) {
-           return [self styleCondition:value range:range];
-         }];
+    BOOL onlyLinks =
+        [OccurenceUtils detect:LinkAttributeName
+                     withInput:_input
+                       inRange:range
+                 withCondition:^BOOL(id _Nullable value, NSRange range) {
+                   return [self styleCondition:value range:range];
+                 }];
     return onlyLinks ? [self isSingleLinkIn:range] : NO;
   } else {
     return [self getLinkDataAt:range.location] != nullptr;
@@ -206,23 +206,21 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 }
 
 - (BOOL)anyOccurence:(NSRange)range {
-  return [OccurenceUtils
-        anyMultiple:@[ ManualLinkAttributeName, AutomaticLinkAttributeName ]
-          withInput:_input
-            inRange:range
-      withCondition:^BOOL(id _Nullable value, NSRange range) {
-        return [self styleCondition:value range:range];
-      }];
+  return [OccurenceUtils any:LinkAttributeName
+                   withInput:_input
+                     inRange:range
+               withCondition:^BOOL(id _Nullable value, NSRange range) {
+                 return [self styleCondition:value range:range];
+               }];
 }
 
 - (NSArray<StylePair *> *_Nullable)findAllOccurences:(NSRange)range {
-  return [OccurenceUtils
-        allMultiple:@[ ManualLinkAttributeName, AutomaticLinkAttributeName ]
-          withInput:_input
-            inRange:range
-      withCondition:^BOOL(id _Nullable value, NSRange range) {
-        return [self styleCondition:value range:range];
-      }];
+  return [OccurenceUtils all:LinkAttributeName
+                   withInput:_input
+                     inRange:range
+               withCondition:^BOOL(id _Nullable value, NSRange range) {
+                 return [self styleCondition:value range:range];
+               }];
 }
 
 // MARK: - Public non-standard methods

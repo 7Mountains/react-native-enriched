@@ -117,6 +117,24 @@
   return conflicted;
 }
 
+- (BOOL)styleConditionWithAttributes:(NSDictionary *)attrs
+                               range:(NSRange)range {
+  NSNumber *underlineStyle = attrs[NSUnderlineStyleAttributeName];
+  if (!underlineStyle) {
+    return NO;
+  }
+  LinkStyle *linkStyle = (LinkStyle *)_input->stylesDict[@(Link)];
+  if (!attrs [[linkStyle.class attributeKey]]) {
+    return NO;
+  }
+  MentionStyle *mentionStyle = (MentionStyle *)_input->stylesDict[@(Mention)];
+  if (!attrs [[mentionStyle.class attributeKey]]) {
+    return NO;
+  }
+
+  return YES;
+}
+
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
   NSNumber *underlineStyle = (NSNumber *)value;
   return underlineStyle != nullptr &&

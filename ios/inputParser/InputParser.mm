@@ -36,12 +36,30 @@
 }
 
 #pragma mark - Public API
-- (NSString *)parseToHtmlFromRange:(NSRange)range {
+- (NSString *)parseToHTML:(NSRange)range {
   NSAttributedString *sub =
       [_input->textView.textStorage attributedSubstringFromRange:range];
 
   return [_attributedStringHTMLSerializer buildHtmlFromAttributedString:sub
                                                                 pretify:NO];
+}
+
+- (void)parseToHTMLAsync:(void (^_Nonnull)(NSString *_Nullable,
+                                           NSError *_Nullable))completion {
+  NSAttributedString *snapshot = [[NSAttributedString alloc]
+      initWithAttributedString:self->_input->textView.textStorage];
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+                 ^{
+                   NSString *html = [self->_attributedStringHTMLSerializer
+                       buildHtmlFromAttributedString:snapshot
+                                             pretify:NO];
+
+                   dispatch_async(dispatch_get_main_queue(), ^{
+                     if (completion) {
+                       completion(html, nil);
+                     }
+                   });
+                 });
 }
 
 - (void)replaceWholeFromHtml:(NSString *)html

@@ -9,7 +9,7 @@
 static NSTextList *const bullet =
     [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDisc options:0];
 
-static NSArray *const TextLists = @[ bullet ];
+static NSArray<NSTextList *> *const TextLists = @[ bullet ];
 
 @implementation UnorderedListStyle {
   EnrichedTextInputView *_input;
@@ -275,8 +275,7 @@ static NSArray *const TextLists = @[ bullet ];
 
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
   NSParagraphStyle *paragraph = (NSParagraphStyle *)value;
-  return paragraph != nullptr && paragraph.textLists.count == 1 &&
-         paragraph.textLists.firstObject.markerFormat == NSTextListMarkerDisc;
+  return paragraph != nullptr && paragraph.textLists == TextLists;
 }
 
 - (BOOL)detectStyle:(NSRange)range {
