@@ -18,28 +18,6 @@
   if (!self)
     return nil;
 
-  NSMutableDictionary<NSString *, id<BaseStyleProtocol>>
-      *inlineStylesByAttributeKeys = [NSMutableDictionary new];
-  NSMutableArray *paragraphStylesArray = [NSMutableArray array];
-  NSMutableArray *paragraphModificatorsArray = [NSMutableArray array];
-
-  for (NSNumber *key in stylesDict.allKeys) {
-    id<BaseStyleProtocol> style = stylesDict[key];
-    Class styleClass = style.class;
-
-    BOOL isParagraph = [styleClass isParagraphStyle];
-
-    if (isParagraph) {
-      BOOL isParagraphModificatorStyle =
-          [styleClass conformsToProtocol:@protocol(ParagraphModifierStyle)];
-
-      isParagraphModificatorStyle ? [paragraphModificatorsArray addObject:style]
-                                  : [paragraphStylesArray addObject:style];
-    } else {
-      inlineStylesByAttributeKeys [[style.class attributeKey]] = style;
-    }
-  }
-
   [self buildAllStyleDescriptors:stylesDict];
 
   return self;
