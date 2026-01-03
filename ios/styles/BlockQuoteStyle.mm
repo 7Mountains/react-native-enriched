@@ -1,5 +1,6 @@
 #import "AlignmentConverter.h"
 #import "ColorExtension.h"
+#import "EnrichedParagraphStyle.h"
 #import "EnrichedTextInputView.h"
 #import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
@@ -65,7 +66,7 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)_ {
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  EnrichedParagraphStyle *pStyle = [EnrichedParagraphStyle new];
   auto headIntent = [self getHeadIndent];
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
@@ -117,8 +118,8 @@
                    options:0
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
+                  EnrichedParagraphStyle *pStyle =
+                      [(EnrichedParagraphStyle *)value mutableCopy];
                   pStyle.headIndent = [self getHeadIndent];
                   pStyle.firstLineHeadIndent = [self getHeadIndent];
                   pStyle.tailIndent = DefaultListTailIndent;
@@ -145,7 +146,7 @@
   // also add typing attributes
   NSMutableDictionary *typingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  NSMutableParagraphStyle *pStyle =
+  EnrichedParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
   pStyle.headIndent = [self getHeadIndent];
   pStyle.firstLineHeadIndent = [self getHeadIndent];
@@ -171,7 +172,7 @@
                    options:0
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
+                  EnrichedParagraphStyle *pStyle =
                       [(NSParagraphStyle *)value mutableCopy];
                   pStyle.headIndent = 0;
                   pStyle.firstLineHeadIndent = 0;
@@ -185,7 +186,7 @@
   // also remove typing attributes
   NSMutableDictionary *typingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  NSMutableParagraphStyle *pStyle =
+  EnrichedParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
   pStyle.headIndent = 0;
   pStyle.firstLineHeadIndent = 0;
@@ -223,7 +224,7 @@
 }
 
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
-  NSParagraphStyle *pStyle = (NSParagraphStyle *)value;
+  EnrichedParagraphStyle *pStyle = (EnrichedParagraphStyle *)value;
   return pStyle != nullptr && pStyle.headIndent == [self getHeadIndent] &&
          pStyle.firstLineHeadIndent == [self getHeadIndent] &&
          pStyle.textLists.count == 0;

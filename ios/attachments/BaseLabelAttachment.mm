@@ -1,6 +1,7 @@
 #import "BaseLabelAttachment.h"
 #import "ContentParams.h"
 #import "ContentStyleProps.h"
+#import "EnrichedParagraphStyle.h"
 #import "ImageLabelAttachmentUtils.h"
 
 @implementation BaseLabelAttachment {
@@ -90,7 +91,7 @@
 
   CGRect contentRect = UIEdgeInsetsInsetRect(rect, _inset);
 
-  NSMutableParagraphStyle *style = [NSMutableParagraphStyle new];
+  EnrichedParagraphStyle *style = [EnrichedParagraphStyle new];
   style.alignment = NSTextAlignmentCenter;
   style.lineBreakMode = NSLineBreakByTruncatingTail;
 

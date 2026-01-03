@@ -1,4 +1,5 @@
 #import "ColorExtension.h"
+#import "EnrichedParagraphStyle.h"
 #import "EnrichedTextInputView.h"
 #import "FontExtension.h"
 #import "HtmlAttributeNames.h"
@@ -49,7 +50,7 @@ static NSArray *const UncheckedLists =
 }
 
 + (NSDictionary *)getParametersFromValue:(id)value {
-  NSParagraphStyle *paragraphStyle = (NSParagraphStyle *)value;
+  EnrichedParagraphStyle *paragraphStyle = (EnrichedParagraphStyle *)value;
   NSString *marker = paragraphStyle.textLists.firstObject.markerFormat;
   return @{
     CheckedAttributeName : marker == NSTextListMarkerCheck ? CheckedValueString
@@ -78,7 +79,7 @@ static NSArray *const UncheckedLists =
   return checked ? CheckedLists : UncheckedLists;
 }
 
-- (void)resetParagraphStyle:(NSMutableParagraphStyle *)pStyle {
+- (void)resetParagraphStyle:(EnrichedParagraphStyle *)pStyle {
   pStyle.textLists = @[];
   pStyle.headIndent = 0;
   pStyle.firstLineHeadIndent = 0;
@@ -87,12 +88,12 @@ static NSArray *const UncheckedLists =
   pStyle.lineHeightMultiple = 1;
 }
 
-- (NSMutableParagraphStyle *)currentTypingParagraphStyle {
+- (EnrichedParagraphStyle *)currentTypingParagraphStyle {
   return [_input->textView.typingAttributes[NSParagraphStyleAttributeName]
       mutableCopy];
 }
 
-- (void)saveTypingParagraphStyle:(NSMutableParagraphStyle *)pStyle {
+- (void)saveTypingParagraphStyle:(EnrichedParagraphStyle *)pStyle {
   NSMutableDictionary *attrs = [_input->textView.typingAttributes mutableCopy];
   attrs[NSParagraphStyleAttributeName] = pStyle;
   _input->textView.typingAttributes = attrs;
@@ -139,7 +140,7 @@ static NSArray *const UncheckedLists =
   CGFloat checkBoxHeight = _input->config.checkBoxHeight;
   UIFont *font = _input->config.primaryFont;
 
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  EnrichedParagraphStyle *pStyle = [EnrichedParagraphStyle new];
   pStyle.textLists = lists;
   pStyle.minimumLineHeight = checkBoxHeight;
   pStyle.maximumLineHeight = checkBoxHeight;
@@ -179,8 +180,8 @@ static NSArray *const UncheckedLists =
                    options:0
                 usingBlock:^(id value, NSRange sub, BOOL *stop) {
                   // reset paragraph style
-                  NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
+                  EnrichedParagraphStyle *pStyle =
+                      [(EnrichedParagraphStyle *)value mutableCopy];
                   [self resetParagraphStyle:pStyle];
 
                   [_input->textView.textStorage
@@ -195,7 +196,7 @@ static NSArray *const UncheckedLists =
 
   [_input->textView.textStorage endEditing];
 
-  NSMutableParagraphStyle *pStyle = [self currentTypingParagraphStyle];
+  EnrichedParagraphStyle *pStyle = [self currentTypingParagraphStyle];
   [self resetParagraphStyle:pStyle];
 
   NSMutableDictionary *typing = [_input->textView.typingAttributes mutableCopy];
@@ -252,7 +253,7 @@ static NSArray *const UncheckedLists =
 #pragma mark - Detection
 
 - (BOOL)styleCondition:(id)value range:(NSRange)range {
-  NSParagraphStyle *paragraphStyle = (NSParagraphStyle *)value;
+  EnrichedParagraphStyle *paragraphStyle = (EnrichedParagraphStyle *)value;
   if (!paragraphStyle || paragraphStyle.textLists.count != 1)
     return NO;
 
@@ -337,7 +338,7 @@ static NSArray *const UncheckedLists =
                  inRange:pRange
                  options:0
               usingBlock:^(id value, NSRange sub, BOOL *stop) {
-                NSMutableParagraphStyle *pStyle =
+                EnrichedParagraphStyle *pStyle =
                     [(NSParagraphStyle *)value mutableCopy];
                 pStyle.textLists = newList;
                 [_input->textView.textStorage
@@ -349,7 +350,7 @@ static NSArray *const UncheckedLists =
   [_input->textView.textStorage endEditing];
 
   // update typing attributes
-  NSMutableParagraphStyle *pStyle = [self currentTypingParagraphStyle];
+  EnrichedParagraphStyle *pStyle = [self currentTypingParagraphStyle];
   [self saveTypingParagraphStyle:pStyle];
   NSUInteger lineEnd = pRange.location + pRange.length;
 
@@ -404,9 +405,10 @@ static NSArray *const UncheckedLists =
                    inRange:fixed
                    options:0
                 usingBlock:^(id value, NSRange sub, BOOL *stop) {
-                  NSMutableParagraphStyle *paragraphStyle =
-                      value == nil ? [NSMutableParagraphStyle new]
-                                   : [(NSParagraphStyle *)value mutableCopy];
+                  EnrichedParagraphStyle *paragraphStyle =
+                      value == nil
+                          ? [EnrichedParagraphStyle new]
+                          : [(EnrichedParagraphStyle *)value mutableCopy];
                   paragraphStyle.textLists = list;
                   paragraphStyle.minimumLineHeight = checBoxHeight;
                   paragraphStyle.maximumLineHeight = checBoxHeight;
@@ -438,7 +440,7 @@ static NSArray *const UncheckedLists =
     _input->textView.selectedRange =
         NSMakeRange(preRange.location, preRange.length + offset);
   }
-  NSMutableParagraphStyle *paragraphStyle = [self currentTypingParagraphStyle];
+  EnrichedParagraphStyle *paragraphStyle = [self currentTypingParagraphStyle];
   paragraphStyle.textLists = list;
   paragraphStyle.minimumLineHeight = checBoxHeight;
   paragraphStyle.maximumLineHeight = checBoxHeight;

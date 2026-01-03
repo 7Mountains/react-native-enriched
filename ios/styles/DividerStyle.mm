@@ -1,4 +1,5 @@
 #import "DividerAttachment.h"
+#import "EnrichedParagraphStyle.h"
 #import "EnrichedTextInputView.h"
 #import "OccurenceUtils.h"
 #import "StyleHeaders.h"
@@ -141,7 +142,7 @@ static NSString *const placeholder = @"\uFFFC";
 - (NSDictionary *)prepareAttributes {
   InputConfig *config = _input->config;
 
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  EnrichedParagraphStyle *pStyle = [EnrichedParagraphStyle new];
 
   return @{
     NSParagraphStyleAttributeName : pStyle,

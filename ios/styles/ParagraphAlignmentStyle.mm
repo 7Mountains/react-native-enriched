@@ -1,4 +1,5 @@
 #import "AlignmentConverter.h"
+#import "EnrichedParagraphStyle.h"
 #import "EnrichedTextInputView.h"
 #import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
@@ -159,9 +160,9 @@
                               [self paragraphStyleAtRange:paragraph
                                                   storage:storage];
 
-                          NSMutableParagraphStyle *style =
+                          EnrichedParagraphStyle *style =
                               current ? [current mutableCopy]
-                                      : [NSMutableParagraphStyle new];
+                                      : [EnrichedParagraphStyle new];
 
                           style.alignment = alignment;
 
@@ -177,9 +178,9 @@
   NSMutableDictionary *typing = [_input->textView.typingAttributes mutableCopy]
                                     ?: [NSMutableDictionary new];
 
-  NSMutableParagraphStyle *style =
+  EnrichedParagraphStyle *style =
       [typing[NSParagraphStyleAttributeName] mutableCopy]
-          ?: [NSMutableParagraphStyle new];
+          ?: [EnrichedParagraphStyle new];
 
   style.alignment = alignment;
   typing[NSParagraphStyleAttributeName] = style;
@@ -300,8 +301,8 @@
                                         atIndex:range.location
                                  effectiveRange:nil];
 
-  NSMutableParagraphStyle *mutableParagraphStyle =
-      current ? [current mutableCopy] : [NSMutableParagraphStyle new];
+  EnrichedParagraphStyle *mutableParagraphStyle =
+      current ? [current mutableCopy] : [EnrichedParagraphStyle new];
 
   mutableParagraphStyle.alignment = alignment;
 

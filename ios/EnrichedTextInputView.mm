@@ -6,6 +6,7 @@
 #import "ColorExtension.h"
 #import "CoreText/CoreText.h"
 #import "EnrichedImageLoader.h"
+#import "EnrichedParagraphStyle.h"
 #import "LayoutManagerExtension.h"
 #import "ParagraphAttributesUtils.h"
 #import "RCTFabricComponentsPlugins.h"
@@ -882,7 +883,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     defaultTypingAttributes[NSStrikethroughColorAttributeName] =
         [config primaryColor];
     defaultTypingAttributes[NSParagraphStyleAttributeName] =
-        [[NSParagraphStyle alloc] init];
+        [[EnrichedParagraphStyle alloc] init];
     textView.typingAttributes = defaultTypingAttributes;
     textView.selectedRange = prevSelectedRange;
   }
@@ -1835,26 +1836,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [codeBlockStyle manageCodeBlockFontAndColor];
   }
 
-  // improper headings fix
-  H1Style *h1Style = stylesDict[@([H1Style getStyleType])];
-  H2Style *h2Style = stylesDict[@([H2Style getStyleType])];
-  H3Style *h3Style = stylesDict[@([H3Style getStyleType])];
-  H4Style *h4Style = stylesDict[@([H4Style getStyleType])];
-  H5Style *h5Style = stylesDict[@([H5Style getStyleType])];
-  H6Style *h6Style = stylesDict[@([H6Style getStyleType])];
-
-  bool hasImproperHeadingStyles = h1Style != nullptr && h2Style != nullptr &&
-                                  h3Style != nullptr && h4Style != nullptr &&
-                                  h5Style != nullptr && h6Style != nullptr;
-
-  if (hasImproperHeadingStyles) {
-    [h1Style handleImproperHeadings];
-    [h2Style handleImproperHeadings];
-    [h3Style handleImproperHeadings];
-    [h4Style handleImproperHeadings];
-    [h5Style handleImproperHeadings];
-    [h6Style handleImproperHeadings];
-  }
+  [self normalizeHeadingPresentationInChangedRange];
 
   // mentions management: removal and editing
   MentionStyle *mentionStyleClass =
@@ -2100,6 +2082,85 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     self->textView.selectedRange = NSMakeRange(newLocation, 0);
     break;
   }
+
+  default:
+    break;
+  }
+}
+
+- (void)normalizeHeadingPresentationInChangedRange {
+
+  if (recentlyChangedRange.length == 0 && recentlyChangedRange.location == 0) {
+    return;
+  }
+
+  NSTextStorage *textStorage = textView.textStorage;
+  NSString *string = textStorage.string;
+
+  NSRange paragraphRange = [string paragraphRangeForRange:recentlyChangedRange];
+
+  [string
+      enumerateSubstringsInRange:paragraphRange
+                         options:NSStringEnumerationByParagraphs |
+                                 NSStringEnumerationSubstringNotRequired
+                      usingBlock:^(__unused NSString *substring,
+                                   NSRange currentParagraphRange,
+                                   __unused NSRange enclosingRange,
+                                   __unused BOOL *stop) {
+                        if (currentParagraphRange.length == 0)
+                          return;
+
+                        NSParagraphStyle *paragraphStyle = [textStorage
+                                 attribute:NSParagraphStyleAttributeName
+                                   atIndex:currentParagraphRange.location
+                            effectiveRange:nil];
+
+                        if (![paragraphStyle
+                                isKindOfClass:[EnrichedParagraphStyle class]]) {
+                          return;
+                        }
+
+                        NSNumber *headingLevel =
+                            ((EnrichedParagraphStyle *)paragraphStyle)
+                                .headingLevel;
+
+                        if (headingLevel == nil) {
+                          return;
+                        }
+
+                        [self applyHeadingPresentationForLevel:headingLevel
+                                                paragraphRange:
+                                                    currentParagraphRange];
+                      }];
+}
+
+- (void)applyHeadingPresentationForLevel:(NSNumber *)headingLevel
+                          paragraphRange:(NSRange)paragraphRange {
+
+  switch (headingLevel.integerValue) {
+  case 1:
+    [stylesDict[@([H1Style getStyleType])] addAttributes:paragraphRange];
+    break;
+
+  case 2:
+    [stylesDict[@([H2Style getStyleType])] addAttributes:paragraphRange];
+    break;
+
+  case 3:
+    [stylesDict[@([H3Style getStyleType])] addAttributes:paragraphRange];
+    break;
+
+  case 4:
+    [stylesDict[@([H4Style getStyleType])] addAttributes:paragraphRange];
+    break;
+
+  case 5:
+    [stylesDict[@([H5Style getStyleType])] addAttributes:paragraphRange];
+    break;
+
+  case 6:
+    [stylesDict[@([H6Style getStyleType])] addAttributes:paragraphRange];
+    break;
 
   default:
     break;

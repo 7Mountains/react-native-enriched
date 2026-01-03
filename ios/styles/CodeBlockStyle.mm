@@ -1,4 +1,5 @@
 #import "ColorExtension.h"
+#import "EnrichedParagraphStyle.h"
 #import "EnrichedTextInputView.h"
 #import "FontExtension.h"
 #import "OccurenceUtils.h"
@@ -64,7 +65,7 @@ static NSString *const CodeBlockMarker = @"codeblock";
   NSTextList *codeBlockList =
       [[NSTextList alloc] initWithMarkerFormat:CodeBlockMarker options:0];
 
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  EnrichedParagraphStyle *pStyle = [EnrichedParagraphStyle new];
   pStyle.textLists = @[ codeBlockList ];
 
   NSDictionary *finalAttributes = @{
@@ -115,9 +116,10 @@ static NSString *const CodeBlockMarker = @"codeblock";
                    options:0
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
-                      value == nil ? [NSMutableParagraphStyle new]
-                                   : [(NSParagraphStyle *)value mutableCopy];
+                  EnrichedParagraphStyle *pStyle =
+                      value == nil
+                          ? [EnrichedParagraphStyle new]
+                          : [(EnrichedParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[ codeBlockList ];
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
@@ -142,7 +144,7 @@ static NSString *const CodeBlockMarker = @"codeblock";
   // also add typing attributes
   NSMutableDictionary *typingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  NSMutableParagraphStyle *pStyle =
+  EnrichedParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
   pStyle.textLists = @[ codeBlockList ];
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
@@ -170,8 +172,8 @@ static NSString *const CodeBlockMarker = @"codeblock";
                    options:0
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
+                  EnrichedParagraphStyle *pStyle =
+                      [(EnrichedParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[];
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
@@ -185,7 +187,7 @@ static NSString *const CodeBlockMarker = @"codeblock";
   // also remove typing attributes
   NSMutableDictionary *typingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  NSMutableParagraphStyle *pStyle =
+  EnrichedParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
   pStyle.textLists = @[];
 

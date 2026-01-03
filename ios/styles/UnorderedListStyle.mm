@@ -1,3 +1,4 @@
+#import "EnrichedParagraphStyle.h"
 #import "EnrichedTextInputView.h"
 #import "FontExtension.h"
 #import "OccurenceUtils.h"
@@ -66,7 +67,7 @@ static NSArray *const TextLists = @[ bullet ];
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  EnrichedParagraphStyle *pStyle = [EnrichedParagraphStyle new];
   CGFloat headIndent = [self getHeadIndent];
   pStyle.textLists = TextLists;
   pStyle.headIndent = headIndent;
@@ -118,9 +119,10 @@ static NSArray *const TextLists = @[ bullet ];
                    options:0
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
-                      value == nil ? [NSMutableParagraphStyle new]
-                                   : [(NSParagraphStyle *)value mutableCopy];
+                  EnrichedParagraphStyle *pStyle =
+                      value == nil
+                          ? [EnrichedParagraphStyle new]
+                          : [(EnrichedParagraphStyle *)value mutableCopy];
                   pStyle.textLists = TextLists;
                   CGFloat headIntet = [self getHeadIndent];
                   pStyle.headIndent = headIntet;
@@ -149,7 +151,7 @@ static NSArray *const TextLists = @[ bullet ];
   // also add typing attributes
   NSMutableDictionary *typingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  NSMutableParagraphStyle *pStyle =
+  EnrichedParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
   pStyle.textLists = TextLists;
   pStyle.headIndent = [self getHeadIndent];
@@ -178,7 +180,7 @@ static NSArray *const TextLists = @[ bullet ];
                    options:0
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
+                  EnrichedParagraphStyle *pStyle =
                       [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[];
                   pStyle.headIndent = 0;
@@ -197,7 +199,7 @@ static NSArray *const TextLists = @[ bullet ];
   // also remove typing attributes
   NSMutableDictionary *typingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  NSMutableParagraphStyle *pStyle =
+  EnrichedParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
   pStyle.textLists = @[];
   pStyle.headIndent = 0;
@@ -274,7 +276,7 @@ static NSArray *const TextLists = @[ bullet ];
 }
 
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
-  NSParagraphStyle *paragraph = (NSParagraphStyle *)value;
+  EnrichedParagraphStyle *paragraph = (EnrichedParagraphStyle *)value;
   return paragraph != nullptr && paragraph.textLists.count == 1 &&
          paragraph.textLists.firstObject.markerFormat == NSTextListMarkerDisc;
 }

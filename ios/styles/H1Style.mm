@@ -17,4 +17,9 @@
 - (BOOL)isHeadingBold {
   return [((EnrichedTextInputView *)input)->config h1Bold];
 }
+
+- (NSNumber *)headingLevel {
+  return @(1);
+}
+
 @end

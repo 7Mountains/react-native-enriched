@@ -76,6 +76,7 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (BOOL)isHeadingBold;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (void)handleImproperHeadings;
++ (NSNumber *)headingLevel;
 @end
 
 @interface H1Style : HeadingStyleBase

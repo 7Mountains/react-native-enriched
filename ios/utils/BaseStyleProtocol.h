@@ -25,4 +25,5 @@
 - (BOOL)detectStyle:(NSRange)range;
 - (BOOL)anyOccurence:(NSRange)range;
 - (NSArray<StylePair *> *_Nullable)findAllOccurences:(NSRange)range;
+- (void)addAttributes:(NSRange)range;
 @end
