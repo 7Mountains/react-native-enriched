@@ -6,7 +6,7 @@
 
 @implementation EnrichedAttributedStringHTMLSerializer {
   NSDictionary<NSNumber *, id<BaseStyleProtocol>> *_styles;
-  NSArray<id<BaseStyleProtocol>> *_inlineStyles;
+  NSDictionary<NSString *, id<BaseStyleProtocol>> *_inlineStylesByAttributeKeys;
   NSArray<id<BaseStyleProtocol>> *_paragraphStyles;
   NSArray<id<BaseStyleProtocol>> *_paragraphModificatorStyles;
 }
@@ -18,7 +18,8 @@
 
   _styles = stylesDict ?: @{};
 
-  NSMutableArray *inlineStylesArray = [NSMutableArray array];
+  NSMutableDictionary<NSString *, id<BaseStyleProtocol>>
+      *inlineStylesByAttributeKeys = [NSMutableDictionary new];
   NSMutableArray *paragraphStylesArray = [NSMutableArray array];
   NSMutableArray *paragraphModificatorsArray = [NSMutableArray array];
 
@@ -26,8 +27,7 @@
     id<BaseStyleProtocol> style = stylesDict[key];
     Class cls = style.class;
 
-    BOOL isParagraph = ([cls respondsToSelector:@selector(isParagraphStyle)]) &&
-                       [cls isParagraphStyle];
+    BOOL isParagraph = [cls isParagraphStyle];
 
     if (isParagraph) {
       BOOL isParagraphModificatorStyle =
@@ -36,11 +36,11 @@
       isParagraphModificatorStyle ? [paragraphModificatorsArray addObject:style]
                                   : [paragraphStylesArray addObject:style];
     } else {
-      [inlineStylesArray addObject:style];
+      inlineStylesByAttributeKeys [[style.class attributeKey]] = style;
     }
   }
 
-  _inlineStyles = inlineStylesArray.copy;
+  _inlineStylesByAttributeKeys = inlineStylesByAttributeKeys.copy;
   _paragraphStyles = paragraphStylesArray.copy;
   _paragraphModificatorStyles = paragraphModificatorsArray.copy;
 
@@ -51,7 +51,6 @@
 
 - (NSString *)buildHtmlFromAttributedString:(NSAttributedString *)text
                                     pretify:(BOOL)pretify {
-
   if (text.length == 0)
     return DefaultHtmlValue;
 
@@ -85,50 +84,58 @@
                                    NSRange paragraphRange,
                                    NSRange __unused enclosingRange,
                                    BOOL *__unused stop) {
-                        if (paragraphRange.length == 0) {
-                          [root.children addObject:br];
-                          previousParagraphStyle = nil;
-                          previousNode = nil;
-                          return;
+                        @autoreleasepool {
+
+                          if (paragraphRange.length == 0) {
+                            [root.children addObject:br];
+                            previousParagraphStyle = nil;
+                            previousNode = nil;
+                            return;
+                          }
+
+                          NSDictionary *attrsAtStart =
+                              [text attributesAtIndex:paragraphRange.location
+                                       effectiveRange:nil];
+
+                          id<BaseStyleProtocol> paragraphStyle =
+                              [self detectParagraphStyle:text
+                                          paragraphRange:paragraphRange
+                                            attrsAtStart:attrsAtStart];
+
+                          HTMLElement *container = [self
+                              containerForParagraphStyle:paragraphStyle
+                                  previousParagraphStyle:previousParagraphStyle
+                                            previousNode:previousNode
+                                                rootNode:root
+                                            attrsAtStart:attrsAtStart];
+
+                          previousParagraphStyle = paragraphStyle;
+                          previousNode = container;
+
+                          HTMLElement *target = [self
+                              nextContainerForParagraphStyle:paragraphStyle
+                                            currentContainer:container];
+
+                          [text
+                              enumerateAttributesInRange:paragraphRange
+                                                 options:0
+                                              usingBlock:^(
+                                                  NSDictionary *attrs,
+                                                  NSRange runRange,
+                                                  BOOL *__unused stopRun) {
+                                                @autoreleasepool {
+                                                  HTMLNode *node = [self
+                                                      getInlineStyleNodes:text
+                                                                    range:
+                                                                        runRange
+                                                                    attrs:attrs
+                                                                    plain:
+                                                                        plain];
+                                                  [target.children
+                                                      addObject:node];
+                                                }
+                                              }];
                         }
-
-                        NSDictionary *attrsAtStart =
-                            [text attributesAtIndex:paragraphRange.location
-                                     effectiveRange:nil];
-
-                        id<BaseStyleProtocol> paragraphStyle =
-                            [self detectParagraphStyle:text
-                                        paragraphRange:paragraphRange
-                                          attrsAtStart:attrsAtStart];
-
-                        HTMLElement *container = [self
-                            containerForParagraphStyle:paragraphStyle
-                                previousParagraphStyle:previousParagraphStyle
-                                          previousNode:previousNode
-                                              rootNode:root
-                                          attrsAtStart:attrsAtStart];
-
-                        previousParagraphStyle = paragraphStyle;
-                        previousNode = container;
-
-                        HTMLElement *target =
-                            [self nextContainerForParagraphStyle:paragraphStyle
-                                                currentContainer:container];
-
-                        [text
-                            enumerateAttributesInRange:paragraphRange
-                                               options:0
-                                            usingBlock:^(
-                                                NSDictionary *attrs,
-                                                NSRange runRange,
-                                                BOOL *__unused stopRun) {
-                                              HTMLNode *node = [self
-                                                  getInlineStyleNodes:text
-                                                                range:runRange
-                                                                attrs:attrs
-                                                                plain:plain];
-                                              [target.children addObject:node];
-                                            }];
                       }];
 
   return root;
@@ -136,10 +143,9 @@
 
 #pragma mark - Paragraph style detection
 
-- (id<BaseStyleProtocol> _Nullable)
-    detectParagraphStyle:(NSAttributedString *)text
-          paragraphRange:(NSRange)paragraphRange
-            attrsAtStart:(NSDictionary *)attrsAtStart {
+- (id<BaseStyleProtocol>)detectParagraphStyle:(NSAttributedString *)text
+                               paragraphRange:(NSRange)paragraphRange
+                                 attrsAtStart:(NSDictionary *)attrsAtStart {
 
   for (id<BaseStyleProtocol> paragraphStyle in _paragraphStyles) {
     Class cls = paragraphStyle.class;
@@ -150,11 +156,10 @@
       return paragraphStyle;
     }
   }
-
   return nil;
 }
 
-#pragma mark - Attribute computation (NEW)
+#pragma mark - Paragraph attributes
 
 - (NSDictionary *)paragraphAttributesForStyle:(id<BaseStyleProtocol>)style
                                  attrsAtStart:(NSDictionary *)attrsAtStart {
@@ -165,7 +170,6 @@
     return result;
 
   Class cls = style.class;
-
   NSAttributedStringKey key = [cls attributeKey];
   id value = key ? attrsAtStart[key] : nil;
 
@@ -176,13 +180,12 @@
   }
 
   for (id<BaseStyleProtocol> modifier in _paragraphModificatorStyles) {
-    Class modifierClass = modifier.class;
-    NSAttributedStringKey attributeKey = [modifierClass attributeKey];
-    id mvalue = attributeKey ? attrsAtStart[attributeKey] : nil;
+    Class mcls = modifier.class;
+    NSAttributedStringKey mkey = [mcls attributeKey];
+    id mvalue = mkey ? attrsAtStart[mkey] : nil;
 
-    if ([modifierClass
-            respondsToSelector:@selector(containerAttributesFromValue:)]) {
-      NSDictionary *attrs = [modifierClass containerAttributesFromValue:mvalue];
+    if ([mcls respondsToSelector:@selector(containerAttributesFromValue:)]) {
+      NSDictionary *attrs = [mcls containerAttributesFromValue:mvalue];
       if (attrs)
         [result addEntriesFromDictionary:attrs];
     }
@@ -191,14 +194,13 @@
   return result;
 }
 
-#pragma mark - Container creation
+#pragma mark - Containers
 
-- (HTMLElement *)
-    containerForParagraphStyle:(id<BaseStyleProtocol> _Nullable)currentStyle
-        previousParagraphStyle:(id<BaseStyleProtocol> _Nullable)previousStyle
-                  previousNode:(HTMLElement *)previousNode
-                      rootNode:(HTMLElement *)rootNode
-                  attrsAtStart:(NSDictionary *)attrsAtStart {
+- (HTMLElement *)containerForParagraphStyle:(id<BaseStyleProtocol>)currentStyle
+                     previousParagraphStyle:(id<BaseStyleProtocol>)previousStyle
+                               previousNode:(HTMLElement *)previousNode
+                                   rootNode:(HTMLElement *)rootNode
+                               attrsAtStart:(NSDictionary *)attrsAtStart {
 
   if (!currentStyle) {
     HTMLElement *outer = [HTMLElement new];
@@ -208,31 +210,28 @@
     return outer;
   }
 
-  Class styleClass = currentStyle.class;
-  BOOL hasSubTag = ([styleClass subTagName] != NULL);
+  Class cls = currentStyle.class;
+  BOOL hasSubTag = ([cls subTagName] != NULL);
 
   BOOL sameStyle = NO;
-
   if (currentStyle == previousStyle && previousNode) {
     NSDictionary *currentAttrs =
         [self paragraphAttributesForStyle:currentStyle
                              attrsAtStart:attrsAtStart];
-
-    NSDictionary *previousAttrs = previousNode.attributes ?: @{};
-
-    sameStyle = [currentAttrs isEqualToDictionary:previousAttrs];
+    NSDictionary *prevAttrs = previousNode.attributes ?: @{};
+    sameStyle = [currentAttrs isEqualToDictionary:prevAttrs];
   }
 
   if (sameStyle && hasSubTag)
     return previousNode;
 
   HTMLElement *outer = [HTMLElement new];
-  outer.tag = [styleClass tagName];
-  outer.selfClosing = [styleClass isSelfClosing];
+  outer.tag = [cls tagName];
+  outer.selfClosing = [cls isSelfClosing];
 
   NSDictionary *attrs = [self paragraphAttributesForStyle:currentStyle
                                              attrsAtStart:attrsAtStart];
-  if (attrs.count > 0)
+  if (attrs.count)
     outer.attributes = attrs;
 
   [rootNode.children addObject:outer];
@@ -241,8 +240,7 @@
 
 #pragma mark - Sub containers
 
-- (HTMLElement *)nextContainerForParagraphStyle:
-                     (id<BaseStyleProtocol> _Nullable)style
+- (HTMLElement *)nextContainerForParagraphStyle:(id<BaseStyleProtocol>)style
                                currentContainer:(HTMLElement *)container {
   if (!style)
     return container;
@@ -263,13 +261,13 @@
                             attrsAtStart:(NSDictionary *)attrsAtStart {
 
   for (id<BaseStyleProtocol> style in _paragraphModificatorStyles) {
-    Class styleClass = style.class;
-    NSAttributedStringKey key = [styleClass attributeKey];
+    Class cls = style.class;
+    NSAttributedStringKey key = [cls attributeKey];
     id value = key ? attrsAtStart[key] : nil;
 
     NSDictionary *attrs =
-        [styleClass respondsToSelector:@selector(containerAttributesFromValue:)]
-            ? [styleClass containerAttributesFromValue:value]
+        [cls respondsToSelector:@selector(containerAttributesFromValue:)]
+            ? [cls containerAttributesFromValue:value]
             : nil;
 
     if (!attrs)
@@ -291,41 +289,43 @@
                             attrs:(NSDictionary *)attrs
                             plain:(NSString *)plain {
 
-  HTMLTextNode *textNode = [HTMLTextNode new];
-  textNode.source = plain;
-  textNode.range = range;
+  @autoreleasepool {
+    HTMLTextNode *textNode = [HTMLTextNode new];
+    textNode.source = plain;
+    textNode.range = range;
 
-  HTMLNode *currentNode = textNode;
+    HTMLNode *currentNode = textNode;
+    for (NSString *key in _inlineStylesByAttributeKeys) {
+      auto styleObject = _inlineStylesByAttributeKeys[key];
+      auto styleClass = styleObject.class;
+      id value = attrs[key];
+      if (!value)
+        continue;
 
-  for (id<BaseStyleProtocol> styleObject in _inlineStyles) {
-    Class styleClass = styleObject.class;
-    NSAttributedStringKey key = [styleClass attributeKey];
-    id value = attrs[key];
-    // very specific case since we have to manage different colors.
-    // Maybe we can avoid it in the future
-    BOOL isColorStyle = [styleClass getStyleType] == Colored;
+      BOOL isColorStyle = [styleClass getStyleType] == Colored;
 
-    BOOL hasStyle =
-        isColorStyle
-            ? [(ColorStyle *)styleObject styleConditionWithAttributes:attrs
-                                                                range:range]
-            : [styleObject styleCondition:value range:range];
+      BOOL hasStyle =
+          isColorStyle
+              ? [(ColorStyle *)styleObject styleConditionWithAttributes:attrs
+                                                                  range:range]
+              : [styleObject styleCondition:value range:range];
 
-    if (!hasStyle)
-      continue;
+      if (!hasStyle)
+        continue;
 
-    HTMLElement *wrap = [HTMLElement new];
-    wrap.tag = [styleClass tagName];
-    wrap.attributes =
-        [styleClass respondsToSelector:@selector(getParametersFromValue:)]
-            ? [styleClass getParametersFromValue:value]
-            : nil;
-    wrap.selfClosing = [styleClass isSelfClosing];
-    [wrap.children addObject:currentNode];
-    currentNode = wrap;
+      HTMLElement *wrap = [HTMLElement new];
+      wrap.tag = [styleClass tagName];
+      wrap.attributes =
+          [styleClass respondsToSelector:@selector(getParametersFromValue:)]
+              ? [styleClass getParametersFromValue:value]
+              : nil;
+      wrap.selfClosing = [styleClass isSelfClosing];
+      [wrap.children addObject:currentNode];
+      currentNode = wrap;
+    }
+
+    return currentNode;
   }
-
-  return currentNode;
 }
 
 #pragma mark - HTML rendering
@@ -333,9 +333,10 @@
 - (void)createHtmlFromNode:(HTMLNode *)node
                       into:(NSMutableData *)buffer
                    pretify:(BOOL)pretify {
+
   if ([node isKindOfClass:[HTMLTextNode class]]) {
-    HTMLTextNode *t = (HTMLTextNode *)node;
-    appendEscapedRange(buffer, t.source, t.range);
+    HTMLTextNode *textNode = (HTMLTextNode *)node;
+    appendEscapedRange(buffer, textNode.source, textNode.range);
     return;
   }
 
@@ -353,11 +354,12 @@
     return;
   }
 
-  appendOpenTag(buffer, element.tag, element.attributes ?: nullptr,
+  appendOpenTag(buffer, element.tag, element.attributes ?: nil,
                 addNewLineBefore);
 
-  for (HTMLNode *child in element.children)
+  for (HTMLNode *child in element.children) {
     [self createHtmlFromNode:child into:buffer pretify:pretify];
+  }
 
   if (addNewLineAfter)
     appendC(buffer, NewLine);
