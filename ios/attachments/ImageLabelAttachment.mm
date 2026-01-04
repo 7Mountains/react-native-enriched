@@ -7,9 +7,7 @@
 
 @implementation ImageLabelAttachment {
   NSDictionary *_headers;
-  NSString *_labelText;
-  UIFont *_font;
-  UIColor *_textColor;
+  NSAttributedString *_labelText;
   NSString *_fallbackUri;
 
   UIColor *_bgColor;
@@ -33,6 +31,10 @@
   CGFloat _imageCornerRadiusBottomRight;
   BorderStyle _borderStyleEnum;
   CGSize _textSize;
+
+  UIImage *_cachedImage;
+  CGSize _cachedImageSize;
+  BOOL _needsRedraw;
 }
 
 #pragma mark - Init
@@ -42,10 +44,16 @@
   self = [super init];
   if (!self)
     return nil;
+
   self.uri = params.url;
-  _labelText = params.text;
-  _font = styles.font;
-  _textColor = styles.textColor;
+
+  _labelText = [[NSAttributedString alloc]
+      initWithString:params.text
+          attributes:@{
+            NSFontAttributeName : styles.font,
+            NSForegroundColorAttributeName : styles.textColor
+          }];
+
   _fallbackUri = styles.fallbackImageURI;
 
   _bgColor = styles.backgroundColor;
@@ -64,7 +72,6 @@
   _imageHeight = styles.imageHeight;
   _imageResizeMode =
       [ImageLayoutUtils resizeModeFromString:styles.imageResizeMode];
-  ;
 
   _imageCornerRadiusTopLeft = styles.imageBorderRadiusTopLeft;
   _imageCornerRadiusTopRight = styles.imageBorderRadiusTopRight;
@@ -73,25 +80,26 @@
 
   _imageSpacing = 8.0;
 
-  self.image = MakeLoaderImage();
+  _needsRedraw = YES;
+
+  _textSize = [_labelText size];
   self.height = [self calculateHeight];
-  _textSize = [_labelText sizeWithAttributes:@{NSFontAttributeName : _font}];
+  self.image = MakeLoaderImage();
 
   [self loadAsync];
 
   return self;
 }
 
+#pragma mark - Layout
+
 - (CGFloat)calculateHeight {
-  CGFloat textHeight =
-      [_labelText sizeWithAttributes:@{NSFontAttributeName : _font}].height;
-
-  CGFloat imageH = _imageHeight > 0 ? _imageHeight : textHeight;
-
-  return MAX(textHeight, imageH) + _margin.top + _margin.bottom;
+  CGFloat imageH = _imageHeight > 0 ? _imageHeight : _textSize.height;
+  return MAX(_textSize.height, imageH) + _margin.top + _margin.bottom;
 }
 
 #pragma mark - Drawing helpers
+
 - (CGRect)imageRectForContentRect:(CGRect)contentRect {
   return ImageRect(contentRect, _imageWidth, _imageHeight);
 }
@@ -124,6 +132,9 @@
 }
 
 - (void)drawImageInRect:(CGRect)contentRect context:(CGContextRef)ctx {
+  if (!self.image)
+    return;
+
   CGRect imageRect = [self imageRectForContentRect:contentRect];
 
   CGContextSaveGState(ctx);
@@ -146,31 +157,26 @@
   CGRect imageRect = [self imageRectForContentRect:contentRect];
 
   CGFloat textX = CGRectGetMaxX(imageRect) + _imageSpacing + _inset.left;
-
   CGFloat textY =
       contentRect.origin.y + (contentRect.size.height - _textSize.height) * 0.5;
 
-  NSDictionary *attrs = @{
-    NSFontAttributeName : _font,
-    NSForegroundColorAttributeName : _textColor
-  };
-
-  [_labelText drawAtPoint:CGPointMake(textX, textY) withAttributes:attrs];
+  [_labelText drawAtPoint:CGPointMake(textX, textY)];
 }
 
-#pragma mark - Size
+#pragma mark - NSTextAttachment sizing
 
 - (CGRect)attachmentBoundsForTextContainer:(NSTextContainer *)textContainer
                       proposedLineFragment:(CGRect)lineFrag
                              glyphPosition:(CGPoint)position
                             characterIndex:(NSUInteger)charIndex {
+
   CGFloat padding = textContainer ? textContainer.lineFragmentPadding : 0.0;
   CGFloat width = lineFrag.size.width - padding * 2;
 
   return CGRectMake(0, 0, width, self.height);
 }
 
-#pragma mark - Rendering entry
+#pragma mark - Rendering entry (with cache)
 
 - (UIImage *)imageForBounds:(CGRect)bounds
               textContainer:(NSTextContainer *)textContainer
@@ -179,28 +185,46 @@
   if (bounds.size.width <= 0 || bounds.size.height <= 0)
     return nil;
 
+  if (!_needsRedraw && _cachedImage &&
+      CGSizeEqualToSize(bounds.size, _cachedImageSize)) {
+    return _cachedImage;
+  }
+
   UIGraphicsImageRendererFormat *format =
       [UIGraphicsImageRendererFormat defaultFormat];
   format.opaque = NO;
 
-  auto renderer = [[UIGraphicsImageRenderer alloc] initWithSize:bounds.size
-                                                         format:format];
+  UIGraphicsImageRenderer *renderer =
+      [[UIGraphicsImageRenderer alloc] initWithSize:bounds.size format:format];
 
-  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
-    CGRect contentRect = ContentRect(bounds, _margin);
+  UIImage *image =
+      [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+        CGRect contentRect = ContentRect(bounds, _margin);
 
-    [self drawBackgroundInRect:contentRect];
-    [self drawBorderInRect:contentRect];
-    [self drawImageInRect:contentRect context:ctx.CGContext];
-    [self drawTextInRect:contentRect];
-  }];
+        [self drawBackgroundInRect:contentRect];
+        [self drawBorderInRect:contentRect];
+        [self drawImageInRect:contentRect context:ctx.CGContext];
+        [self drawTextInRect:contentRect];
+      }];
+
+  _cachedImage = image;
+  _cachedImageSize = bounds.size;
+  _needsRedraw = NO;
+
+  return image;
 }
 
 #pragma mark - Image loading
 
+- (void)invalidateCache {
+  _cachedImage = nil;
+  _needsRedraw = YES;
+}
+
 - (void)updateImage:(UIImage *)image {
   dispatch_async(dispatch_get_main_queue(), ^{
     self.image = image;
+    [self invalidateCache];
     [self notifyUpdate];
   });
 }

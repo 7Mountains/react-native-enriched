@@ -4,9 +4,7 @@
 #import "ImageLabelAttachmentUtils.h"
 
 @implementation BaseLabelAttachment {
-  NSString *_labelText;
-  UIFont *_font;
-  UIColor *_textColor;
+  NSAttributedString *_labelText;
 
   UIColor *_bgColor;
   UIColor *_borderColor;
@@ -20,6 +18,8 @@
   BorderStyle _borderStyleEnum;
 
   CGSize _textSize;
+  UIImage *_cachedImage;
+  CGSize _cachedImageSize;
 }
 
 - (instancetype)initWithParams:(ContentParams *)params
@@ -28,9 +28,18 @@
   if (!self)
     return nil;
 
-  _labelText = params.text ?: @"";
-  _font = styles.font ?: [UIFont systemFontOfSize:12];
-  _textColor = styles.textColor ?: UIColor.blackColor;
+  NSMutableParagraphStyle *style = [NSMutableParagraphStyle new];
+  style.alignment = NSTextAlignmentCenter;
+  style.lineBreakMode = NSLineBreakByTruncatingTail;
+
+  NSDictionary *attrs = @{
+    NSFontAttributeName : styles.font ?: [UIFont systemFontOfSize:12],
+    NSForegroundColorAttributeName : styles.textColor ?: UIColor.blackColor,
+    NSParagraphStyleAttributeName : style
+  };
+
+  _labelText = [[NSAttributedString alloc] initWithString:params.text ?: @""
+                                               attributes:attrs];
 
   _bgColor = styles.backgroundColor;
   _borderColor = styles.borderColor;
@@ -44,10 +53,7 @@
   _inset = UIEdgeInsetsMake(styles.paddingTop, styles.paddingLeft,
                             styles.paddingBottom, styles.paddingRight);
 
-  NSDictionary *attrs = @{NSFontAttributeName : _font};
-  _textSize = [_labelText sizeWithAttributes:attrs];
-
-  self.image = nil;
+  _textSize = [_labelText size];
 
   return self;
 }
@@ -90,22 +96,12 @@
 
   CGRect contentRect = UIEdgeInsetsInsetRect(rect, _inset);
 
-  NSMutableParagraphStyle *style = [NSMutableParagraphStyle new];
-  style.alignment = NSTextAlignmentCenter;
-  style.lineBreakMode = NSLineBreakByTruncatingTail;
-
-  NSDictionary *attrs = @{
-    NSFontAttributeName : _font,
-    NSForegroundColorAttributeName : _textColor,
-    NSParagraphStyleAttributeName : style
-  };
-
   CGRect textRect =
       CGRectMake(CGRectGetMidX(contentRect) - _textSize.width / 2.0,
                  CGRectGetMidY(contentRect) - _textSize.height / 2.0,
                  _textSize.width, _textSize.height);
 
-  [_labelText drawInRect:CGRectIntegral(textRect) withAttributes:attrs];
+  [_labelText drawInRect:CGRectIntegral(textRect)];
 }
 
 #pragma mark - Renderer
@@ -113,6 +109,10 @@
 - (UIImage *)renderImageWithSize:(CGSize)size {
   if (size.width <= 0 || size.height <= 0)
     return nil;
+
+  if (_cachedImage && CGSizeEqualToSize(size, _cachedImageSize)) {
+    return _cachedImage;
+  }
 
   UIGraphicsImageRendererFormat *format =
       [UIGraphicsImageRendererFormat preferredFormat];
@@ -122,9 +122,15 @@
   UIGraphicsImageRenderer *renderer =
       [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
 
-  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
-    [self drawAttachmentInRendererContext:context size:size];
-  }];
+  UIImage *image =
+      [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        [self drawAttachmentInRendererContext:context size:size];
+      }];
+
+  _cachedImage = image;
+  _cachedImageSize = size;
+
+  return image;
 }
 
 - (void)drawAttachmentInRendererContext:
@@ -145,6 +151,7 @@
              characterIndex:(NSUInteger)charIndex {
 
   CGSize size = CGSizeMake(round(bounds.size.width), round(bounds.size.height));
+  _cachedImageSize = bounds.size;
 
   return [self renderImageWithSize:size];
 }
