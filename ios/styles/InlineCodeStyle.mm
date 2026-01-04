@@ -156,22 +156,36 @@
 
 // making sure no newlines get inline code style, it looks bad
 - (void)handleNewlines {
-  for (int i = 0; i < _input->textView.textStorage.string.length; i++) {
-    if ([[NSCharacterSet newlineCharacterSet]
-            characterIsMember:[_input->textView.textStorage.string
-                                  characterAtIndex:i]]) {
-      NSRange mockRange = NSMakeRange(0, 0);
-      // can't use detect style because it intentionally doesn't take newlines
-      // into consideration
-      UIColor *bgColor =
-          [_input->textView.textStorage attribute:NSBackgroundColorAttributeName
-                                          atIndex:i
-                                   effectiveRange:&mockRange];
-      if ([self styleCondition:bgColor range:NSMakeRange(i, 1)]) {
-        [self removeAttributes:NSMakeRange(i, 1)];
-      }
-    }
-  }
+  NSTextStorage *storage = _input->textView.textStorage;
+  NSString *string = storage.string;
+
+  [string
+      enumerateSubstringsInRange:NSMakeRange(0, string.length)
+                         options:NSStringEnumerationByLines
+                      usingBlock:^(
+                          NSString *_Nullable substring, NSRange substringRange,
+                          NSRange enclosingRange, BOOL *_Nonnull stop) {
+                        NSRange newlineRange =
+                            NSMakeRange(NSMaxRange(enclosingRange) - 1, 1);
+
+                        if (newlineRange.location >= string.length)
+                          return;
+
+                        unichar ch =
+                            [string characterAtIndex:newlineRange.location];
+                        if (![[NSCharacterSet newlineCharacterSet]
+                                characterIsMember:ch])
+                          return;
+
+                        UIColor *bgColor =
+                            [storage attribute:NSBackgroundColorAttributeName
+                                       atIndex:newlineRange.location
+                                effectiveRange:nil];
+
+                        if ([self styleCondition:bgColor range:newlineRange]) {
+                          [self removeAttributes:newlineRange];
+                        }
+                      }];
 }
 
 - (BOOL)styleConditionWithAttributes:(NSDictionary *)attrs
