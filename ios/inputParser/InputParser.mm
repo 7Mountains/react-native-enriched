@@ -36,7 +36,7 @@
 }
 
 #pragma mark - Public API
-- (NSString *)parseToHTML:(NSRange)range {
+- (NSString *)parseToHtmlFromRange:(NSRange)range {
   NSAttributedString *sub =
       [_input->textView.textStorage attributedSubstringFromRange:range];
 

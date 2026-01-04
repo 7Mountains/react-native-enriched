@@ -124,11 +124,11 @@
     return NO;
   }
   LinkStyle *linkStyle = (LinkStyle *)_input->stylesDict[@(Link)];
-  if (!attrs [[linkStyle.class attributeKey]]) {
+  if (attrs [[linkStyle.class attributeKey]]) {
     return NO;
   }
   MentionStyle *mentionStyle = (MentionStyle *)_input->stylesDict[@(Mention)];
-  if (!attrs [[mentionStyle.class attributeKey]]) {
+  if (attrs [[mentionStyle.class attributeKey]]) {
     return NO;
   }
 

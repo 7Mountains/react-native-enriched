@@ -1,15 +1,22 @@
 #import "EnrichedHTMLToAttributedStringParser.h"
 #import "EnrichedHTMLToAttributedStringParserUtils.h"
 #import "StylesStack.h"
+
 #import <libxml/HTMLparser.h>
 #import <libxml/tree.h>
 
+#include <vector>
+
 @implementation EnrichedHTMLToAttributedStringParser {
-  NSMutableAttributedString *_result;
-  StylesStack *_styleStack;
-  NSArray<id> *_paragraphModifiers;
+  NSMutableString *_plain;
+
+  StyleStack _styleStack;
   NSDictionary *_defaultTypingAttributes;
   NSDictionary *_tagsRegistry;
+  NSArray<id> *_paragraphModifiers;
+
+  std::vector<StyleContext> _styleContexts;
+  std::vector<StyleContext> _paragraphModifierSpans;
 }
 
 - (instancetype)initWithStyles:
@@ -20,7 +27,6 @@
     return nil;
 
   _defaultTypingAttributes = defaultAttributes ?: @{};
-  _styleStack = [StylesStack new];
 
   NSMutableDictionary *tags = [NSMutableDictionary dictionary];
   NSMutableArray<id> *paragraphModifiers = [NSMutableArray new];
@@ -39,46 +45,70 @@
 
   _tagsRegistry = tags.copy;
   _paragraphModifiers = paragraphModifiers.copy;
+
   return self;
 }
 
 - (NSMutableAttributedString *)parseToAttributedString:(NSString *)html {
-  _result = [[NSMutableAttributedString alloc]
-      initWithString:@""
-          attributes:_defaultTypingAttributes];
+  _plain = [NSMutableString new];
+  _styleContexts.clear();
+  _paragraphModifierSpans.clear();
 
   if (html.length == 0) {
-    return _result;
+    return [[NSMutableAttributedString alloc]
+        initWithString:@""
+            attributes:_defaultTypingAttributes];
   }
 
   const char *cHtml = html.UTF8String ?: "";
 
-  htmlDocPtr htmlDocumentPtr = htmlReadMemory(
-      cHtml, (int)strlen(cHtml), NULL, "UTF-8",
-      HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_RECOVER);
+  htmlDocPtr doc = htmlReadMemory(cHtml, (int)strlen(cHtml), NULL, "UTF-8",
+                                  HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING |
+                                      HTML_PARSE_RECOVER);
 
-  if (!htmlDocumentPtr)
-    return _result;
+  if (!doc) {
+    return [[NSMutableAttributedString alloc]
+        initWithString:@""
+            attributes:_defaultTypingAttributes];
+  }
 
-  [_result beginEditing];
-
-  xmlNodePtr root = xmlDocGetRootElement(htmlDocumentPtr);
+  xmlNodePtr root = xmlDocGetRootElement(doc);
   if (root) {
     [self traverseChildren:root];
   }
 
-  xmlFreeDoc(htmlDocumentPtr);
-  [_result endEditing];
-  return _result;
+  xmlFreeDoc(doc);
+
+  NSMutableAttributedString *result = [[NSMutableAttributedString alloc]
+      initWithString:_plain
+          attributes:_defaultTypingAttributes];
+
+  [result beginEditing];
+
+  for (const StyleContext &styleApplication : _styleContexts) {
+    [styleApplication.style
+        addAttributesInAttributedString:result
+                                  range:styleApplication.range
+                             attributes:styleApplication.attributes];
+  }
+
+  for (const StyleContext &styleContext : _paragraphModifierSpans) {
+    [styleContext.style
+        addAttributesInAttributedString:result
+                                  range:styleContext.range
+                             attributes:styleContext.attributes];
+  }
+
+  [result endEditing];
+  return result;
 }
 
-// MARK: - Traversal
+#pragma mark - Traversal
+
 - (void)traverseChildren:(xmlNodePtr)parent {
   for (xmlNodePtr cur = parent->children; cur; cur = cur->next) {
-
     xmlNodePtr nextRenderable = nextRenderableSibling(cur);
     BOOL isLastRenderable = (nextRenderable == NULL);
-
     [self traverseNode:cur isLastRenderable:isLastRenderable];
   }
 }
@@ -93,17 +123,15 @@
     return;
   }
 
-  NSString *tag = cur->name
-                      ? [NSString stringWithUTF8String:(const char *)cur->name]
-                            .lowercaseString
-                      : @"";
+  NSString *tag =
+      cur->name ? [NSString stringWithUTF8String:(const char *)cur->name] : @"";
 
   id<BaseStyleProtocol> style = _tagsRegistry[tag];
   NSDictionary *attributes = HTMLAttributesFromNodeAndParents(cur);
 
   BOOL isBlock = isBlockTag(tag);
 
-  NSUInteger lengthBefore = _result.length;
+  NSUInteger lengthBefore = _plain.length;
 
   if (style && [[style class] isSelfClosing]) {
     [self traverseSelfClosing:style attributes:attributes tag:tag];
@@ -111,31 +139,30 @@
   }
 
   if (style) {
-    [_styleStack pushStyle:style attributes:attributes];
+    _styleStack.push(style, attributes);
   }
 
   if (cur->children) {
     [self traverseChildren:cur];
   }
 
-  BOOL hasContent = _result.length > lengthBefore;
+  BOOL hasContent = _plain.length > lengthBefore;
 
   if (!hasContent && isBlock) {
-    // Append ZWS for empty lists/blockquotes
     [self appendEmptyBlockPlaceholder];
   }
 
   if (style) {
-    [_styleStack popStyle:style];
+    _styleStack.pop(style);
   }
 
   if (isTopLevelNode(cur) && isLastRenderable) {
-    [self applyParagraphModifiersIfNeeded:attributes];
+    [self collectParagraphModifiersIfNeeded:attributes];
     return;
   }
 
   if (isBlockTag(tag)) {
-    [self applyParagraphModifiersIfNeeded:attributes];
+    [self collectParagraphModifiersIfNeeded:attributes];
     if (!HTMLIsLastParagraphInBlockContext(
             cur, cur->name, cur->parent ? cur->parent->name : NULL,
             isLastRenderable)) {
@@ -152,16 +179,13 @@
   if (!text)
     return;
 
-  // Collapse whitespace
   NSString *collapsed = collapseWhiteSpaceIfNeeded(text);
   if (collapsed.length == 0)
     return;
 
-  // Skip leading whitespace-only content
-  if (_result.length == 0 && isWhiteSpaceOnly(collapsed))
+  if (_plain.length == 0 && isWhiteSpaceOnly(collapsed))
     return;
 
-  // Trim leading space if needed
   if ([self shouldTrimLeadingSpaceForText:collapsed]) {
     collapsed = [collapsed substringFromIndex:1];
   }
@@ -169,53 +193,92 @@
   [self appendText:collapsed];
 }
 
+#pragma mark - Plain append + span collection
+
+- (void)appendText:(NSString *)text {
+  if (text.length == 0)
+    return;
+
+  NSUInteger start = _plain.length;
+  [_plain appendString:text];
+
+  NSRange range = NSMakeRange(start, text.length);
+
+  _styleStack.applyActiveStyles(_styleContexts, range);
+}
+
 - (void)appendEmptyLine {
   [self appendText:@"\n"];
 }
 
-- (void)appendText:(NSString *)text {
-  NSUInteger start = _result.length;
-
-  [_result appendAttributedString:[[NSAttributedString alloc]
-                                      initWithString:text
-                                          attributes:_defaultTypingAttributes]];
-
-  NSRange range = NSMakeRange(start, text.length);
-
-  [_styleStack applyStylesToAttributedString:_result range:range];
+- (void)appendEmptyBlockPlaceholder {
+  // ZWS
+  [self appendText:@"\u200B"];
 }
+
+#pragma mark - Self closing
 
 - (void)traverseSelfClosing:(id<BaseStyleProtocol>)style
                  attributes:(NSDictionary *)attributes
                         tag:(NSString *)tag {
+  // <br> hadnling
   if ([tag isEqualToString:@"br"]) {
     [self appendEmptyLine];
     return;
   }
-  BOOL isParagraph = [style.class isParagraphStyle];
 
-  if (isParagraph && _result.length > 0) {
-    unichar last = [[_result string] characterAtIndex:_result.length - 1];
+  const BOOL isBlock = [style.class isParagraphStyle];
+
+  // if it's a block tag close previous style
+  if (isBlock && _plain.length > 0) {
+    unichar last = [_plain characterAtIndex:_plain.length - 1];
     if (last != '\n') {
       [self appendEmptyLine];
     }
   }
 
-  unichar rep = 0xFFFC;
-  NSString *placeholder = [NSString stringWithCharacters:&rep length:1];
+  // append U+FFFC
+  static const unichar replacementChar = 0xFFFC;
+  NSString *placeholder = [NSString stringWithCharacters:&replacementChar
+                                                  length:1];
 
-  NSUInteger start = _result.length;
-  [_result appendAttributedString:[[NSAttributedString alloc]
-                                      initWithString:placeholder
-                                          attributes:_defaultTypingAttributes]];
+  const NSUInteger start = _plain.length;
+  [_plain appendString:placeholder];
 
-  NSRange r = NSMakeRange(start, 1);
+  const NSRange inlineRange = NSMakeRange(start, 1);
 
-  [style addAttributesInAttributedString:_result range:r attributes:attributes];
-  if (isParagraph) {
+  _styleContexts.emplace_back(style, inlineRange, attributes);
+
+  if (isBlock) {
+    NSRange paragraphRange = [_plain
+        paragraphRangeForRange:NSMakeRange(MAX((NSInteger)_plain.length - 1, 0),
+                                           0)];
+
+    for (id<BaseStyleProtocol> modifier in _paragraphModifiers) {
+      _paragraphModifierSpans.emplace_back(modifier, paragraphRange,
+                                           attributes);
+    }
+
     [self appendEmptyLine];
   }
 }
+
+#pragma mark - Paragraph modifiers (collect only)
+
+- (void)collectParagraphModifiersIfNeeded:(NSDictionary *)attributes {
+  if (_plain.length == 0 || attributes.count == 0)
+    return;
+  NSRange paragraphRange = [_plain
+      paragraphRangeForRange:NSMakeRange(MAX((NSInteger)_plain.length - 1, 0),
+                                         0)];
+
+  for (id<BaseStyleProtocol> modifier in _paragraphModifiers) {
+    StyleContext styleContext(modifier, paragraphRange, attributes);
+    _paragraphModifierSpans.push_back(styleContext);
+  }
+}
+
+#pragma mark - Helpers
 
 - (xmlNodePtr)nextRenderableSibling:(xmlNodePtr)node {
   for (xmlNodePtr next = node->next; next; next = next->next) {
@@ -237,36 +300,14 @@
 }
 
 - (BOOL)shouldTrimLeadingSpaceForText:(NSString *)text {
-  if (_result.length == 0)
+  if (_plain.length == 0)
     return NO;
-
   if (![text hasPrefix:@" "])
     return NO;
 
-  unichar last = [[_result string] characterAtIndex:_result.length - 1];
-
+  unichar last = [_plain characterAtIndex:_plain.length - 1];
   return [[NSCharacterSet whitespaceAndNewlineCharacterSet]
       characterIsMember:last];
-}
-
-- (void)appendEmptyBlockPlaceholder {
-  NSString *placeholder = @"\u200B";
-  [self appendText:placeholder];
-}
-
-- (void)applyParagraphModifiersIfNeeded:(NSDictionary *)attributes {
-  if (_result.length == 0 || attributes.count == 0)
-    return;
-
-  NSRange paragraphRange = [_result.string
-      paragraphRangeForRange:NSMakeRange(MAX((NSInteger)_result.length - 1, 0),
-                                         0)];
-
-  for (id<BaseStyleProtocol> modifier in _paragraphModifiers) {
-    [modifier addAttributesInAttributedString:_result
-                                        range:paragraphRange
-                                   attributes:attributes];
-  }
 }
 
 @end
