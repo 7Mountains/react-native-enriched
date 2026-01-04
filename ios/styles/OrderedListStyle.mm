@@ -13,6 +13,8 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
 
 @implementation OrderedListStyle {
   EnrichedTextInputView *_input;
+  NSParagraphStyle *_cachedAttributes;
+  CGFloat _cachedHeadIntent;
 }
 
 + (StyleType)getStyleType {
@@ -46,6 +48,23 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
          [_input->config orderedListGapWidth];
 }
 
+- (NSParagraphStyle *)prepareAttributes {
+  CGFloat headIntent = [self getHeadIndent];
+  if (_cachedHeadIntent == headIntent && _cachedAttributes) {
+    return _cachedAttributes;
+  }
+
+  _cachedHeadIntent = headIntent;
+
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  pStyle.textLists = TextLists;
+  pStyle.headIndent = headIntent;
+  pStyle.firstLineHeadIndent = headIntent;
+  pStyle.tailIndent = DefaultListTailIndent;
+  _cachedAttributes = pStyle;
+  return _cachedAttributes;
+}
+
 - (instancetype)initWithInput:(id)input {
   self = [super init];
   _input = (EnrichedTextInputView *)input;
@@ -66,22 +85,13 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-  CGFloat headIntent = [self getHeadIndent];
-  pStyle.textLists = TextLists;
-  pStyle.headIndent = headIntent;
-  pStyle.firstLineHeadIndent = headIntent;
-  pStyle.tailIndent = DefaultListTailIndent;
   [attributedString addAttribute:NSParagraphStyleAttributeName
-                           value:pStyle
+                           value:[self prepareAttributes]
                            range:range];
 }
 
 // we assume correct paragraph range is already given
 - (void)addAttributes:(NSRange)range {
-  NSTextList *numberBullet =
-      [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerDecimal
-                                       options:0];
   NSArray *paragraphs =
       [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
                                                range:range];
@@ -122,13 +132,11 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      value == nil ? [NSMutableParagraphStyle new]
-                                   : [(NSParagraphStyle *)value mutableCopy];
-                  pStyle.textLists = TextLists;
-                  CGFloat headIntet = [self getHeadIndent];
-                  pStyle.headIndent = headIntet;
-                  pStyle.firstLineHeadIndent = headIntet;
-                  pStyle.tailIndent = DefaultListTailIndent;
+                      [_cachedAttributes mutableCopy];
+                  pStyle.alignment = value != nil
+                                         ? ((NSParagraphStyle *)value).alignment
+                                         : NSTextAlignmentNatural;
+
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
                              value:pStyle

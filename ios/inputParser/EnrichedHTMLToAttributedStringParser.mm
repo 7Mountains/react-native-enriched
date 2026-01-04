@@ -193,8 +193,6 @@
   [self appendText:collapsed];
 }
 
-#pragma mark - Plain append + span collection
-
 - (void)appendText:(NSString *)text {
   if (text.length == 0)
     return;
@@ -279,7 +277,6 @@
 }
 
 #pragma mark - Helpers
-
 - (xmlNodePtr)nextRenderableSibling:(xmlNodePtr)node {
   for (xmlNodePtr next = node->next; next; next = next->next) {
     if (next->type == XML_ELEMENT_NODE) {

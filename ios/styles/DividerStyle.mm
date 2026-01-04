@@ -8,6 +8,8 @@ static NSString *const placeholder = @"\uFFFC";
 
 @implementation DividerStyle {
   EnrichedTextInputView *_input;
+  NSDictionary *_cachedAttributes;
+  InputConfig *_cachedConfig;
 }
 
 + (StyleType)getStyleType {
@@ -37,6 +39,8 @@ static NSString *const placeholder = @"\uFFFC";
 - (instancetype)initWithInput:(id)input {
   if (self = [super init]) {
     _input = (EnrichedTextInputView *)input;
+    _cachedConfig = nil;
+    _cachedAttributes = nil;
   }
   return self;
 }
@@ -124,30 +128,31 @@ static NSString *const placeholder = @"\uFFFC";
                }];
 }
 
-#pragma mark - Attachment & Attributes
-
-- (DividerAttachment *)prepareAttachment {
+- (NSDictionary *)prepareAttributes {
   InputConfig *config = _input->config;
+
+  if (_cachedConfig == config && _cachedAttributes != nil) {
+    return _cachedAttributes;
+  }
+  _cachedConfig = config;
+
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+
   DividerAttachment *attachment =
       [[DividerAttachment alloc] initWithStyles:config.dividerColor
                                          height:config.dividerHeight
                                       thickness:config.dividerThickness];
-  return attachment;
-}
 
-- (NSDictionary *)prepareAttributes {
-  InputConfig *config = _input->config;
-
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-
-  return @{
+  _cachedAttributes = @{
     NSParagraphStyleAttributeName : pStyle,
-    NSAttachmentAttributeName : [self prepareAttachment],
+    NSAttachmentAttributeName : attachment,
     NSFontAttributeName : config.primaryFont,
     NSForegroundColorAttributeName : config.primaryColor,
     NSFontAttributeName : config.primaryFont,
     ReadOnlyParagraphKey : @(YES),
   };
+
+  return _cachedAttributes;
 }
 
 - (BOOL)isParagraphEmpty:(NSRange)paragraphRange

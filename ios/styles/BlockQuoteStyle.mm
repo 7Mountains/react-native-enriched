@@ -11,6 +11,9 @@
 @implementation BlockQuoteStyle {
   EnrichedTextInputView *_input;
   NSArray *_stylesToExclude;
+  UIColor *_blockQuoteForegroundColor;
+  CGFloat _cachedHeadIntent;
+  NSDictionary *_cachedAttributes;
 }
 
 + (StyleType)getStyleType {
@@ -50,6 +53,30 @@
          [_input->config blockquoteGapWidth];
 }
 
+- (NSDictionary *)prepareAttributes {
+  UIColor *configBlockQuoteColor = _input->config.blockquoteColor;
+  CGFloat headIntent = [self getHeadIndent];
+  if (_cachedHeadIntent == headIntent && _cachedAttributes &&
+      _blockQuoteForegroundColor == configBlockQuoteColor) {
+    return _cachedAttributes;
+  }
+
+  _cachedHeadIntent = headIntent;
+  _blockQuoteForegroundColor = configBlockQuoteColor;
+
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  pStyle.headIndent = headIntent;
+  pStyle.firstLineHeadIndent = headIntent;
+  pStyle.tailIndent = DefaultListTailIndent;
+  NSDictionary *attributes = @{
+    NSForegroundColorAttributeName : _input->config.blockquoteColor,
+    NSParagraphStyleAttributeName : pStyle,
+    NSForegroundColorAttributeName : _input->config.blockquoteColor
+  };
+  _cachedAttributes = attributes;
+  return _cachedAttributes;
+}
+
 // the range will already be the full paragraph/s range
 - (void)applyStyle:(NSRange)range {
   BOOL isStylePresent = [self detectStyle:range];
@@ -65,18 +92,7 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)_ {
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-  auto headIntent = [self getHeadIndent];
-  pStyle.headIndent = headIntent;
-  pStyle.firstLineHeadIndent = headIntent;
-  pStyle.tailIndent = DefaultListTailIndent;
-  NSDictionary *attributes = @{
-    NSForegroundColorAttributeName : _input->config.blockquoteColor,
-    NSParagraphStyleAttributeName : pStyle,
-    NSForegroundColorAttributeName : _input->config.blockquoteColor
-  };
-
-  [attributedString addAttributes:attributes range:range];
+  [attributedString addAttributes:[self prepareAttributes] range:range];
 }
 
 - (void)addAttributes:(NSRange)range {

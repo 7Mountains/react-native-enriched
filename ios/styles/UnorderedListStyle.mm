@@ -13,6 +13,8 @@ static NSArray<NSTextList *> *const TextLists = @[ bullet ];
 
 @implementation UnorderedListStyle {
   EnrichedTextInputView *_input;
+  NSParagraphStyle *_cachedAttributes;
+  CGFloat _cachedHeadIntent;
 }
 
 + (StyleType)getStyleType {
@@ -61,19 +63,30 @@ static NSArray<NSTextList *> *const TextLists = @[ bullet ];
   }
 }
 
+- (NSParagraphStyle *)prepareAttributes {
+  CGFloat headIntent = [self getHeadIndent];
+  if (_cachedHeadIntent == headIntent && _cachedAttributes) {
+    return _cachedAttributes;
+  }
+
+  _cachedHeadIntent = headIntent;
+
+  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  pStyle.textLists = TextLists;
+  pStyle.headIndent = headIntent;
+  pStyle.firstLineHeadIndent = headIntent;
+  pStyle.tailIndent = DefaultListTailIndent;
+  _cachedAttributes = pStyle;
+  return _cachedAttributes;
+}
+
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-  CGFloat headIndent = [self getHeadIndent];
-  pStyle.textLists = TextLists;
-  pStyle.headIndent = headIndent;
-  pStyle.firstLineHeadIndent = headIndent;
-  pStyle.tailIndent = DefaultListTailIndent;
   [attributedString addAttribute:NSParagraphStyleAttributeName
-                           value:pStyle
+                           value:[self prepareAttributes]
                            range:range];
 }
 
@@ -119,13 +132,10 @@ static NSArray<NSTextList *> *const TextLists = @[ bullet ];
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      value == nil ? [NSMutableParagraphStyle new]
-                                   : [(NSParagraphStyle *)value mutableCopy];
-                  pStyle.textLists = TextLists;
-                  CGFloat headIntet = [self getHeadIndent];
-                  pStyle.headIndent = headIntet;
-                  pStyle.firstLineHeadIndent = headIntet;
-                  pStyle.tailIndent = DefaultListTailIndent;
+                      [_cachedAttributes mutableCopy];
+                  pStyle.alignment = value != nil
+                                         ? ((NSParagraphStyle *)value).alignment
+                                         : NSTextAlignmentNatural;
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
                              value:pStyle
