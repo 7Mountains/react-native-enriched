@@ -1,15 +1,11 @@
 #import "AttachmentInvalidationBatcher.h"
 
-@interface AttachmentInvalidationBatcher ()
-
-@property(nonatomic, weak) UITextView *textView;
-@property(nonatomic, strong) NSMutableSet<NSTextAttachment *> *pending;
-@property(nonatomic, strong) NSMutableSet<NSTextAttachment *> *nextBatch;
-@property(nonatomic) BOOL isProcessing;
-
-@end
-
-@implementation AttachmentInvalidationBatcher
+@implementation AttachmentInvalidationBatcher {
+  BOOL _isProcessing;
+  NSMutableSet *_pending;
+  NSMutableSet *_nextBatch;
+  UITextView __weak *_textView;
+}
 
 - (instancetype)initWithTextView:(UITextView *)textView {
   self = [super init];
@@ -30,9 +26,9 @@
   if (!attachment)
     return;
 
-  [self.pending addObject:attachment];
+  [_pending addObject:attachment];
 
-  if (!self.isProcessing) {
+  if (!_isProcessing) {
     [self scheduleTick];
   }
 }
@@ -46,23 +42,22 @@
 }
 
 - (void)processPending {
-  if (self.isProcessing)
+  if (_isProcessing)
     return;
 
-  self.isProcessing = YES;
+  _isProcessing = YES;
 
-  NSTextStorage *storage = self.textView.textStorage;
-  if (!storage || self.pending.count == 0) {
-    self.isProcessing = NO;
+  NSTextStorage *storage = _textView.textStorage;
+  NSLayoutManager *layoutManager = _textView.layoutManager;
+  if (_pending.count == 0) {
+    _isProcessing = NO;
     return;
   }
 
-  NSSet<NSTextAttachment *> *targets = [self.pending copy];
-  [self.pending removeAllObjects];
+  NSMutableSet<NSTextAttachment *> *targets = [_pending mutableCopy];
+  [_pending removeAllObjects];
 
   NSRange fullRange = NSMakeRange(0, storage.length);
-
-  [storage beginEditing];
 
   [storage enumerateAttribute:NSAttachmentAttributeName
                       inRange:fullRange
@@ -72,39 +67,20 @@
                        return;
 
                      if ([targets containsObject:value]) {
-                       [storage edited:NSTextStorageEditedAttributes
-                                    range:range
-                           changeInLength:0];
+                       [layoutManager
+                           invalidateLayoutForCharacterRange:range
+                                        actualCharacterRange:nullptr];
+                       [layoutManager invalidateDisplayForCharacterRange:range];
+                       [targets removeObject:value];
                      }
                    }];
 
-  [storage endEditing];
-
-  self.isProcessing = NO;
-
-  if (self.pending.count > 0) {
+  _isProcessing = NO;
+  // if we added a new quee while processing we have to schedule a new tick
+  // right after processing
+  if (_pending.count > 0) {
     [self scheduleTick];
   }
-}
-
-#pragma mark - Invalidation
-
-- (void)invalidateAttachment:(NSTextAttachment *)attachment
-                   inStorage:(NSTextStorage *)storage {
-
-  NSRange fullRange = NSMakeRange(0, storage.length);
-
-  [storage enumerateAttribute:NSAttachmentAttributeName
-                      inRange:fullRange
-                      options:0
-                   usingBlock:^(id value, NSRange range, BOOL *stop) {
-                     if (value == attachment) {
-                       [storage edited:NSTextStorageEditedAttributes
-                                    range:range
-                           changeInLength:0];
-                       *stop = YES;
-                     }
-                   }];
 }
 
 @end
