@@ -179,7 +179,7 @@
                                   atIndex:i
                            effectiveRange:nil];
 
-    if ([self styleCondition:bgColor range:newlineRange]) {
+    if (bgColor != nil && [self styleCondition:bgColor range:newlineRange]) {
       [self removeAttributes:newlineRange];
     }
   }
@@ -202,9 +202,14 @@
 // color if there is no mention
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
   UIColor *bgColor = (UIColor *)value;
+
+  if (!bgColor) {
+    return NO;
+  }
+
   MentionStyle *mStyle =
       (MentionStyle *)_input->stylesDict[@([MentionStyle getStyleType])];
-  return bgColor != nullptr && mStyle != nullptr && ![mStyle detectStyle:range];
+  return mStyle != nullptr && ![mStyle detectStyle:range];
 }
 
 - (BOOL)detectStyle:(NSRange)range {

@@ -408,112 +408,158 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   }
 }
 
-// handles detecting and removing automatic links
-- (void)handleAutomaticLinks:(NSString *)word inRange:(NSRange)wordRange {
+// Handles detecting and removing automatic links
+- (void)handleAutomaticLinks:(NSString *)word inRange:(NSRange)range {
+  if (word.length == 0) {
+    return;
+  }
+
+  if ([self shouldIgnoreAutomaticLinksInRange:range]) {
+    return;
+  }
+
+  [self removeConnectedLinksIfNeeded:word range:range];
+
+  if ([self hasManualLinkInRange:range]) {
+    return;
+  }
+
+  BOOL matchesURL = [self stringMatchesAnyURLRegex:word];
+
+  if (!matchesURL) {
+    [self removeStaleAutomaticLinkIfNeeded:range];
+    return;
+  }
+
+  if ([self isSameAutomaticLinkAlreadyApplied:word range:range]) {
+    return;
+  }
+
+  [self addLink:word url:word range:range manual:NO withSelection:NO];
+
+  [_input emitOnLinkDetectedEvent:word url:word range:range];
+}
+
+#pragma mark - Context checks
+
+- (BOOL)shouldIgnoreAutomaticLinksInRange:(NSRange)range {
   InlineCodeStyle *inlineCodeStyle =
-      [_input->stylesDict objectForKey:@([InlineCodeStyle getStyleType])];
-  MentionStyle *mentionStyle = (MentionStyle *)[_input->stylesDict
-      objectForKey:@([MentionStyle getStyleType])];
+      _input->stylesDict[@([InlineCodeStyle getStyleType])];
+  MentionStyle *mentionStyle =
+      (MentionStyle *)_input->stylesDict[@([MentionStyle getStyleType])];
   CodeBlockStyle *codeBlockStyle =
-      [_input->stylesDict objectForKey:@([CodeBlockStyle getStyleType])];
+      _input->stylesDict[@([CodeBlockStyle getStyleType])];
 
-  if (inlineCodeStyle == nullptr || mentionStyle == nullptr) {
-    return;
+  if (!inlineCodeStyle || !mentionStyle || !codeBlockStyle) {
+    return YES;
   }
 
-  // we don't recognize links along mentions
-  if ([mentionStyle anyOccurence:wordRange]) {
-    return;
-  }
+  // Do not detect links inside mentions, inline code, or code blocks
+  if ([mentionStyle anyOccurence:range])
+    return YES;
+  if ([inlineCodeStyle anyOccurence:range])
+    return YES;
+  if ([codeBlockStyle anyOccurence:range])
+    return YES;
 
-  // we don't recognize links among inline code
-  if ([inlineCodeStyle anyOccurence:wordRange]) {
-    return;
-  }
+  return NO;
+}
 
-  // we don't recognize links in codeblocks
-  if ([codeBlockStyle anyOccurence:wordRange]) {
-    return;
-  }
-
-  // remove connected different links
-  [self removeConnectedLinksIfNeeded:word range:wordRange];
-
-  // we don't recognize automatic links along manual ones
+- (BOOL)hasManualLinkInRange:(NSRange)range {
   __block BOOL manualLinkPresent = NO;
+
   [_input->textView.textStorage
       enumerateAttribute:ManualLinkAttributeName
-                 inRange:wordRange
+                 inRange:range
                  options:0
-              usingBlock:^(id value, NSRange range, BOOL *stop) {
-                NSString *urlValue = (NSString *)value;
-                if (urlValue != nullptr) {
+              usingBlock:^(id value, NSRange _, BOOL *stop) {
+                if (value != nil) {
                   manualLinkPresent = YES;
                   *stop = YES;
                 }
               }];
-  if (manualLinkPresent) {
-    return;
+
+  return manualLinkPresent;
+}
+
+#pragma mark - Regex detection
+
+- (BOOL)stringMatchesAnyURLRegex:(NSString *)string {
+  NSRange fullRange = NSMakeRange(0, string.length);
+
+  return ([[self.class fullURLRegex] numberOfMatchesInString:string
+                                                     options:0
+                                                       range:fullRange] > 0 ||
+          [[self.class wwwURLRegex] numberOfMatchesInString:string
+                                                    options:0
+                                                      range:fullRange] > 0 ||
+          [[self.class bareURLRegex] numberOfMatchesInString:string
+                                                     options:0
+                                                       range:fullRange] > 0);
+}
+
++ (NSRegularExpression *)fullURLRegex {
+  static NSRegularExpression *regex;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    regex =
+        [NSRegularExpression regularExpressionWithPattern:
+                                 @"http(s)?://"
+                                 @"www\\.[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-z]"
+                                 @"{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"
+                                                  options:0
+                                                    error:nil];
+  });
+  return regex;
+}
+
++ (NSRegularExpression *)wwwURLRegex {
+  static NSRegularExpression *regex;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    regex =
+        [NSRegularExpression regularExpressionWithPattern:
+                                 @"www\\.[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-z]"
+                                 @"{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"
+                                                  options:0
+                                                    error:nil];
+  });
+  return regex;
+}
+
++ (NSRegularExpression *)bareURLRegex {
+  static NSRegularExpression *regex;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    regex = [NSRegularExpression
+        regularExpressionWithPattern:@"[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-z]{"
+                                     @"2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"
+                             options:0
+                               error:nil];
+  });
+  return regex;
+}
+
+#pragma mark - Link cleanup / deduplication
+
+- (void)removeStaleAutomaticLinkIfNeeded:(NSRange)range {
+  // anyOccurence means an automatic link exists here
+  if ([self anyOccurence:range]) {
+    [self removeAttributes:range];
+  }
+}
+
+- (BOOL)isSameAutomaticLinkAlreadyApplied:(NSString *)url range:(NSRange)range {
+  if (![self detectStyle:range]) {
+    return NO;
   }
 
-  NSRegularExpression *fullRegex = [NSRegularExpression
-      regularExpressionWithPattern:@"http(s)?:\\/\\/"
-                                   @"www\\.[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-"
-                                   @"z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"
-                           options:0
-                             error:nullptr];
-  NSRegularExpression *wwwRegex = [NSRegularExpression
-      regularExpressionWithPattern:@"www\\.[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-"
-                                   @"z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"
-                           options:0
-                             error:nullptr];
-  NSRegularExpression *bareRegex = [NSRegularExpression
-      regularExpressionWithPattern:@"[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-z]{2,"
-                                   @"6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"
-                           options:0
-                             error:nullptr];
-
-  NSString *regexPassedUrl = nullptr;
-
-  if ([fullRegex numberOfMatchesInString:word
-                                 options:0
-                                   range:NSMakeRange(0, word.length)]) {
-    regexPassedUrl = word;
-  } else if ([wwwRegex numberOfMatchesInString:word
-                                       options:0
-                                         range:NSMakeRange(0, word.length)]) {
-    regexPassedUrl = word;
-  } else if ([bareRegex numberOfMatchesInString:word
-                                        options:0
-                                          range:NSMakeRange(0, word.length)]) {
-    regexPassedUrl = word;
-  } else if ([self anyOccurence:wordRange]) {
-    // there was some automatic link (because anyOccurence is true and we are
-    // sure there are no manual links) still, it didn't pass any regex - needs
-    // to be removed
-    [self removeAttributes:wordRange];
+  LinkData *currentData = [self getLinkDataAt:range.location];
+  if (!currentData) {
+    return NO;
   }
 
-  if (regexPassedUrl != nullptr) {
-    // add style only if needed
-    BOOL addStyle = YES;
-    if ([self detectStyle:wordRange]) {
-      LinkData *currentData = [self getLinkDataAt:wordRange.location];
-      if (currentData != nullptr && currentData.url != nullptr &&
-          [currentData.url isEqualToString:regexPassedUrl]) {
-        addStyle = NO;
-      }
-    }
-    if (addStyle) {
-      [self addLink:word
-                    url:regexPassedUrl
-                  range:wordRange
-                 manual:NO
-          withSelection:NO];
-      // emit onLinkDetected if style was added
-      [_input emitOnLinkDetectedEvent:word url:regexPassedUrl range:wordRange];
-    }
-  }
+  return (currentData.url != nil && [currentData.url isEqualToString:url]);
 }
 
 // handles refreshing manual links
