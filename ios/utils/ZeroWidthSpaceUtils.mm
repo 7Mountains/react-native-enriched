@@ -81,8 +81,6 @@ static NSString *const kZWSP = @"\u200B";
   NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
   NSRange preRemoveSelection = input->textView.selectedRange;
 
-  NSArray<id<BaseStyleProtocol>> *styles = [self ZWSStylesForInput:input];
-
   CFStringInlineBuffer buffer;
   CFStringInitInlineBuffer((CFStringRef)string, &buffer,
                            CFRangeMake(0, length));
