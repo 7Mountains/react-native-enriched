@@ -164,7 +164,7 @@
     if (!HTMLIsLastParagraphInBlockContext(
             cur, cur->name, cur->parent ? cur->parent->name : NULL,
             isLastRenderable)) {
-      [self appendEmptyLine];
+      [self appendEmptyLineToBLockTag];
     }
   }
 
@@ -212,7 +212,7 @@
   _styleStack.applyActiveStyles(_styleContexts, range);
 }
 
-- (void)appendEmptyLine {
+- (void)appendEmptyLineToBLockTag {
   NSUInteger start = _plain.length;
   [_plain appendString:@"\n"];
 
@@ -237,7 +237,7 @@
   if (isBlock && _plain.length > 0) {
     unichar last = [_plain characterAtIndex:_plain.length - 1];
     if (last != '\n') {
-      [self appendEmptyLine];
+      [self appendEmptyLineToBLockTag];
     }
   }
 
@@ -263,7 +263,7 @@
                                            attributes);
     }
 
-    [self appendEmptyLine];
+    [self appendEmptyLineToBLockTag];
   }
 }
 
