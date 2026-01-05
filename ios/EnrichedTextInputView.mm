@@ -49,6 +49,7 @@ using namespace facebook::react;
   UITapGestureRecognizer *tapRecognizer;
   NSString *_recentlyEmittedAlignment;
   AttachmentInvalidationBatcher *_attachmentBatcher;
+  BOOL _emitChangeText;
 }
 
 // MARK: - Component utils
@@ -95,6 +96,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   blockEmitting = NO;
   _emitFocusBlur = YES;
   _recentlyEmittedAlignment = nil;
+  _emitChangeText = NO;
 
   defaultTypingAttributes =
       [[NSMutableDictionary<NSAttributedStringKey, id> alloc] init];
@@ -975,6 +977,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // isOnChangeHtmlSet
   _emitHtml = newViewProps.isOnChangeHtmlSet;
 
+  // isOnChangeTextSet
+  _emitChangeText = newViewProps.isOnChangeTextSet;
+
   [super updateProps:props oldProps:oldProps];
 
   // if default value changed it will be fired in default value update
@@ -1843,11 +1848,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   H5Style *h5Style = stylesDict[@([H5Style getStyleType])];
   H6Style *h6Style = stylesDict[@([H6Style getStyleType])];
 
-  bool shouldHandleImproperHeadings =
-      h1Style != nullptr && h2Style != nullptr && h3Style != nullptr &&
-      h4Style != nullptr && h5Style != nullptr && h6Style != nullptr;
+  bool canHandleImproperHeadings = h1Style != nullptr && h2Style != nullptr &&
+                                   h3Style != nullptr && h4Style != nullptr &&
+                                   h5Style != nullptr && h6Style != nullptr;
 
-  if (shouldHandleImproperHeadings) {
+  if (canHandleImproperHeadings) {
     [HeadingsParagraphInvariantUtils handleImproperHeadingStyles:@[
       h1Style, h2Style, h3Style, h4Style, h5Style, h6Style
     ]
@@ -1886,7 +1891,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
     // emit onChangeText event
     auto emitter = [self getEventEmitter];
-    if (emitter != nullptr) {
+    if (emitter != nullptr && _emitChangeText) {
       // set the recent input string only if the emitter is defined
       _recentInputString = [textView.textStorage.string copy];
 

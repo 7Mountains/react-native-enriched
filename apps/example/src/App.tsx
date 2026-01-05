@@ -87,13 +87,76 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const contentHtml = Array(1)
-  .fill(
-    `<p alignment="center"><u>Test</u></p><checklist alignment="center" checked="false">This is a checklist item</checklist>`
-  )
-  .join('');
+const generateHugeHtml = (repeat = 200) => {
+  const parts: string[] = [];
+  parts.push('<html>');
 
-const html = '<html>' + contentHtml + '</html>';
+  // small helper to make deterministic colors
+  // const colorAt = (i: number) => {
+  //   const r = (37 * (i + 1)) % 256;
+  //   const g = (83 * (i + 7)) % 256;
+  //   const b = (199 * (i + 13)) % 256;
+  //   const toHex = (n: number) => n.toString(16).padStart(2, '0');
+  //   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  // };
+
+  for (let i = 0; i < repeat; i++) {
+    // const col = colorAt(i);
+    const imgW = 200 + (i % 5) * 40;
+    const imgH = 100 + (i % 3) * 30;
+
+    parts.push(
+      // Headings
+      `\n<h1>Section ${i + 1}</h1>`,
+      `\n<h2>Subsection ${i + 1}.1</h2>`,
+      `\n<h3>Topic ${i + 1}.1.a</h3>`,
+
+      // Paragraph with mixed inline styles
+      `\n<p>This is a <b>bold</b> and <i>italic</i> paragraph with <u>underline</u>, ` +
+        `<s>strike</s>, <code>inline_code_${i}</code>, ` +
+        `<a href="https://example.com/${i}">a link ${i}</a>, ` +
+        `<mention text="@alex_${i}" indicator="@">@alex_${i}</mention>, ` +
+        `<mention text="#general" indicator="#" text="#general">#general</mention>, ` +
+        `and some plain text to bulk it up.</p>`,
+
+      // Line break
+      `\n<br>`,
+
+      // Unordered list
+      `<ul>`,
+      `<li>bullet A ${i}</li>`,
+      `<li>bullet B ${i}</li>`,
+      `<li>bullet C ${i}</li>`,
+      `</ul>`,
+
+      // Ordered list
+      `\n<ol>`,
+      `\n<li>step 1.${i}</li>`,
+      `\n<li>step 2.${i}</li>`,
+      `\n<li>step 3.${i}</li>`,
+      `\n</ol>`,
+
+      // Blockquote
+      `\n<blockquote>`,
+      `\n<p>"Blockquote line 1 for ${i}."</p>`,
+      `\n<p>"Blockquote line 2 for ${i}."</p>`,
+      `\n</blockquote>`,
+
+      // Code block (escaped characters)
+      `\n<codeblock>`,
+      `\n<p>for (let k = 0; k < ${i % 7}; k++) { console.log(&quot;block_${i}&quot;); }</p>`,
+      `\n</codeblock>`,
+
+      // Image (self-closing)
+      `\n<p><img src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" width="${Math.min(imgW, 300)}" height="${imgH}" /></p>`
+    );
+  }
+
+  parts.push('\n</html>');
+  return parts.join('').replaceAll('\n', '');
+};
+
+const initialHugeHtml = generateHugeHtml();
 
 export default function App() {
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);
@@ -320,6 +383,16 @@ export default function App() {
         contentContainerStyle={styles.content}
       >
         <Text style={styles.label}>Enriched Text Input</Text>
+        <Button
+          title="Request html"
+          onPress={async () => {
+            const start = performance.now();
+            const result = await ref.current?.getHTML();
+            const end = performance.now();
+            console.log('HTML:', result?.length);
+            console.log('Time taken:', end - start, 'ms');
+          }}
+        />
         <View style={styles.editor}>
           <EnrichedTextInput
             ref={ref}
@@ -335,7 +408,7 @@ export default function App() {
             onChangeText={(e) => handleChangeText(e.nativeEvent)}
             onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
-            defaultValue={html}
+            defaultValue={initialHugeHtml}
             onColorChangeInSelection={(e) => {
               handleSelectionColorChange(e.nativeEvent);
             }}
@@ -443,41 +516,41 @@ export default function App() {
 const htmlStyle: HtmlStyle = {
   h1: {
     fontSize: 72,
-    bold: true,
+    bold: false,
   },
   h2: {
     fontSize: 60,
-    bold: true,
+    bold: false,
   },
   h3: {
     fontSize: 50,
-    bold: true,
+    bold: false,
   },
   h4: {
     fontSize: 40,
-    bold: true,
+    bold: false,
   },
   h5: {
     fontSize: 30,
-    bold: true,
+    bold: false,
   },
   h6: {
     fontSize: 24,
-    bold: true,
+    bold: false,
   },
   blockquote: {
     borderColor: 'navy',
     borderWidth: 4,
     gapWidth: 16,
-    color: 'navy',
+    color: 'black',
   },
   codeblock: {
-    color: 'green',
+    color: 'black',
     borderRadius: 8,
     backgroundColor: 'aquamarine',
   },
   code: {
-    color: 'purple',
+    color: 'black',
     backgroundColor: 'yellow',
   },
   a: {
@@ -488,7 +561,7 @@ const htmlStyle: HtmlStyle = {
     '#': {
       color: 'blue',
       backgroundColor: 'lightblue',
-      textDecorationLine: 'underline',
+      textDecorationLine: 'none',
     },
     '@': {
       color: 'green',
@@ -626,6 +699,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Regular',
     paddingVertical: 12,
     paddingHorizontal: 14,
+    color: 'black',
   },
   scrollPlaceholder: {
     marginTop: 24,

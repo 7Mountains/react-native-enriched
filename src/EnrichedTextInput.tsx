@@ -468,6 +468,7 @@ export const EnrichedTextInput = ({
       onRequestHtmlResult={handleRequestHtmlResult}
       onColorChangeInSelection={onColorChangeInSelection}
       onParagraphAlignmentChange={onParagraphAlignmentChange}
+      isOnChangeTextSet={onChangeText !== undefined}
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }
