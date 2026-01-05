@@ -200,4 +200,9 @@ static inline xmlNodePtr __nullable nextRenderableSibling(xmlNodePtr node) {
   return NULL;
 }
 
+static inline bool isBrTag(const char *tagName) {
+  return tagName && tagName[0] == 'b' && tagName[1] == 'r' &&
+         tagName[2] == '\0';
+}
+
 NS_ASSUME_NONNULL_END

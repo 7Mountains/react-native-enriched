@@ -123,8 +123,15 @@
     return;
   }
 
-  NSString *tag =
-      cur->name ? [NSString stringWithUTF8String:(const char *)cur->name] : @"";
+  const char *tagChar = (const char *)cur->name;
+
+  // <br> handling
+  if (isBrTag(tagChar)) {
+    [_plain appendString:@"\n"];
+    return;
+  }
+
+  NSString *tag = tagChar ? [NSString stringWithUTF8String:tagChar] : @"";
 
   id<BaseStyleProtocol> style = _tagsRegistry[tag];
   NSDictionary *attributes = HTMLAttributesFromNodeAndParents(cur);
@@ -224,12 +231,6 @@
 - (void)traverseSelfClosing:(id<BaseStyleProtocol>)style
                  attributes:(NSDictionary *)attributes
                         tag:(NSString *)tag {
-  // <br> hadnling
-  if ([tag isEqualToString:@"br"]) {
-    [self appendEmptyLine];
-    return;
-  }
-
   const BOOL isBlock = [style.class isParagraphStyle];
 
   // if it's a block tag close previous style
