@@ -6,6 +6,7 @@
 #import "ColorExtension.h"
 #import "CoreText/CoreText.h"
 #import "EnrichedImageLoader.h"
+#import "HeadingsParagraphInvariantUtils.h"
 #import "LayoutManagerExtension.h"
 #import "ParagraphAttributesUtils.h"
 #import "RCTFabricComponentsPlugins.h"
@@ -1843,17 +1844,15 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   H5Style *h5Style = stylesDict[@([H5Style getStyleType])];
   H6Style *h6Style = stylesDict[@([H6Style getStyleType])];
 
-  bool hasImproperHeadingStyles = h1Style != nullptr && h2Style != nullptr &&
-                                  h3Style != nullptr && h4Style != nullptr &&
-                                  h5Style != nullptr && h6Style != nullptr;
+  bool shouldHandleImproperHeadings =
+      h1Style != nullptr && h2Style != nullptr && h3Style != nullptr &&
+      h4Style != nullptr && h5Style != nullptr && h6Style != nullptr;
 
-  if (hasImproperHeadingStyles) {
-    [h1Style handleImproperHeadings];
-    [h2Style handleImproperHeadings];
-    [h3Style handleImproperHeadings];
-    [h4Style handleImproperHeadings];
-    [h5Style handleImproperHeadings];
-    [h6Style handleImproperHeadings];
+  if (shouldHandleImproperHeadings) {
+    [HeadingsParagraphInvariantUtils handleImproperHeadingStyles:@[
+      h1Style, h2Style, h3Style, h4Style, h5Style, h6Style
+    ]
+                                                           input:self];
   }
 
   // mentions management: removal and editing

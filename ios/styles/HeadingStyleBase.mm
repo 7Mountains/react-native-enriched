@@ -225,23 +225,4 @@
   return NO;
 }
 
-// backspacing a line after a heading "into" a heading will not result in the
-// text attaining heading attributes so, we do it manually
-- (void)handleImproperHeadings {
-  NSArray *occurences = [self
-      findAllOccurences:NSMakeRange(0,
-                                    [self typedInput]
-                                        ->textView.textStorage.string.length)];
-  for (StylePair *pair in occurences) {
-    NSRange occurenceRange = [pair.rangeValue rangeValue];
-    NSRange paragraphRange = [[self typedInput]->textView.textStorage.string
-        paragraphRangeForRange:occurenceRange];
-    if (!NSEqualRanges(occurenceRange, paragraphRange)) {
-      // we have a heading but it does not span its whole paragraph - let's fix
-      // it
-      [self addAttributes:paragraphRange withTypingAttributes:NO];
-    }
-  }
-}
-
 @end

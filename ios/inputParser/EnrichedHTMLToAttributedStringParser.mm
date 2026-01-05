@@ -152,6 +152,15 @@
     [self appendEmptyBlockPlaceholder];
   }
 
+  if (isBlockTag(tag)) {
+    [self collectParagraphModifiersIfNeeded:attributes];
+    if (!HTMLIsLastParagraphInBlockContext(
+            cur, cur->name, cur->parent ? cur->parent->name : NULL,
+            isLastRenderable)) {
+      [self appendEmptyLine];
+    }
+  }
+
   if (style) {
     _styleStack.pop(style);
   }
@@ -159,15 +168,6 @@
   if (isTopLevelNode(cur) && isLastRenderable) {
     [self collectParagraphModifiersIfNeeded:attributes];
     return;
-  }
-
-  if (isBlockTag(tag)) {
-    [self collectParagraphModifiersIfNeeded:attributes];
-    if (!HTMLIsLastParagraphInBlockContext(
-            cur, cur->name, cur->parent ? cur->parent->name : NULL,
-            isLastRenderable)) {
-      [self appendText:@"\n"];
-    }
   }
 }
 
@@ -206,7 +206,12 @@
 }
 
 - (void)appendEmptyLine {
-  [self appendText:@"\n"];
+  NSUInteger start = _plain.length;
+  [_plain appendString:@"\n"];
+
+  NSRange newlineRange = NSMakeRange(start, 1);
+
+  _styleStack.applyActiveParagraphStyles(_styleContexts, newlineRange);
 }
 
 - (void)appendEmptyBlockPlaceholder {

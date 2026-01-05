@@ -18,8 +18,8 @@ struct ActiveStyleEntry {
   id<BaseStyleProtocol> style;
   NSDictionary *attributes;
 
-  ActiveStyleEntry(id<BaseStyleProtocol> s, NSDictionary *attrs)
-      : style(s), attributes(attrs ?: @{}) {}
+  ActiveStyleEntry(id<BaseStyleProtocol> style, NSDictionary *attributes)
+      : style(style), attributes(attributes ?: @{}) {}
 };
 
 class StyleStack {
@@ -52,8 +52,20 @@ public:
     if (range.length == 0 || _active.empty())
       return;
 
-    for (const ActiveStyleEntry &e : _active) {
-      out.emplace_back(e.style, range, e.attributes);
+    for (const ActiveStyleEntry &entry : _active) {
+      out.emplace_back(entry.style, range, entry.attributes);
+    }
+  }
+
+  void applyActiveParagraphStyles(std::vector<StyleContext> &out,
+                                  NSRange range) const {
+    if (range.length == 0)
+      return;
+
+    for (const ActiveStyleEntry &entry : _active) {
+      if ([entry.style.class isParagraphStyle]) {
+        out.emplace_back(entry.style, range, entry.attributes);
+      }
     }
   }
 

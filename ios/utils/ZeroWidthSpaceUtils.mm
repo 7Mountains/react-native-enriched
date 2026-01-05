@@ -4,6 +4,8 @@
 #import "TextInsertionUtils.h"
 #import "UIView+React.h"
 
+static NSString *const kZWSP = @"\u200B";
+
 @implementation ZeroWidthSpaceUtils
 + (void)handleZeroWidthSpacesInInput:(id)input {
   EnrichedTextInputView *typedInput = (EnrichedTextInputView *)input;
@@ -15,163 +17,208 @@
   [self addSpacesIfNeededinInput:typedInput];
 }
 
++ (NSArray<id<BaseStyleProtocol>> *)ZWSStylesForInput:
+    (EnrichedTextInputView *)input {
+
+  NSMutableArray *result = [NSMutableArray array];
+
+  for (NSNumber *type in [self ZWSStyleTypes]) {
+    id<BaseStyleProtocol> style = input->stylesDict[type];
+    if (style) {
+      [result addObject:style];
+    }
+  }
+
+  return result;
+}
+
++ (NSArray<NSNumber *> *)ZWSStyleTypes {
+  static NSArray<NSNumber *> *types;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    types = @[
+      @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]),
+      @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]),
+      @([CheckBoxStyle getStyleType])
+    ];
+  });
+  return types;
+}
+
++ (BOOL)findAnyZWSStylesInInput:(EnrichedTextInputView *)input
+                          range:(NSRange)range {
+  NSTextStorage *storage = input->textView.textStorage;
+  NSUInteger length = storage.length;
+
+  NSUInteger attributeIndex = (range.location < length)
+                                  ? range.location
+                                  : (length > 0 ? length - 1 : NSNotFound);
+
+  if (attributeIndex == NSNotFound)
+    return NO;
+
+  for (id<BaseStyleProtocol> style in [self ZWSStylesForInput:input]) {
+    NSAttributedStringKey key = [[style class] attributeKey];
+    id value = [storage attribute:key
+                          atIndex:attributeIndex
+                   effectiveRange:nil];
+
+    if ([style styleCondition:value range:range]) {
+      return YES;
+    }
+  }
+  return NO;
+}
+
 + (void)removeSpacesIfNeededinInput:(EnrichedTextInputView *)input {
-  NSMutableArray *indexesToBeRemoved = [[NSMutableArray alloc] init];
+  NSTextStorage *storage = input->textView.textStorage;
+  NSString *string = storage.string;
+  NSUInteger length = string.length;
+
+  if (length == 0)
+    return;
+
+  NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
   NSRange preRemoveSelection = input->textView.selectedRange;
 
-  for (int i = 0; i < input->textView.textStorage.string.length; i++) {
-    unichar character = [input->textView.textStorage.string characterAtIndex:i];
-    if (character == 0x200B) {
-      NSRange characterRange = NSMakeRange(i, 1);
+  NSArray<id<BaseStyleProtocol>> *styles = [self ZWSStylesForInput:input];
 
-      NSRange paragraphRange = [input->textView.textStorage.string
-          paragraphRangeForRange:characterRange];
-      // having paragraph longer than 1 character means someone most likely
-      // added something and we probably can remove the space
-      BOOL removeSpace = paragraphRange.length > 1;
-      // exception; 2 characters paragraph with zero width space + newline
-      // here, we still need zero width space to keep the empty list items
-      if (paragraphRange.length == 2 && paragraphRange.location == i &&
-          [[NSCharacterSet newlineCharacterSet]
-              characterIsMember:[input->textView.textStorage.string
-                                    characterAtIndex:i + 1]]) {
+  CFStringInlineBuffer buffer;
+  CFStringInitInlineBuffer((CFStringRef)string, &buffer,
+                           CFRangeMake(0, length));
+
+  for (NSUInteger i = 0; i < length; i++) {
+    unichar ch = CFStringGetCharacterFromInlineBuffer(&buffer, i);
+    if (ch != 0x200B)
+      continue;
+
+    NSRange range = NSMakeRange(i, 1);
+    NSRange paragraphRange = [string paragraphRangeForRange:range];
+
+    BOOL removeSpace = paragraphRange.length > 1;
+
+    // exception: ZWSP + newline only
+    if (paragraphRange.length == 2 && paragraphRange.location == i &&
+        i + 1 < length) {
+
+      unichar nextChar = CFStringGetCharacterFromInlineBuffer(&buffer, i + 1);
+
+      if ([[NSCharacterSet newlineCharacterSet] characterIsMember:nextChar]) {
         removeSpace = NO;
       }
+    }
 
-      if (removeSpace) {
-        [indexesToBeRemoved addObject:@(characterRange.location)];
-        continue;
+    if (!removeSpace) {
+      if (![self findAnyZWSStylesInInput:input range:range]) {
+        removeSpace = YES;
       }
+    }
 
-      UnorderedListStyle *ulStyle =
-          input->stylesDict[@([UnorderedListStyle getStyleType])];
-      OrderedListStyle *olStyle =
-          input->stylesDict[@([OrderedListStyle getStyleType])];
-      BlockQuoteStyle *bqStyle =
-          (BlockQuoteStyle *)
-              input->stylesDict[@([BlockQuoteStyle getStyleType])];
-      CodeBlockStyle *cbStyle =
-          (CodeBlockStyle *)input->stylesDict[@([CodeBlockStyle getStyleType])];
-      CheckBoxStyle *checkBoxStyle =
-          (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
-
-      // zero width spaces with no lists/blockquotes/codeblocks/checkboxes on
-      // them get removed
-      if (![ulStyle detectStyle:characterRange] &&
-          ![olStyle detectStyle:characterRange] &&
-          ![bqStyle detectStyle:characterRange] &&
-          ![cbStyle detectStyle:characterRange] &&
-          ![checkBoxStyle detectStyle:characterRange]) {
-        [indexesToBeRemoved addObject:@(characterRange.location)];
-      }
+    if (removeSpace) {
+      [indexesToRemove addIndex:i];
     }
   }
 
   // do the removing
-  NSInteger offset = 0;
-  NSInteger postRemoveLocationOffset = 0;
-  NSInteger postRemoveLengthOffset = 0;
-  for (NSNumber *index in indexesToBeRemoved) {
-    NSRange replaceRange = NSMakeRange([index integerValue] + offset, 1);
-    [TextInsertionUtils replaceText:@""
-                                 at:replaceRange
-               additionalAttributes:input->textView.typingAttributes
-                              input:input
-                      withSelection:NO];
-    offset -= 1;
-    if ([index integerValue] < preRemoveSelection.location) {
-      postRemoveLocationOffset -= 1;
-    }
-    if ([index integerValue] >= preRemoveSelection.location &&
-        [index integerValue] < NSMaxRange(preRemoveSelection)) {
-      postRemoveLengthOffset -= 1;
-    }
-  }
+  [indexesToRemove
+      enumerateIndexesWithOptions:NSEnumerationReverse
+                       usingBlock:^(NSUInteger idx, BOOL *stop) {
+                         [TextInsertionUtils replaceText:@""
+                                                      at:NSMakeRange(idx, 1)
+                                    additionalAttributes:input->textView
+                                                             .typingAttributes
+                                                   input:input
+                                           withSelection:NO];
+                       }];
 
   // fix the selection if needed
   if ([input->textView isFirstResponder]) {
+    NSUInteger removedBefore = [indexesToRemove
+        countOfIndexesInRange:NSMakeRange(0, preRemoveSelection.location)];
+
+    NSUInteger removedInside =
+        [indexesToRemove countOfIndexesInRange:preRemoveSelection];
+
     input->textView.selectedRange =
-        NSMakeRange(preRemoveSelection.location + postRemoveLocationOffset,
-                    preRemoveSelection.length + postRemoveLengthOffset);
+        NSMakeRange(preRemoveSelection.location - removedBefore,
+                    preRemoveSelection.length - removedInside);
   }
 }
 
 + (void)addSpacesIfNeededinInput:(EnrichedTextInputView *)input {
-  UnorderedListStyle *ulStyle =
-      input->stylesDict[@([UnorderedListStyle getStyleType])];
-  OrderedListStyle *olStyle =
-      input->stylesDict[@([OrderedListStyle getStyleType])];
-  BlockQuoteStyle *bqStyle =
-      (BlockQuoteStyle *)input->stylesDict[@([BlockQuoteStyle getStyleType])];
-  CodeBlockStyle *cbStyle =
-      (CodeBlockStyle *)input->stylesDict[@([CodeBlockStyle getStyleType])];
-  CheckBoxStyle *checkBoxStyle =
-      (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
-  NSMutableArray *indexesToBeInserted = [[NSMutableArray alloc] init];
+  NSTextStorage *storage = input->textView.textStorage;
+  NSString *string = storage.string;
+  NSUInteger length = string.length;
+
+  if (length == 0)
+    return;
+
   NSRange preAddSelection = input->textView.selectedRange;
+  NSMutableIndexSet *indexesToInsert = [NSMutableIndexSet indexSet];
 
-  for (int i = 0; i < input->textView.textStorage.string.length; i++) {
-    unichar character = [input->textView.textStorage.string characterAtIndex:i];
+  CFStringInlineBuffer buffer;
+  CFStringInitInlineBuffer((CFStringRef)string, &buffer,
+                           CFRangeMake(0, length));
 
-    if ([[NSCharacterSet newlineCharacterSet] characterIsMember:character]) {
-      NSRange characterRange = NSMakeRange(i, 1);
-      NSRange paragraphRange = [input->textView.textStorage.string
-          paragraphRangeForRange:characterRange];
+  NSUInteger paragraphStart = 0;
 
-      if (paragraphRange.length == 1) {
-        if ([ulStyle detectStyle:characterRange] ||
-            [olStyle detectStyle:characterRange] ||
-            [bqStyle detectStyle:characterRange] ||
-            [cbStyle detectStyle:characterRange] ||
-            [checkBoxStyle detectStyle:characterRange]) {
-          // we have an empty list or quote item with no space: add it!
-          [indexesToBeInserted addObject:@(paragraphRange.location)];
-        }
+  for (NSUInteger i = 0; i <= length; i++) {
+    BOOL isEnd = (i == length);
+    unichar ch = isEnd ? 0 : CFStringGetCharacterFromInlineBuffer(&buffer, i);
+
+    if (!isEnd && ch != '\n')
+      continue;
+
+    NSUInteger paragraphLength = i - paragraphStart + (isEnd ? 0 : 1);
+
+    BOOL isEmptyParagraph =
+        (paragraphLength == 1 && !isEnd) || (isEnd && paragraphLength == 0);
+
+    if (isEmptyParagraph) {
+      NSRange checkRange = NSMakeRange(paragraphStart, 1);
+      BOOL found = [self findAnyZWSStylesInInput:input range:checkRange];
+      if (found) {
+        [indexesToInsert addIndex:paragraphStart];
       }
     }
+
+    paragraphStart = i + 1;
   }
 
-  // do the replacing
-  NSInteger offset = 0;
-  NSInteger postAddLocationOffset = 0;
-  NSInteger postAddLengthOffset = 0;
-  for (NSNumber *index in indexesToBeInserted) {
-    NSRange replaceRange = NSMakeRange([index integerValue] + offset, 1);
-    [TextInsertionUtils replaceText:@"\u200B\n"
-                                 at:replaceRange
-               additionalAttributes:input->textView.typingAttributes
-                              input:input
-                      withSelection:NO];
-    offset += 1;
-    if ([index integerValue] < preAddSelection.location) {
-      postAddLocationOffset += 1;
-    }
-    if ([index integerValue] >= preAddSelection.location &&
-        [index integerValue] < NSMaxRange(preAddSelection)) {
-      postAddLengthOffset += 1;
-    }
-  }
+  [indexesToInsert
+      enumerateIndexesWithOptions:NSEnumerationReverse
+                       usingBlock:^(NSUInteger idx, BOOL *stop) {
+                         BOOL isAtEnd = (idx == length);
+                         NSString *text = isAtEnd ? kZWSP : @"\u200B\n";
 
-  // additional check for last index of the input
-  NSRange lastRange = NSMakeRange(input->textView.textStorage.string.length, 0);
-  NSRange lastParagraphRange =
-      [input->textView.textStorage.string paragraphRangeForRange:lastRange];
-  if (lastParagraphRange.length == 0 &&
-      ([ulStyle detectStyle:lastRange] || [olStyle detectStyle:lastRange] ||
-       [bqStyle detectStyle:lastRange] || [cbStyle detectStyle:lastRange] ||
-       [checkBoxStyle detectStyle:lastRange])) {
-    [TextInsertionUtils insertText:@"\u200B"
-                                at:lastRange.location
-              additionalAttributes:input->textView.typingAttributes
-                             input:input
-                     withSelection:NO];
-  }
+                         if (isAtEnd) {
+                           [TextInsertionUtils insertText:text
+                                                       at:idx
+                                     additionalAttributes:input->textView
+                                                              .typingAttributes
+                                                    input:input
+                                            withSelection:NO];
+                         } else {
+                           [TextInsertionUtils replaceText:text
+                                                        at:NSMakeRange(idx, 1)
+                                      additionalAttributes:input->textView
+                                                               .typingAttributes
+                                                     input:input
+                                             withSelection:NO];
+                         }
+                       }];
 
-  // fix the selection if needed
+  // fix selection
   if ([input->textView isFirstResponder]) {
+    NSUInteger addedBefore = [indexesToInsert
+        countOfIndexesInRange:NSMakeRange(0, preAddSelection.location)];
+
+    NSUInteger addedInside =
+        [indexesToInsert countOfIndexesInRange:preAddSelection];
+
     input->textView.selectedRange =
-        NSMakeRange(preAddSelection.location + postAddLocationOffset,
-                    preAddSelection.length + postAddLengthOffset);
+        NSMakeRange(preAddSelection.location + addedBefore,
+                    preAddSelection.length + addedInside);
   }
 }
 

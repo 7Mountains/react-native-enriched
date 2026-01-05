@@ -73,7 +73,8 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (CGFloat)getHeadingFontSize;
 - (BOOL)isHeadingBold;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
-- (void)handleImproperHeadings;
+- (void)addAttributes:(NSRange)range
+    withTypingAttributes:(BOOL)withTypingAttributes;
 @end
 
 @interface H1Style : HeadingStyleBase
