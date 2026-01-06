@@ -9,7 +9,6 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AlignmentSpan;
 import android.text.style.ParagraphStyle;
-
 import com.swmansion.enriched.constants.Strings;
 import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan;
 import com.swmansion.enriched.spans.EnrichedBoldSpan;
@@ -701,7 +700,7 @@ class HtmlToSpannedConverter implements ContentHandler {
   private void addHr(Editable text) {
     SpannableStringBuilder builder = new SpannableStringBuilder();
     builder.append(Strings.MAGIC_CHAR);
-    builder.setSpan(new EnrichedHorizontalRuleSpan(mStyle), 0 , 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    builder.setSpan(new EnrichedHorizontalRuleSpan(mStyle), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     text.append(builder);
     text.append('\n');
   }

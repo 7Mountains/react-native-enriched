@@ -30,6 +30,7 @@ import com.swmansion.enriched.events.MentionHandler
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
+import com.swmansion.enriched.inputFilters.NonEditableParagraphFilter
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
@@ -60,6 +61,29 @@ class EnrichedTextInputView : AppCompatEditText {
   var isDuringTransaction: Boolean = false
   var isRemovingMany: Boolean = false
   var scrollEnabled: Boolean = true
+
+  var editorWidth: Int = 0
+    private set
+
+  override fun onSizeChanged(
+    w: Int,
+    h: Int,
+    oldw: Int,
+    oldh: Int,
+  ) {
+    super.onSizeChanged(w, h, oldw, oldh)
+
+    val editorWidth = w - paddingLeft - paddingRight
+
+    if (editorWidth != this.editorWidth) {
+      this.editorWidth = editorWidth
+      htmlStyle.invalidateStyles()
+    }
+
+    text?.let {
+      invalidate()
+    }
+  }
 
   val mentionHandler: MentionHandler? = MentionHandler(this)
   var htmlStyle: HtmlStyle = HtmlStyle(this, null)
@@ -126,6 +150,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
     addSpanWatcher(EnrichedSpanWatcher(this))
     addTextChangedListener(EnrichedTextWatcher(this))
+    filters = arrayOf(NonEditableParagraphFilter())
   }
 
   // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L295C1-L296C1

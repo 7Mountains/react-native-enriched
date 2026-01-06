@@ -5,7 +5,7 @@ object Strings {
   const val MAGIC_STRING = "" + MAGIC_CHAR
   const val REPLACEMENT_MARKER_CHAR = '\u202F'
   const val REPLACEMENT_MARKER_STRING = "" + REPLACEMENT_MARKER_CHAR
-  const val ZWJ_CHAR = '\u200B'//'§'
+  const val ZWJ_CHAR = '\u200B' // '§'
   const val ZERO_WIDTH_PLACEHOLDER_CHAR = '\u200C'
   const val ZERO_WIDTH_PLACEHOLDER_STRING = "" + ZERO_WIDTH_PLACEHOLDER_CHAR
   const val ZWJ_STRING = "" + ZWJ_CHAR

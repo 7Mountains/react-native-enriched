@@ -187,7 +187,7 @@ class HtmlStyle {
     dividerHeight = parseFloat(dividerStyle, "height")
     dividerThickness = parseFloat(dividerStyle, "thickness")
     dividerColor = parseColor(dividerStyle, "color")
-    dividerWidth = view?.maxWidth ?: 0
+    dividerWidth = view?.editorWidth ?: 0
   }
 
   private fun parseFloat(

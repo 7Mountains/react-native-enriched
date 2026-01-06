@@ -120,7 +120,7 @@ const generateHugeHtml = (repeat = 200) => {
         `and some plain text to bulk it up.</p>`,
 
       // Line break
-      `\n<br>`,
+      `\n<hr>`,
 
       // Unordered list
       `<ul>`,

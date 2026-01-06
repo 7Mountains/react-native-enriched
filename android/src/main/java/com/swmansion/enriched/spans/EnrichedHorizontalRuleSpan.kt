@@ -5,14 +5,14 @@ import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.text.style.ReplacementSpan
 import androidx.core.graphics.withTranslation
-import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedHorizontalRuleSpan(
   private val htmlStyle: HtmlStyle,
 ) : ReplacementSpan(),
-  EnrichedParagraphSpan {
+  EnrichedNonEditableParagraphSpan {
   override val dependsOnHtmlStyle: Boolean = false
 
   private val drawable: Drawable =
@@ -47,7 +47,7 @@ class EnrichedHorizontalRuleSpan(
     top: Int,
     y: Int,
     bottom: Int,
-    paint: Paint
+    paint: Paint,
   ) {
     val width = canvas.clipBounds.width()
     val drawableHeight = htmlStyle.dividerThickness.toInt()
@@ -59,7 +59,7 @@ class EnrichedHorizontalRuleSpan(
       0,
       0,
       width,
-      drawableHeight
+      drawableHeight,
     )
 
     canvas.withTranslation(x, drawableTop.toFloat()) {

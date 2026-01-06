@@ -421,7 +421,7 @@ class ParagraphStyles(
   fun insertDivider() {
     val editable = view.editableText as Editable
     val index = view.selection?.end
-    if(index == null) return
+    if (index == null) return
     val safeIndex = index.coerceIn(0, editable.length)
     val paragraphRange = editable.paragraphRangeAt(safeIndex)
 
@@ -432,7 +432,7 @@ class ParagraphStyles(
     if (!paragraphRange.isEmpty()) {
       editable.delete(paragraphRange.first, paragraphRange.last + 1)
     }
-
+    view.spanState?.setStart(DIVIDER, null)
     val dividerIndex = paragraphRange.first
     val builder = SpannableStringBuilder()
     builder.append(Strings.MAGIC_STRING)
@@ -458,6 +458,4 @@ private fun Editable.paragraphRangeAt(index: Int): IntRange {
   return start until end
 }
 
-private fun Editable.isParagraphEmpty(range: IntRange): Boolean {
-  return substring(range).all { it == '\n' || it.isWhitespace() }
-}
+private fun Editable.isParagraphEmpty(range: IntRange): Boolean = substring(range).all { it == '\n' || it.isWhitespace() }
