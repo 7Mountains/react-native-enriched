@@ -191,6 +191,7 @@ export interface NativeProps extends ViewProps {
     fontWeight?: string;
     fontStyle?: string;
     isOnChangeHtmlSet: boolean;
+    isOnChangeTextSet: boolean;
     androidExperimentalSynchronousEvents: boolean;
 }
 type ComponentType = HostComponent<NativeProps>;
