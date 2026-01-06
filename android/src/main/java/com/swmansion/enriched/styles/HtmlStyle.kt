@@ -1,6 +1,11 @@
 package com.swmansion.enriched.styles
 
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.drawable.Drawable
 import com.facebook.react.bridge.ColorPropConverter
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableMap
@@ -63,6 +68,50 @@ class HtmlStyle {
   var inlineCodeBackgroundColor: Int = Color.BLACK
 
   var mentionsStyle: MutableMap<String, MentionStyle> = mutableMapOf()
+
+  var dividerThickness: Float = 2.0f
+  var dividerHeight: Float = 24.0f
+  var dividerColor: Int = Color.GRAY
+  var dividerWidth = view?.maxWidth ?: 0
+
+  private var hrDrawable: Drawable? = null
+
+  fun getHorizontalRuleDrawable(): Drawable {
+    if (hrDrawable == null) {
+      hrDrawable =
+        object : Drawable() {
+          private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+          override fun draw(canvas: Canvas) {
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = dividerThickness
+            paint.color = dividerColor
+
+            val y = bounds.height() / 2f
+            canvas.drawLine(
+              0f,
+              y,
+              bounds.width().toFloat(),
+              y,
+              paint,
+            )
+          }
+
+          override fun setAlpha(alpha: Int) {
+            paint.alpha = alpha
+          }
+
+          override fun setColorFilter(filter: ColorFilter?) {
+            paint.colorFilter = filter
+          }
+
+          override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
+        }
+    }
+
+    hrDrawable!!.invalidateSelf()
+    return hrDrawable!!
+  }
 
   constructor(view: EnrichedTextInputView?, style: ReadableMap?) {
     this.view = view
@@ -133,6 +182,12 @@ class HtmlStyle {
 
     val mentionStyle = style.getMap("mention")
     mentionsStyle = parseMentionsStyle(mentionStyle)
+
+    val dividerStyle = style.getMap("divider")
+    dividerHeight = parseFloat(dividerStyle, "height")
+    dividerThickness = parseFloat(dividerStyle, "thickness")
+    dividerColor = parseColor(dividerStyle, "color")
+    dividerWidth = view?.maxWidth ?: 0
   }
 
   private fun parseFloat(

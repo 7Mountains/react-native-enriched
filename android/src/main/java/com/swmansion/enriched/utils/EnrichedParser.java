@@ -9,6 +9,8 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AlignmentSpan;
 import android.text.style.ParagraphStyle;
+
+import com.swmansion.enriched.constants.Strings;
 import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan;
 import com.swmansion.enriched.spans.EnrichedBoldSpan;
 import com.swmansion.enriched.spans.EnrichedCodeBlockSpan;
@@ -18,6 +20,7 @@ import com.swmansion.enriched.spans.EnrichedH3Span;
 import com.swmansion.enriched.spans.EnrichedH4Span;
 import com.swmansion.enriched.spans.EnrichedH5Span;
 import com.swmansion.enriched.spans.EnrichedH6Span;
+import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan;
 import com.swmansion.enriched.spans.EnrichedImageSpan;
 import com.swmansion.enriched.spans.EnrichedInlineCodeSpan;
 import com.swmansion.enriched.spans.EnrichedItalicSpan;
@@ -168,6 +171,8 @@ public class EnrichedParser {
         return "h5";
       } else if (span instanceof EnrichedH6Span) {
         return "h6";
+      } else if (span instanceof EnrichedHorizontalRuleSpan) {
+        return "hr";
       }
     }
 
@@ -198,6 +203,11 @@ public class EnrichedParser {
         EnrichedParagraphSpan[] paragraphStyles =
             text.getSpans(i, next, EnrichedParagraphSpan.class);
         String tag = getBlockTag(paragraphStyles);
+        if (tag.equals("hr")) {
+          out.append("<hr />\n");
+          next++;
+          continue;
+        }
         boolean isUlListItem = tag.equals("ul");
         boolean isOlListItem = tag.equals("ol");
 
@@ -498,6 +508,8 @@ class HtmlToSpannedConverter implements ContentHandler {
       start(mSpannableStringBuilder, new Code());
     } else if (tag.equalsIgnoreCase("mention")) {
       startMention(mSpannableStringBuilder, attributes);
+    } else if (tag.equalsIgnoreCase("hr")) {
+      addHr(mSpannableStringBuilder);
     }
   }
 
@@ -684,6 +696,14 @@ class HtmlToSpannedConverter implements ContentHandler {
       default:
         throw new IllegalArgumentException("Unsupported heading level: " + level);
     }
+  }
+
+  private void addHr(Editable text) {
+    SpannableStringBuilder builder = new SpannableStringBuilder();
+    builder.append(Strings.MAGIC_CHAR);
+    builder.setSpan(new EnrichedHorizontalRuleSpan(mStyle), 0 , 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    text.append(builder);
+    text.append('\n');
   }
 
   private static <T> T getLast(Spanned text, Class<T> kind) {

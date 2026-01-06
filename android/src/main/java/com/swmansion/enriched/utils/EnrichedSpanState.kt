@@ -49,6 +49,8 @@ class EnrichedSpanState(
     private set
   var mentionStart: Int? = null
     private set
+  var dividerStart: Int? = null
+    private set
 
   fun setBoldStart(start: Int?) {
     this.boldStart = start
@@ -140,6 +142,10 @@ class EnrichedSpanState(
     emitStateChangeEvent()
   }
 
+  fun setDividerStart(start: Int?) {
+    this.dividerStart = start
+  }
+
   fun getStart(name: String): Int? {
     val start =
       when (name) {
@@ -161,6 +167,7 @@ class EnrichedSpanState(
         EnrichedSpans.LINK -> linkStart
         EnrichedSpans.IMAGE -> imageStart
         EnrichedSpans.MENTION -> mentionStart
+        EnrichedSpans.DIVIDER -> dividerStart
         else -> null
       }
 
@@ -190,6 +197,7 @@ class EnrichedSpanState(
       EnrichedSpans.LINK -> setLinkStart(start)
       EnrichedSpans.IMAGE -> setImageStart(start)
       EnrichedSpans.MENTION -> setMentionStart(start)
+      EnrichedSpans.DIVIDER -> setDividerStart(start)
     }
   }
 

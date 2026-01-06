@@ -534,6 +534,7 @@ class EnrichedTextInputView : AppCompatEditText {
         EnrichedSpans.H4 -> paragraphStyles?.getStyleRange()
         EnrichedSpans.H5 -> paragraphStyles?.getStyleRange()
         EnrichedSpans.H6 -> paragraphStyles?.getStyleRange()
+        EnrichedSpans.DIVIDER -> paragraphStyles?.getStyleRange()
         EnrichedSpans.CODE_BLOCK -> paragraphStyles?.getStyleRange()
         EnrichedSpans.BLOCK_QUOTE -> paragraphStyles?.getStyleRange()
         EnrichedSpans.ORDERED_LIST -> listStyles?.getStyleRange()
@@ -625,6 +626,10 @@ class EnrichedTextInputView : AppCompatEditText {
 
     parametrizedStyles?.setImageSpan(src, width, height)
     layoutManager.invalidateLayout()
+  }
+
+  fun insertDivider() {
+    paragraphStyles?.insertDivider()
   }
 
   fun startMention(indicator: String) {
