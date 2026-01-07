@@ -136,7 +136,7 @@
   id<BaseStyleProtocol> style = _tagsRegistry[tag];
   NSDictionary *attributes = HTMLAttributesFromNodeAndParents(cur);
 
-  BOOL isBlock = isBlockTag(tag);
+  BOOL isBlock = isBlockTag(tagChar);
 
   NSUInteger lengthBefore = _plain.length;
 
@@ -159,7 +159,7 @@
     [self appendEmptyBlockPlaceholder];
   }
 
-  if (isBlockTag(tag)) {
+  if (isBlockTag(tagChar)) {
     [self collectParagraphModifiersIfNeeded:attributes];
     if (!HTMLIsLastParagraphInBlockContext(
             cur, cur->name, cur->parent ? cur->parent->name : NULL,

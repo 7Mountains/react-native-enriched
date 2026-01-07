@@ -396,7 +396,6 @@ export default function App() {
         <View style={styles.editor}>
           <EnrichedTextInput
             ref={ref}
-            autoFocus
             mentionIndicators={['@', '#']}
             style={styles.editorInput}
             htmlStyle={htmlStyle}

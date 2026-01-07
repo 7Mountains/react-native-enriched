@@ -3,206 +3,35 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSDictionary<NSString *, NSString *>
-    *_Nullable HTMLAttributesFromNodeAndParents(xmlNodePtr node) {
-  if (!node)
-    return nullptr;
+@protocol BaseStyleProtocol;
 
-  NSMutableDictionary *result = [NSMutableDictionary dictionary];
+NSDictionary<NSString *, NSString *> *
+HTMLAttributesFromNodeAndParents(xmlNodePtr node);
 
-  for (xmlNodePtr n = node; n; n = n->parent) {
-    if (n->type != XML_ELEMENT_NODE)
-      continue;
+BOOL isTopLevelNode(xmlNodePtr node);
 
-    for (xmlAttrPtr attr = n->properties; attr; attr = attr->next) {
-      if (!attr->children || !attr->children->content)
-        continue;
+NSSet<NSValue *> *
+MakeBlockTags(NSDictionary<NSNumber *, id<BaseStyleProtocol>> *styles);
 
-      NSString *key = [NSString stringWithUTF8String:(const char *)attr->name];
-      NSString *val =
-          [NSString stringWithUTF8String:(const char *)attr->children->content];
+extern const char *_Nonnull const kBlockTags[];
 
-      if (key && val && !result[key]) {
-        result[key] = val;
-      }
-    }
-  }
+bool isBlockTag(const char *tag);
 
-  return result;
-}
+BOOL isHTMLWhitespace(unsigned char c);
 
-static inline BOOL isTopLevelNode(xmlNodePtr node) {
-  if (!node || !node->parent)
-    return NO;
+NSString *collapseWhiteSpace(NSString *text);
 
-  if (node->parent->type == XML_DOCUMENT_NODE)
-    return YES;
+NSString *collapseWhiteSpaceIfNeeded(NSString *text);
 
-  const xmlChar *parentName = node->parent->name;
-  if (!parentName)
-    return NO;
+BOOL isWhiteSpaceOnly(NSString *text);
 
-  return xmlStrEqual(parentName, BAD_CAST "html") ||
-         xmlStrEqual(parentName, BAD_CAST "body");
-}
+BOOL HTMLIsLastParagraphInBlockContext(xmlNodePtr node, const xmlChar *tag,
+                                       const xmlChar *parentTag, BOOL isLast);
 
-static inline NSSet<NSValue *> *
-MakeBlockTags(NSDictionary<NSNumber *, id<BaseStyleProtocol>> *styles) {
-  NSMutableSet<NSValue *> *tags = [NSMutableSet set];
+BOOL xmlTextNodeHasRenderableContent(xmlNodePtr node);
 
-  [styles enumerateKeysAndObjectsUsingBlock:^(
-              NSNumber *key, id<BaseStyleProtocol> style, BOOL *stop) {
-    if (![[style class] isParagraphStyle])
-      return;
+xmlNodePtr _Nullable nextRenderableSibling(xmlNodePtr node);
 
-    // tagName (container or paragraph)
-    const char *tag = [[style class] tagName];
-    if (tag) {
-      [tags addObject:[NSValue valueWithPointer:(const void *)tag]];
-    }
-
-    // subTagName (paragraph inside container)
-    if ([[style class] respondsToSelector:@selector(subTagName)]) {
-      const char *sub = [[style class] subTagName];
-      if (sub) {
-        [tags addObject:[NSValue valueWithPointer:(const void *)sub]];
-      }
-    }
-  }];
-
-  return tags.copy;
-}
-
-static NSSet<NSString *> *blockTags;
-static dispatch_once_t onceToken;
-static inline BOOL isBlockTag(NSString *tag) {
-  dispatch_once(&onceToken, ^{
-    blockTags = [NSSet setWithArray:@[
-      @"p", @"ul", @"ol", @"li", @"h1", @"h2", @"h3", @"h4", @"h5", @"h6",
-      @"blockquote", @"checklist", @"codeblock", @"hr"
-    ]];
-  });
-
-  return [blockTags containsObject:tag];
-}
-
-static inline BOOL isHTMLWhitespace(unsigned char c) {
-  return c == ' ' || c == '\n' || c == '\t' || c == '\r' || c == '\f';
-}
-
-static inline NSString *collapseWhiteSpace(NSString *text) {
-  CFIndex len = CFStringGetLength((CFStringRef)text);
-  if (len == 0)
-    return text;
-
-  CFMutableStringRef out = CFStringCreateMutable(kCFAllocatorDefault, len);
-
-  CFStringInlineBuffer buffer;
-  CFStringInitInlineBuffer((CFStringRef)text, &buffer, CFRangeMake(0, len));
-
-  BOOL lastWasWhitespace = NO;
-
-  for (CFIndex i = 0; i < len; i++) {
-    unichar c = CFStringGetCharacterFromInlineBuffer(&buffer, i);
-
-    BOOL isWhitespace = (c == ' ' || c == '\n' || c == '\t' || c == '\r' ||
-                         c == '\f' || c == 0x00A0);
-
-    if (isWhitespace) {
-      if (!lastWasWhitespace) {
-        UniChar space = ' ';
-        CFStringAppendCharacters(out, &space, 1);
-        lastWasWhitespace = YES;
-      }
-    } else {
-      CFStringAppendCharacters(out, &c, 1);
-      lastWasWhitespace = NO;
-    }
-  }
-
-  return CFBridgingRelease(out);
-}
-
-static inline NSString *collapseWhiteSpaceIfNeeded(NSString *text) {
-  if (text.length == 0)
-    return text;
-
-  static NSCharacterSet *ws;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    ws = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-  });
-
-  if ([text rangeOfCharacterFromSet:ws].location == NSNotFound)
-    return text;
-
-  return collapseWhiteSpace(text);
-}
-
-static inline BOOL isWhiteSpaceOnly(NSString *text) {
-  NSCharacterSet *ws = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-  for (NSUInteger i = 0; i < text.length; i++) {
-    if (![ws characterIsMember:[text characterAtIndex:i]]) {
-      return NO;
-    }
-  }
-  return YES;
-}
-
-static inline BOOL HTMLIsLastParagraphInBlockContext(xmlNodePtr node,
-                                                     const xmlChar *tag,
-                                                     const xmlChar *parentTag,
-                                                     BOOL isLast) {
-  if (!isLast || !tag || !parentTag)
-    return NO;
-
-  if (xmlStrEqual(tag, BAD_CAST "p")) {
-    return xmlStrEqual(parentTag, BAD_CAST "blockquote") ||
-           xmlStrEqual(parentTag, BAD_CAST "codeblock");
-  }
-
-  if (xmlStrEqual(tag, BAD_CAST "li")) {
-    return xmlStrEqual(parentTag, BAD_CAST "ol") ||
-           xmlStrEqual(parentTag, BAD_CAST "ul");
-  }
-
-  return NO;
-}
-
-static inline BOOL xmlTextNodeHasRenderableContent(xmlNodePtr node) {
-  if (!node || node->type != XML_TEXT_NODE || !node->content)
-    return NO;
-
-  const xmlChar *c = node->content;
-  for (; *c; c++) {
-    switch (*c) {
-    case ' ':
-    case '\n':
-    case '\t':
-    case '\r':
-    case '\f':
-      continue;
-    default:
-      return YES;
-    }
-  }
-  return NO;
-}
-
-static inline xmlNodePtr __nullable nextRenderableSibling(xmlNodePtr node) {
-  for (xmlNodePtr next = node->next; next; next = next->next) {
-    if (next->type == XML_ELEMENT_NODE)
-      return next;
-
-    if (xmlTextNodeHasRenderableContent(next))
-      return next;
-  }
-  return NULL;
-}
-
-static inline bool isBrTag(const char *tagName) {
-  return tagName && tagName[0] == 'b' && tagName[1] == 'r' &&
-         tagName[2] == '\0';
-}
+bool isBrTag(const char *tagName);
 
 NS_ASSUME_NONNULL_END
