@@ -341,7 +341,7 @@ class EnrichedTextInputViewManager :
   }
 
   override fun addDividerAtNewLine(view: EnrichedTextInputView?) {
-    // no-op for now
+    view?.insertDivider()
   }
 
   override fun addLink(

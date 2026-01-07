@@ -3,9 +3,13 @@ package com.swmansion.enriched.styles
 import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.util.Log
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.constants.Strings
+import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.EnrichedSpans.DIVIDER
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
@@ -414,6 +418,29 @@ class ParagraphStyles(
 
   fun getStyleRange(): Pair<Int, Int> = view.selection?.getParagraphSelection() ?: Pair(0, 0)
 
+  fun insertDivider() {
+    val editable = view.editableText as Editable
+    val index = view.selection?.end
+    if (index == null) return
+    val safeIndex = index.coerceIn(0, editable.length)
+    val paragraphRange = editable.paragraphRangeAt(safeIndex)
+
+    if (!editable.isParagraphEmpty(paragraphRange)) {
+      return
+    }
+
+    if (!paragraphRange.isEmpty()) {
+      editable.delete(paragraphRange.first, paragraphRange.last + 1)
+    }
+    view.spanState?.setStart(DIVIDER, null)
+    val dividerIndex = paragraphRange.first
+    val builder = SpannableStringBuilder()
+    builder.append(Strings.MAGIC_STRING)
+    builder.setSpan(EnrichedHorizontalRuleSpan(htmlStyle = view.htmlStyle), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    editable.insert(dividerIndex, builder)
+    editable.append('\n')
+  }
+
   fun removeStyle(
     name: String,
     start: Int,
@@ -424,3 +451,11 @@ class ParagraphStyles(
     return removeSpansForRange(spannable, start, end, config.clazz)
   }
 }
+
+private fun Editable.paragraphRangeAt(index: Int): IntRange {
+  val start = lastIndexOf('\n', index - 1).let { if (it == -1) 0 else it + 1 }
+  val end = indexOf('\n', index).let { if (it == -1) length else it + 1 }
+  return start until end
+}
+
+private fun Editable.isParagraphEmpty(range: IntRange): Boolean = substring(range).all { it == '\n' || it.isWhitespace() }
