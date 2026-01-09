@@ -4,7 +4,9 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.text.style.ReplacementSpan
+import android.util.Log
 import androidx.core.graphics.withTranslation
+import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
@@ -12,13 +14,15 @@ import com.swmansion.enriched.styles.HtmlStyle
 class EnrichedHorizontalRuleSpan(
   private val htmlStyle: HtmlStyle,
 ) : ReplacementSpan(),
-  EnrichedNonEditableParagraphSpan {
+  EnrichedNonEditableParagraphSpan,
+  EnrichedFullWidthSpan {
   override val dependsOnHtmlStyle: Boolean = false
 
-  private val drawable: Drawable =
-    htmlStyle.getHorizontalRuleDrawable().mutate()
+  private val drawable: Drawable = htmlStyle.getHorizontalRuleDrawable()
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedSpan = this
+
+  override fun copyWithStyle(htmlStyle: HtmlStyle): EnrichedHorizontalRuleSpan = this
 
   override fun getSize(
     paint: Paint,
@@ -34,8 +38,7 @@ class EnrichedHorizontalRuleSpan(
       it.top = it.ascent
       it.bottom = 0
     }
-
-    return htmlStyle.dividerWidth
+    return htmlStyle.editorWidth
   }
 
   override fun draw(

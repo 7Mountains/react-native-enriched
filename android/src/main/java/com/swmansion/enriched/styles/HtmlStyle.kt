@@ -1,17 +1,15 @@
 package com.swmansion.enriched.styles
 
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ColorFilter
-import android.graphics.Paint
-import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
 import com.facebook.react.bridge.ColorPropConverter
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.PixelUtil
+import com.facebook.react.views.text.ReactTypefaceUtils
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.drawables.HRDrawable
 import kotlin.Float
 import kotlin.Int
 import kotlin.String
@@ -20,6 +18,9 @@ import kotlin.math.ceil
 class HtmlStyle {
   private var style: ReadableMap? = null
   private var view: EnrichedTextInputView? = null
+
+  var editorWidth = view?.editorWidth ?: 0
+    private set
 
   // Default values are ignored as they are specified on the JS side.
   // They are specified only because they are required by the constructor.
@@ -68,49 +69,24 @@ class HtmlStyle {
   var inlineCodeBackgroundColor: Int = Color.BLACK
 
   var mentionsStyle: MutableMap<String, MentionStyle> = mutableMapOf()
+  var contentStyle: Map<String, ContentStyle> = mutableMapOf()
 
   var dividerThickness: Float = 2.0f
   var dividerHeight: Float = 24.0f
   var dividerColor: Int = Color.GRAY
-  var dividerWidth = view?.maxWidth ?: 0
 
-  private var hrDrawable: Drawable? = null
+  private var hrDrawable: HRDrawable? = null
 
   fun getHorizontalRuleDrawable(): Drawable {
-    if (hrDrawable == null) {
-      hrDrawable =
-        object : Drawable() {
-          private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    hrDrawable
+      ?.takeIf {
+        dividerColor == it.color && dividerThickness == it.thickness
+      }?.let { return it }
 
-          override fun draw(canvas: Canvas) {
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = dividerThickness
-            paint.color = dividerColor
-
-            val y = bounds.height() / 2f
-            canvas.drawLine(
-              0f,
-              y,
-              bounds.width().toFloat(),
-              y,
-              paint,
-            )
-          }
-
-          override fun setAlpha(alpha: Int) {
-            paint.alpha = alpha
-          }
-
-          override fun setColorFilter(filter: ColorFilter?) {
-            paint.colorFilter = filter
-          }
-
-          override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
-        }
+    return HRDrawable(dividerThickness, dividerColor).also {
+      hrDrawable = it
+      it.invalidateSelf()
     }
-
-    hrDrawable!!.invalidateSelf()
-    return hrDrawable!!
   }
 
   constructor(view: EnrichedTextInputView?, style: ReadableMap?) {
@@ -183,11 +159,14 @@ class HtmlStyle {
     val mentionStyle = style.getMap("mention")
     mentionsStyle = parseMentionsStyle(mentionStyle)
 
+    contentStyle = ContentStyle.parseComplex(style.getMap("content"), context = view?.context as ReactContext?)
+
     val dividerStyle = style.getMap("divider")
     dividerHeight = parseFloat(dividerStyle, "height")
     dividerThickness = parseFloat(dividerStyle, "thickness")
     dividerColor = parseColor(dividerStyle, "color")
-    dividerWidth = view?.editorWidth ?: 0
+    editorWidth = view?.editorWidth ?: 0
+    getHorizontalRuleDrawable()
   }
 
   private fun parseFloat(
@@ -396,5 +375,149 @@ class HtmlStyle {
       val backgroundColor: Int,
       val underline: Boolean,
     )
+
+    data class ContentStyle(
+      val backgroundColor: Int?,
+      val textColor: Int?,
+      val borderColor: Int?,
+      val borderWidth: Float,
+      val borderStyle: String?,
+      val borderRadius: Float,
+      val marginTop: Float,
+      val marginBottom: Float,
+      val marginLeft: Float,
+      val marginRight: Float,
+      val paddingTop: Float,
+      val paddingBottom: Float,
+      val paddingLeft: Float,
+      val paddingRight: Float,
+      val imageWidth: Float?,
+      val imageHeight: Float?,
+      val imageBorderRadiusTopLeft: Float,
+      val imageBorderRadiusTopRight: Float,
+      val imageBorderRadiusBottomLeft: Float,
+      val imageBorderRadiusBottomRight: Float,
+      val imageResizeMode: String?,
+      val fallbackImageURI: String?,
+      val width: Float,
+      val height: Float,
+      val fontSize: Float,
+      val typefaceStyle: Int,
+    ) {
+      companion object {
+        fun fromReadableMap(
+          map: ReadableMap?,
+          context: ReactContext,
+        ): ContentStyle {
+          if (map == null) {
+            throw Error("ContentStyle map cannot be null")
+          }
+
+          fun num(
+            key: String,
+            def: Double = 0.0,
+          ): Float =
+            if (map.hasKey(key) && !map.isNull(key)) {
+              PixelUtil.toPixelFromDIP(map.getDouble(key))
+            } else {
+              def.toFloat()
+            }
+
+          fun baseNum(
+            key: String,
+            def: Double = 0.0,
+          ): Float =
+            if (map.hasKey(key) && !map.isNull(key)) {
+              map.getDouble(key).toFloat()
+            } else {
+              def.toFloat()
+            }
+
+          fun str(
+            key: String,
+            def: String? = null,
+          ): String? = if (map.hasKey(key) && !map.isNull(key)) map.getString(key) else def
+
+          fun color(
+            key: String,
+            def: Int?,
+          ): Int? =
+            if (map.hasKey(key) && !map.isNull(key)) {
+              ColorPropConverter.getColor(map.getDouble(key), context)
+            } else {
+              def
+            }
+
+          return ContentStyle(
+            backgroundColor = color("backgroundColor", null),
+            textColor = color("textColor", Color.BLACK),
+            borderColor = color("borderColor", null),
+            borderWidth = num("borderWidth"),
+            borderStyle = str("borderStyle", "solid"),
+            borderRadius = num("borderRadius"),
+            marginTop = num("marginTop"),
+            marginBottom = num("marginBottom"),
+            marginLeft = num("marginLeft"),
+            marginRight = num("marginRight"),
+            paddingTop = num("paddingTop"),
+            paddingBottom = num("paddingBottom"),
+            paddingLeft = num("paddingLeft"),
+            paddingRight = num("paddingRight"),
+            imageWidth = baseNum("imageWidth"),
+            imageHeight = baseNum("imageHeight"),
+            imageBorderRadiusTopLeft = num("imageBorderRadiusTopLeft"),
+            imageBorderRadiusTopRight = num("imageBorderRadiusTopRight"),
+            imageBorderRadiusBottomLeft = num("imageBorderRadiusBottomLeft"),
+            imageBorderRadiusBottomRight = num("imageBorderRadiusBottomRight"),
+            imageResizeMode = str("imageResizeMode", "cover"),
+            fallbackImageURI = str("fallbackImageURI"),
+            width = num("width"),
+            height =
+              if (map.hasKey("height") && !map.isNull("height")) {
+                num("height")
+              } else if (map.hasKey("imageHeight") && !map.isNull("imageHeight")) {
+                num("imageHeight")
+              } else {
+                50f
+              },
+            fontSize =
+              if (map.hasKey("fontSize") && !map.isNull("fontSize")) {
+                map.getDouble("fontSize").toFloat()
+              } else {
+                14f
+              },
+            typefaceStyle = ReactTypefaceUtils.parseFontWeight(str("fontWeight", "400")),
+          )
+        }
+
+        fun parseSingle(
+          map: ReadableMap?,
+          context: ReactContext,
+        ): Map<String, ContentStyle> =
+          map?.let {
+            mapOf("all" to fromReadableMap(it, context))
+          } ?: emptyMap()
+
+        fun parseComplex(
+          map: ReadableMap?,
+          context: ReactContext?,
+        ): Map<String, ContentStyle> {
+          if (map == null || context == null) return emptyMap()
+
+          val result = mutableMapOf<String, ContentStyle>()
+          val iterator = map.keySetIterator()
+
+          while (iterator.hasNextKey()) {
+            val key = iterator.nextKey()
+            val styleMap = map.getMap(key)
+            if (styleMap != null) {
+              result[key] = fromReadableMap(styleMap, context)
+            }
+          }
+
+          return result
+        }
+      }
+    }
   }
 }

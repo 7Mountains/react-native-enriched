@@ -2,6 +2,7 @@ package com.swmansion.enriched.watchers
 
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
@@ -36,7 +37,15 @@ class EnrichedTextWatcher(
   override fun afterTextChanged(s: Editable?) {
     if (s == null) return
     emitEvents(s)
+    val marked =
+      s
+        .toString()
+        .replace("\u200B", "[ZWS]")
+        .replace("\u200C", "[ZWNJ]")
+        .replace("\u200D", "[ZWJ]")
+        .replace("\u00A0", "[NBSP]")
 
+    Log.i("Text changed", marked)
     if (view.isDuringTransaction) return
     applyStyles(s)
   }
