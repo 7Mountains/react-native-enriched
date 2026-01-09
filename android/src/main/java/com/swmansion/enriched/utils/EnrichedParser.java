@@ -9,10 +9,13 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AlignmentSpan;
 import android.text.style.ParagraphStyle;
+import com.swmansion.enriched.EnrichedTextInputView;
 import com.swmansion.enriched.constants.Strings;
+import com.swmansion.enriched.spans.ContentParams;
 import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan;
 import com.swmansion.enriched.spans.EnrichedBoldSpan;
 import com.swmansion.enriched.spans.EnrichedCodeBlockSpan;
+import com.swmansion.enriched.spans.EnrichedContentSpan;
 import com.swmansion.enriched.spans.EnrichedH1Span;
 import com.swmansion.enriched.spans.EnrichedH2Span;
 import com.swmansion.enriched.spans.EnrichedH3Span;
@@ -38,6 +41,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.ccil.cowan.tagsoup.HTMLSchema;
 import org.ccil.cowan.tagsoup.Parser;
 import org.xml.sax.Attributes;
@@ -63,7 +67,17 @@ public class EnrichedParser {
      * Drawable representation of the image or <code>null</code> for a generic replacement image.
      * Make sure you call setBounds() on your Drawable if it doesn't already have its bounds set.
      */
-    Drawable getDrawable(String source);
+    void loadImage(String source, ImageGetter.Callbacks callbacks, int maxWidth);
+
+    void loadImage(String source, ImageGetter.Callbacks callbacks, int maxWidth, int minWidth);
+
+    interface Callbacks {
+      void onImageFailed();
+
+      void onImageLoaded(Drawable drawable);
+
+      void onImageLoading(Drawable drawable);
+    }
   }
 
   private EnrichedParser() {}
@@ -84,7 +98,11 @@ public class EnrichedParser {
    *
    * <p>This uses TagSoup to handle real HTML, including all of the brokenness found in the wild.
    */
-  public static Spanned fromHtml(String source, HtmlStyle style, ImageGetter imageGetter) {
+  public static Spanned fromHtml(
+      String source,
+      HtmlStyle style,
+      ImageGetter imageGetter,
+      EnrichedTextInputView textInputView) {
     Parser parser = new Parser();
     try {
       parser.setProperty(Parser.schemaProperty, HtmlParser.schema);
@@ -93,7 +111,7 @@ public class EnrichedParser {
       throw new RuntimeException(e);
     }
     HtmlToSpannedConverter converter =
-        new HtmlToSpannedConverter(source, style, imageGetter, parser);
+        new HtmlToSpannedConverter(source, style, imageGetter, parser, textInputView);
     return converter.convert();
   }
 
@@ -152,30 +170,40 @@ public class EnrichedParser {
     }
   }
 
-  private static String getBlockTag(EnrichedParagraphSpan[] spans) {
+  private static TagInfo getBlockTagWithAttributes(EnrichedParagraphSpan[] spans) {
     for (EnrichedParagraphSpan span : spans) {
       if (span instanceof EnrichedUnorderedListSpan) {
-        return "ul";
+        return new TagInfo("ul");
       } else if (span instanceof EnrichedOrderedListSpan) {
-        return "ol";
+        return new TagInfo("ol");
       } else if (span instanceof EnrichedH1Span) {
-        return "h1";
+        return new TagInfo("h1");
       } else if (span instanceof EnrichedH2Span) {
-        return "h2";
+        return new TagInfo("h2");
       } else if (span instanceof EnrichedH3Span) {
-        return "h3";
+        return new TagInfo("h3");
       } else if (span instanceof EnrichedH4Span) {
-        return "h4";
+        return new TagInfo("h4");
       } else if (span instanceof EnrichedH5Span) {
-        return "h5";
+        return new TagInfo("h5");
       } else if (span instanceof EnrichedH6Span) {
-        return "h6";
+        return new TagInfo("h6");
       } else if (span instanceof EnrichedHorizontalRuleSpan) {
-        return "hr";
+        return new TagInfo("hr");
+      } else if (span instanceof EnrichedContentSpan) {
+        ContentParams params = ((EnrichedContentSpan) span).getParams();
+
+        Map<String, String> attr = new HashMap<>();
+        attr.put("text", params.getText());
+        attr.put("type", params.getType());
+        attr.put("src", params.getSrc());
+        attr.putAll(params.getAttributes());
+
+        return new TagInfo("content", attr);
       }
     }
 
-    return "p";
+    return new TagInfo("p");
   }
 
   private static void withinBlock(StringBuilder out, Spanned text, int start, int end) {
@@ -201,9 +229,38 @@ public class EnrichedParser {
       } else {
         EnrichedParagraphSpan[] paragraphStyles =
             text.getSpans(i, next, EnrichedParagraphSpan.class);
-        String tag = getBlockTag(paragraphStyles);
+        TagInfo tagInfo = getBlockTagWithAttributes(paragraphStyles);
+        String tag = tagInfo.tag;
+
         if (tag.equals("hr")) {
+          if (isInOlList || isInUlList) {
+            out.append(isInOlList ? "</ol>" : "</ul>");
+            out.append("\n");
+            isInOlList = false;
+            isInUlList = false;
+          }
           out.append("<hr />\n");
+          next++;
+          continue;
+        }
+        if (tag.equals("content")) {
+          if (isInOlList || isInUlList) {
+            out.append(isInOlList ? "</ol>" : "</ul>");
+            out.append("\n");
+            isInOlList = false;
+            isInUlList = false;
+          }
+          out.append("<").append(tagInfo.tag);
+
+          for (Map.Entry<String, String> entry : tagInfo.attributes.entrySet()) {
+            out.append("   ")
+                .append(entry.getKey())
+                .append("=\"")
+                .append(entry.getValue())
+                .append("\"");
+          }
+          out.append("/>");
+          out.append("\n");
           next++;
           continue;
         }
@@ -377,6 +434,20 @@ public class EnrichedParser {
       }
     }
   }
+
+  private static class TagInfo {
+    String tag;
+    @Nullable Map<String, String> attributes;
+
+    TagInfo(String tag) {
+      this.tag = tag;
+    }
+
+    TagInfo(String tag, Map<String, String> attributes) {
+      this.tag = tag;
+      this.attributes = attributes != null ? attributes : new HashMap<>();
+    }
+  }
 }
 
 class HtmlToSpannedConverter implements ContentHandler {
@@ -388,14 +459,20 @@ class HtmlToSpannedConverter implements ContentHandler {
   private static Integer currentOrderedListItemIndex = 0;
   private static Boolean isInOrderedList = false;
   private static Boolean isEmptyTag = false;
+  private final EnrichedTextInputView mTextInputView;
 
   public HtmlToSpannedConverter(
-      String source, HtmlStyle style, EnrichedParser.ImageGetter imageGetter, Parser parser) {
+      String source,
+      HtmlStyle style,
+      EnrichedParser.ImageGetter imageGetter,
+      Parser parser,
+      EnrichedTextInputView textInputView) {
     mStyle = style;
     mSource = source;
     mSpannableStringBuilder = new SpannableStringBuilder();
     mImageGetter = imageGetter;
     mReader = parser;
+    mTextInputView = textInputView;
   }
 
   public Spanned convert() {
@@ -454,7 +531,7 @@ class HtmlToSpannedConverter implements ContentHandler {
     return mSpannableStringBuilder;
   }
 
-  private void handleStartTag(String tag, Attributes attributes) {
+  private void handleStartTag(String tag, @Nullable Attributes attributes, HtmlStyle htmlStyle) {
     if (tag.equalsIgnoreCase("br")) {
       // We don't need to handle this. TagSoup will ensure that there's a </br> for each <br>
       // so we can safely emit the linebreaks when we handle the close tag.
@@ -509,6 +586,8 @@ class HtmlToSpannedConverter implements ContentHandler {
       startMention(mSpannableStringBuilder, attributes);
     } else if (tag.equalsIgnoreCase("hr")) {
       addHr(mSpannableStringBuilder);
+    } else if (tag.equalsIgnoreCase("content")) {
+      addContent(mSpannableStringBuilder, attributes, htmlStyle);
     }
   }
 
@@ -705,6 +784,34 @@ class HtmlToSpannedConverter implements ContentHandler {
     text.append('\n');
   }
 
+  private void addContent(Editable editable, @Nullable Attributes attributes, HtmlStyle htmlStyle) {
+    if (attributes == null) {
+      return;
+    }
+
+    String text = attributes.getValue("", "text");
+    String type = attributes.getValue("", "type");
+    String src = attributes.getValue("", "src");
+
+    Map<String, String> attributesMap = new HashMap<>();
+    for (int i = 0; i < attributes.getLength(); i++) {
+      String localName = attributes.getLocalName(i);
+
+      if (!"text".equals(localName) && !"type".equals(localName) && !"src".equals(localName)) {
+        attributesMap.put(localName, attributes.getValue(i));
+      }
+    }
+    SpannableStringBuilder builder = new SpannableStringBuilder();
+    builder.append(Strings.MAGIC_CHAR);
+    EnrichedContentSpan span =
+        EnrichedContentSpan.Companion.createEnrichedContentSpan(
+            text, type, src, attributesMap, htmlStyle);
+    span.attachTo(mTextInputView);
+    builder.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    editable.append(builder);
+    editable.append('\n');
+  }
+
   private static <T> T getLast(Spanned text, Class<T> kind) {
     /*
      * This knows that the last returned object from getSpans()
@@ -765,7 +872,10 @@ class HtmlToSpannedConverter implements ContentHandler {
   }
 
   private static void startImg(
-      Editable text, Attributes attributes, EnrichedParser.ImageGetter img) {
+      Editable text, @Nullable Attributes attributes, EnrichedParser.ImageGetter img) {
+    if (attributes == null) {
+      return;
+    }
     String src = attributes.getValue("", "src");
     String width = attributes.getValue("", "width");
     String height = attributes.getValue("", "height");
@@ -778,7 +888,10 @@ class HtmlToSpannedConverter implements ContentHandler {
     text.setSpan(span, len, text.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
   }
 
-  private static void startA(Editable text, Attributes attributes) {
+  private static void startA(Editable text, @Nullable Attributes attributes) {
+    if (attributes == null) {
+      return;
+    }
     String href = attributes.getValue("", "href");
     start(text, new Href(href));
   }
@@ -792,7 +905,10 @@ class HtmlToSpannedConverter implements ContentHandler {
     }
   }
 
-  private static void startMention(Editable mention, Attributes attributes) {
+  private static void startMention(Editable mention, @Nullable Attributes attributes) {
+    if (attributes == null) {
+      return;
+    }
     String text = attributes.getValue("", "text");
     String indicator = attributes.getValue("", "indicator");
 
@@ -828,7 +944,7 @@ class HtmlToSpannedConverter implements ContentHandler {
   public void endPrefixMapping(String prefix) {}
 
   public void startElement(String uri, String localName, String qName, Attributes attributes) {
-    handleStartTag(localName, attributes);
+    handleStartTag(localName, attributes, mStyle);
   }
 
   public void endElement(String uri, String localName, String qName) {

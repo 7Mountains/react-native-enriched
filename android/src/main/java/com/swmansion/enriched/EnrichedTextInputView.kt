@@ -31,12 +31,15 @@ import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.inputFilters.NonEditableParagraphFilter
+import com.swmansion.enriched.spans.EnrichedContentSpan
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
 import com.swmansion.enriched.spans.EnrichedImageSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
+import com.swmansion.enriched.spans.utils.ForceRedrawSpan
 import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.styles.InlineStyles
 import com.swmansion.enriched.styles.ListStyles
@@ -65,23 +68,21 @@ class EnrichedTextInputView : AppCompatEditText {
   var editorWidth: Int = 0
     private set
 
-  override fun onSizeChanged(
-    w: Int,
-    h: Int,
-    oldw: Int,
-    oldh: Int,
+  override fun onLayout(
+    changed: Boolean,
+    l: Int,
+    t: Int,
+    r: Int,
+    b: Int,
   ) {
-    super.onSizeChanged(w, h, oldw, oldh)
-
-    val editorWidth = w - paddingLeft - paddingRight
-
-    if (editorWidth != this.editorWidth) {
-      this.editorWidth = editorWidth
+    super.onLayout(changed, l, t, r, b)
+    val textLayoutWidth = layout?.width ?: return
+    // during screen rotation or initial mount
+    // we have to reapply styles that depend on the view width
+    if (textLayoutWidth != editorWidth) {
+      editorWidth = textLayoutWidth
       htmlStyle.invalidateStyles()
-    }
-
-    text?.let {
-      invalidate()
+      reApplyFullWidthSpans(htmlStyle)
     }
   }
 
@@ -283,7 +284,7 @@ class EnrichedTextInputView : AppCompatEditText {
     if (!isHtml) return text
 
     try {
-      val parsed = EnrichedParser.fromHtml(text.toString(), htmlStyle, null)
+      val parsed = EnrichedParser.fromHtml(text.toString(), htmlStyle, null, this)
       val withoutLastNewLine = parsed.trimEnd('\n')
       return withoutLastNewLine
     } catch (e: Exception) {
@@ -318,6 +319,22 @@ class EnrichedTextInputView : AppCompatEditText {
     setSelection(actualStart, actualEnd)
   }
 
+  fun forceRedrawSpan(span: EnrichedSpan) {
+    val text = text
+    if (text !is Spannable) return
+
+    val start = text.getSpanStart(span)
+    val end = text.getSpanEnd(span)
+
+    if (start == -1 || end == -1) return
+
+    val marker = ForceRedrawSpan()
+
+    text.setSpan(marker, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+    text.removeSpan(marker)
+  }
+
   // Helper: Walks through the string skipping ZWSPs to find the Nth visible character
   private fun getActualIndex(visibleIndex: Int): Int {
     val currentText = text as Spannable
@@ -346,11 +363,10 @@ class EnrichedTextInputView : AppCompatEditText {
   private fun observeAsyncImages() {
     val liveText = text ?: return
 
-    val spans = liveText.getSpans(0, liveText.length, EnrichedImageSpan::class.java)
-
-    for (span in spans) {
-      span.observeAsyncDrawableLoaded(liveText)
-    }
+    val spans =
+      liveText.getSpans(0, liveText.length, EnrichedImageSpan::class.java).forEach {
+        it.observeAsyncDrawableLoaded(liveText)
+      }
   }
 
   fun setAutoFocus(autoFocus: Boolean) {
@@ -726,6 +742,24 @@ class EnrichedTextInputView : AppCompatEditText {
     val maxScrollY = (textLayout.height - visibleTextHeight).coerceAtLeast(0)
     targetScrollY = targetScrollY.coerceIn(0, maxScrollY)
     scrollTo(scrollX, targetScrollY)
+  }
+
+  private fun reApplyFullWidthSpans(htmlStyle: HtmlStyle) {
+    val spannable = text as? Spannable ?: return
+    if (spannable.isEmpty()) return
+    runAsATransaction {
+      val spans = spannable.getSpans(0, spannable.length, EnrichedFullWidthSpan::class.java)
+      for (span in spans) {
+        val start = spannable.getSpanStart(span)
+        val end = spannable.getSpanEnd(span)
+        val flags = spannable.getSpanFlags(span)
+
+        if (start == -1 || end == -1) continue
+        spannable.removeSpan(span)
+        val copiedSpan = span.copyWithStyle(htmlStyle)
+        spannable.setSpan(copiedSpan, start, end, flags)
+      }
+    }
   }
 
   private fun reApplyHtmlStyleForSpans(

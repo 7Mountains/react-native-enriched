@@ -111,7 +111,7 @@ object MeasurementStore {
 
     try {
       val htmlStyle = HtmlStyle(defaultView, props.getMap("htmlStyle"))
-      val parsed = EnrichedParser.fromHtml(defaultValue, htmlStyle, null)
+      val parsed = EnrichedParser.fromHtml(defaultValue, htmlStyle, null, defaultView)
       return parsed.trimEnd('\n')
     } catch (e: Exception) {
       Log.w("MeasurementStore", "Error parsing initial HTML text: ${e.message}")

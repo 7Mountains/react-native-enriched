@@ -13,6 +13,7 @@ data class BaseSpanConfig(
 data class ParagraphSpanConfig(
   override val clazz: Class<*>,
   val isContinuous: Boolean,
+  val isSelfClosing: Boolean,
 ) : ISpanConfig
 
 data class ListSpanConfig(
@@ -45,6 +46,7 @@ object EnrichedSpans {
   const val BLOCK_QUOTE = "block_quote"
   const val CODE_BLOCK = "code_block"
   const val DIVIDER = "divider"
+  const val CONTENT = "content"
 
   // list styles
   const val UNORDERED_LIST = "unordered_list"
@@ -66,15 +68,16 @@ object EnrichedSpans {
 
   val paragraphSpans: Map<String, ParagraphSpanConfig> =
     mapOf(
-      H1 to ParagraphSpanConfig(EnrichedH1Span::class.java, false),
-      H2 to ParagraphSpanConfig(EnrichedH2Span::class.java, false),
-      H3 to ParagraphSpanConfig(EnrichedH3Span::class.java, false),
-      H4 to ParagraphSpanConfig(EnrichedH4Span::class.java, false),
-      H5 to ParagraphSpanConfig(EnrichedH5Span::class.java, false),
-      H6 to ParagraphSpanConfig(EnrichedH6Span::class.java, false),
-      DIVIDER to ParagraphSpanConfig(EnrichedHorizontalRuleSpan::class.java, false),
-      BLOCK_QUOTE to ParagraphSpanConfig(EnrichedBlockQuoteSpan::class.java, true),
-      CODE_BLOCK to ParagraphSpanConfig(EnrichedCodeBlockSpan::class.java, true),
+      H1 to ParagraphSpanConfig(EnrichedH1Span::class.java, false, false),
+      H2 to ParagraphSpanConfig(EnrichedH2Span::class.java, false, false),
+      H3 to ParagraphSpanConfig(EnrichedH3Span::class.java, false, false),
+      H4 to ParagraphSpanConfig(EnrichedH4Span::class.java, false, false),
+      H5 to ParagraphSpanConfig(EnrichedH5Span::class.java, false, false),
+      H6 to ParagraphSpanConfig(EnrichedH6Span::class.java, false, false),
+      DIVIDER to ParagraphSpanConfig(EnrichedHorizontalRuleSpan::class.java, false, true),
+      CONTENT to ParagraphSpanConfig(EnrichedContentSpan::class.java, false, true),
+      BLOCK_QUOTE to ParagraphSpanConfig(EnrichedBlockQuoteSpan::class.java, true, false),
+      CODE_BLOCK to ParagraphSpanConfig(EnrichedCodeBlockSpan::class.java, true, false),
     )
 
   val listSpans: Map<String, ListSpanConfig> =
@@ -99,7 +102,7 @@ object EnrichedSpans {
   ): StylesMergingConfig? =
     when (style) {
       BOLD -> {
-        val blockingStyles = mutableListOf(CODE_BLOCK, DIVIDER)
+        val blockingStyles = mutableListOf(CODE_BLOCK, DIVIDER, CONTENT)
         if (htmlStyle.h1Bold) blockingStyles.add(H1)
         if (htmlStyle.h2Bold) blockingStyles.add(H2)
         if (htmlStyle.h3Bold) blockingStyles.add(H3)
@@ -111,57 +114,57 @@ object EnrichedSpans {
 
       ITALIC, UNDERLINE, STRIKETHROUGH -> {
         StylesMergingConfig(
-          blockingStyles = arrayOf(CODE_BLOCK, DIVIDER),
+          blockingStyles = arrayOf(CODE_BLOCK, DIVIDER, CONTENT),
         )
       }
 
       INLINE_CODE -> {
         StylesMergingConfig(
           conflictingStyles = arrayOf(MENTION, LINK),
-          blockingStyles = arrayOf(CODE_BLOCK, DIVIDER),
+          blockingStyles = arrayOf(CODE_BLOCK, DIVIDER, CONTENT),
         )
       }
 
       H1 -> {
         val conflicting = mutableListOf(H2, H3, H4, H5, H6, ORDERED_LIST, UNORDERED_LIST, BLOCK_QUOTE, CODE_BLOCK)
         if (htmlStyle.h1Bold) conflicting.add(BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER))
+        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER, CONTENT))
       }
 
       H2 -> {
         val conflicting = mutableListOf(H1, H3, H4, H5, H6, ORDERED_LIST, UNORDERED_LIST, BLOCK_QUOTE, CODE_BLOCK)
         if (htmlStyle.h2Bold) conflicting.add(BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER))
+        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER, CONTENT))
       }
 
       H3 -> {
         val conflicting = mutableListOf(H1, H2, H4, H5, H6, ORDERED_LIST, UNORDERED_LIST, BLOCK_QUOTE, CODE_BLOCK)
         if (htmlStyle.h3Bold) conflicting.add(BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER))
+        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER, CONTENT))
       }
 
       H4 -> {
         val conflicting = mutableListOf(H1, H2, H3, H5, H6, ORDERED_LIST, UNORDERED_LIST, BLOCK_QUOTE, CODE_BLOCK)
         if (htmlStyle.h4Bold) conflicting.add(BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER))
+        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER, CONTENT))
       }
 
       H5 -> {
         val conflicting = mutableListOf(H1, H2, H3, H4, H6, ORDERED_LIST, UNORDERED_LIST, BLOCK_QUOTE, CODE_BLOCK)
         if (htmlStyle.h5Bold) conflicting.add(BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER))
+        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER, CONTENT))
       }
 
       H6 -> {
         val conflicting = mutableListOf(H1, H2, H3, H4, H5, ORDERED_LIST, UNORDERED_LIST, BLOCK_QUOTE, CODE_BLOCK)
         if (htmlStyle.h6Bold) conflicting.add(BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER))
+        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(DIVIDER, CONTENT))
       }
 
       BLOCK_QUOTE -> {
         StylesMergingConfig(
           conflictingStyles = arrayOf(H1, H2, H3, H4, H5, H6, CODE_BLOCK, ORDERED_LIST, UNORDERED_LIST),
-          blockingStyles = arrayOf(DIVIDER),
+          blockingStyles = arrayOf(DIVIDER, CONTENT),
         )
       }
 
@@ -184,36 +187,37 @@ object EnrichedSpans {
               BLOCK_QUOTE,
               INLINE_CODE,
             ),
-          blockingStyles = arrayOf(DIVIDER),
+          blockingStyles = arrayOf(DIVIDER, CONTENT),
         )
       }
 
       UNORDERED_LIST -> {
         StylesMergingConfig(
           conflictingStyles = arrayOf(H1, H2, H3, H4, H5, H6, ORDERED_LIST, CODE_BLOCK, BLOCK_QUOTE),
-          blockingStyles = arrayOf(DIVIDER),
+          blockingStyles = arrayOf(DIVIDER, CONTENT),
         )
       }
 
       ORDERED_LIST -> {
         StylesMergingConfig(
-          conflictingStyles = arrayOf(H1, H2, H3, H4, H5, H6, UNORDERED_LIST, CODE_BLOCK, BLOCK_QUOTE, DIVIDER),
+          conflictingStyles = arrayOf(H1, H2, H3, H4, H5, H6, UNORDERED_LIST, CODE_BLOCK, BLOCK_QUOTE),
+          blockingStyles = arrayOf(DIVIDER, CONTENT),
         )
       }
 
       LINK -> {
         StylesMergingConfig(
-          blockingStyles = arrayOf(INLINE_CODE, CODE_BLOCK, MENTION, DIVIDER),
+          blockingStyles = arrayOf(INLINE_CODE, CODE_BLOCK, MENTION, DIVIDER, CONTENT),
         )
       }
 
       IMAGE -> {
-        StylesMergingConfig()
+        StylesMergingConfig(blockingStyles = arrayOf(DIVIDER, CONTENT))
       }
 
       MENTION -> {
         StylesMergingConfig(
-          blockingStyles = arrayOf(INLINE_CODE, CODE_BLOCK, LINK, DIVIDER),
+          blockingStyles = arrayOf(INLINE_CODE, CODE_BLOCK, LINK, DIVIDER, CONTENT),
         )
       }
 
@@ -239,6 +243,34 @@ object EnrichedSpans {
               UNORDERED_LIST,
               ORDERED_LIST,
               IMAGE,
+              CONTENT,
+            ),
+        )
+      }
+
+      CONTENT -> {
+        StylesMergingConfig(
+          blockingStyles =
+            arrayOf(
+              BOLD,
+              ITALIC,
+              UNDERLINE,
+              STRIKETHROUGH,
+              INLINE_CODE,
+              CODE_BLOCK,
+              LINK,
+              MENTION,
+              H1,
+              H2,
+              H3,
+              H4,
+              H5,
+              H6,
+              BLOCK_QUOTE,
+              UNORDERED_LIST,
+              ORDERED_LIST,
+              IMAGE,
+              DIVIDER,
             ),
         )
       }

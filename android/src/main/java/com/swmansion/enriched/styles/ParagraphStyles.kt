@@ -9,7 +9,9 @@ import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.EnrichedSpans.CONTENT
 import com.swmansion.enriched.spans.EnrichedSpans.DIVIDER
+import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
@@ -316,6 +318,10 @@ class ParagraphStyles(
     val spanState = view.spanState ?: return
 
     for ((style, config) in EnrichedSpans.paragraphSpans) {
+      if (style == DIVIDER || style == CONTENT) {
+        return // simply skip non text paragraphs
+      }
+
       val styleStart = spanState.getStart(style)
 
       if (styleStart == null) {
@@ -425,7 +431,7 @@ class ParagraphStyles(
     val safeIndex = index.coerceIn(0, editable.length)
     val paragraphRange = editable.paragraphRangeAt(safeIndex)
 
-    if (!editable.isParagraphEmpty(paragraphRange)) {
+    if (!editable.isParagraphEmptyOrEmptyParagraphWithZWS(paragraphRange)) {
       return
     }
 
@@ -458,4 +464,7 @@ private fun Editable.paragraphRangeAt(index: Int): IntRange {
   return start until end
 }
 
-private fun Editable.isParagraphEmpty(range: IntRange): Boolean = substring(range).all { it == '\n' || it.isWhitespace() }
+private fun Editable.isParagraphEmptyOrEmptyParagraphWithZWS(range: IntRange): Boolean =
+  substring(range).all {
+    it == '\n' || it.isWhitespace() || it == Strings.ZWJ_CHAR
+  }
