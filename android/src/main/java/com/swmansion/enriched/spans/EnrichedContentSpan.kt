@@ -27,8 +27,6 @@ class EnrichedContentSpan(
 ) : ReplacementSpan(),
   EnrichedNonEditableParagraphSpan,
   EnrichedFullWidthSpan {
-  private val style = htmlStyle.contentStyle[contentParams.type]!!
-  override val dependsOnHtmlStyle: Boolean = true
   private var tvRef: WeakReference<EnrichedTextInputView>? = null
 
   fun attachTo(tv: EnrichedTextInputView) {
@@ -37,8 +35,11 @@ class EnrichedContentSpan(
 
   private fun invalidate() {
     val tv = tvRef?.get() ?: return
-    tv.forceRedrawSpan(this)
+    tv.onSpanLoaded(this)
   }
+
+  private val style = htmlStyle.contentStyle[contentParams.type]!!
+  override val dependsOnHtmlStyle: Boolean = true
 
   private var internalDrawable: BaseContentDrawable? = null
 

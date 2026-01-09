@@ -1,13 +1,17 @@
 package com.swmansion.enriched.drawables
 
+import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.graphics.withClip
+import com.swmansion.enriched.R
+import com.swmansion.enriched.loaders.EnrichedImageLoader
 import com.swmansion.enriched.styles.HtmlStyle
-import com.swmansion.enriched.utils.AsyncDrawable
+import com.swmansion.enriched.utils.ResourceManager
 
 class ImageContentDrawable(
   private val contentStyle: HtmlStyle.Companion.ContentStyle,
@@ -20,10 +24,11 @@ class ImageContentDrawable(
 
   private var imageDrawable: Drawable? = null
 
-  private val onImageLoaded: (Drawable) -> Unit = { drawable ->
+  private val onImageLoaded: (Drawable?) -> Unit = { drawable ->
     imageDrawable = drawable
     onContentLoadEnd?.invoke()
     isLoaded = true
+    invalidateSelf()
   }
 
   init {
@@ -164,9 +169,31 @@ class ImageContentDrawable(
   }
 
   private fun loadImageAsync() {
-    val asyncDrawable = AsyncDrawable(src)
-    asyncDrawable.onLoaded = onImageLoaded
-    imageDrawable = asyncDrawable
-    this.invalidateSelf()
+    EnrichedImageLoader.instance.load(src) { bitmap ->
+      if (bitmap == null) {
+        loadFallbackImage()
+      } else {
+        onImageLoaded(bitmap.toDrawable(Resources.getSystem()))
+      }
+    }
+  }
+
+  private fun loadFallbackImage() {
+    val fallbackUri = contentStyle.fallbackImageURI
+    if (fallbackUri == null) {
+      loadBaseFallbackImage()
+    } else {
+      EnrichedImageLoader.instance.load(fallbackUri) { bitmap ->
+        if (bitmap == null) {
+          loadBaseFallbackImage()
+        } else {
+          onImageLoaded(bitmap.toDrawable(Resources.getSystem()))
+        }
+      }
+    }
+  }
+
+  private fun loadBaseFallbackImage() {
+    onImageLoaded(ResourceManager.getDrawableResource(R.drawable.broken_image))
   }
 }

@@ -31,7 +31,6 @@ import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.inputFilters.NonEditableParagraphFilter
-import com.swmansion.enriched.spans.EnrichedContentSpan
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
@@ -319,7 +318,7 @@ class EnrichedTextInputView : AppCompatEditText {
     setSelection(actualStart, actualEnd)
   }
 
-  fun forceRedrawSpan(span: EnrichedSpan) {
+  fun onSpanLoaded(span: EnrichedSpan) {
     val text = text
     if (text !is Spannable) return
 
