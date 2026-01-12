@@ -8,7 +8,6 @@ import android.widget.TextView
 class EnrichedMovementMethod(
   view: EnrichedTextInputView,
 ) : ArrowKeyMovementMethod() {
-  private var detectScrollMovement: Boolean = false
   val checklistClickHandler: CheckListClickHandler = CheckListClickHandler(view)
 
   override fun onTouchEvent(
@@ -18,27 +17,6 @@ class EnrichedMovementMethod(
   ): Boolean {
     val action = event.action
     when (action) {
-      MotionEvent.ACTION_DOWN -> {
-        detectScrollMovement = true
-        // Disallow parent views to intercept touch events, until we can detect if we should be
-        // capturing these touches or not.
-        widget.parent.requestDisallowInterceptTouchEvent(true)
-      }
-
-      MotionEvent.ACTION_MOVE -> {
-        if (detectScrollMovement) {
-          if (!widget.canScrollVertically(-1) &&
-            !widget.canScrollVertically(1) &&
-            !widget.canScrollHorizontally(-1) &&
-            !widget.canScrollHorizontally(1)
-          ) {
-            // We cannot scroll, let parent views take care of these touches.
-            widget.parent.requestDisallowInterceptTouchEvent(false)
-          }
-          detectScrollMovement = false
-        }
-      }
-
       MotionEvent.ACTION_UP -> {
         val x = event.x.toInt() - widget.totalPaddingLeft + widget.scrollX
         val y = event.y.toInt() - widget.totalPaddingTop + widget.scrollY

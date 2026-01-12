@@ -3,7 +3,6 @@ package com.swmansion.enriched
 import android.text.Layout
 import android.text.Spannable
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
-import com.swmansion.enriched.utils.getParagraphBounds
 
 class CheckListClickHandler(
   private val view: EnrichedTextInputView,
@@ -24,20 +23,10 @@ class CheckListClickHandler(
     if (isInsideCheckbox(span, layout, line, clickX, clickY)) {
       span.toggleChecked()
       view.redrawSpan(span)
-      moveCursorToParagraphEnd(text, offset)
       return true
     }
 
     return false
-  }
-
-  private fun moveCursorToParagraphEnd(
-    text: Spannable,
-    offset: Int,
-  ) {
-    val (_, end) = text.getParagraphBounds(offset)
-    if (end == 0 || end == -1) return
-    view.setSelection(end)
   }
 
   fun isInsideCheckbox(

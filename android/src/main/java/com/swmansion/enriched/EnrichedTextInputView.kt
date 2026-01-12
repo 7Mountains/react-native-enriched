@@ -15,6 +15,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import com.facebook.react.bridge.ReactContext
@@ -64,6 +65,7 @@ class EnrichedTextInputView : AppCompatEditText {
   var isDuringTransaction: Boolean = false
   var isRemovingMany: Boolean = false
   var scrollEnabled: Boolean = true
+  private var detectScrollMovement: Boolean = false
 
   var editorWidth: Int = 0
     private set
@@ -97,6 +99,34 @@ class EnrichedTextInputView : AppCompatEditText {
     }
   var spanWatcher: EnrichedSpanWatcher? = null
   var layoutManager: EnrichedTextInputViewLayoutManager = EnrichedTextInputViewLayoutManager(this)
+
+  // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L295C1-L296C1
+  override fun onTouchEvent(event: MotionEvent): Boolean {
+    when (event.action) {
+      MotionEvent.ACTION_DOWN -> {
+        detectScrollMovement = true
+        // Disallow parent views to intercept touch events, until we can detect if we should be
+        // capturing these touches or not.
+        parent.requestDisallowInterceptTouchEvent(true)
+      }
+
+      MotionEvent.ACTION_MOVE -> {
+        if (detectScrollMovement) {
+          if (!canScrollVertically(-1) &&
+            !canScrollVertically(1) &&
+            !canScrollHorizontally(-1) &&
+            !canScrollHorizontally(1)
+          ) {
+            // We cannot scroll, let parent views take care of these touches.
+            parent.requestDisallowInterceptTouchEvent(false)
+          }
+          detectScrollMovement = false
+        }
+      }
+    }
+
+    return super.onTouchEvent(event)
+  }
 
   var shouldEmitHtml: Boolean = false
   var shouldEmitOnChangeText: Boolean = false
