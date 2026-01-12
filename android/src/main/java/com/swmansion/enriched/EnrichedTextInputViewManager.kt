@@ -1,6 +1,7 @@
 package com.swmansion.enriched
 
 import android.content.Context
+import androidx.core.graphics.toColorInt
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
@@ -19,6 +20,7 @@ import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.events.OnChangeSelectionEvent
 import com.swmansion.enriched.events.OnChangeStateEvent
 import com.swmansion.enriched.events.OnChangeTextEvent
+import com.swmansion.enriched.events.OnColorChangeEvent
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnLinkDetectedEvent
@@ -68,6 +70,7 @@ class EnrichedTextInputViewManager :
     map.put(OnMentionEvent.EVENT_NAME, mapOf("registrationName" to OnMentionEvent.EVENT_NAME))
     map.put(OnChangeSelectionEvent.EVENT_NAME, mapOf("registrationName" to OnChangeSelectionEvent.EVENT_NAME))
     map.put(OnRequestHtmlResultEvent.EVENT_NAME, mapOf("registrationName" to OnRequestHtmlResultEvent.EVENT_NAME))
+    map.put(OnColorChangeEvent.EVENT_NAME, mapOf("registrationName" to OnColorChangeEvent.EVENT_NAME))
 
     return map
   }
@@ -333,11 +336,11 @@ class EnrichedTextInputViewManager :
     view: EnrichedTextInputView?,
     color: String,
   ) {
-    // no-op for now
+    view?.setColor(color.toColorInt())
   }
 
   override fun removeColor(view: EnrichedTextInputView?) {
-    // no-op for now
+    view?.removeColor()
   }
 
   override fun addDividerAtNewLine(view: EnrichedTextInputView?) {

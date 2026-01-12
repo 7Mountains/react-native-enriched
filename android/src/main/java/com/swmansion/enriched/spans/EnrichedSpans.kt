@@ -57,14 +57,16 @@ object EnrichedSpans {
   const val LINK = "link"
   const val IMAGE = "image"
   const val MENTION = "mention"
+  const val COLOR = "color"
 
-  val inlineSpans: Map<String, BaseSpanConfig> =
+  val inlineSpans: Map<String, ISpanConfig> =
     mapOf(
       BOLD to BaseSpanConfig(EnrichedBoldSpan::class.java),
       ITALIC to BaseSpanConfig(EnrichedItalicSpan::class.java),
       UNDERLINE to BaseSpanConfig(EnrichedUnderlineSpan::class.java),
       STRIKETHROUGH to BaseSpanConfig(EnrichedStrikeThroughSpan::class.java),
       INLINE_CODE to BaseSpanConfig(EnrichedInlineCodeSpan::class.java),
+      COLOR to BaseSpanConfig(EnrichedColoredSpan::class.java),
     )
 
   val paragraphSpans: Map<String, ParagraphSpanConfig> =
@@ -112,6 +114,13 @@ object EnrichedSpans {
         if (htmlStyle.h5Bold) blockingStyles.add(H5)
         if (htmlStyle.h6Bold) blockingStyles.add(H6)
         StylesMergingConfig(blockingStyles = blockingStyles.toTypedArray())
+      }
+
+      COLOR -> {
+        StylesMergingConfig(
+          conflictingStyles = arrayOf(INLINE_CODE),
+          blockingStyles = arrayOf(CODE_BLOCK, DIVIDER, CONTENT, MENTION),
+        )
       }
 
       ITALIC, UNDERLINE, STRIKETHROUGH -> {

@@ -6,12 +6,14 @@ import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnChangeStateEvent
+import com.swmansion.enriched.events.OnColorChangeEvent
 import com.swmansion.enriched.spans.EnrichedSpans
 
 class EnrichedSpanState(
   private val view: EnrichedTextInputView,
 ) {
   private var previousPayload: WritableMap? = null
+  private var previousDispatchedColor: Int? = null
 
   var boldStart: Int? = null
     private set
@@ -53,6 +55,33 @@ class EnrichedSpanState(
     private set
   var checklistStart: Int? = null
     private set
+  var colorStart: Int? = null
+    private set
+  var typingColor: Int? = null
+    private set
+
+  fun setTypingColor(color: Int?) {
+    typingColor = color
+    emitColorChangeEvent(color)
+  }
+
+  fun setColorStart(start: Int?) {
+    if (start == null) {
+      setColorStart(null, null)
+    } else {
+      setColorStart(start, typingColor)
+    }
+  }
+
+  fun setColorStart(
+    start: Int?,
+    color: Int?,
+  ) {
+    colorStart = start
+    typingColor = null
+    emitStateChangeEvent()
+    setTypingColor(color)
+  }
 
   fun setBoldStart(start: Int?) {
     this.boldStart = start
@@ -160,6 +189,7 @@ class EnrichedSpanState(
         EnrichedSpans.UNDERLINE -> underlineStart
         EnrichedSpans.STRIKETHROUGH -> strikethroughStart
         EnrichedSpans.INLINE_CODE -> inlineCodeStart
+        EnrichedSpans.COLOR -> colorStart
         EnrichedSpans.H1 -> h1Start
         EnrichedSpans.H2 -> h2Start
         EnrichedSpans.H3 -> h3Start
@@ -189,6 +219,7 @@ class EnrichedSpanState(
       EnrichedSpans.BOLD -> setBoldStart(start)
       EnrichedSpans.ITALIC -> setItalicStart(start)
       EnrichedSpans.UNDERLINE -> setUnderlineStart(start)
+      EnrichedSpans.COLOR -> setColorStart(start)
       EnrichedSpans.STRIKETHROUGH -> setStrikethroughStart(start)
       EnrichedSpans.INLINE_CODE -> setInlineCodeStart(start)
       EnrichedSpans.H1 -> setH1Start(start)
@@ -207,6 +238,31 @@ class EnrichedSpanState(
       EnrichedSpans.MENTION -> setMentionStart(start)
       EnrichedSpans.DIVIDER -> setDividerStart(start)
     }
+  }
+
+  private fun emitColorChangeEvent(color: Int?) {
+    val resolvedColor = color ?: view.currentTextColor
+
+    if (previousDispatchedColor == resolvedColor) {
+      return
+    }
+
+    previousDispatchedColor = resolvedColor
+
+    val colorToDispatch = String.format("#%06X", resolvedColor and 0x00FFFFFF)
+
+    val context = view.context as ReactContext
+    val surfaceId = UIManagerHelper.getSurfaceId(context)
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
+
+    dispatcher?.dispatchEvent(
+      OnColorChangeEvent(
+        surfaceId,
+        view.id,
+        view.experimentalSynchronousEvents,
+        colorToDispatch,
+      ),
+    )
   }
 
   private fun emitStateChangeEvent() {
@@ -230,6 +286,7 @@ class EnrichedSpanState(
     payload.putBoolean("isImage", imageStart != null)
     payload.putBoolean("isMention", mentionStart != null)
     payload.putBoolean("isCheckList", checklistStart != null)
+    payload.putBoolean("isColored", colorStart != null)
 
     // Do not emit event if payload is the same
     if (previousPayload == payload) {
