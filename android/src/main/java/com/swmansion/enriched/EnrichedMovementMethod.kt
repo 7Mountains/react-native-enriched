@@ -9,7 +9,6 @@ class EnrichedMovementMethod(
   view: EnrichedTextInputView,
 ) : ArrowKeyMovementMethod() {
   private var detectScrollMovement: Boolean = false
-  private var disableCaretPositionChange = false
   val checklistClickHandler: CheckListClickHandler = CheckListClickHandler(view)
 
   override fun onTouchEvent(
