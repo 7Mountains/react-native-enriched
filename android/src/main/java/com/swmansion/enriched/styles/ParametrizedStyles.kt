@@ -5,6 +5,7 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.EnrichedImageSpan
 import com.swmansion.enriched.spans.EnrichedLinkSpan
 import com.swmansion.enriched.spans.EnrichedMentionSpan
@@ -29,7 +30,7 @@ class ParametrizedStyles(
     val spans = ssb.getSpans(start, end, clazz)
     if (spans.isEmpty()) return false
 
-    ssb.replace(start, end, ssb.substring(start, end).replace("\u200B", ""))
+    ssb.replace(start, end, ssb.substring(start, end).replace(Strings.ZERO_WIDTH_SPACE_STRING, ""))
 
     for (span in spans) {
       ssb.removeSpan(span)

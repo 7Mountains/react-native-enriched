@@ -11,7 +11,6 @@ import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.EnrichedSpans.CONTENT
 import com.swmansion.enriched.spans.EnrichedSpans.DIVIDER
-import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
@@ -352,7 +351,7 @@ class ParagraphStyles(
           endCursorPosition -= 1
           spanState.setStart(style, null)
         } else {
-          s.insert(endCursorPosition, "\u200B")
+          s.insert(endCursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
           endCursorPosition += 1
         }
       }
@@ -401,7 +400,7 @@ class ParagraphStyles(
     }
 
     if (start == end) {
-      spannable.insert(start, "\u200B")
+      spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
       setAndMergeSpans(spannable, type, start, end + 1)
       view.selection.validateStyles()
 
@@ -410,10 +409,10 @@ class ParagraphStyles(
 
     var currentStart = start
     var currentEnd = currentStart
-    val paragraphs = spannable.substring(start, end).split("\n")
+    val paragraphs = spannable.substring(start, end).split(Strings.NEWLINE)
 
     for (paragraph in paragraphs) {
-      spannable.insert(currentStart, "\u200B")
+      spannable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
       currentEnd = currentStart + paragraph.length + 1
       currentStart = currentEnd + 1
     }
@@ -426,24 +425,36 @@ class ParagraphStyles(
 
   fun insertDivider() {
     val editable = view.editableText as Editable
-    val index = view.selection?.end
-    if (index == null) return
+    val index = view.selection?.end ?: return
+
     val safeIndex = index.coerceIn(0, editable.length)
     val paragraphRange = editable.paragraphRangeAt(safeIndex)
 
-    if (!editable.isParagraphEmptyOrEmptyParagraphWithZWS(paragraphRange)) {
+    if (!editable.isParagraphZeroOrOneAndEmpty(paragraphRange)) {
       return
     }
 
-    if (!paragraphRange.isEmpty()) {
-      editable.delete(paragraphRange.first, paragraphRange.last + 1)
+    if (paragraphRange.count() == 1) {
+      editable.delete(paragraphRange.first, paragraphRange.last)
     }
+
     view.spanState?.setStart(DIVIDER, null)
+
     val dividerIndex = paragraphRange.first
-    val builder = SpannableStringBuilder()
-    builder.append(Strings.MAGIC_STRING)
-    builder.setSpan(EnrichedHorizontalRuleSpan(htmlStyle = view.htmlStyle), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+    val builder =
+      SpannableStringBuilder().apply {
+        append(Strings.MAGIC_STRING)
+        setSpan(
+          EnrichedHorizontalRuleSpan(htmlStyle = view.htmlStyle),
+          0,
+          1,
+          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+      }
+
     editable.insert(dividerIndex, builder)
+
     editable.append('\n')
   }
 
@@ -464,7 +475,12 @@ private fun Editable.paragraphRangeAt(index: Int): IntRange {
   return start until end
 }
 
-private fun Editable.isParagraphEmptyOrEmptyParagraphWithZWS(range: IntRange): Boolean =
-  substring(range).all {
-    it == '\n' || it.isWhitespace() || it == Strings.ZERO_WIDTH_SPACE_CHAR
-  }
+private fun Editable.isParagraphZeroOrOneAndEmpty(range: IntRange): Boolean {
+  val text = substring(range)
+
+  if (text.length > 1) return false
+  if (text.isEmpty()) return true
+
+  val c = text[0]
+  return c == Strings.SPACE_CHAR || c == Strings.ZERO_WIDTH_SPACE_CHAR || c == Strings.NEWLINE
+}

@@ -67,6 +67,10 @@ class EnrichedTextInputView : AppCompatEditText {
   var scrollEnabled: Boolean = true
   private var detectScrollMovement: Boolean = false
 
+  private val checkboxClickHandler by lazy {
+    CheckListClickHandler(this)
+  }
+
   var editorWidth: Int = 0
     private set
 
@@ -102,6 +106,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
   // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L295C1-L296C1
   override fun onTouchEvent(event: MotionEvent): Boolean {
+    if (checkboxClickHandler.handleTouch(event)) return true
     when (event.action) {
       MotionEvent.ACTION_DOWN -> {
         detectScrollMovement = true
@@ -162,7 +167,6 @@ class EnrichedTextInputView : AppCompatEditText {
 
   init {
     inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-    movementMethod = EnrichedMovementMethod(this)
     EnrichedImageLoader.init(context as ReactContext)
   }
 

@@ -5,6 +5,7 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedSpans
@@ -158,7 +159,7 @@ class ListStyles(
     val (start, end) = s.getParagraphBounds(cursorPosition)
 
     val isBackspace = previousTextLength > s.length
-    val isNewLine = cursorPosition > 0 && s[cursorPosition - 1] == '\n'
+    val isNewLine = cursorPosition > 0 && s[cursorPosition - 1] == Strings.NEWLINE
     val isShortcut = if (config.shortcut != null) s.substring(start, end).startsWith(config.shortcut) else false
     val spans = s.getSpans(start, end, config.clazz)
 
@@ -169,7 +170,7 @@ class ListStyles(
     }
 
     if (!isBackspace && isShortcut) {
-      s.replace(start, cursorPosition, "\u200B")
+      s.replace(start, cursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
       setSpan(s, name, start, start + 1)
       // Inform that new span has been added
       view.selection?.validateStyles()
@@ -177,7 +178,7 @@ class ListStyles(
     }
 
     if (!isBackspace && isNewLine && isPreviousParagraphList(s, start, config.clazz)) {
-      s.insert(cursorPosition, "\u200B")
+      s.insert(cursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
       setSpan(s, name, start, end + 1)
       // Inform that new span has been added
       view.selection?.validateStyles()
