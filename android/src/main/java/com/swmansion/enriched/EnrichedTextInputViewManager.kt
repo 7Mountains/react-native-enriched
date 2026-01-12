@@ -388,7 +388,7 @@ class EnrichedTextInputViewManager :
   }
 
   override fun toggleCheckList(view: EnrichedTextInputView?) {
-    // no-op
+    view?.verifyAndToggleStyle(EnrichedSpans.CHECK_LIST)
   }
 
   override fun setParagraphAlignment(

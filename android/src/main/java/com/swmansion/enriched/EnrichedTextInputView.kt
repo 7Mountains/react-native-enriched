@@ -26,11 +26,13 @@ import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.views.text.ReactTypefaceUtils.applyStyles
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontStyle
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
+import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.events.MentionHandler
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.inputFilters.NonEditableParagraphFilter
+import com.swmansion.enriched.loaders.EnrichedImageLoader
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
@@ -63,6 +65,7 @@ class EnrichedTextInputView : AppCompatEditText {
   var isDuringTransaction: Boolean = false
   var isRemovingMany: Boolean = false
   var scrollEnabled: Boolean = true
+  private var detectScrollMovement: Boolean = false
 
   var editorWidth: Int = 0
     private set
@@ -97,6 +100,34 @@ class EnrichedTextInputView : AppCompatEditText {
   var spanWatcher: EnrichedSpanWatcher? = null
   var layoutManager: EnrichedTextInputViewLayoutManager = EnrichedTextInputViewLayoutManager(this)
 
+  // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L295C1-L296C1
+  override fun onTouchEvent(event: MotionEvent): Boolean {
+    when (event.action) {
+      MotionEvent.ACTION_DOWN -> {
+        detectScrollMovement = true
+        // Disallow parent views to intercept touch events, until we can detect if we should be
+        // capturing these touches or not.
+        parent.requestDisallowInterceptTouchEvent(true)
+      }
+
+      MotionEvent.ACTION_MOVE -> {
+        if (detectScrollMovement) {
+          if (!canScrollVertically(-1) &&
+            !canScrollVertically(1) &&
+            !canScrollHorizontally(-1) &&
+            !canScrollHorizontally(1)
+          ) {
+            // We cannot scroll, let parent views take care of these touches.
+            parent.requestDisallowInterceptTouchEvent(false)
+          }
+          detectScrollMovement = false
+        }
+      }
+    }
+
+    return super.onTouchEvent(event)
+  }
+
   var shouldEmitHtml: Boolean = false
   var shouldEmitOnChangeText: Boolean = false
   var experimentalSynchronousEvents: Boolean = false
@@ -105,7 +136,6 @@ class EnrichedTextInputView : AppCompatEditText {
   private var autoFocus = false
   private var typefaceDirty = false
   private var didAttachToWindow = false
-  private var detectScrollMovement = false
   private var fontFamily: String? = null
   private var fontStyle: Int = ReactConstants.UNSET
   private var fontWeight: Int = ReactConstants.UNSET
@@ -132,6 +162,8 @@ class EnrichedTextInputView : AppCompatEditText {
 
   init {
     inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    movementMethod = EnrichedMovementMethod(this)
+    EnrichedImageLoader.init(context as ReactContext)
   }
 
   private fun prepareComponent() {
@@ -151,34 +183,6 @@ class EnrichedTextInputView : AppCompatEditText {
     addSpanWatcher(EnrichedSpanWatcher(this))
     addTextChangedListener(EnrichedTextWatcher(this))
     filters = arrayOf(NonEditableParagraphFilter())
-  }
-
-  // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L295C1-L296C1
-  override fun onTouchEvent(ev: MotionEvent): Boolean {
-    when (ev.action) {
-      MotionEvent.ACTION_DOWN -> {
-        detectScrollMovement = true
-        // Disallow parent views to intercept touch events, until we can detect if we should be
-        // capturing these touches or not.
-        this.parent.requestDisallowInterceptTouchEvent(true)
-      }
-
-      MotionEvent.ACTION_MOVE -> {
-        if (detectScrollMovement) {
-          if (!canScrollVertically(-1) &&
-            !canScrollVertically(1) &&
-            !canScrollHorizontally(-1) &&
-            !canScrollHorizontally(1)
-          ) {
-            // We cannot scroll, let parent views take care of these touches.
-            this.parent.requestDisallowInterceptTouchEvent(false)
-          }
-          detectScrollMovement = false
-        }
-      }
-    }
-
-    return super.onTouchEvent(ev)
   }
 
   override fun canScrollVertically(direction: Int): Boolean = scrollEnabled
@@ -284,7 +288,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
     try {
       val parsed = EnrichedParser.fromHtml(text.toString(), htmlStyle, null, this)
-      val withoutLastNewLine = parsed.trimEnd('\n')
+      val withoutLastNewLine = parsed.trimEnd(Strings.NEWLINE)
       return withoutLastNewLine
     } catch (e: Exception) {
       Log.e("EnrichedTextInputView", "Error parsing HTML: ${e.message}")
@@ -318,7 +322,8 @@ class EnrichedTextInputView : AppCompatEditText {
     setSelection(actualStart, actualEnd)
   }
 
-  fun onSpanLoaded(span: EnrichedSpan) {
+  // this method is used to update the draw state of span
+  fun redrawSpan(span: EnrichedSpan) {
     val text = text
     if (text !is Spannable) return
 
@@ -330,7 +335,6 @@ class EnrichedTextInputView : AppCompatEditText {
     val marker = ForceRedrawSpan()
 
     text.setSpan(marker, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-
     text.removeSpan(marker)
   }
 
@@ -346,7 +350,7 @@ class EnrichedTextInputView : AppCompatEditText {
       }
 
       // If the current char is not a hidden space, it counts towards our visible index
-      if (currentText[actualIndex] != '\u200B') {
+      if (currentText[actualIndex] != Strings.ZERO_WIDTH_SPACE_CHAR) {
         currentVisibleCount++
       }
       actualIndex++
@@ -362,10 +366,9 @@ class EnrichedTextInputView : AppCompatEditText {
   private fun observeAsyncImages() {
     val liveText = text ?: return
 
-    val spans =
-      liveText.getSpans(0, liveText.length, EnrichedImageSpan::class.java).forEach {
-        it.observeAsyncDrawableLoaded(liveText)
-      }
+    liveText.getSpans(0, liveText.length, EnrichedImageSpan::class.java).forEach {
+      it.observeAsyncDrawableLoaded(liveText)
+    }
   }
 
   fun setAutoFocus(autoFocus: Boolean) {
@@ -523,6 +526,7 @@ class EnrichedTextInputView : AppCompatEditText {
       EnrichedSpans.BLOCK_QUOTE -> paragraphStyles?.toggleStyle(EnrichedSpans.BLOCK_QUOTE)
       EnrichedSpans.ORDERED_LIST -> listStyles?.toggleStyle(EnrichedSpans.ORDERED_LIST)
       EnrichedSpans.UNORDERED_LIST -> listStyles?.toggleStyle(EnrichedSpans.UNORDERED_LIST)
+      EnrichedSpans.CHECK_LIST -> listStyles?.toggleStyle(EnrichedSpans.CHECK_LIST)
       else -> Log.w("EnrichedTextInputView", "Unknown style: $name")
     }
 
@@ -551,6 +555,7 @@ class EnrichedTextInputView : AppCompatEditText {
         EnrichedSpans.BLOCK_QUOTE -> paragraphStyles?.removeStyle(EnrichedSpans.BLOCK_QUOTE, start, end)
         EnrichedSpans.ORDERED_LIST -> listStyles?.removeStyle(EnrichedSpans.ORDERED_LIST, start, end)
         EnrichedSpans.UNORDERED_LIST -> listStyles?.removeStyle(EnrichedSpans.UNORDERED_LIST, start, end)
+        EnrichedSpans.CHECK_LIST -> listStyles?.removeStyle(EnrichedSpans.CHECK_LIST, start, end)
         EnrichedSpans.LINK -> parametrizedStyles?.removeStyle(EnrichedSpans.LINK, start, end)
         EnrichedSpans.IMAGE -> parametrizedStyles?.removeStyle(EnrichedSpans.IMAGE, start, end)
         EnrichedSpans.MENTION -> parametrizedStyles?.removeStyle(EnrichedSpans.MENTION, start, end)
@@ -579,6 +584,7 @@ class EnrichedTextInputView : AppCompatEditText {
         EnrichedSpans.BLOCK_QUOTE -> paragraphStyles?.getStyleRange()
         EnrichedSpans.ORDERED_LIST -> listStyles?.getStyleRange()
         EnrichedSpans.UNORDERED_LIST -> listStyles?.getStyleRange()
+        EnrichedSpans.CHECK_LIST -> listStyles?.getStyleRange()
         EnrichedSpans.LINK -> parametrizedStyles?.getStyleRange()
         EnrichedSpans.IMAGE -> parametrizedStyles?.getStyleRange()
         EnrichedSpans.MENTION -> parametrizedStyles?.getStyleRange()

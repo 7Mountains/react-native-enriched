@@ -466,5 +466,5 @@ private fun Editable.paragraphRangeAt(index: Int): IntRange {
 
 private fun Editable.isParagraphEmptyOrEmptyParagraphWithZWS(range: IntRange): Boolean =
   substring(range).all {
-    it == '\n' || it.isWhitespace() || it == Strings.ZWJ_CHAR
+    it == '\n' || it.isWhitespace() || it == Strings.ZERO_WIDTH_SPACE_CHAR
   }

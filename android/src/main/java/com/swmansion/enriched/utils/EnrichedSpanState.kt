@@ -51,6 +51,8 @@ class EnrichedSpanState(
     private set
   var dividerStart: Int? = null
     private set
+  var checklistStart: Int? = null
+    private set
 
   fun setBoldStart(start: Int?) {
     this.boldStart = start
@@ -146,6 +148,10 @@ class EnrichedSpanState(
     this.dividerStart = start
   }
 
+  fun setChecklistStart(start: Int?) {
+    this.checklistStart = start
+  }
+
   fun getStart(name: String): Int? {
     val start =
       when (name) {
@@ -164,6 +170,7 @@ class EnrichedSpanState(
         EnrichedSpans.BLOCK_QUOTE -> blockQuoteStart
         EnrichedSpans.ORDERED_LIST -> orderedListStart
         EnrichedSpans.UNORDERED_LIST -> unorderedListStart
+        EnrichedSpans.CHECK_LIST -> checklistStart
         EnrichedSpans.LINK -> linkStart
         EnrichedSpans.IMAGE -> imageStart
         EnrichedSpans.MENTION -> mentionStart
@@ -194,6 +201,7 @@ class EnrichedSpanState(
       EnrichedSpans.BLOCK_QUOTE -> setBlockQuoteStart(start)
       EnrichedSpans.ORDERED_LIST -> setOrderedListStart(start)
       EnrichedSpans.UNORDERED_LIST -> setUnorderedListStart(start)
+      EnrichedSpans.CHECK_LIST -> setChecklistStart(start)
       EnrichedSpans.LINK -> setLinkStart(start)
       EnrichedSpans.IMAGE -> setImageStart(start)
       EnrichedSpans.MENTION -> setMentionStart(start)
@@ -221,6 +229,7 @@ class EnrichedSpanState(
     payload.putBoolean("isLink", linkStart != null)
     payload.putBoolean("isImage", imageStart != null)
     payload.putBoolean("isMention", mentionStart != null)
+    payload.putBoolean("isCheckList", checklistStart != null)
 
     // Do not emit event if payload is the same
     if (previousPayload == payload) {

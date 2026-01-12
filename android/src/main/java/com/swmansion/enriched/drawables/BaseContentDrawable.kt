@@ -9,10 +9,11 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import com.swmansion.enriched.styles.ContentStyle
 import com.swmansion.enriched.styles.HtmlStyle
 
 abstract class BaseContentDrawable(
-  private val contentStyle: HtmlStyle.Companion.ContentStyle,
+  private val contentStyle: ContentStyle,
   private val text: String,
 ) : Drawable() {
   var onContentLoadEnd: (() -> Unit)? = null
