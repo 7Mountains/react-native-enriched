@@ -37,15 +37,7 @@ class EnrichedTextWatcher(
   override fun afterTextChanged(s: Editable?) {
     if (s == null) return
     emitEvents(s)
-    val marked =
-      s
-        .toString()
-        .replace("\u200B", "[ZWS]")
-        .replace("\u200C", "[ZWNJ]")
-        .replace("\u200D", "[ZWJ]")
-        .replace("\u00A0", "[NBSP]")
 
-    Log.i("Text changed", marked)
     if (view.isDuringTransaction) return
     applyStyles(s)
   }

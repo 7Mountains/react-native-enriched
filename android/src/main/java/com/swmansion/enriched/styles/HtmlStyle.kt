@@ -1,7 +1,10 @@
 package com.swmansion.enriched.styles
 
+import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.drawable.toDrawable
 import com.facebook.react.bridge.ColorPropConverter
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableMap
@@ -9,7 +12,9 @@ import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.views.text.ReactTypefaceUtils
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.R
 import com.swmansion.enriched.drawables.HRDrawable
+import com.swmansion.enriched.loaders.EnrichedImageLoader
 import kotlin.Float
 import kotlin.Int
 import kotlin.String
@@ -76,6 +81,8 @@ class HtmlStyle {
   var dividerColor: Int = Color.GRAY
 
   private var hrDrawable: HRDrawable? = null
+
+  var checkboxStyle = CheckboxStyle.fromReadableMap(null, view?.context as ReactContext?)
 
   fun getHorizontalRuleDrawable(): Drawable {
     hrDrawable
@@ -167,6 +174,8 @@ class HtmlStyle {
     dividerColor = parseColor(dividerStyle, "color")
     editorWidth = view?.editorWidth ?: 0
     getHorizontalRuleDrawable()
+
+    checkboxStyle = CheckboxStyle.fromReadableMap(style.getMap("checkbox"), context = view?.context as ReactContext)
   }
 
   private fun parseFloat(
@@ -328,6 +337,10 @@ class HtmlStyle {
       inlineCodeColor == other.inlineCodeColor &&
       inlineCodeBackgroundColor == other.inlineCodeBackgroundColor &&
 
+      checkboxStyle == other.checkboxStyle &&
+
+      contentStyle == other.contentStyle &&
+
       mentionsStyle == other.mentionsStyle
   }
 
@@ -364,6 +377,10 @@ class HtmlStyle {
     result = 31 * result + inlineCodeColor.hashCode()
     result = 31 * result + inlineCodeBackgroundColor.hashCode()
 
+    result = 31 * result + checkboxStyle.hashCode()
+
+    result = 31 * result + contentStyle.hashCode()
+
     result = 31 * result + mentionsStyle.hashCode()
 
     return result
@@ -375,149 +392,5 @@ class HtmlStyle {
       val backgroundColor: Int,
       val underline: Boolean,
     )
-
-    data class ContentStyle(
-      val backgroundColor: Int?,
-      val textColor: Int?,
-      val borderColor: Int?,
-      val borderWidth: Float,
-      val borderStyle: String?,
-      val borderRadius: Float,
-      val marginTop: Float,
-      val marginBottom: Float,
-      val marginLeft: Float,
-      val marginRight: Float,
-      val paddingTop: Float,
-      val paddingBottom: Float,
-      val paddingLeft: Float,
-      val paddingRight: Float,
-      val imageWidth: Float?,
-      val imageHeight: Float?,
-      val imageBorderRadiusTopLeft: Float,
-      val imageBorderRadiusTopRight: Float,
-      val imageBorderRadiusBottomLeft: Float,
-      val imageBorderRadiusBottomRight: Float,
-      val imageResizeMode: String?,
-      val fallbackImageURI: String?,
-      val width: Float,
-      val height: Float,
-      val fontSize: Float,
-      val typefaceStyle: Int,
-    ) {
-      companion object {
-        fun fromReadableMap(
-          map: ReadableMap?,
-          context: ReactContext,
-        ): ContentStyle {
-          if (map == null) {
-            throw Error("ContentStyle map cannot be null")
-          }
-
-          fun num(
-            key: String,
-            def: Double = 0.0,
-          ): Float =
-            if (map.hasKey(key) && !map.isNull(key)) {
-              PixelUtil.toPixelFromDIP(map.getDouble(key))
-            } else {
-              def.toFloat()
-            }
-
-          fun baseNum(
-            key: String,
-            def: Double = 0.0,
-          ): Float =
-            if (map.hasKey(key) && !map.isNull(key)) {
-              map.getDouble(key).toFloat()
-            } else {
-              def.toFloat()
-            }
-
-          fun str(
-            key: String,
-            def: String? = null,
-          ): String? = if (map.hasKey(key) && !map.isNull(key)) map.getString(key) else def
-
-          fun color(
-            key: String,
-            def: Int?,
-          ): Int? =
-            if (map.hasKey(key) && !map.isNull(key)) {
-              ColorPropConverter.getColor(map.getDouble(key), context)
-            } else {
-              def
-            }
-
-          return ContentStyle(
-            backgroundColor = color("backgroundColor", null),
-            textColor = color("textColor", Color.BLACK),
-            borderColor = color("borderColor", null),
-            borderWidth = num("borderWidth"),
-            borderStyle = str("borderStyle", "solid"),
-            borderRadius = num("borderRadius"),
-            marginTop = num("marginTop"),
-            marginBottom = num("marginBottom"),
-            marginLeft = num("marginLeft"),
-            marginRight = num("marginRight"),
-            paddingTop = num("paddingTop"),
-            paddingBottom = num("paddingBottom"),
-            paddingLeft = num("paddingLeft"),
-            paddingRight = num("paddingRight"),
-            imageWidth = baseNum("imageWidth"),
-            imageHeight = baseNum("imageHeight"),
-            imageBorderRadiusTopLeft = num("imageBorderRadiusTopLeft"),
-            imageBorderRadiusTopRight = num("imageBorderRadiusTopRight"),
-            imageBorderRadiusBottomLeft = num("imageBorderRadiusBottomLeft"),
-            imageBorderRadiusBottomRight = num("imageBorderRadiusBottomRight"),
-            imageResizeMode = str("imageResizeMode", "cover"),
-            fallbackImageURI = str("fallbackImageURI"),
-            width = num("width"),
-            height =
-              if (map.hasKey("height") && !map.isNull("height")) {
-                num("height")
-              } else if (map.hasKey("imageHeight") && !map.isNull("imageHeight")) {
-                num("imageHeight")
-              } else {
-                50f
-              },
-            fontSize =
-              if (map.hasKey("fontSize") && !map.isNull("fontSize")) {
-                map.getDouble("fontSize").toFloat()
-              } else {
-                14f
-              },
-            typefaceStyle = ReactTypefaceUtils.parseFontWeight(str("fontWeight", "400")),
-          )
-        }
-
-        fun parseSingle(
-          map: ReadableMap?,
-          context: ReactContext,
-        ): Map<String, ContentStyle> =
-          map?.let {
-            mapOf("all" to fromReadableMap(it, context))
-          } ?: emptyMap()
-
-        fun parseComplex(
-          map: ReadableMap?,
-          context: ReactContext?,
-        ): Map<String, ContentStyle> {
-          if (map == null || context == null) return emptyMap()
-
-          val result = mutableMapOf<String, ContentStyle>()
-          val iterator = map.keySetIterator()
-
-          while (iterator.hasNextKey()) {
-            val key = iterator.nextKey()
-            val styleMap = map.getMap(key)
-            if (styleMap != null) {
-              result[key] = fromReadableMap(styleMap, context)
-            }
-          }
-
-          return result
-        }
-      }
-    }
   }
 }

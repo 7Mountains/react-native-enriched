@@ -35,7 +35,7 @@ class EnrichedContentSpan(
 
   private fun invalidate() {
     val tv = tvRef?.get() ?: return
-    tv.onSpanLoaded(this)
+    tv.redrawSpan(this)
   }
 
   private val style = htmlStyle.contentStyle[contentParams.type]!!
@@ -88,7 +88,7 @@ class EnrichedContentSpan(
     }
   }
 
-  fun getParams() = contentParams
+  fun getAttributes() = contentParams
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedSpan = this
 

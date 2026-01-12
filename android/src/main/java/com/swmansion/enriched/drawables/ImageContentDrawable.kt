@@ -10,11 +10,11 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.graphics.withClip
 import com.swmansion.enriched.R
 import com.swmansion.enriched.loaders.EnrichedImageLoader
-import com.swmansion.enriched.styles.HtmlStyle
+import com.swmansion.enriched.styles.ContentStyle
 import com.swmansion.enriched.utils.ResourceManager
 
 class ImageContentDrawable(
-  private val contentStyle: HtmlStyle.Companion.ContentStyle,
+  private val contentStyle: ContentStyle,
   private val text: String,
   private val src: String,
 ) : BaseContentDrawable(contentStyle, text) {

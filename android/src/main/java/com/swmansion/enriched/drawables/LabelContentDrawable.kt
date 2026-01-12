@@ -2,10 +2,10 @@ package com.swmansion.enriched.drawables
 
 import android.graphics.Canvas
 import android.graphics.Paint
-import com.swmansion.enriched.styles.HtmlStyle
+import com.swmansion.enriched.styles.ContentStyle
 
 class LabelContentDrawable(
-  private val contentStyle: HtmlStyle.Companion.ContentStyle,
+  private val contentStyle: ContentStyle,
   private val text: String,
 ) : BaseContentDrawable(contentStyle, text) {
   override fun draw(canvas: Canvas) {

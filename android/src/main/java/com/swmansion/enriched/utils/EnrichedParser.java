@@ -10,10 +10,11 @@ import android.text.TextUtils;
 import android.text.style.AlignmentSpan;
 import android.text.style.ParagraphStyle;
 import com.swmansion.enriched.EnrichedTextInputView;
+import com.swmansion.enriched.constants.HtmlTags;
 import com.swmansion.enriched.constants.Strings;
-import com.swmansion.enriched.spans.ContentParams;
 import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan;
 import com.swmansion.enriched.spans.EnrichedBoldSpan;
+import com.swmansion.enriched.spans.EnrichedChecklistSpan;
 import com.swmansion.enriched.spans.EnrichedCodeBlockSpan;
 import com.swmansion.enriched.spans.EnrichedContentSpan;
 import com.swmansion.enriched.spans.EnrichedH1Span;
@@ -40,7 +41,9 @@ import com.swmansion.enriched.styles.HtmlStyle;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import org.ccil.cowan.tagsoup.HTMLSchema;
 import org.ccil.cowan.tagsoup.Parser;
@@ -119,18 +122,25 @@ public class EnrichedParser {
     StringBuilder out = new StringBuilder();
     withinHtml(out, text);
     String outString = out.toString();
-    // Codeblocks and blockquotes appends a newline character by default, so we have to remove it
-    String normalizedCodeBlock = outString.replaceAll("</codeblock>\\n<br>", "</codeblock>");
+
+    String normalizedCodeBlock =
+        outString.replaceAll(
+            Strings.LT_SLASH + HtmlTags.CODE_BLOCK + Strings.GT + "\\n<br>",
+            Strings.LT_SLASH + HtmlTags.CODE_BLOCK + Strings.GT);
+
     String normalizedBlockQuote =
-        normalizedCodeBlock.replaceAll("</blockquote>\\n<br>", "</blockquote>");
-    return "<html>\n" + normalizedBlockQuote + "</html>";
+        normalizedCodeBlock.replaceAll(
+            Strings.LT_SLASH + HtmlTags.BLOCK_QUOTE + Strings.GT + "\\n<br>",
+            Strings.LT_SLASH + HtmlTags.BLOCK_QUOTE + Strings.GT);
+
+    return Strings.HTML_OPEN + normalizedBlockQuote + Strings.HTML_CLOSE;
   }
 
   public static String toHtmlWithDefault(CharSequence text) {
     if (text instanceof Spanned) {
       return toHtml((Spanned) text);
     }
-    return "<html>\n<p></p>\n</html>";
+    return Strings.HTML_OPEN + "<p></p>\n" + Strings.HTML_CLOSE;
   }
 
   /** Returns an HTML escaped representation of the given plain text. */
@@ -149,165 +159,182 @@ public class EnrichedParser {
     for (int i = start; i < end; i = next) {
       next = text.nextSpanTransition(i, end, EnrichedBlockSpan.class);
       EnrichedBlockSpan[] blocks = text.getSpans(i, next, EnrichedBlockSpan.class);
-      String tag = "unknown";
+
+      String tag = HtmlTags.BLOCK_QUOTE;
       if (blocks.length > 0) {
-        tag = blocks[0] instanceof EnrichedCodeBlockSpan ? "codeblock" : "blockquote";
+        tag =
+            blocks[0] instanceof EnrichedCodeBlockSpan ? HtmlTags.CODE_BLOCK : HtmlTags.BLOCK_QUOTE;
       }
 
-      // Each block appends a newline by default.
-      // If we set up a new block, we have to remove the last  character.
       if (out.length() >= 5 && out.substring(out.length() - 5).equals("<br>\n")) {
         out.replace(out.length() - 5, out.length(), "");
       }
 
       for (EnrichedBlockSpan ignored : blocks) {
-        out.append("<").append(tag).append(">\n");
+        appendOpenTag(out, tag);
+        out.append(Strings.NEWLINE);
       }
+
       withinBlock(out, text, i, next);
+
       for (EnrichedBlockSpan ignored : blocks) {
-        out.append("</").append(tag).append(">\n");
+        appendClosingTag(out, tag);
+        out.append(Strings.NEWLINE);
       }
     }
   }
 
-  private static TagInfo getBlockTagWithAttributes(EnrichedParagraphSpan[] spans) {
+  private static TagsRegistry.TagInfo getBlockTagWithAttributes(EnrichedParagraphSpan[] spans) {
     for (EnrichedParagraphSpan span : spans) {
-      if (span instanceof EnrichedUnorderedListSpan) {
-        return new TagInfo("ul");
-      } else if (span instanceof EnrichedOrderedListSpan) {
-        return new TagInfo("ol");
-      } else if (span instanceof EnrichedH1Span) {
-        return new TagInfo("h1");
-      } else if (span instanceof EnrichedH2Span) {
-        return new TagInfo("h2");
-      } else if (span instanceof EnrichedH3Span) {
-        return new TagInfo("h3");
-      } else if (span instanceof EnrichedH4Span) {
-        return new TagInfo("h4");
-      } else if (span instanceof EnrichedH5Span) {
-        return new TagInfo("h5");
-      } else if (span instanceof EnrichedH6Span) {
-        return new TagInfo("h6");
-      } else if (span instanceof EnrichedHorizontalRuleSpan) {
-        return new TagInfo("hr");
-      } else if (span instanceof EnrichedContentSpan) {
-        ContentParams params = ((EnrichedContentSpan) span).getParams();
-
-        Map<String, String> attr = new HashMap<>();
-        attr.put("text", params.getText());
-        attr.put("type", params.getType());
-        attr.put("src", params.getSrc());
-        attr.putAll(params.getAttributes());
-
-        return new TagInfo("content", attr);
-      }
+      TagsRegistry.TagInfo info = TagsRegistry.INSTANCE.lookup(span);
+      if (info != null) return info;
     }
-
-    return new TagInfo("p");
+    return new TagsRegistry.TagInfo(HtmlTags.PARAGRAPH, false, null);
   }
 
   private static void withinBlock(StringBuilder out, Spanned text, int start, int end) {
     boolean isInUlList = false;
     boolean isInOlList = false;
     int next;
+
     for (int i = start; i <= end; i = next) {
-      next = TextUtils.indexOf(text, '\n', i, end);
-      if (next < 0) {
-        next = end;
-      }
+
+      next = TextUtils.indexOf(text, Strings.NEWLINE, i, end);
+      if (next < 0) next = end;
+
       if (next == i) {
         if (isInUlList) {
-          // Current paragraph is no longer a list item; close the previously opened list
           isInUlList = false;
-          out.append("</ul>\n");
+          appendClosingTag(out, HtmlTags.UNORDERED_LIST, true);
         } else if (isInOlList) {
-          // Current paragraph is no longer a list item; close the previously opened list
           isInOlList = false;
-          out.append("</ol>\n");
+          appendClosingTag(out, HtmlTags.ORDERED_LIST, true);
         }
-        out.append("<br>\n");
+        appendOpenTag(out, HtmlTags.BREAK_LINE, true);
       } else {
+
         EnrichedParagraphSpan[] paragraphStyles =
             text.getSpans(i, next, EnrichedParagraphSpan.class);
-        TagInfo tagInfo = getBlockTagWithAttributes(paragraphStyles);
-        String tag = tagInfo.tag;
 
-        if (tag.equals("hr")) {
+        TagsRegistry.TagInfo tagInfo = getBlockTagWithAttributes(paragraphStyles);
+        String tag = tagInfo.getTag();
+        if (tagInfo.isSelfClosing()) {
+
           if (isInOlList || isInUlList) {
-            out.append(isInOlList ? "</ol>" : "</ul>");
-            out.append("\n");
+            appendClosingTag(
+                out, isInOlList ? HtmlTags.UNORDERED_LIST : HtmlTags.ORDERED_LIST, true);
             isInOlList = false;
             isInUlList = false;
           }
-          out.append("<hr />\n");
+
+          Map<String, String> attrs =
+              tagInfo.getAttributes() != null
+                  ? tagInfo.getAttributes().invoke(paragraphStyles[0])
+                  : null;
+
+          appendSelfClosingTag(out, tag, attrs);
+          out.append(Strings.NEWLINE);
+
           next++;
           continue;
         }
-        if (tag.equals("content")) {
-          if (isInOlList || isInUlList) {
-            out.append(isInOlList ? "</ol>" : "</ul>");
-            out.append("\n");
-            isInOlList = false;
-            isInUlList = false;
-          }
-          out.append("<").append(tagInfo.tag);
+        boolean isUlListItem = tag.equals(HtmlTags.UNORDERED_LIST);
+        boolean isOlListItem = tag.equals(HtmlTags.ORDERED_LIST);
 
-          for (Map.Entry<String, String> entry : tagInfo.attributes.entrySet()) {
-            out.append("   ")
-                .append(entry.getKey())
-                .append("=\"")
-                .append(entry.getValue())
-                .append("\"");
-          }
-          out.append("/>");
-          out.append("\n");
-          next++;
-          continue;
-        }
-        boolean isUlListItem = tag.equals("ul");
-        boolean isOlListItem = tag.equals("ol");
-
+        // Closing previous list
         if (isInUlList && !isUlListItem) {
-          // Current paragraph is no longer a list item; close the previously opened list
           isInUlList = false;
-          out.append("</ul>\n");
+          appendClosingTag(out, HtmlTags.UNORDERED_LIST, true);
         } else if (isInOlList && !isOlListItem) {
-          // Current paragraph is no longer a list item; close the previously opened list
           isInOlList = false;
-          out.append("</ol>\n");
+          appendClosingTag(out, HtmlTags.ORDERED_LIST, true);
         }
 
+        // Opening new list
         if (isUlListItem && !isInUlList) {
-          // Current paragraph is the first item in a list
           isInUlList = true;
-          out.append("<ul").append(">\n");
+          appendOpenTag(out, HtmlTags.UNORDERED_LIST, true);
         } else if (isOlListItem && !isInOlList) {
-          // Current paragraph is the first item in a list
           isInOlList = true;
-          out.append("<ol").append(">\n");
+          appendOpenTag(out, HtmlTags.ORDERED_LIST, true);
         }
+        boolean isListItem = isUlListItem || isOlListItem;
+        String tagType = isListItem ? HtmlTags.LIST_ITEM : tag;
 
-        boolean isList = isUlListItem || isOlListItem;
-        String tagType = isList ? "li" : tag;
-        out.append("<");
+        Map<String, String> attrs =
+            tagInfo.getAttributes() != null
+                ? tagInfo.getAttributes().invoke(paragraphStyles[0])
+                : null;
 
-        out.append(tagType);
+        appendOpenTagWithAttributes(out, tagType, attrs, false);
 
-        out.append(">");
         withinParagraph(out, text, i, next);
-        out.append("</");
-        out.append(tagType);
-        out.append(">\n");
-        if (next == end && isInUlList) {
-          isInUlList = false;
-          out.append("</ul>\n");
-        } else if (next == end && isInOlList) {
-          isInOlList = false;
-          out.append("</ol>\n");
+
+        appendClosingTag(out, tagType, true);
+
+        // If we're at the end of block, close list if active
+        if (next == end) {
+          if (isInUlList) {
+            isInUlList = false;
+            appendClosingTag(out, HtmlTags.UNORDERED_LIST, true);
+          } else if (isInOlList) {
+            isInOlList = false;
+            appendClosingTag(out, HtmlTags.ORDERED_LIST, true);
+          }
         }
       }
+
       next++;
     }
+  }
+
+  private static void appendOpenTag(StringBuilder out, String tag) {
+    appendOpenTag(out, tag, false);
+  }
+
+  private static void appendOpenTag(StringBuilder out, String tag, boolean withNewLine) {
+    out.append(Strings.LT).append(tag).append(Strings.GT);
+    if (withNewLine) {
+      out.append(Strings.NEWLINE);
+    }
+  }
+
+  private static void appendClosingTag(StringBuilder out, String tag) {
+    appendClosingTag(out, tag, false);
+  }
+
+  private static void appendOpenTagWithAttributes(
+      StringBuilder out, String tag, Map<String, String> attrs, boolean withNewLine) {
+    out.append(Strings.LT).append(tag);
+    appendAttributes(out, attrs);
+    out.append(Strings.GT);
+    if (withNewLine) out.append(Strings.NEWLINE);
+  }
+
+  private static void appendAttributes(StringBuilder out, Map<String, String> attrs) {
+    if (attrs == null || attrs.isEmpty()) return;
+
+    for (Map.Entry<String, String> entry : attrs.entrySet()) {
+      out.append(Strings.SPACE_CHAR)
+          .append(entry.getKey())
+          .append("=\"")
+          .append(entry.getValue())
+          .append("\"");
+    }
+  }
+
+  private static void appendClosingTag(StringBuilder out, String tag, boolean withNewLine) {
+    out.append(Strings.LT_SLASH).append(tag).append(Strings.GT);
+    if (withNewLine) {
+      out.append(Strings.NEWLINE);
+    }
+  }
+
+  private static void appendSelfClosingTag(
+      StringBuilder out, String tag, Map<String, String> attrs) {
+    out.append(Strings.LT).append(tag);
+    appendAttributes(out, attrs);
+    out.append(Strings.SLASH_GT);
   }
 
   private static void withinParagraph(StringBuilder out, Spanned text, int start, int end) {
@@ -317,19 +344,19 @@ public class EnrichedParser {
       EnrichedInlineSpan[] style = text.getSpans(i, next, EnrichedInlineSpan.class);
       for (int j = 0; j < style.length; j++) {
         if (style[j] instanceof EnrichedBoldSpan) {
-          out.append("<b>");
+          appendOpenTag(out, HtmlTags.BOLD);
         }
         if (style[j] instanceof EnrichedItalicSpan) {
-          out.append("<i>");
+          appendOpenTag(out, HtmlTags.ITALIC);
         }
         if (style[j] instanceof EnrichedUnderlineSpan) {
-          out.append("<u>");
+          appendOpenTag(out, HtmlTags.UNDERLINE);
         }
         if (style[j] instanceof EnrichedInlineCodeSpan) {
-          out.append("<code>");
+          appendOpenTag(out, HtmlTags.CODE_INLINE);
         }
         if (style[j] instanceof EnrichedStrikeThroughSpan) {
-          out.append("<s>");
+          appendOpenTag(out, HtmlTags.STRIKE_THROUGH);
         }
         if (style[j] instanceof EnrichedLinkSpan) {
           out.append("<a href=\"");
@@ -347,7 +374,7 @@ public class EnrichedParser {
 
           Map<String, String> attributes = ((EnrichedMentionSpan) style[j]).getAttributes();
           for (Map.Entry<String, String> entry : attributes.entrySet()) {
-            out.append(" ");
+            out.append(Strings.SPACE_CHAR);
             out.append(entry.getKey());
             out.append("=\"");
             out.append(entry.getValue());
@@ -376,25 +403,25 @@ public class EnrichedParser {
       withinStyle(out, text, i, next);
       for (int j = style.length - 1; j >= 0; j--) {
         if (style[j] instanceof EnrichedLinkSpan) {
-          out.append("</a>");
+          appendClosingTag(out, HtmlTags.LINK);
         }
         if (style[j] instanceof EnrichedMentionSpan) {
-          out.append("</mention>");
+          appendClosingTag(out, HtmlTags.MENTION);
         }
         if (style[j] instanceof EnrichedStrikeThroughSpan) {
-          out.append("</s>");
+          appendClosingTag(out, HtmlTags.STRIKE_THROUGH);
         }
         if (style[j] instanceof EnrichedUnderlineSpan) {
-          out.append("</u>");
+          appendClosingTag(out, HtmlTags.UNDERLINE);
         }
         if (style[j] instanceof EnrichedInlineCodeSpan) {
-          out.append("</code>");
+          appendClosingTag(out, HtmlTags.CODE_INLINE);
         }
         if (style[j] instanceof EnrichedBoldSpan) {
-          out.append("</b>");
+          appendClosingTag(out, HtmlTags.BOLD);
         }
         if (style[j] instanceof EnrichedItalicSpan) {
-          out.append("</i>");
+          appendClosingTag(out, HtmlTags.ITALIC);
         }
       }
     }
@@ -402,50 +429,59 @@ public class EnrichedParser {
 
   private static void withinStyle(StringBuilder out, CharSequence text, int start, int end) {
     for (int i = start; i < end; i++) {
+
       char c = text.charAt(i);
-      if (c == '\u200B') {
-        // Do not output zero-width space characters.
+
+      // Skip zero-width characters
+      if (c == Strings.ZERO_WIDTH_SPACE_CHAR
+          || c == Strings.ZERO_WIDTH_JOINER_CHAR
+          || c == Strings.ZERO_WIDTH_NON_JOINER_CHAR) {
         continue;
-      } else if (c == '<') {
-        out.append("&lt;");
-      } else if (c == '>') {
-        out.append("&gt;");
-      } else if (c == '&') {
-        out.append("&amp;");
-      } else if (c >= 0xD800 && c <= 0xDFFF) {
+      }
+
+      if (c == Strings.LT_CHAR) {
+        out.append(Strings.ESC_LT);
+        continue;
+      }
+      if (c == Strings.GT_CHAR) {
+        out.append(Strings.ESC_GT);
+        continue;
+      }
+      if (c == Strings.AMP_CHAR) {
+        out.append(Strings.ESC_AMP);
+        continue;
+      }
+
+      // Handle surrogate pairs (emoji, extended unicode)
+      if (c >= 0xD800 && c <= 0xDFFF) {
         if (c < 0xDC00 && i + 1 < end) {
           char d = text.charAt(i + 1);
           if (d >= 0xDC00 && d <= 0xDFFF) {
             i++;
-            int codepoint = 0x010000 | (int) c - 0xD800 << 10 | (int) d - 0xDC00;
+            int codepoint = 0x010000 | ((c - 0xD800) << 10) | (d - 0xDC00);
             out.append("&#").append(codepoint).append(";");
+            continue;
           }
         }
-      } else if (c > 0x7E || c < ' ') {
+      }
+
+      if (c > 0x7E || c < ' ') {
         out.append("&#").append((int) c).append(";");
-      } else if (c == ' ') {
-        while (i + 1 < end && text.charAt(i + 1) == ' ') {
-          out.append("&nbsp;");
+        continue;
+      }
+
+      // Collapse multiple spaces → nbsp
+      if (c == Strings.SPACE_CHAR) {
+        while (i + 1 < end && text.charAt(i + 1) == Strings.SPACE_CHAR) {
+          out.append(Strings.ESC_NBSP);
           i++;
         }
-        out.append(' ');
-      } else {
-        out.append(c);
+        out.append(Strings.SPACE_CHAR);
+        continue;
       }
-    }
-  }
 
-  private static class TagInfo {
-    String tag;
-    @Nullable Map<String, String> attributes;
-
-    TagInfo(String tag) {
-      this.tag = tag;
-    }
-
-    TagInfo(String tag, Map<String, String> attributes) {
-      this.tag = tag;
-      this.attributes = attributes != null ? attributes : new HashMap<>();
+      // Default append
+      out.append(c);
     }
   }
 }
@@ -494,8 +530,8 @@ class HtmlToSpannedConverter implements ContentHandler {
       int end = mSpannableStringBuilder.getSpanEnd(obj[i]);
       // If the last line of the range is blank, back off by one.
       if (end - 2 >= 0) {
-        if (mSpannableStringBuilder.charAt(end - 1) == '\n'
-            && mSpannableStringBuilder.charAt(end - 2) == '\n') {
+        if (mSpannableStringBuilder.charAt(end - 1) == Strings.NEWLINE
+            && mSpannableStringBuilder.charAt(end - 2) == Strings.NEWLINE) {
           end--;
         }
       }
@@ -517,9 +553,9 @@ class HtmlToSpannedConverter implements ContentHandler {
       int start = mSpannableStringBuilder.getSpanStart(zeroWidthSpaceSpan);
       int end = mSpannableStringBuilder.getSpanEnd(zeroWidthSpaceSpan);
 
-      if (mSpannableStringBuilder.charAt(start) != '\u200B') {
+      if (mSpannableStringBuilder.charAt(start) != Strings.ZERO_WIDTH_SPACE_CHAR) {
         // Insert zero-width space character at the start if it's not already present.
-        mSpannableStringBuilder.insert(start, "\u200B");
+        mSpannableStringBuilder.insert(start, Strings.ZERO_WIDTH_SPACE_STRING);
         end++; // Adjust end position due to insertion.
       }
 
@@ -532,104 +568,205 @@ class HtmlToSpannedConverter implements ContentHandler {
   }
 
   private void handleStartTag(String tag, @Nullable Attributes attributes, HtmlStyle htmlStyle) {
-    if (tag.equalsIgnoreCase("br")) {
-      // We don't need to handle this. TagSoup will ensure that there's a </br> for each <br>
-      // so we can safely emit the linebreaks when we handle the close tag.
-    } else if (tag.equalsIgnoreCase("p")) {
-      isEmptyTag = true;
-      startBlockElement(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("ul")) {
-      isInOrderedList = false;
-      startBlockElement(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("ol")) {
-      isInOrderedList = true;
-      currentOrderedListItemIndex = 0;
-      startBlockElement(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("li")) {
-      isEmptyTag = true;
-      startLi(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("b")) {
-      start(mSpannableStringBuilder, new Bold());
-    } else if (tag.equalsIgnoreCase("i")) {
-      start(mSpannableStringBuilder, new Italic());
-    } else if (tag.equalsIgnoreCase("blockquote")) {
-      isEmptyTag = true;
-      startBlockquote(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("codeblock")) {
-      isEmptyTag = true;
-      startCodeBlock(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("a")) {
-      startA(mSpannableStringBuilder, attributes);
-    } else if (tag.equalsIgnoreCase("u")) {
-      start(mSpannableStringBuilder, new Underline());
-    } else if (tag.equalsIgnoreCase("s")) {
-      start(mSpannableStringBuilder, new Strikethrough());
-    } else if (tag.equalsIgnoreCase("strike")) {
-      start(mSpannableStringBuilder, new Strikethrough());
-    } else if (tag.equalsIgnoreCase("h1")) {
-      startHeading(mSpannableStringBuilder, 1);
-    } else if (tag.equalsIgnoreCase("h2")) {
-      startHeading(mSpannableStringBuilder, 2);
-    } else if (tag.equalsIgnoreCase("h3")) {
-      startHeading(mSpannableStringBuilder, 3);
-    } else if (tag.equalsIgnoreCase("h4")) {
-      startHeading(mSpannableStringBuilder, 4);
-    } else if (tag.equalsIgnoreCase("h5")) {
-      startHeading(mSpannableStringBuilder, 5);
-    } else if (tag.equalsIgnoreCase("h6")) {
-      startHeading(mSpannableStringBuilder, 6);
-    } else if (tag.equalsIgnoreCase("img")) {
-      startImg(mSpannableStringBuilder, attributes, mImageGetter);
-    } else if (tag.equalsIgnoreCase("code")) {
-      start(mSpannableStringBuilder, new Code());
-    } else if (tag.equalsIgnoreCase("mention")) {
-      startMention(mSpannableStringBuilder, attributes);
-    } else if (tag.equalsIgnoreCase("hr")) {
-      addHr(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("content")) {
-      addContent(mSpannableStringBuilder, attributes, htmlStyle);
+    if (tag == null) return;
+    switch (tag.toLowerCase(Locale.ROOT)) {
+      case HtmlTags.BREAK_LINE:
+        // no-op, handled on close
+        return;
+
+      case HtmlTags.PARAGRAPH:
+        isEmptyTag = true;
+        startBlockElement(mSpannableStringBuilder);
+        return;
+
+      case HtmlTags.UNORDERED_LIST:
+        isInOrderedList = false;
+        startBlockElement(mSpannableStringBuilder);
+        return;
+
+      case HtmlTags.ORDERED_LIST:
+        isInOrderedList = true;
+        currentOrderedListItemIndex = 0;
+        startBlockElement(mSpannableStringBuilder);
+        return;
+
+      case HtmlTags.LIST_ITEM:
+        isEmptyTag = true;
+        startLi(mSpannableStringBuilder);
+        return;
+
+      case HtmlTags.BOLD:
+        start(mSpannableStringBuilder, new Bold());
+        return;
+
+      case HtmlTags.ITALIC:
+        start(mSpannableStringBuilder, new Italic());
+        return;
+
+      case HtmlTags.UNDERLINE:
+        start(mSpannableStringBuilder, new Underline());
+        return;
+
+      case HtmlTags.STRIKE_THROUGH:
+      case HtmlTags.STRIKE: // alias
+        start(mSpannableStringBuilder, new Strikethrough());
+        return;
+
+      case HtmlTags.BLOCK_QUOTE:
+        isEmptyTag = true;
+        startBlockquote(mSpannableStringBuilder);
+        return;
+
+      case HtmlTags.CODE_BLOCK:
+        isEmptyTag = true;
+        startCodeBlock(mSpannableStringBuilder);
+        return;
+
+      case HtmlTags.CODE_INLINE:
+        start(mSpannableStringBuilder, new Code());
+        return;
+
+      case HtmlTags.LINK:
+        startA(mSpannableStringBuilder, attributes);
+        return;
+
+      case HtmlTags.H1:
+        startHeading(mSpannableStringBuilder, 1);
+        return;
+
+      case HtmlTags.H2:
+        startHeading(mSpannableStringBuilder, 2);
+        return;
+
+      case HtmlTags.H3:
+        startHeading(mSpannableStringBuilder, 3);
+        return;
+
+      case HtmlTags.H4:
+        startHeading(mSpannableStringBuilder, 4);
+        return;
+
+      case HtmlTags.H5:
+        startHeading(mSpannableStringBuilder, 5);
+        return;
+
+      case HtmlTags.H6:
+        startHeading(mSpannableStringBuilder, 6);
+        return;
+
+      case HtmlTags.IMAGE:
+        startImg(mSpannableStringBuilder, attributes, mImageGetter);
+        return;
+
+      case HtmlTags.MENTION:
+        startMention(mSpannableStringBuilder, attributes);
+        return;
+
+      case HtmlTags.HORIZONTAL_RULE:
+        addHr(mSpannableStringBuilder, htmlStyle);
+        return;
+
+      case HtmlTags.CONTENT:
+        addContent(mSpannableStringBuilder, attributes, htmlStyle);
+        return;
+
+      case HtmlTags.CHECKLIST:
+        isEmptyTag = true;
+        startChecklist(mSpannableStringBuilder, attributes);
+        return;
+
+      default:
+        // unknown tag → ignore
+        return;
     }
   }
 
   private void handleEndTag(String tag) {
-    if (tag.equalsIgnoreCase("br")) {
-      handleBr(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("p")) {
-      endBlockElement(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("ul")) {
-      endBlockElement(mSpannableStringBuilder);
-    } else if (tag.equalsIgnoreCase("li")) {
-      endLi(mSpannableStringBuilder, mStyle);
-    } else if (tag.equalsIgnoreCase("b")) {
-      end(mSpannableStringBuilder, Bold.class, new EnrichedBoldSpan(mStyle));
-    } else if (tag.equalsIgnoreCase("i")) {
-      end(mSpannableStringBuilder, Italic.class, new EnrichedItalicSpan(mStyle));
-    } else if (tag.equalsIgnoreCase("blockquote")) {
-      endBlockquote(mSpannableStringBuilder, mStyle);
-    } else if (tag.equalsIgnoreCase("codeblock")) {
-      endCodeBlock(mSpannableStringBuilder, mStyle);
-    } else if (tag.equalsIgnoreCase("a")) {
-      endA(mSpannableStringBuilder, mStyle);
-    } else if (tag.equalsIgnoreCase("u")) {
-      end(mSpannableStringBuilder, Underline.class, new EnrichedUnderlineSpan(mStyle));
-    } else if (tag.equalsIgnoreCase("s")) {
-      end(mSpannableStringBuilder, Strikethrough.class, new EnrichedStrikeThroughSpan(mStyle));
-    } else if (tag.equalsIgnoreCase("h1")) {
-      endHeading(mSpannableStringBuilder, mStyle, 1);
-    } else if (tag.equalsIgnoreCase("h2")) {
-      endHeading(mSpannableStringBuilder, mStyle, 2);
-    } else if (tag.equalsIgnoreCase("h3")) {
-      endHeading(mSpannableStringBuilder, mStyle, 3);
-    } else if (tag.equalsIgnoreCase("h4")) {
-      endHeading(mSpannableStringBuilder, mStyle, 4);
-    } else if (tag.equalsIgnoreCase("h5")) {
-      endHeading(mSpannableStringBuilder, mStyle, 5);
-    } else if (tag.equalsIgnoreCase("h6")) {
-      endHeading(mSpannableStringBuilder, mStyle, 6);
-    } else if (tag.equalsIgnoreCase("code")) {
-      end(mSpannableStringBuilder, Code.class, new EnrichedInlineCodeSpan(mStyle));
-    } else if (tag.equalsIgnoreCase("mention")) {
-      endMention(mSpannableStringBuilder, mStyle);
+
+    if (tag == null) return;
+
+    switch (tag.toLowerCase(Locale.ROOT)) {
+      case HtmlTags.BREAK_LINE:
+        handleBr(mSpannableStringBuilder);
+        return;
+
+      case HtmlTags.PARAGRAPH:
+      case HtmlTags.UNORDERED_LIST:
+        endBlockElement(mSpannableStringBuilder);
+        return;
+
+      case HtmlTags.LIST_ITEM:
+        endLi(mSpannableStringBuilder, mStyle);
+        return;
+
+      case HtmlTags.BOLD:
+        end(mSpannableStringBuilder, Bold.class, new EnrichedBoldSpan(mStyle));
+        return;
+
+      case HtmlTags.ITALIC:
+        end(mSpannableStringBuilder, Italic.class, new EnrichedItalicSpan(mStyle));
+        return;
+
+      case HtmlTags.UNDERLINE:
+        end(mSpannableStringBuilder, Underline.class, new EnrichedUnderlineSpan(mStyle));
+        return;
+
+      case HtmlTags.STRIKE_THROUGH:
+      case HtmlTags.STRIKE:
+        end(mSpannableStringBuilder, Strikethrough.class, new EnrichedStrikeThroughSpan(mStyle));
+        return;
+
+      case HtmlTags.BLOCK_QUOTE:
+        endBlockquote(mSpannableStringBuilder, mStyle);
+        return;
+
+      case HtmlTags.CODE_BLOCK:
+        endCodeBlock(mSpannableStringBuilder, mStyle);
+        return;
+
+      case HtmlTags.LINK:
+        endA(mSpannableStringBuilder, mStyle);
+        return;
+
+      case HtmlTags.H1:
+        endHeading(mSpannableStringBuilder, mStyle, 1);
+        return;
+
+      case HtmlTags.H2:
+        endHeading(mSpannableStringBuilder, mStyle, 2);
+        return;
+
+      case HtmlTags.H3:
+        endHeading(mSpannableStringBuilder, mStyle, 3);
+        return;
+
+      case HtmlTags.H4:
+        endHeading(mSpannableStringBuilder, mStyle, 4);
+        return;
+
+      case HtmlTags.H5:
+        endHeading(mSpannableStringBuilder, mStyle, 5);
+        return;
+
+      case HtmlTags.H6:
+        endHeading(mSpannableStringBuilder, mStyle, 6);
+        return;
+
+      case HtmlTags.CODE_INLINE:
+        end(mSpannableStringBuilder, Code.class, new EnrichedInlineCodeSpan(mStyle));
+        return;
+
+      case HtmlTags.MENTION:
+        endMention(mSpannableStringBuilder, mStyle);
+        return;
+
+      case HtmlTags.CHECKLIST:
+        endCheckList(mSpannableStringBuilder, mStyle);
+        return;
+
+      default:
+        // Unknown tag, ignore
+        return;
     }
   }
 
@@ -643,7 +780,7 @@ class HtmlToSpannedConverter implements ContentHandler {
       existingNewlines++;
     }
     for (int j = existingNewlines; j < minNewline; j++) {
-      text.append("\n");
+      text.append(Strings.NEWLINE);
     }
   }
 
@@ -673,10 +810,31 @@ class HtmlToSpannedConverter implements ContentHandler {
 
     if (isInOrderedList) {
       currentOrderedListItemIndex++;
-      start(text, new List("ol", currentOrderedListItemIndex));
+      start(text, new List(HtmlTags.ORDERED_LIST, currentOrderedListItemIndex));
     } else {
-      start(text, new List("ul", 0));
+      start(text, new List(HtmlTags.UNORDERED_LIST, 0));
     }
+  }
+
+  private void startChecklist(Editable text, @Nullable Attributes attributes) {
+    if (attributes == null) {
+      return;
+    }
+    boolean checked = Objects.equals(attributes.getValue("checked"), "true");
+
+    startBlockElement(text);
+    start(text, new Checklist(checked));
+  }
+
+  private static void endCheckList(Editable text, HtmlStyle style) {
+    endBlockElement(text);
+    Checklist last = getLast(text, Checklist.class);
+
+    if (last == null) {
+      return;
+    }
+
+    setParagraphSpanFromMark(text, last, new EnrichedChecklistSpan(style, last.mChecked));
   }
 
   private static void endLi(Editable text, HtmlStyle style) {
@@ -684,7 +842,7 @@ class HtmlToSpannedConverter implements ContentHandler {
 
     List l = getLast(text, List.class);
     if (l != null) {
-      if (l.mType.equals("ol")) {
+      if (l.mType.equals(HtmlTags.ORDERED_LIST)) {
         setParagraphSpanFromMark(text, l, new EnrichedOrderedListSpan(l.mIndex, style));
       } else {
         setParagraphSpanFromMark(text, l, new EnrichedUnorderedListSpan(style));
@@ -716,7 +874,7 @@ class HtmlToSpannedConverter implements ContentHandler {
     setParagraphSpanFromMark(text, last, new EnrichedCodeBlockSpan(style));
   }
 
-  private void startHeading(Editable text, int level) {
+  private static void startHeading(Editable text, int level) {
     startBlockElement(text);
 
     switch (level) {
@@ -776,10 +934,11 @@ class HtmlToSpannedConverter implements ContentHandler {
     }
   }
 
-  private void addHr(Editable text) {
+  private static void addHr(Editable text, HtmlStyle htmlStyle) {
     SpannableStringBuilder builder = new SpannableStringBuilder();
     builder.append(Strings.MAGIC_CHAR);
-    builder.setSpan(new EnrichedHorizontalRuleSpan(mStyle), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    builder.setSpan(
+        new EnrichedHorizontalRuleSpan(htmlStyle), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     text.append(builder);
     text.append('\n');
   }
@@ -848,7 +1007,7 @@ class HtmlToSpannedConverter implements ContentHandler {
     }
 
     // Adjust the end position to exclude the newline character, if present
-    if (len > 0 && text.charAt(len - 1) == '\n') {
+    if (len > 0 && text.charAt(len - 1) == Strings.NEWLINE) {
       len--;
     }
 
@@ -884,7 +1043,7 @@ class HtmlToSpannedConverter implements ContentHandler {
     EnrichedImageSpan span =
         EnrichedImageSpan.Companion.createEnrichedImageSpan(
             src, Integer.parseInt(width), Integer.parseInt(height));
-    text.append("￼");
+    text.append(Strings.SPACE_CHAR);
     text.setSpan(span, len, text.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
   }
 
@@ -961,21 +1120,21 @@ class HtmlToSpannedConverter implements ContentHandler {
      */
     for (int i = 0; i < length; i++) {
       char c = ch[i + start];
-      if (c == ' ' || c == '\n') {
+      if (c == Strings.SPACE_CHAR || c == Strings.NEWLINE) {
         char pred;
         int len = sb.length();
         if (len == 0) {
           len = mSpannableStringBuilder.length();
           if (len == 0) {
-            pred = '\n';
+            pred = Strings.NEWLINE;
           } else {
             pred = mSpannableStringBuilder.charAt(len - 1);
           }
         } else {
           pred = sb.charAt(len - 1);
         }
-        if (pred != ' ' && pred != '\n') {
-          sb.append(' ');
+        if (pred != Strings.SPACE_CHAR && pred != Strings.NEWLINE) {
+          sb.append(Strings.SPACE_CHAR);
         }
       } else {
         sb.append(c);
@@ -1023,6 +1182,14 @@ class HtmlToSpannedConverter implements ContentHandler {
     public List(String type, int index) {
       mType = type;
       mIndex = index;
+    }
+  }
+
+  private static class Checklist {
+    public boolean mChecked;
+
+    public Checklist(boolean checked) {
+      mChecked = checked;
     }
   }
 
