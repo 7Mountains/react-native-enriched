@@ -16,6 +16,7 @@ import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerDelegate
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerInterface
 import com.facebook.yoga.YogaMeasureMode
+import com.swmansion.enriched.events.OnAlignmentChangeEvent
 import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.events.OnChangeSelectionEvent
 import com.swmansion.enriched.events.OnChangeStateEvent
@@ -72,6 +73,7 @@ class EnrichedTextInputViewManager :
     map.put(OnChangeSelectionEvent.EVENT_NAME, mapOf("registrationName" to OnChangeSelectionEvent.EVENT_NAME))
     map.put(OnRequestHtmlResultEvent.EVENT_NAME, mapOf("registrationName" to OnRequestHtmlResultEvent.EVENT_NAME))
     map.put(OnColorChangeEvent.EVENT_NAME, mapOf("registrationName" to OnColorChangeEvent.EVENT_NAME))
+    map.put(OnAlignmentChangeEvent.EVENT_NAME, mapOf("registrationName" to OnAlignmentChangeEvent.EVENT_NAME))
 
     return map
   }

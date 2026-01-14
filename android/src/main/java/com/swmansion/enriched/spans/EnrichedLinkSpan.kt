@@ -27,8 +27,6 @@ class EnrichedLinkSpan(
 
   fun getUrl(): String = url
 
-  override fun copy(): EnrichedLinkSpan = EnrichedLinkSpan(url = url, htmlStyle = htmlStyle)
-
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedLinkSpan = EnrichedLinkSpan(url, htmlStyle)
 
   override fun copy(): EnrichedSpan = EnrichedLinkSpan(url = url, htmlStyle = htmlStyle)

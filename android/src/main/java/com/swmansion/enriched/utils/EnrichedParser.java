@@ -8,11 +8,11 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.AlignmentSpan;
 import android.text.style.ParagraphStyle;
 import com.swmansion.enriched.EnrichedTextInputView;
 import com.swmansion.enriched.constants.HtmlTags;
 import com.swmansion.enriched.constants.Strings;
+import com.swmansion.enriched.spans.EnrichedAlignmentSpan;
 import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan;
 import com.swmansion.enriched.spans.EnrichedBoldSpan;
 import com.swmansion.enriched.spans.EnrichedChecklistSpan;
@@ -585,18 +585,18 @@ class HtmlToSpannedConverter implements ContentHandler {
 
       case HtmlTags.PARAGRAPH:
         isEmptyTag = true;
-        startBlockElement(mSpannableStringBuilder);
+        startBlockElement(mSpannableStringBuilder, attributes);
         return;
 
       case HtmlTags.UNORDERED_LIST:
         isInOrderedList = false;
-        startBlockElement(mSpannableStringBuilder);
+        startBlockElement(mSpannableStringBuilder, attributes);
         return;
 
       case HtmlTags.ORDERED_LIST:
         isInOrderedList = true;
         currentOrderedListItemIndex = 0;
-        startBlockElement(mSpannableStringBuilder);
+        startBlockElement(mSpannableStringBuilder, attributes);
         return;
 
       case HtmlTags.LIST_ITEM:
@@ -623,12 +623,12 @@ class HtmlToSpannedConverter implements ContentHandler {
 
       case HtmlTags.BLOCK_QUOTE:
         isEmptyTag = true;
-        startBlockquote(mSpannableStringBuilder);
+        startBlockquote(mSpannableStringBuilder, attributes);
         return;
 
       case HtmlTags.CODE_BLOCK:
         isEmptyTag = true;
-        startCodeBlock(mSpannableStringBuilder);
+        startCodeBlock(mSpannableStringBuilder, attributes);
         return;
 
       case HtmlTags.CODE_INLINE:
@@ -640,27 +640,27 @@ class HtmlToSpannedConverter implements ContentHandler {
         return;
 
       case HtmlTags.H1:
-        startHeading(mSpannableStringBuilder, 1);
+        startHeading(mSpannableStringBuilder, 1, attributes);
         return;
 
       case HtmlTags.H2:
-        startHeading(mSpannableStringBuilder, 2);
+        startHeading(mSpannableStringBuilder, 2, attributes);
         return;
 
       case HtmlTags.H3:
-        startHeading(mSpannableStringBuilder, 3);
+        startHeading(mSpannableStringBuilder, 3, attributes);
         return;
 
       case HtmlTags.H4:
-        startHeading(mSpannableStringBuilder, 4);
+        startHeading(mSpannableStringBuilder, 4, attributes);
         return;
 
       case HtmlTags.H5:
-        startHeading(mSpannableStringBuilder, 5);
+        startHeading(mSpannableStringBuilder, 5, attributes);
         return;
 
       case HtmlTags.H6:
-        startHeading(mSpannableStringBuilder, 6);
+        startHeading(mSpannableStringBuilder, 6, attributes);
         return;
 
       case HtmlTags.IMAGE:
@@ -776,7 +776,7 @@ class HtmlToSpannedConverter implements ContentHandler {
         endCheckList(mSpannableStringBuilder, mStyle);
         return;
       case HtmlTags.FONT:
-        endFont(mSpannableStringBuilder, mStyle);
+        endFont(mSpannableStringBuilder);
         return;
 
       default:
@@ -791,7 +791,7 @@ class HtmlToSpannedConverter implements ContentHandler {
       return;
     }
     int existingNewlines = 0;
-    for (int i = len - 1; i >= 0 && text.charAt(i) == '\n'; i--) {
+    for (int i = len - 1; i >= 0 && text.charAt(i) == Strings.NEWLINE; i--) {
       existingNewlines++;
     }
     for (int j = existingNewlines; j < minNewline; j++) {
@@ -799,9 +799,10 @@ class HtmlToSpannedConverter implements ContentHandler {
     }
   }
 
-  private static void startBlockElement(Editable text) {
+  private static void startBlockElement(Editable text, Attributes attributes) {
     appendNewlines(text, 1);
     start(text, new Newline(1));
+    startAlignment(text, attributes);
   }
 
   private static void endBlockElement(Editable text) {
@@ -810,10 +811,7 @@ class HtmlToSpannedConverter implements ContentHandler {
       appendNewlines(text, n.mNumNewlines);
       text.removeSpan(n);
     }
-    Alignment a = getLast(text, Alignment.class);
-    if (a != null) {
-      setSpanFromMark(text, a, new AlignmentSpan.Standard(a.mAlignment));
-    }
+    endAlignment(text);
   }
 
   private static void handleBr(Editable text) {
@@ -821,7 +819,7 @@ class HtmlToSpannedConverter implements ContentHandler {
   }
 
   private void startLi(Editable text) {
-    startBlockElement(text);
+    startBlockElement(text, null);
 
     if (isInOrderedList) {
       currentOrderedListItemIndex++;
@@ -837,7 +835,7 @@ class HtmlToSpannedConverter implements ContentHandler {
     }
     boolean checked = Objects.equals(attributes.getValue("checked"), "true");
 
-    startBlockElement(text);
+    startBlockElement(text, attributes);
     start(text, new Checklist(checked));
   }
 
@@ -867,8 +865,8 @@ class HtmlToSpannedConverter implements ContentHandler {
     endBlockElement(text);
   }
 
-  private void startBlockquote(Editable text) {
-    startBlockElement(text);
+  private void startBlockquote(Editable text, @Nullable Attributes attributes) {
+    startBlockElement(text, attributes);
     start(text, new Blockquote());
   }
 
@@ -878,8 +876,8 @@ class HtmlToSpannedConverter implements ContentHandler {
     setParagraphSpanFromMark(text, last, new EnrichedBlockQuoteSpan(style));
   }
 
-  private void startCodeBlock(Editable text) {
-    startBlockElement(text);
+  private void startCodeBlock(Editable text, @Nullable Attributes attributes) {
+    startBlockElement(text, attributes);
     start(text, new CodeBlock());
   }
 
@@ -889,8 +887,8 @@ class HtmlToSpannedConverter implements ContentHandler {
     setParagraphSpanFromMark(text, last, new EnrichedCodeBlockSpan(style));
   }
 
-  private static void startHeading(Editable text, int level) {
-    startBlockElement(text);
+  private static void startHeading(Editable text, int level, @Nullable Attributes attributes) {
+    startBlockElement(text, attributes);
 
     switch (level) {
       case 1:
@@ -1089,7 +1087,7 @@ class HtmlToSpannedConverter implements ContentHandler {
     start(text, new Font(color));
   }
 
-  private static void endFont(Editable text, HtmlStyle style) {
+  private static void endFont(Editable text) {
     Font font = getLast(text, Font.class);
 
     if (font == null) {
@@ -1097,6 +1095,37 @@ class HtmlToSpannedConverter implements ContentHandler {
     }
 
     setSpanFromMark(text, font, new EnrichedColoredSpan(font.color));
+  }
+
+  private static void startAlignment(Editable text, @Nullable Attributes attributes) {
+    if (attributes == null) return;
+
+    String alignmentString = attributes.getValue("", "alignment");
+    if (alignmentString == null) return;
+
+    Layout.Alignment alignment =
+        switch (alignmentString.toLowerCase(Locale.ROOT)) {
+          case "center" -> Layout.Alignment.ALIGN_CENTER;
+          case "right" -> Layout.Alignment.ALIGN_OPPOSITE;
+          case "left" -> Layout.Alignment.ALIGN_NORMAL;
+          default -> null;
+        };
+
+    if (alignment != null) {
+      start(text, new Alignment(alignment));
+    }
+  }
+
+  private static void endAlignment(Editable text) {
+    Alignment mark = getLast(text, Alignment.class);
+    if (mark == null) return;
+
+    int where = text.getSpanStart(mark);
+    text.removeSpan(mark);
+    int end = text.length();
+
+    text.setSpan(
+        new EnrichedAlignmentSpan(mark.mAlignment), where, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
   }
 
   private static int parseCssColor(String css) {

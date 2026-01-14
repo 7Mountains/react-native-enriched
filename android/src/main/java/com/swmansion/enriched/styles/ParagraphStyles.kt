@@ -18,21 +18,20 @@ import com.swmansion.enriched.spans.EnrichedH6Span
 import com.swmansion.enriched.spans.EnrichedAlignmentSpan
 import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
 import com.swmansion.enriched.spans.EnrichedSpans
-import com.swmansion.enriched.spans.TextStyle
-import com.swmansion.enriched.spans.EnrichedSpans.ALIGNMENT
-import com.swmansion.enriched.spans.EnrichedSpans.CONTENT
-import com.swmansion.enriched.spans.EnrichedSpans.DIVIDER
 import com.swmansion.enriched.spans.ParagraphSpanConfig
+import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.expandDown
 import com.swmansion.enriched.utils.expandUp
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getParagraphsBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
-import com.swmansion.enriched.utils.removeZWS
 import com.swmansion.enriched.utils.isListParagraph
 import com.swmansion.enriched.utils.isParagraphZeroOrOneAndEmpty
 import com.swmansion.enriched.utils.paragraphRangeAt
+import com.swmansion.enriched.utils.removeSpansForRange
+import com.swmansion.enriched.utils.removeZWS
+import com.swmansion.enriched.utils.toAlignment
 
 class ParagraphStyles(
   private val view: EnrichedTextInputView,
@@ -380,8 +379,12 @@ class ParagraphStyles(
     previousTextLength: Int,
   ) {
     var endCursorPosition = endPosition
+    val cursorPosition = endPosition.coerceAtMost(s.length)
     val isBackspace = s.length < previousTextLength
-    val isNewLine = endCursorPosition == 0 || (endCursorPosition > 0 && s[endCursorPosition - 1] == Strings.NEWLINE)
+    val isNewLine =
+      cursorPosition == 0 ||
+        (cursorPosition > 0 && s[cursorPosition - 1] == Strings.NEWLINE)
+
     val spanState = view.spanState ?: return
 
     if (isBackspace) {
@@ -390,13 +393,19 @@ class ParagraphStyles(
 
     for ((style, config) in EnrichedSpans.paragraphSpans) {
       if (style == TextStyle.DIVIDER || style == TextStyle.CONTENT) {
-        continue // simply skip non text paragraphs
+        continue
       }
 
       val styleStart = spanState.getStart(style)
 
-      if (style == ALIGNMENT) {
-        handleAlignmentSpan(s, styleStart, endCursorPosition)
+      if (style == TextStyle.ALIGNMENT) {
+        handleAlignmentSpan(
+          s = s,
+          styleStart = styleStart,
+          cursorPosition = cursorPosition,
+          isBackspace = isBackspace,
+          isNewLine = isNewLine,
+        )
         continue
       }
 
@@ -415,7 +424,7 @@ class ParagraphStyles(
 
   private fun processParagraphStyle(
     s: Editable,
-    style: String,
+    style: TextStyle,
     config: ParagraphSpanConfig,
     styleStart: Int?,
     isBackspace: Boolean,
@@ -424,6 +433,7 @@ class ParagraphStyles(
   ): Int {
     var endCursorPosition = cursor
     val type = config.clazz
+
     if (styleStart == null) {
       if (isBackspace) {
         val (start, end) = s.getParagraphBounds(endCursorPosition)
@@ -442,28 +452,30 @@ class ParagraphStyles(
       return endCursorPosition
     }
 
-    if (isNewLine) {
-      if (!config.isContinuous) {
+    if (isNewLine && !isBackspace) {
+      if (config.isContinuous) {
+        s.insert(endCursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
+        endCursorPosition += 1
+      } else {
         view.spanState?.setStart(style, null)
         return endCursorPosition
       }
+    }
 
-      if (isBackspace) {
-        endCursorPosition -= 1
-        view.spanState?.setStart(style, null)
-      } else {
-        s.insert(endCursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
-        endCursorPosition += 1
-      }
+    if (isNewLine && isBackspace) {
+      endCursorPosition -= 1
+      view.spanState?.setStart(style, null)
+    }
+
+    if (!isNewLine && isBackspace) {
+      return endCursorPosition
     }
 
     var (start, end) = s.getParagraphBounds(styleStart, endCursorPosition)
 
     if (isBackspace && styleStart != start) {
       val isConflicting = handleConflictsDuringNewlineDeletion(s, style, start, end)
-      if (isConflicting) {
-        return endCursorPosition
-      }
+      if (isConflicting) return endCursorPosition
     }
 
     val isNotEndLineSpan = isSpanEnabledInNextLine(s as Spannable, end, type)
@@ -482,7 +494,7 @@ class ParagraphStyles(
     return endCursorPosition
   }
 
-  fun toggleStyle(name: String) {
+  fun toggleStyle(name: TextStyle) {
     val selection = view.selection ?: return
     val spannable = view.text as SpannableStringBuilder
     val (start, end) = selection.getParagraphSelection()
@@ -499,22 +511,41 @@ class ParagraphStyles(
       return
     }
 
-    if (start == end) {
-      spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
-      setAndMergeSpans(spannable, type, start, end + 1, name)
-      view.selection.validateStyles()
+    val selectedText = spannable.substring(start, end)
 
+    if (start == end) {
+      val paragraphStart = spannable.lastIndexOf(Strings.NEWLINE, start - 1).let { if (it == -1) 0 else it + 1 }
+      val paragraphEnd = spannable.indexOf(Strings.NEWLINE, start).let { if (it == -1) spannable.length else it }
+      val paragraphContent = spannable.substring(paragraphStart, paragraphEnd)
+
+      if (paragraphContent.isEmpty()) {
+        spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
+        setAndMergeSpans(spannable, type, start, start + 1)
+      } else {
+        setAndMergeSpans(spannable, type, paragraphStart, paragraphEnd)
+      }
+
+      selection.validateStyles()
       return
     }
 
+    val paragraphs = selectedText.split(Strings.NEWLINE)
+
     var currentStart = start
     var currentEnd = currentStart
-    val paragraphs = spannable.substring(start, end).split(Strings.NEWLINE)
 
     for (paragraph in paragraphs) {
-      spannable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
-      currentEnd = currentStart + paragraph.length + 1
-      currentStart = currentEnd + 1
+      val paragraphLength = paragraph.length
+      val paragraphEnd = currentStart + paragraphLength
+
+      if (paragraphLength == 0) {
+        spannable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
+        currentEnd = currentStart + 1
+      } else {
+        currentEnd = paragraphEnd
+      }
+
+      currentStart = currentEnd + 1 // skip newline
     }
 
     setAndMergeSpans(spannable, type, start, currentEnd, name)
@@ -559,8 +590,16 @@ class ParagraphStyles(
 
   fun setParagraphAlignmentSpan(alignment: String) {
     val selection = view.selection ?: return
+    val spanState = view.spanState ?: return
     val spannable = view.text as Spannable
-    val (start, end) = selection.getParagraphSelection()
+    var (start, end) = selection.getParagraphSelection()
+
+    spanState.setAlignmentStart(start, alignment.toAlignment())
+
+    if (start == end) {
+      view.text?.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
+      end = start + 1
+    }
 
     val (expandedStart, expandedEnd) = expandListRange(spannable, start, end)
 
@@ -568,8 +607,19 @@ class ParagraphStyles(
       .getSpans(expandedStart, expandedEnd, EnrichedAlignmentSpan::class.java)
       .forEach { spannable.removeSpan(it) }
 
-    val span = EnrichedAlignmentSpan(alignment)
-    spannable.setSpan(span, expandedStart, expandedEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    val alignmentSpan = EnrichedAlignmentSpan(alignment)
+    spannable.setSpan(
+      alignmentSpan,
+      expandedStart,
+      expandedEnd,
+      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+    )
+
+    if (start == end - 1 && spannable[end - 1] == Strings.ZERO_WIDTH_SPACE_CHAR) {
+      view.setSelection(end)
+    }
+
+    view.selection.validateStyles()
   }
 
   fun removeStyle(
@@ -611,56 +661,57 @@ class ParagraphStyles(
   private fun handleAlignmentSpan(
     s: Editable,
     styleStart: Int?,
-    cursor: Int,
+    cursorPosition: Int,
+    isBackspace: Boolean,
+    isNewLine: Boolean,
   ) {
     if (styleStart == null) return
+    val (pStart, pEnd) = s.getParagraphBounds(styleStart, cursorPosition)
 
-    val isBackspace =
-      cursor > 0 &&
-        cursor < s.length &&
-        s.isNotEmpty() &&
-        s[cursor] == Strings.NEWLINE
+    val current =
+      s
+        .getSpans(pStart, pEnd, EnrichedAlignmentSpan::class.java)
+        .firstOrNull()
 
-    val isNewLine = cursor > 0 && s[cursor - 1] == Strings.NEWLINE
-
-    val (pStart, pEnd) = s.getParagraphBounds(styleStart, cursor)
-    val spans = s.getSpans(pStart, pEnd, EnrichedAlignmentSpan::class.java)
-    val current = spans.firstOrNull() ?: return
-
-    if (isNewLine) {
-      val (nextStart, nextEnd) = s.getParagraphBounds(cursor)
-      val newSpan = current.copy()
-      s.setSpan(newSpan, nextStart, nextEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    if (isNewLine && !isBackspace && current != null) {
+      val (nextStart, nextEnd) = s.getParagraphBounds(cursorPosition)
+      s.setSpan(current.copy(), nextStart, nextEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       return
     }
 
-    if (isBackspace) {
-      val prevParagraphEnd = cursor
-      val (prevStart, prevEnd) = s.getParagraphBounds(prevParagraphEnd - 1)
+    val deletedNewline =
+      isBackspace && styleStart != pStart
 
-      val prev = s.getSpans(prevStart, prevEnd, EnrichedAlignmentSpan::class.java).firstOrNull()
-      if (prev != null) {
-        val toRemove = s.getSpans(pStart, pEnd, EnrichedAlignmentSpan::class.java)
-        toRemove.forEach(s::removeSpan)
+    if (deletedNewline) {
+      val prevEnd = pStart - 1
+      if (prevEnd >= 0) {
+        val (prevStart, prevEndActual) = s.getParagraphBounds(prevEnd)
 
-        val merged = prev.copy()
-        s.setSpan(
-          merged,
-          prevStart,
-          pEnd,
-          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
+        val leftAlignmentSpan =
+          s
+            .getSpans(prevStart, prevEndActual, EnrichedAlignmentSpan::class.java)
+            .firstOrNull()
+
+        s.removeSpansForRange(pStart, pEnd, EnrichedAlignmentSpan::class.java)
+
+        if (leftAlignmentSpan != null) {
+          s.setSpan(leftAlignmentSpan.copy(), prevStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+      } else {
+        s.removeSpansForRange(pStart, pEnd, EnrichedAlignmentSpan::class.java)
       }
+
       return
     }
 
-    val spanStart = s.getSpanStart(current)
-    val spanEnd = s.getSpanEnd(current)
+    if (current != null) {
+      val spanStart = s.getSpanStart(current)
+      val spanEnd = s.getSpanEnd(current)
 
-    if (spanEnd != pEnd) {
-      s.removeSpan(current)
-      val expanded = current.copy()
-      s.setSpan(expanded, spanStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      if (spanEnd != pEnd && spanEnd < pEnd) {
+        s.removeSpan(current)
+        s.setSpan(current.copy(), spanStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      }
     }
   }
 

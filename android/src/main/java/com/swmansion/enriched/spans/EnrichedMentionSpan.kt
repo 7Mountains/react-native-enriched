@@ -35,8 +35,6 @@ class EnrichedMentionSpan(
 
   fun getIndicator(): String = indicator
 
-  override fun copy() = EnrichedMentionSpan(text = text, indicator = indicator, attributes = attributes, htmlStyle = htmlStyle)
-
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedMentionSpan = EnrichedMentionSpan(text, indicator, attributes, htmlStyle)
 
   override fun copy() = EnrichedMentionSpan(text = text, indicator = indicator, attributes = attributes, htmlStyle)

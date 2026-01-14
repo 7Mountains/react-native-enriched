@@ -23,8 +23,6 @@ class EnrichedChecklistSpan(
     this.isChecked = isChecked
   }
 
-  override fun copy(): EnrichedChecklistSpan = EnrichedChecklistSpan(htmlStyle, isChecked)
-
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedChecklistSpan = EnrichedChecklistSpan(htmlStyle, isChecked)
 
   override fun updateMeasureState(tp: TextPaint) {}
@@ -98,5 +96,5 @@ class EnrichedChecklistSpan(
 
   fun getAttributes(): Map<String, String> = mapOf("checked" to if (isChecked) "true" else "false")
 
-  override fun copy() = EnrichedChecklistSpan(htmlStyle)
+  override fun copy() = EnrichedChecklistSpan(htmlStyle, isChecked)
 }

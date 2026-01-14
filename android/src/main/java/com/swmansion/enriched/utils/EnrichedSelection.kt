@@ -8,6 +8,7 @@ import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnChangeSelectionEvent
 import com.swmansion.enriched.events.OnLinkDetectedEvent
 import com.swmansion.enriched.events.OnMentionDetectedEvent
+import com.swmansion.enriched.spans.EnrichedAlignmentSpan
 import com.swmansion.enriched.spans.EnrichedColoredSpan
 import com.swmansion.enriched.spans.EnrichedLinkSpan
 import com.swmansion.enriched.spans.EnrichedMentionSpan
@@ -150,7 +151,9 @@ class EnrichedSelection(
     for (span in spans) {
       val spanStart = spannable.getSpanStart(span)
       val spanEnd = spannable.getSpanEnd(span)
-
+      if (span is EnrichedAlignmentSpan) {
+        view.spanState?.setAlignment(span.alignment)
+      }
       if (start >= spanStart && end <= spanEnd) {
         styleStart = spanStart
         break

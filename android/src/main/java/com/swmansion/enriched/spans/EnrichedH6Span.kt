@@ -20,8 +20,6 @@ class EnrichedH6Span(
     }
   }
 
-  override fun copy(): EnrichedH6Span = EnrichedH6Span(htmlStyle)
-
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedH6Span = EnrichedH6Span(htmlStyle)
 
   override fun copy(): EnrichedH6Span = EnrichedH6Span(htmlStyle)

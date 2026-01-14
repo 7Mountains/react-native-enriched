@@ -169,22 +169,3 @@ fun <T> Spannable.removeSpansForRange(
   ssb.replace(newStart, newEnd, ssb.substring(newStart, newEnd).replace("\u200B", ""))
   return true
 }
-
-fun Editable.extendSpanToParagraphEnd(
-  span: EnrichedSpan,
-  paragraphEnd: Int,
-) {
-  val oldStart = getSpanStart(span)
-  removeSpan(span)
-  val (s, e) = getSafeSpanBoundaries(oldStart, paragraphEnd)
-  setSpan(span.copy(), s, e, 0)
-}
-
-fun Editable.shouldContinueInNextLine(
-  index: Int,
-  type: Class<out EnrichedSpan>,
-): Boolean {
-  if (index + 1 >= length) return false
-  val (pStart, pEnd) = getParagraphBounds(index + 1)
-  return getSpans(pStart, pEnd, type).isNotEmpty()
-}

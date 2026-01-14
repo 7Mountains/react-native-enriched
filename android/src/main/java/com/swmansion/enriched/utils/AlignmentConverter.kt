@@ -20,7 +20,7 @@ fun String.toAlignment(): Layout.Alignment =
 
 fun Layout.Alignment.toStringName(): String =
   when (this) {
-    Layout.Alignment.ALIGN_NORMAL -> "left"
+    Layout.Alignment.ALIGN_NORMAL -> "default"
     Layout.Alignment.ALIGN_OPPOSITE -> "right"
     Layout.Alignment.ALIGN_CENTER -> "center"
     else -> "default"

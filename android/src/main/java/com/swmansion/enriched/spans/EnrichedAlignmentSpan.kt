@@ -6,16 +6,17 @@ import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.utils.toAlignment
+import com.swmansion.enriched.utils.toStringName
 
 class EnrichedAlignmentSpan(
-  private val alignmentString: String?,
+  val alignmentString: String?,
 ) : EnrichedParagraphSpan,
   AlignmentSpan {
   private val alignment: Layout.Alignment = alignmentString?.toAlignment() ?: Layout.Alignment.ALIGN_NORMAL
 
   constructor() : this("default")
 
-  constructor(htmlStyle: HtmlStyle) : this("default")
+  constructor(alignment: Layout.Alignment) : this(alignment.toStringName())
 
   override val dependsOnHtmlStyle: Boolean = false
 

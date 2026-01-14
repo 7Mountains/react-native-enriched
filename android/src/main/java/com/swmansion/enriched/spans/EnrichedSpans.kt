@@ -84,6 +84,7 @@ object EnrichedSpans {
       TextStyle.CONTENT to ParagraphSpanConfig(EnrichedContentSpan::class.java, false, true),
       TextStyle.BLOCK_QUOTE to ParagraphSpanConfig(EnrichedBlockQuoteSpan::class.java, true, false),
       TextStyle.CODE_BLOCK to ParagraphSpanConfig(EnrichedCodeBlockSpan::class.java, true, false),
+      TextStyle.ALIGNMENT to ParagraphSpanConfig(EnrichedAlignmentSpan::class.java, false, false),
     )
 
   val listSpans: Map<TextStyle, ListSpanConfig> =
