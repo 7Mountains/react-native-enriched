@@ -12,6 +12,7 @@ import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
+import com.swmansion.enriched.utils.removeZWS
 
 class ListStyles(
   private val view: EnrichedTextInputView,
@@ -93,7 +94,7 @@ class ListStyles(
       ssb.removeSpan(span)
     }
 
-    ssb.replace(start, end, ssb.substring(start, end).replace("\u200B", ""))
+    ssb.removeZWS(start, end)
     return true
   }
 

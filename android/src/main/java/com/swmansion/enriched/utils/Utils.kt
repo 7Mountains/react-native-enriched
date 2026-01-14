@@ -4,6 +4,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.util.Log
+import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.interfaces.EnrichedBlockSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import org.json.JSONObject
@@ -86,16 +87,28 @@ fun Spannable.mergeSpannables(
   val isNewLineEnd = endBlockSpans.isNotEmpty() || endParagraphSpans.isNotEmpty()
 
   if (isNewLineStart && start != paragraphStart) {
-    builder.insert(start, "\n")
+    builder.insert(start, Strings.NEWLINE_STRING)
     finalStart = start + 1
     finalEnd = end + 1
   }
 
   if (isNewLineEnd && end != paragraphEnd) {
-    builder.insert(finalEnd, "\n")
+    builder.insert(finalEnd, Strings.NEWLINE_STRING)
   }
 
   builder.replace(finalStart, finalEnd, spannable)
 
   return builder
+}
+
+// Removes zero-width spaces from the given range in the SpannableStringBuilder without affecting spans
+fun SpannableStringBuilder.removeZWS(
+  start: Int,
+  end: Int,
+) {
+  for (i in (end - 1) downTo start) {
+    if (this[i] == Strings.ZERO_WIDTH_SPACE_CHAR) {
+      delete(i, i + 1)
+    }
+  }
 }
