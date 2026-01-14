@@ -10,6 +10,7 @@ import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
+import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
@@ -55,28 +56,30 @@ class ListStyles(
 
   private fun setSpan(
     spannable: Spannable,
-    name: String,
+    name: TextStyle,
     start: Int,
     end: Int,
   ) {
     val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, end)
 
     when (name) {
-      EnrichedSpans.UNORDERED_LIST -> {
+      TextStyle.UNORDERED_LIST -> {
         val span = EnrichedUnorderedListSpan(view.htmlStyle)
         spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
 
-      EnrichedSpans.ORDERED_LIST -> {
+      TextStyle.ORDERED_LIST -> {
         val index = getOrderedListIndex(spannable, safeStart)
         val span = EnrichedOrderedListSpan(index, view.htmlStyle)
         spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
 
-      EnrichedSpans.CHECK_LIST -> {
+      TextStyle.CHECK_LIST -> {
         val span = EnrichedChecklistSpan(view.htmlStyle)
         spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
+
+      else -> {}
     }
   }
 
@@ -110,7 +113,7 @@ class ListStyles(
     }
   }
 
-  fun toggleStyle(name: String) {
+  fun toggleStyle(name: TextStyle) {
     if (view.selection == null) return
     val config = EnrichedSpans.listSpans[name] ?: return
     val spannable = view.text as SpannableStringBuilder
@@ -151,7 +154,7 @@ class ListStyles(
 
   private fun handleAfterTextChanged(
     s: Editable,
-    name: String,
+    name: TextStyle,
     endCursorPosition: Int,
     previousTextLength: Int,
   ) {
@@ -187,7 +190,7 @@ class ListStyles(
     }
 
     if (spans.isNotEmpty()) {
-      val isCheckList = name == EnrichedSpans.CHECK_LIST
+      val isCheckList = name == TextStyle.CHECK_LIST
       val wasChecked =
         if (isCheckList) {
           getCurrentChecklistState(s, start, end)
@@ -213,9 +216,9 @@ class ListStyles(
     endCursorPosition: Int,
     previousTextLength: Int,
   ) {
-    handleAfterTextChanged(s, EnrichedSpans.ORDERED_LIST, endCursorPosition, previousTextLength)
-    handleAfterTextChanged(s, EnrichedSpans.UNORDERED_LIST, endCursorPosition, previousTextLength)
-    handleAfterTextChanged(s, EnrichedSpans.CHECK_LIST, endCursorPosition, previousTextLength)
+    handleAfterTextChanged(s, TextStyle.ORDERED_LIST, endCursorPosition, previousTextLength)
+    handleAfterTextChanged(s, TextStyle.UNORDERED_LIST, endCursorPosition, previousTextLength)
+    handleAfterTextChanged(s, TextStyle.CHECK_LIST, endCursorPosition, previousTextLength)
   }
 
   private fun getCurrentChecklistState(
@@ -230,7 +233,7 @@ class ListStyles(
   fun getStyleRange(): Pair<Int, Int> = view.selection?.getParagraphSelection() ?: Pair(0, 0)
 
   fun removeStyle(
-    name: String,
+    name: TextStyle,
     start: Int,
     end: Int,
   ): Boolean {

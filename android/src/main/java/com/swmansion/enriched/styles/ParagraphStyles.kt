@@ -9,8 +9,7 @@ import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
 import com.swmansion.enriched.spans.EnrichedSpans
-import com.swmansion.enriched.spans.EnrichedSpans.CONTENT
-import com.swmansion.enriched.spans.EnrichedSpans.DIVIDER
+import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
@@ -238,7 +237,7 @@ class ParagraphStyles(
 
   private fun handleConflictsDuringNewlineDeletion(
     s: Editable,
-    style: String,
+    style: TextStyle,
     paragraphStart: Int,
     paragraphEnd: Int,
   ): Boolean {
@@ -278,7 +277,7 @@ class ParagraphStyles(
 
   private fun deleteConflictingAndBlockingStyles(
     s: Editable,
-    style: String,
+    style: TextStyle,
     paragraphStart: Int,
     paragraphEnd: Int,
   ) {
@@ -318,7 +317,7 @@ class ParagraphStyles(
     val spanState = view.spanState ?: return
 
     for ((style, config) in EnrichedSpans.paragraphSpans) {
-      if (style == DIVIDER || style == CONTENT) {
+      if (style == TextStyle.DIVIDER || style == TextStyle.CONTENT) {
         return // simply skip non text paragraphs
       }
 
@@ -383,7 +382,7 @@ class ParagraphStyles(
     }
   }
 
-  fun toggleStyle(name: String) {
+  fun toggleStyle(name: TextStyle) {
     if (view.selection == null) return
     val spannable = view.text as SpannableStringBuilder
     val (start, end) = view.selection.getParagraphSelection()
@@ -439,7 +438,7 @@ class ParagraphStyles(
       editable.delete(paragraphRange.first, paragraphRange.last)
     }
 
-    view.spanState?.setStart(DIVIDER, null)
+    view.spanState?.setStart(TextStyle.DIVIDER, null)
 
     val dividerIndex = paragraphRange.first
 
@@ -460,7 +459,7 @@ class ParagraphStyles(
   }
 
   fun removeStyle(
-    name: String,
+    name: TextStyle,
     start: Int,
     end: Int,
   ): Boolean {

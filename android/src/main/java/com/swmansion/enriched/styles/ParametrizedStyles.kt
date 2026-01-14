@@ -10,6 +10,7 @@ import com.swmansion.enriched.spans.EnrichedImageSpan
 import com.swmansion.enriched.spans.EnrichedLinkSpan
 import com.swmansion.enriched.spans.EnrichedMentionSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
 
@@ -125,7 +126,7 @@ class ParametrizedStyles(
   }
 
   private fun canLinkBeApplied(): Boolean {
-    val mergingConfig = EnrichedSpans.getMergingConfigForStyle(EnrichedSpans.LINK, view.htmlStyle) ?: return true
+    val mergingConfig = EnrichedSpans.getMergingConfigForStyle(TextStyle.LINK, view.htmlStyle) ?: return true
     val conflictingStyles = mergingConfig.conflictingStyles
     val blockingStyles = mergingConfig.blockingStyles
 
@@ -294,7 +295,7 @@ class ParametrizedStyles(
   fun getStyleRange(): Pair<Int, Int> = view.selection?.getInlineSelection() ?: Pair(0, 0)
 
   fun removeStyle(
-    name: String,
+    name: TextStyle,
     start: Int,
     end: Int,
   ): Boolean {

@@ -8,6 +8,7 @@ import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnChangeStateEvent
 import com.swmansion.enriched.events.OnColorChangeEvent
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.TextStyle
 
 class EnrichedSpanState(
   private val view: EnrichedTextInputView,
@@ -181,30 +182,30 @@ class EnrichedSpanState(
     this.checklistStart = start
   }
 
-  fun getStart(name: String): Int? {
+  fun getStart(name: TextStyle): Int? {
     val start =
       when (name) {
-        EnrichedSpans.BOLD -> boldStart
-        EnrichedSpans.ITALIC -> italicStart
-        EnrichedSpans.UNDERLINE -> underlineStart
-        EnrichedSpans.STRIKETHROUGH -> strikethroughStart
-        EnrichedSpans.INLINE_CODE -> inlineCodeStart
-        EnrichedSpans.COLOR -> colorStart
-        EnrichedSpans.H1 -> h1Start
-        EnrichedSpans.H2 -> h2Start
-        EnrichedSpans.H3 -> h3Start
-        EnrichedSpans.H4 -> h4Start
-        EnrichedSpans.H5 -> h5Start
-        EnrichedSpans.H6 -> h6Start
-        EnrichedSpans.CODE_BLOCK -> codeBlockStart
-        EnrichedSpans.BLOCK_QUOTE -> blockQuoteStart
-        EnrichedSpans.ORDERED_LIST -> orderedListStart
-        EnrichedSpans.UNORDERED_LIST -> unorderedListStart
-        EnrichedSpans.CHECK_LIST -> checklistStart
-        EnrichedSpans.LINK -> linkStart
-        EnrichedSpans.IMAGE -> imageStart
-        EnrichedSpans.MENTION -> mentionStart
-        EnrichedSpans.DIVIDER -> dividerStart
+        TextStyle.BOLD -> boldStart
+        TextStyle.ITALIC -> italicStart
+        TextStyle.UNDERLINE -> underlineStart
+        TextStyle.STRIKETHROUGH -> strikethroughStart
+        TextStyle.INLINE_CODE -> inlineCodeStart
+        TextStyle.COLOR -> colorStart
+        TextStyle.H1 -> h1Start
+        TextStyle.H2 -> h2Start
+        TextStyle.H3 -> h3Start
+        TextStyle.H4 -> h4Start
+        TextStyle.H5 -> h5Start
+        TextStyle.H6 -> h6Start
+        TextStyle.CODE_BLOCK -> codeBlockStart
+        TextStyle.BLOCK_QUOTE -> blockQuoteStart
+        TextStyle.ORDERED_LIST -> orderedListStart
+        TextStyle.UNORDERED_LIST -> unorderedListStart
+        TextStyle.CHECK_LIST -> checklistStart
+        TextStyle.LINK -> linkStart
+        TextStyle.IMAGE -> imageStart
+        TextStyle.MENTION -> mentionStart
+        TextStyle.DIVIDER -> dividerStart
         else -> null
       }
 
@@ -212,31 +213,95 @@ class EnrichedSpanState(
   }
 
   fun setStart(
-    name: String,
+    name: TextStyle,
     start: Int?,
   ) {
     when (name) {
-      EnrichedSpans.BOLD -> setBoldStart(start)
-      EnrichedSpans.ITALIC -> setItalicStart(start)
-      EnrichedSpans.UNDERLINE -> setUnderlineStart(start)
-      EnrichedSpans.COLOR -> setColorStart(start)
-      EnrichedSpans.STRIKETHROUGH -> setStrikethroughStart(start)
-      EnrichedSpans.INLINE_CODE -> setInlineCodeStart(start)
-      EnrichedSpans.H1 -> setH1Start(start)
-      EnrichedSpans.H2 -> setH2Start(start)
-      EnrichedSpans.H3 -> setH3Start(start)
-      EnrichedSpans.H4 -> setH4Start(start)
-      EnrichedSpans.H5 -> setH5Start(start)
-      EnrichedSpans.H6 -> setH6Start(start)
-      EnrichedSpans.CODE_BLOCK -> setCodeBlockStart(start)
-      EnrichedSpans.BLOCK_QUOTE -> setBlockQuoteStart(start)
-      EnrichedSpans.ORDERED_LIST -> setOrderedListStart(start)
-      EnrichedSpans.UNORDERED_LIST -> setUnorderedListStart(start)
-      EnrichedSpans.CHECK_LIST -> setChecklistStart(start)
-      EnrichedSpans.LINK -> setLinkStart(start)
-      EnrichedSpans.IMAGE -> setImageStart(start)
-      EnrichedSpans.MENTION -> setMentionStart(start)
-      EnrichedSpans.DIVIDER -> setDividerStart(start)
+      TextStyle.BOLD -> {
+        setBoldStart(start)
+      }
+
+      TextStyle.ITALIC -> {
+        setItalicStart(start)
+      }
+
+      TextStyle.UNDERLINE -> {
+        setUnderlineStart(start)
+      }
+
+      TextStyle.COLOR -> {
+        setColorStart(start)
+      }
+
+      TextStyle.STRIKETHROUGH -> {
+        setStrikethroughStart(start)
+      }
+
+      TextStyle.INLINE_CODE -> {
+        setInlineCodeStart(start)
+      }
+
+      TextStyle.H1 -> {
+        setH1Start(start)
+      }
+
+      TextStyle.H2 -> {
+        setH2Start(start)
+      }
+
+      TextStyle.H3 -> {
+        setH3Start(start)
+      }
+
+      TextStyle.H4 -> {
+        setH4Start(start)
+      }
+
+      TextStyle.H5 -> {
+        setH5Start(start)
+      }
+
+      TextStyle.H6 -> {
+        setH6Start(start)
+      }
+
+      TextStyle.CODE_BLOCK -> {
+        setCodeBlockStart(start)
+      }
+
+      TextStyle.BLOCK_QUOTE -> {
+        setBlockQuoteStart(start)
+      }
+
+      TextStyle.ORDERED_LIST -> {
+        setOrderedListStart(start)
+      }
+
+      TextStyle.UNORDERED_LIST -> {
+        setUnorderedListStart(start)
+      }
+
+      TextStyle.CHECK_LIST -> {
+        setChecklistStart(start)
+      }
+
+      TextStyle.LINK -> {
+        setLinkStart(start)
+      }
+
+      TextStyle.IMAGE -> {
+        setImageStart(start)
+      }
+
+      TextStyle.MENTION -> {
+        setMentionStart(start)
+      }
+
+      TextStyle.DIVIDER -> {
+        setDividerStart(start)
+      }
+
+      else -> {}
     }
   }
 

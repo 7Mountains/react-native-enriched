@@ -5,6 +5,7 @@ import android.text.Spannable
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.spans.EnrichedColoredSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 
 class InlineStyles(
@@ -302,7 +303,7 @@ class InlineStyles(
     view.spanState.setColorStart(cursor, color)
   }
 
-  fun toggleStyle(name: String) {
+  fun toggleStyle(name: TextStyle) {
     if (view.selection == null) return
     val (start, end) = view.selection.getInlineSelection()
     val config = EnrichedSpans.inlineSpans[name] ?: return
@@ -327,7 +328,7 @@ class InlineStyles(
   }
 
   fun removeStyle(
-    name: String,
+    name: TextStyle,
     start: Int,
     end: Int,
   ): Boolean {

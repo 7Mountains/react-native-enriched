@@ -28,6 +28,7 @@ import com.swmansion.enriched.events.OnMentionDetectedEvent
 import com.swmansion.enriched.events.OnMentionEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.utils.jsonStringToStringMap
 
@@ -273,63 +274,63 @@ class EnrichedTextInputViewManager :
   }
 
   override fun toggleBold(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.BOLD)
+    view?.verifyAndToggleStyle(TextStyle.BOLD)
   }
 
   override fun toggleItalic(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.ITALIC)
+    view?.verifyAndToggleStyle(TextStyle.ITALIC)
   }
 
   override fun toggleUnderline(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.UNDERLINE)
+    view?.verifyAndToggleStyle(TextStyle.UNDERLINE)
   }
 
   override fun toggleStrikeThrough(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.STRIKETHROUGH)
+    view?.verifyAndToggleStyle(TextStyle.STRIKETHROUGH)
   }
 
   override fun toggleInlineCode(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.INLINE_CODE)
+    view?.verifyAndToggleStyle(TextStyle.INLINE_CODE)
   }
 
   override fun toggleH1(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.H1)
+    view?.verifyAndToggleStyle(TextStyle.H1)
   }
 
   override fun toggleH2(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.H2)
+    view?.verifyAndToggleStyle(TextStyle.H2)
   }
 
   override fun toggleH3(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.H3)
+    view?.verifyAndToggleStyle(TextStyle.H3)
   }
 
   override fun toggleH4(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.H4)
+    view?.verifyAndToggleStyle(TextStyle.H4)
   }
 
   override fun toggleH5(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.H5)
+    view?.verifyAndToggleStyle(TextStyle.H5)
   }
 
   override fun toggleH6(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.H6)
+    view?.verifyAndToggleStyle(TextStyle.H6)
   }
 
   override fun toggleCodeBlock(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.CODE_BLOCK)
+    view?.verifyAndToggleStyle(TextStyle.CODE_BLOCK)
   }
 
   override fun toggleBlockQuote(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.BLOCK_QUOTE)
+    view?.verifyAndToggleStyle(TextStyle.BLOCK_QUOTE)
   }
 
   override fun toggleOrderedList(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.ORDERED_LIST)
+    view?.verifyAndToggleStyle(TextStyle.ORDERED_LIST)
   }
 
   override fun toggleUnorderedList(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.UNORDERED_LIST)
+    view?.verifyAndToggleStyle(TextStyle.UNORDERED_LIST)
   }
 
   override fun setColor(
@@ -391,7 +392,7 @@ class EnrichedTextInputViewManager :
   }
 
   override fun toggleCheckList(view: EnrichedTextInputView?) {
-    view?.verifyAndToggleStyle(EnrichedSpans.CHECK_LIST)
+    view?.verifyAndToggleStyle(TextStyle.CHECK_LIST)
   }
 
   override fun setParagraphAlignment(
