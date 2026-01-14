@@ -724,6 +724,8 @@ class EnrichedTextInputView : AppCompatEditText {
     dispatcher?.dispatchEvent(OnRequestHtmlResultEvent(surfaceId, id, requestId, html, experimentalSynchronousEvents))
   }
 
+  fun setParagraphAlignmentSpan(alignment: String) = paragraphStyles?.setParagraphAlignmentSpan(alignment)
+
   // Sometimes setting up style triggers many changes in sequence
   // Eg. removing conflicting styles -> changing text -> applying spans
   // In such scenario we want to prevent from handling side effects (eg. onTextChanged)

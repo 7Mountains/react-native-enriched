@@ -85,6 +85,8 @@ class EnrichedOrderedListSpan(
     index = i
   }
 
+  override fun copy() = EnrichedOrderedListSpan(index = index, htmlStyle = htmlStyle)
+
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedOrderedListSpan = EnrichedOrderedListSpan(index, htmlStyle)
 
   override fun copy(): EnrichedOrderedListSpan = EnrichedOrderedListSpan(index = index, htmlStyle = htmlStyle)

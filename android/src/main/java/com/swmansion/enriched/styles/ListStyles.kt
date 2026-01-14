@@ -129,7 +129,7 @@ class ListStyles(
     }
 
     if (start == end) {
-      spannable.insert(start, "\u200B")
+      spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
       view.spanState?.setStart(name, start + 1)
       removeSpansForRange(spannable, start, end, config.clazz)
       setSpan(spannable, name, start, end + 1)
@@ -138,11 +138,11 @@ class ListStyles(
     }
 
     var currentStart = start
-    val paragraphs = spannable.substring(start, end).split("\n")
+    val paragraphs = spannable.substring(start, end).split(Strings.NEWLINE_STRING)
     removeSpansForRange(spannable, start, end, config.clazz)
 
     for (paragraph in paragraphs) {
-      spannable.insert(currentStart, "\u200B")
+      spannable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
       val currentEnd = currentStart + paragraph.length + 1
       setSpan(spannable, name, currentStart, currentEnd)
 
@@ -216,9 +216,9 @@ class ListStyles(
     endCursorPosition: Int,
     previousTextLength: Int,
   ) {
-    handleAfterTextChanged(s, TextStyle.ORDERED_LIST, endCursorPosition, previousTextLength)
-    handleAfterTextChanged(s, TextStyle.UNORDERED_LIST, endCursorPosition, previousTextLength)
-    handleAfterTextChanged(s, TextStyle.CHECK_LIST, endCursorPosition, previousTextLength)
+    for ((style) in EnrichedSpans.listSpans) {
+      handleAfterTextChanged(s, style, endCursorPosition, previousTextLength)
+    }
   }
 
   private fun getCurrentChecklistState(

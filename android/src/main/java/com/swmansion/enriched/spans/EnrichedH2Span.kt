@@ -21,6 +21,8 @@ class EnrichedH2Span(
     }
   }
 
+  override fun copy(): EnrichedH2Span = EnrichedH2Span(htmlStyle)
+
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedH2Span = EnrichedH2Span(htmlStyle)
 
   override fun copy(): EnrichedH2Span = EnrichedH2Span(htmlStyle)

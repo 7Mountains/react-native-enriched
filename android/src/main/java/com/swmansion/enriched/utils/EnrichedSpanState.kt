@@ -83,10 +83,16 @@ class EnrichedSpanState(
     emitStateChangeEvent()
     setTypingColor(color)
   }
+  var alignmentStart: Int? = null
+    private set
 
   fun setBoldStart(start: Int?) {
     this.boldStart = start
     emitStateChangeEvent()
+  }
+
+  fun setAlignmentStart(start: Int?) {
+    this.alignmentStart = start
   }
 
   fun setItalicStart(start: Int?) {

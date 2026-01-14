@@ -30,6 +30,8 @@ class EnrichedImageSpan :
     this.height = height
   }
 
+  override fun copy() = this
+
   override fun draw(
     canvas: Canvas,
     text: CharSequence?,

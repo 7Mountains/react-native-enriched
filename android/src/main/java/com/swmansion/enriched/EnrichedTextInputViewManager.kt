@@ -399,7 +399,7 @@ class EnrichedTextInputViewManager :
     view: EnrichedTextInputView?,
     alignment: String,
   ) {
-    // no-op
+    view?.setParagraphAlignmentSpan(alignment)
   }
 
   override fun measure(
