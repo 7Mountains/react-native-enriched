@@ -66,6 +66,7 @@ object EnrichedSpans {
       TextStyle.UNDERLINE to BaseSpanConfig(EnrichedUnderlineSpan::class.java),
       TextStyle.STRIKETHROUGH to BaseSpanConfig(EnrichedStrikeThroughSpan::class.java),
       TextStyle.INLINE_CODE to BaseSpanConfig(EnrichedInlineCodeSpan::class.java),
+      TextStyle.COLOR to BaseSpanConfig(EnrichedColoredSpan::class.java),
     )
 
   val paragraphSpans: Map<TextStyle, ParagraphSpanConfig> =

@@ -3,9 +3,15 @@ package com.swmansion.enriched.styles
 import android.text.Editable
 import android.text.Spannable
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.spans.EnrichedBoldSpan
 import com.swmansion.enriched.spans.EnrichedColoredSpan
+import com.swmansion.enriched.spans.EnrichedInlineCodeSpan
+import com.swmansion.enriched.spans.EnrichedItalicSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.EnrichedStrikeThroughSpan
+import com.swmansion.enriched.spans.EnrichedUnderlineSpan
 import com.swmansion.enriched.spans.TextStyle
+import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 
 class InlineStyles(
@@ -16,6 +22,7 @@ class InlineStyles(
     type: Class<T>,
     start: Int,
     end: Int,
+    styleName: TextStyle,
   ) {
     val previousSpanStart = (start - 1).coerceAtLeast(0)
     val previousSpanEnd = previousSpanStart + 1
@@ -41,7 +48,7 @@ class InlineStyles(
       spannable.removeSpan(span)
     }
 
-    val span = type.getDeclaredConstructor().newInstance()
+    val span = createSpan(styleName)
     val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(minimum, maximum)
     spannable.setSpan(span, safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
@@ -51,12 +58,13 @@ class InlineStyles(
     type: Class<T>,
     start: Int,
     end: Int,
+    styleName: TextStyle,
   ) {
     val spans = spannable.getSpans(start, end, type)
 
     // No spans setup for current selection, means we just need to assign new span
     if (spans.isEmpty()) {
-      setSpan(spannable, type, start, end)
+      setSpan(spannable, type, start, end, styleName)
       return
     }
 
@@ -75,8 +83,8 @@ class InlineStyles(
       if (start == spanStart && end == spanEnd) {
         setSpanOnFinish = false
       } else if (start > spanStart && end < spanEnd) {
-        setSpan(spannable, type, spanStart, start)
-        setSpan(spannable, type, end, spanEnd)
+        setSpan(spannable, type, spanStart, start, styleName)
+        setSpan(spannable, type, end, spanEnd, styleName)
       } else if (start == spanStart && end < spanEnd) {
         finalStart = end
         finalEnd = spanEnd
@@ -94,12 +102,12 @@ class InlineStyles(
       }
 
       if (!setSpanOnFinish && finalStart != null && finalEnd != null) {
-        setSpan(spannable, type, finalStart, finalEnd)
+        setSpan(spannable, type, finalStart, finalEnd, styleName)
       }
     }
 
     if (setSpanOnFinish) {
-      setSpan(spannable, type, start, end)
+      setSpan(spannable, type, start, end, styleName)
     }
   }
 
@@ -240,14 +248,12 @@ class InlineStyles(
   fun removeColorSpan() {
     val (start, end) = view.selection?.getInlineSelection() ?: return
 
+    view.spanState?.setColorStart(null, null)
     if (start == end) {
-      view.spanState?.setColorStart(null, null)
       return
     }
 
     removeColorRange(start, end)
-
-    view.spanState?.setColorStart(null, null)
     view.selection.validateStyles()
   }
 
@@ -269,7 +275,7 @@ class InlineStyles(
         editable.removeSpan(span)
       }
 
-      setSpan(editable, config.clazz, start, end)
+      setSpan(editable, config.clazz, start, end, style)
     }
   }
 
@@ -323,7 +329,7 @@ class InlineStyles(
     }
 
     val spannable = view.text as Spannable
-    setAndMergeSpans(spannable, type, start, end)
+    setAndMergeSpans(spannable, type, start, end, name)
     view.selection.validateStyles()
   }
 
@@ -343,6 +349,39 @@ class InlineStyles(
 
     return true
   }
+
+  private fun createSpan(name: TextStyle): EnrichedInlineSpan? =
+    when (name) {
+      TextStyle.BOLD -> {
+        EnrichedBoldSpan()
+      }
+
+      TextStyle.ITALIC -> {
+        EnrichedItalicSpan()
+      }
+
+      TextStyle.UNDERLINE -> {
+        EnrichedUnderlineSpan()
+      }
+
+      TextStyle.STRIKETHROUGH -> {
+        EnrichedStrikeThroughSpan()
+      }
+
+      TextStyle.COLOR -> {
+        val color = view.spanState?.typingColor ?: 0
+        EnrichedColoredSpan(color)
+      }
+
+      TextStyle.INLINE_CODE -> {
+        EnrichedInlineCodeSpan(view.htmlStyle)
+      }
+
+      // fallback
+      else -> {
+        null
+      }
+    }
 
   fun getStyleRange(): Pair<Int, Int> = view.selection?.getInlineSelection() ?: Pair(0, 0)
 }
