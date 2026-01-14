@@ -1,5 +1,6 @@
 package com.swmansion.enriched.utils;
 
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.Layout;
@@ -16,6 +17,7 @@ import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan;
 import com.swmansion.enriched.spans.EnrichedBoldSpan;
 import com.swmansion.enriched.spans.EnrichedChecklistSpan;
 import com.swmansion.enriched.spans.EnrichedCodeBlockSpan;
+import com.swmansion.enriched.spans.EnrichedColoredSpan;
 import com.swmansion.enriched.spans.EnrichedContentSpan;
 import com.swmansion.enriched.spans.EnrichedH1Span;
 import com.swmansion.enriched.spans.EnrichedH2Span;
@@ -343,6 +345,10 @@ public class EnrichedParser {
       next = text.nextSpanTransition(i, end, EnrichedInlineSpan.class);
       EnrichedInlineSpan[] style = text.getSpans(i, next, EnrichedInlineSpan.class);
       for (int j = 0; j < style.length; j++) {
+        if (style[j] instanceof EnrichedColoredSpan) {
+          String color = ((EnrichedColoredSpan) style[j]).getHexColor();
+          out.append("<font color=\"").append(color).append("\">");
+        }
         if (style[j] instanceof EnrichedBoldSpan) {
           appendOpenTag(out, HtmlTags.BOLD);
         }
@@ -422,6 +428,9 @@ public class EnrichedParser {
         }
         if (style[j] instanceof EnrichedItalicSpan) {
           appendClosingTag(out, HtmlTags.ITALIC);
+        }
+        if (style[j] instanceof EnrichedColoredSpan) {
+          appendClosingTag(out, HtmlTags.FONT);
         }
       }
     }
@@ -675,6 +684,9 @@ class HtmlToSpannedConverter implements ContentHandler {
         startChecklist(mSpannableStringBuilder, attributes);
         return;
 
+      case HtmlTags.FONT:
+        startFont(mSpannableStringBuilder, attributes);
+        return;
       default:
         // unknown tag → ignore
         return;
@@ -762,6 +774,9 @@ class HtmlToSpannedConverter implements ContentHandler {
 
       case HtmlTags.CHECKLIST:
         endCheckList(mSpannableStringBuilder, mStyle);
+        return;
+      case HtmlTags.FONT:
+        endFont(mSpannableStringBuilder, mStyle);
         return;
 
       default:
@@ -1064,6 +1079,56 @@ class HtmlToSpannedConverter implements ContentHandler {
     }
   }
 
+  private static void startFont(Editable text, @Nullable Attributes attributes) {
+    if (attributes == null) {
+      return;
+    }
+
+    int color = parseCssColor(attributes.getValue("", "color"));
+
+    start(text, new Font(color));
+  }
+
+  private static void endFont(Editable text, HtmlStyle style) {
+    Font font = getLast(text, Font.class);
+
+    if (font == null) {
+      return;
+    }
+
+    setSpanFromMark(text, font, new EnrichedColoredSpan(style, font.color));
+  }
+
+  private static int parseCssColor(String css) {
+    if (css == null) return Color.BLACK;
+
+    css = css.trim();
+
+    try {
+      return Color.parseColor(css);
+    } catch (Exception ignore) {
+    }
+
+    if (css.startsWith("rgb(")) {
+      String[] parts = css.substring(4, css.length() - 1).split(",");
+      int r = Integer.parseInt(parts[0].trim());
+      int g = Integer.parseInt(parts[1].trim());
+      int b = Integer.parseInt(parts[2].trim());
+      return Color.rgb(r, g, b);
+    }
+
+    if (css.startsWith("rgba(")) {
+      String[] parts = css.substring(5, css.length() - 1).split(",");
+      int r = Integer.parseInt(parts[0].trim());
+      int g = Integer.parseInt(parts[1].trim());
+      int b = Integer.parseInt(parts[2].trim());
+      float a = Float.parseFloat(parts[3].trim());
+      return Color.argb((int) (a * 255), r, g, b);
+    }
+
+    return Color.BLACK;
+  }
+
   private static void startMention(Editable mention, @Nullable Attributes attributes) {
     if (attributes == null) {
       return;
@@ -1190,6 +1255,14 @@ class HtmlToSpannedConverter implements ContentHandler {
 
     public Checklist(boolean checked) {
       mChecked = checked;
+    }
+  }
+
+  private static class Font {
+    public int color;
+
+    public Font(int color) {
+      this.color = color;
     }
   }
 

@@ -8,6 +8,7 @@ object HtmlTags {
   const val STRIKE_THROUGH = "s"
   const val STRIKE = "strike"
   const val CODE_INLINE = "code"
+  const val FONT = "font"
 
   // Paragraph and structural
   const val PARAGRAPH = "p"

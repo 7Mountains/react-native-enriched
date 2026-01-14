@@ -700,6 +700,15 @@ class EnrichedTextInputView : AppCompatEditText {
     parametrizedStyles?.setMentionSpan(text, indicator, attributes)
   }
 
+  fun setColor(color: Int) {
+    val isValid = verifyStyle(EnrichedSpans.COLOR)
+    if (!isValid) return
+
+    inlineStyles?.setColorStyle(color)
+  }
+
+  fun removeColor() = inlineStyles?.removeColorSpan()
+
   fun requestHTML(requestId: Int) {
     val html =
       try {
