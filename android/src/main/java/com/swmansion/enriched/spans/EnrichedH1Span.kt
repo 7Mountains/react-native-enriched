@@ -4,6 +4,7 @@ import android.graphics.Typeface
 import android.text.TextPaint
 import android.text.style.AbsoluteSizeSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedHeadingSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedH1Span(
@@ -21,4 +22,6 @@ class EnrichedH1Span(
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedH1Span = EnrichedH1Span(htmlStyle)
+
+  override fun copy(): EnrichedSpan = EnrichedH1Span(style)
 }

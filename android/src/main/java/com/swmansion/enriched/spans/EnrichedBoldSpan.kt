@@ -6,12 +6,12 @@ import com.swmansion.enriched.spans.interfaces.EnrichedBlockSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
-@Suppress("UNUSED_PARAMETER")
-class EnrichedBoldSpan(
-  htmlStyle: HtmlStyle,
-) : StyleSpan(Typeface.BOLD),
+class EnrichedBoldSpan :
+  StyleSpan(Typeface.BOLD),
   EnrichedInlineSpan {
   override val dependsOnHtmlStyle: Boolean = false
 
-  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedBoldSpan = EnrichedBoldSpan(htmlStyle)
+  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedBoldSpan = EnrichedBoldSpan()
+
+  override fun copy(): EnrichedBoldSpan = EnrichedBoldSpan()
 }

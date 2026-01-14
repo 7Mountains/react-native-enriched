@@ -6,4 +6,6 @@ interface EnrichedSpan {
   val dependsOnHtmlStyle: Boolean
 
   fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedSpan
+
+  fun copy(): EnrichedSpan
 }

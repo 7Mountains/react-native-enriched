@@ -10,6 +10,7 @@ import android.text.TextPaint
 import android.text.style.LineBackgroundSpan
 import android.text.style.MetricAffectingSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedBlockSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedCodeBlockSpan(
@@ -82,4 +83,6 @@ class EnrichedCodeBlockSpan(
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedCodeBlockSpan = EnrichedCodeBlockSpan(htmlStyle)
+
+  override fun copy(): EnrichedSpan = EnrichedCodeBlockSpan(htmlStyle)
 }

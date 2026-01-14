@@ -21,4 +21,6 @@ class EnrichedH3Span(
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedH3Span = EnrichedH3Span(htmlStyle)
+
+  override fun copy(): EnrichedH3Span = EnrichedH3Span(htmlStyle)
 }

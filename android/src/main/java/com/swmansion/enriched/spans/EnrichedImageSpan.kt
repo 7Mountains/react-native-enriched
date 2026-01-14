@@ -119,6 +119,14 @@ class EnrichedImageSpan :
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedImageSpan = this
 
+  override fun copy() =
+    EnrichedImageSpan(
+      drawable = drawable,
+      width = width,
+      height = height,
+      source = source.toString(),
+    )
+
   companion object {
     fun createEnrichedImageSpan(
       src: String,

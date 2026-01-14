@@ -41,7 +41,7 @@ class InlineStyles(
       spannable.removeSpan(span)
     }
 
-    val span = type.getDeclaredConstructor(HtmlStyle::class.java).newInstance(view.htmlStyle)
+    val span = type.getDeclaredConstructor().newInstance()
     val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(minimum, maximum)
     spannable.setSpan(span, safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
@@ -111,7 +111,7 @@ class InlineStyles(
   ) {
     val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, end)
     spannable.setSpan(
-      EnrichedColoredSpan(view.htmlStyle, color),
+      EnrichedColoredSpan(color),
       safeStart,
       safeEnd,
       Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,

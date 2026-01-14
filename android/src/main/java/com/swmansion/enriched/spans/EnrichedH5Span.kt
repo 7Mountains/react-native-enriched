@@ -21,4 +21,6 @@ class EnrichedH5Span(
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedH5Span = EnrichedH5Span(htmlStyle)
+
+  override fun copy(): EnrichedH5Span = EnrichedH5Span(htmlStyle)
 }

@@ -62,4 +62,6 @@ class EnrichedUnorderedListSpan(
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedUnorderedListSpan = EnrichedUnorderedListSpan(htmlStyle)
+
+  override fun copy() = EnrichedUnorderedListSpan(htmlStyle)
 }

@@ -24,6 +24,8 @@ class EnrichedHorizontalRuleSpan(
 
   override fun copyWithStyle(htmlStyle: HtmlStyle): EnrichedHorizontalRuleSpan = this
 
+  override fun copy(): EnrichedSpan = EnrichedHorizontalRuleSpan(htmlStyle)
+
   override fun getSize(
     paint: Paint,
     text: CharSequence?,

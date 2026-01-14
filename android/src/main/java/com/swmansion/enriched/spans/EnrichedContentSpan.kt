@@ -45,6 +45,8 @@ class EnrichedContentSpan(
 
   override fun copyWithStyle(htmlStyle: HtmlStyle): EnrichedContentSpan = this
 
+  override fun copy() = this
+
   override fun getSize(
     paint: Paint,
     text: CharSequence?,

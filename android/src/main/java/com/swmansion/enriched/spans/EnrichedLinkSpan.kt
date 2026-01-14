@@ -4,6 +4,7 @@ import android.text.TextPaint
 import android.text.style.ClickableSpan
 import android.view.View
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedLinkSpan(
@@ -27,4 +28,6 @@ class EnrichedLinkSpan(
   fun getUrl(): String = url
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedLinkSpan = EnrichedLinkSpan(url, htmlStyle)
+
+  override fun copy(): EnrichedSpan = EnrichedLinkSpan(url = url, htmlStyle = htmlStyle)
 }

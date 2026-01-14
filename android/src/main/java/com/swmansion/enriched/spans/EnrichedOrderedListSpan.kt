@@ -8,6 +8,7 @@ import android.text.TextPaint
 import android.text.style.LeadingMarginSpan
 import android.text.style.MetricAffectingSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedOrderedListSpan(
@@ -85,4 +86,6 @@ class EnrichedOrderedListSpan(
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedOrderedListSpan = EnrichedOrderedListSpan(index, htmlStyle)
+
+  override fun copy(): EnrichedOrderedListSpan = EnrichedOrderedListSpan(index = index, htmlStyle = htmlStyle)
 }

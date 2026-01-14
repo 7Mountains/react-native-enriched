@@ -25,4 +25,6 @@ class EnrichedInlineCodeSpan(
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedInlineCodeSpan = EnrichedInlineCodeSpan(htmlStyle)
+
+  override fun copy(): EnrichedInlineCodeSpan = EnrichedInlineCodeSpan(htmlStyle)
 }

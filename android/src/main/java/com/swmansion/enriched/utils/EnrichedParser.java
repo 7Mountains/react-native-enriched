@@ -712,20 +712,20 @@ class HtmlToSpannedConverter implements ContentHandler {
         return;
 
       case HtmlTags.BOLD:
-        end(mSpannableStringBuilder, Bold.class, new EnrichedBoldSpan(mStyle));
+        end(mSpannableStringBuilder, Bold.class, new EnrichedBoldSpan());
         return;
 
       case HtmlTags.ITALIC:
-        end(mSpannableStringBuilder, Italic.class, new EnrichedItalicSpan(mStyle));
+        end(mSpannableStringBuilder, Italic.class, new EnrichedItalicSpan());
         return;
 
       case HtmlTags.UNDERLINE:
-        end(mSpannableStringBuilder, Underline.class, new EnrichedUnderlineSpan(mStyle));
+        end(mSpannableStringBuilder, Underline.class, new EnrichedUnderlineSpan());
         return;
 
       case HtmlTags.STRIKE_THROUGH:
       case HtmlTags.STRIKE:
-        end(mSpannableStringBuilder, Strikethrough.class, new EnrichedStrikeThroughSpan(mStyle));
+        end(mSpannableStringBuilder, Strikethrough.class, new EnrichedStrikeThroughSpan());
         return;
 
       case HtmlTags.BLOCK_QUOTE:
@@ -1096,7 +1096,7 @@ class HtmlToSpannedConverter implements ContentHandler {
       return;
     }
 
-    setSpanFromMark(text, font, new EnrichedColoredSpan(style, font.color));
+    setSpanFromMark(text, font, new EnrichedColoredSpan(font.color));
   }
 
   private static int parseCssColor(String css) {

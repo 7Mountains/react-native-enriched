@@ -54,4 +54,6 @@ class EnrichedBlockQuoteSpan(
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedBlockQuoteSpan = EnrichedBlockQuoteSpan(htmlStyle)
+
+  override fun copy(): EnrichedBlockQuoteSpan = EnrichedBlockQuoteSpan(htmlStyle)
 }
