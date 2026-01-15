@@ -1,9 +1,11 @@
 package com.swmansion.enriched.spans
 
+import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 interface ISpanConfig {
-  val clazz: Class<*>
+  val clazz: Class<out EnrichedSpan>
 }
 
 enum class TextStyle {
@@ -26,6 +28,7 @@ enum class TextStyle {
   CODE_BLOCK,
   DIVIDER,
   CONTENT,
+  ALIGNMENT,
 
   // list styles
   UNORDERED_LIST,
@@ -39,17 +42,17 @@ enum class TextStyle {
 }
 
 data class BaseSpanConfig(
-  override val clazz: Class<*>,
+  override val clazz: Class<out EnrichedSpan>,
 ) : ISpanConfig
 
 data class ParagraphSpanConfig(
-  override val clazz: Class<*>,
+  override val clazz: Class<out EnrichedSpan>,
   val isContinuous: Boolean,
   val isSelfClosing: Boolean,
 ) : ISpanConfig
 
 data class ListSpanConfig(
-  override val clazz: Class<*>,
+  override val clazz: Class<out EnrichedSpan>,
   val shortcut: String?,
 ) : ISpanConfig
 
@@ -127,6 +130,12 @@ object EnrichedSpans {
         StylesMergingConfig(
           conflictingStyles = arrayOf(TextStyle.MENTION, TextStyle.LINK),
           blockingStyles = arrayOf(TextStyle.CODE_BLOCK, TextStyle.DIVIDER, TextStyle.CONTENT),
+        )
+      }
+
+      TextStyle.ALIGNMENT -> {
+        StylesMergingConfig(
+          blockingStyles = arrayOf(TextStyle.CONTENT, TextStyle.DIVIDER),
         )
       }
 

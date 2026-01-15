@@ -2,7 +2,6 @@ package com.swmansion.enriched.watchers
 
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView

@@ -7,11 +7,20 @@ import android.text.Spanned
 import android.util.Log
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
+import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan
+import com.swmansion.enriched.spans.EnrichedCodeBlockSpan
+import com.swmansion.enriched.spans.EnrichedH1Span
+import com.swmansion.enriched.spans.EnrichedH2Span
+import com.swmansion.enriched.spans.EnrichedH3Span
+import com.swmansion.enriched.spans.EnrichedH4Span
+import com.swmansion.enriched.spans.EnrichedH5Span
+import com.swmansion.enriched.spans.EnrichedH6Span
 import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getParagraphBounds
+import com.swmansion.enriched.utils.getParagraphsBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
 
@@ -74,8 +83,9 @@ class ParagraphStyles(
     start: Int,
     end: Int,
     type: Class<T>,
+    styleName: TextStyle,
   ) {
-    val span = type.getDeclaredConstructor(HtmlStyle::class.java).newInstance(view.htmlStyle)
+    val span = createSpan(styleName)
     val previousSpan = getPreviousParagraphSpan(spannable, start, type)
     val nextSpan = getNextParagraphSpan(spannable, end, type)
     var newStart = start
@@ -100,39 +110,57 @@ class ParagraphStyles(
     type: Class<T>,
     start: Int,
     end: Int,
+    styleName: TextStyle,
   ) {
     if (EnrichedSpans.isTypeContinuous(type)) {
-      setContinuousSpan(spannable, start, end, type)
+      setContinuousSpan(spannable, start, end, type, styleName)
       return
     }
 
-    val span = type.getDeclaredConstructor(HtmlStyle::class.java).newInstance(view.htmlStyle)
+    val span = createSpan(styleName)
     val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, end)
     spannable.setSpan(span, safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
-  private fun <T> removeSpansForRange(
+  private fun removeStyleForSelection(
     spannable: Spannable,
     start: Int,
     end: Int,
-    clazz: Class<T>,
+    clazz: Class<out EnrichedSpan>,
   ): Boolean {
-    val ssb = spannable as SpannableStringBuilder
-    var finalStart = start
-    var finalEnd = end
+    val spannableStringBuilder = spannable as SpannableStringBuilder
+    val paragraphRanges = spannable.getParagraphsBounds(start, end)
+    var removedAny = false
 
-    val spans = ssb.getSpans(start, end, clazz)
-    if (spans.isEmpty()) return false
+    for (range in paragraphRanges) {
+      val paragraphStart = range.first
+      val paragraphEnd = range.last
+      spannableStringBuilder.removeZWS(paragraphStart, paragraphEnd)
+      val spans = spannableStringBuilder.getSpans(paragraphStart, paragraphEnd, clazz)
+      if (spans.isEmpty()) continue
 
-    for (span in spans) {
-      finalStart = ssb.getSpanStart(span).coerceAtMost(finalStart)
-      finalEnd = ssb.getSpanEnd(span).coerceAtLeast(finalEnd)
+      for (span in spans) {
+        val spanStart = spannableStringBuilder.getSpanStart(span)
+        val spanEnd = spannableStringBuilder.getSpanEnd(span)
+        val intersects = spanStart <= paragraphEnd && spanEnd >= paragraphStart
+        if (!intersects) continue
 
-      ssb.removeSpan(span)
+        spannableStringBuilder.removeSpan(span)
+
+        if (spanStart < paragraphStart) {
+          val leftSpan = span.copy()
+          spannableStringBuilder.setSpan(leftSpan, spanStart, paragraphStart, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        if (spanEnd > paragraphEnd) {
+          val rightSpan = span.copy()
+          spannableStringBuilder.setSpan(rightSpan, paragraphEnd + 1, spanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+
+        removedAny = true
+      }
     }
 
-    ssb.removeZWS(finalStart, finalEnd)
-    return true
+    return removedAny
   }
 
   private fun <T> setAndMergeSpans(
@@ -140,12 +168,13 @@ class ParagraphStyles(
     type: Class<T>,
     start: Int,
     end: Int,
+    styleName: TextStyle,
   ) {
     val spans = spannable.getSpans(start, end, type)
 
     // No spans setup for current selection, means we just need to assign new span
     if (spans.isEmpty()) {
-      setSpan(spannable, type, start, end)
+      setSpan(spannable, type, start, end, styleName)
       return
     }
 
@@ -163,8 +192,8 @@ class ParagraphStyles(
       if (start == spanStart && end == spanEnd) {
         setSpanOnFinish = false
       } else if (start > spanStart && end < spanEnd) {
-        setSpan(spannable, type, spanStart, start)
-        setSpan(spannable, type, end, spanEnd)
+        setSpan(spannable, type, spanStart, start, styleName)
+        setSpan(spannable, type, end, spanEnd, styleName)
       } else if (start == spanStart && end < spanEnd) {
         finalStart = end
         finalEnd = spanEnd
@@ -182,12 +211,12 @@ class ParagraphStyles(
       }
 
       if (!setSpanOnFinish && finalStart != null && finalEnd != null) {
-        setSpan(spannable, type, finalStart, finalEnd)
+        setSpan(spannable, type, finalStart, finalEnd, styleName)
       }
     }
 
     if (setSpanOnFinish) {
-      setSpan(spannable, type, start, end)
+      setSpan(spannable, type, start, end, styleName)
     }
   }
 
@@ -240,6 +269,7 @@ class ParagraphStyles(
     style: TextStyle,
     paragraphStart: Int,
     paragraphEnd: Int,
+    styleName: TextStyle,
   ): Boolean {
     val spanState = view.spanState ?: return false
     val mergingConfig = EnrichedSpans.getMergingConfigForStyle(style, view.htmlStyle) ?: return false
@@ -261,7 +291,7 @@ class ParagraphStyles(
       }
 
       for (span in spans) {
-        extendStyleOnWholeParagraph(s, span as EnrichedSpan, conflictingType, paragraphEnd)
+        extendStyleOnWholeParagraph(s, span as EnrichedSpan, conflictingType, paragraphEnd, styleName)
       }
     }
 
@@ -299,11 +329,12 @@ class ParagraphStyles(
     span: EnrichedSpan,
     type: Class<T>,
     paragraphEnd: Int,
+    styleName: TextStyle,
   ) {
     val currStyleStart = s.getSpanStart(span)
     s.removeSpan(span)
     val (safeStart, safeEnd) = s.getSafeSpanBoundaries(currStyleStart, paragraphEnd)
-    setSpan(s, type, safeStart, safeEnd)
+    setSpan(s, type, safeStart, safeEnd, styleName)
   }
 
   fun afterTextChanged(
@@ -331,7 +362,7 @@ class ParagraphStyles(
           for (span in spans) {
             // handle conflicts when entering paragraph with some paragraph style applied
             deleteConflictingAndBlockingStyles(s, style, start, end)
-            extendStyleOnWholeParagraph(s, span as EnrichedSpan, config.clazz, end)
+            extendStyleOnWholeParagraph(s, span as EnrichedSpan, config.clazz, end, style)
           }
         }
 
@@ -360,7 +391,7 @@ class ParagraphStyles(
 
       // handle conflicts when deleting newline from paragraph style (going back to previous line)
       if (isBackspace && styleStart != start) {
-        val isConflicting = handleConflictsDuringNewlineDeletion(s, style, start, end)
+        val isConflicting = handleConflictsDuringNewlineDeletion(s, style, start, end, style)
         if (isConflicting) {
           continue
         }
@@ -378,7 +409,7 @@ class ParagraphStyles(
         s.removeSpan(span)
       }
 
-      setSpan(s, config.clazz, start, end)
+      setSpan(s, config.clazz, start, end, style)
     }
   }
 
@@ -393,7 +424,7 @@ class ParagraphStyles(
 
     if (styleStart != null) {
       view.spanState.setStart(name, null)
-      removeSpansForRange(spannable, start, end, type)
+      removeStyleForSelection(spannable, start, end, type)
       view.selection.validateStyles()
 
       return
@@ -401,7 +432,7 @@ class ParagraphStyles(
 
     if (start == end) {
       spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
-      setAndMergeSpans(spannable, type, start, end + 1)
+      setAndMergeSpans(spannable, type, start, end + 1, name)
       view.selection.validateStyles()
 
       return
@@ -417,7 +448,7 @@ class ParagraphStyles(
       currentStart = currentEnd + 1
     }
 
-    setAndMergeSpans(spannable, type, start, currentEnd)
+    setAndMergeSpans(spannable, type, start, currentEnd, name)
     view.selection.validateStyles()
   }
 
@@ -465,8 +496,21 @@ class ParagraphStyles(
   ): Boolean {
     val config = EnrichedSpans.paragraphSpans[name] ?: return false
     val spannable = view.text as Spannable
-    return removeSpansForRange(spannable, start, end, config.clazz)
+    return removeStyleForSelection(spannable, start, end, config.clazz)
   }
+
+  private fun createSpan(name: TextStyle): EnrichedSpan? =
+    when (name) {
+      TextStyle.H1 -> EnrichedH1Span(view.htmlStyle)
+      TextStyle.H2 -> EnrichedH2Span(view.htmlStyle)
+      TextStyle.H3 -> EnrichedH3Span(view.htmlStyle)
+      TextStyle.H4 -> EnrichedH4Span(view.htmlStyle)
+      TextStyle.H5 -> EnrichedH5Span(view.htmlStyle)
+      TextStyle.H6 -> EnrichedH6Span(view.htmlStyle)
+      TextStyle.BLOCK_QUOTE -> EnrichedBlockQuoteSpan(view.htmlStyle)
+      TextStyle.CODE_BLOCK -> EnrichedCodeBlockSpan(view.htmlStyle)
+      else -> null
+    }
 }
 
 private fun Editable.paragraphRangeAt(index: Int): IntRange {
@@ -483,4 +527,28 @@ private fun Editable.isParagraphZeroOrOneAndEmpty(range: IntRange): Boolean {
 
   val c = text[0]
   return c == Strings.SPACE_CHAR || c == Strings.ZERO_WIDTH_SPACE_CHAR || c == Strings.NEWLINE
+}
+
+private fun SpannableStringBuilder.cleanParagraphZWS(
+  pStart: Int,
+  pEnd: Int,
+) {
+  var hasRealText = false
+
+  for (i in pStart until pEnd) {
+    val c = this[i]
+    if (c != Strings.ZERO_WIDTH_SPACE_CHAR && c != Strings.NEWLINE) {
+      hasRealText = true
+      break
+    }
+  }
+
+  if (!hasRealText) return
+
+  for (i in pStart until pEnd) {
+    if (this[i] == Strings.ZERO_WIDTH_SPACE_CHAR) {
+      delete(i, i + 1)
+      return cleanParagraphZWS(pStart, pEnd - 1)
+    }
+  }
 }

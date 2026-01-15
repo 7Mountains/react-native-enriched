@@ -1,8 +1,10 @@
 package com.swmansion.enriched.utils
 
+import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.util.Log
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.interfaces.EnrichedBlockSpan
@@ -44,12 +46,12 @@ fun Spannable.getParagraphBounds(
   var endPosition = end.coerceAtLeast(0).coerceAtMost(this.length)
 
   // Find the start of the paragraph
-  while (startPosition > 0 && this[startPosition - 1] != '\n') {
+  while (startPosition > 0 && this[startPosition - 1] != Strings.NEWLINE) {
     startPosition--
   }
 
   // Find the end of the paragraph
-  while (endPosition < this.length && this[endPosition] != '\n') {
+  while (endPosition < this.length && this[endPosition] != Strings.NEWLINE) {
     endPosition++
   }
 
@@ -111,4 +113,31 @@ fun SpannableStringBuilder.removeZWS(
       delete(i, i + 1)
     }
   }
+}
+
+fun Spannable.getParagraphsBounds(
+  start: Int,
+  end: Int,
+): List<IntRange> {
+  val result = mutableListOf<IntRange>()
+
+  var pos = start.coerceIn(0, length)
+
+  while (pos <= end && pos < length) {
+    var pStart = pos
+    while (pStart > 0 && this[pStart - 1] != Strings.NEWLINE) {
+      pStart--
+    }
+
+    var pEnd = pos
+    while (pEnd < length && this[pEnd] != Strings.NEWLINE) {
+      pEnd++
+    }
+
+    result.add(pStart until pEnd)
+
+    pos = pEnd + 1
+  }
+
+  return result
 }
