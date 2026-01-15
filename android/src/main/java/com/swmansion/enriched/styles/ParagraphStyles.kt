@@ -135,7 +135,7 @@ class ParagraphStyles(
     for (range in paragraphRanges) {
       val paragraphStart = range.first
       val paragraphEnd = range.last
-      spannableStringBuilder.removeZWS(paragraphStart, paragraphEnd)
+      spannableStringBuilder.removeZWS(paragraphStart, paragraphEnd + 1)
       val spans = spannableStringBuilder.getSpans(paragraphStart, paragraphEnd, clazz)
       if (spans.isEmpty()) continue
 
@@ -264,47 +264,6 @@ class ParagraphStyles(
     s.setSpan(span, safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
-  private fun handleConflictsDuringNewlineDeletion(
-    s: Editable,
-    style: TextStyle,
-    paragraphStart: Int,
-    paragraphEnd: Int,
-    styleName: TextStyle,
-  ): Boolean {
-    val spanState = view.spanState ?: return false
-    val mergingConfig = EnrichedSpans.getMergingConfigForStyle(style, view.htmlStyle) ?: return false
-    var isConflicting = false
-    val stylesToCheck = mergingConfig.blockingStyles + mergingConfig.conflictingStyles
-
-    for (styleToCheck in stylesToCheck) {
-      val conflictingType = EnrichedSpans.allSpans[styleToCheck]?.clazz ?: continue
-
-      val spans = s.getSpans(paragraphStart, paragraphEnd, conflictingType)
-      if (spans.isEmpty()) {
-        continue
-      }
-      isConflicting = true
-
-      val isParagraphStyle = EnrichedSpans.paragraphSpans[styleToCheck] != null
-      if (!isParagraphStyle) {
-        continue
-      }
-
-      for (span in spans) {
-        extendStyleOnWholeParagraph(s, span as EnrichedSpan, conflictingType, paragraphEnd, styleName)
-      }
-    }
-
-    if (isConflicting) {
-      val styleStart = spanState.getStart(style) ?: return false
-      spanState.setStart(style, null)
-      removeStyle(style, styleStart, paragraphEnd)
-      return true
-    }
-
-    return false
-  }
-
   private fun deleteConflictingAndBlockingStyles(
     s: Editable,
     style: TextStyle,
@@ -337,6 +296,80 @@ class ParagraphStyles(
     setSpan(s, type, safeStart, safeEnd, styleName)
   }
 
+  private fun handleMergedParagraph(
+    s: Editable,
+    cursor: Int,
+  ) {
+    val ssb = s as SpannableStringBuilder
+    val (pStart, pEnd) = ssb.getParagraphBounds(cursor)
+
+    val paraSpans = mutableListOf<Pair<TextStyle, EnrichedSpan>>()
+    for ((style, cfg) in EnrichedSpans.paragraphSpans) {
+      val spans = ssb.getSpans(pStart, pEnd, cfg.clazz)
+      if (spans.isNotEmpty()) {
+        paraSpans += style to spans.first()
+      }
+    }
+    if (paraSpans.size <= 1) return
+
+    var winner: Pair<TextStyle, EnrichedSpan>? = null
+    var winnerStart = Int.MAX_VALUE
+    val losers = ArrayList<Pair<TextStyle, EnrichedSpan>>()
+
+    for ((style, span) in paraSpans) {
+      val start = ssb.getSpanStart(span)
+      if (start < winnerStart) {
+        winner?.let { losers.add(it) }
+        winner = style to span
+        winnerStart = start
+      } else {
+        losers.add(style to span)
+      }
+    }
+
+    if (winner == null) return
+    val (winnerStyle, winnerSpan) = winner
+
+    val mergeCfg = EnrichedSpans.getMergingConfigForStyle(winnerStyle, view.htmlStyle) ?: return
+    val blocking = mergeCfg.blockingStyles.toSet()
+    val conflicting = mergeCfg.conflictingStyles.toSet()
+
+    ssb.removeSpan(winnerSpan)
+
+    for ((loserStyle, loserSpan) in losers) {
+      val loserStart = ssb.getSpanStart(loserSpan)
+      val loserEnd = ssb.getSpanEnd(loserSpan)
+
+      ssb.removeSpan(loserSpan)
+
+      if (loserStyle !in blocking && loserStyle !in conflicting) {
+        ssb.setSpan(loserSpan, loserStart, loserEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        continue
+      }
+
+      if (loserStart < pStart) {
+        val leftPart = loserSpan.copy()
+        ssb.setSpan(leftPart, loserStart, pStart, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      }
+
+      if (loserEnd > pEnd) {
+        val rightPart = loserSpan.copy()
+        ssb.setSpan(rightPart, pEnd, loserEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      }
+
+      view.spanState?.setStart(loserStyle, null)
+    }
+
+    ssb.setSpan(
+      winnerSpan.copy(),
+      winnerStart,
+      pEnd,
+      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+    )
+
+    view.spanState?.setStart(winnerStyle, winnerStart)
+  }
+
   fun afterTextChanged(
     s: Editable,
     endPosition: Int,
@@ -347,9 +380,13 @@ class ParagraphStyles(
     val isNewLine = endCursorPosition == 0 || (endCursorPosition > 0 && s[endCursorPosition - 1] == '\n')
     val spanState = view.spanState ?: return
 
+    if (isBackspace) {
+      handleMergedParagraph(s, endCursorPosition)
+    }
+
     for ((style, config) in EnrichedSpans.paragraphSpans) {
       if (style == TextStyle.DIVIDER || style == TextStyle.CONTENT) {
-        return // simply skip non text paragraphs
+        continue // simply skip non text paragraphs
       }
 
       val styleStart = spanState.getStart(style)
@@ -388,14 +425,6 @@ class ParagraphStyles(
       }
 
       var (start, end) = s.getParagraphBounds(styleStart, endCursorPosition)
-
-      // handle conflicts when deleting newline from paragraph style (going back to previous line)
-      if (isBackspace && styleStart != start) {
-        val isConflicting = handleConflictsDuringNewlineDeletion(s, style, start, end, style)
-        if (isConflicting) {
-          continue
-        }
-      }
 
       val isNotEndLineSpan = isSpanEnabledInNextLine(s, end, config.clazz)
       val spans = s.getSpans(start, end, config.clazz)
@@ -477,7 +506,7 @@ class ParagraphStyles(
       SpannableStringBuilder().apply {
         append(Strings.MAGIC_STRING)
         setSpan(
-          EnrichedHorizontalRuleSpan(htmlStyle = view.htmlStyle),
+          EnrichedHorizontalRuleSpan(view.htmlStyle),
           0,
           1,
           Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
@@ -527,28 +556,4 @@ private fun Editable.isParagraphZeroOrOneAndEmpty(range: IntRange): Boolean {
 
   val c = text[0]
   return c == Strings.SPACE_CHAR || c == Strings.ZERO_WIDTH_SPACE_CHAR || c == Strings.NEWLINE
-}
-
-private fun SpannableStringBuilder.cleanParagraphZWS(
-  pStart: Int,
-  pEnd: Int,
-) {
-  var hasRealText = false
-
-  for (i in pStart until pEnd) {
-    val c = this[i]
-    if (c != Strings.ZERO_WIDTH_SPACE_CHAR && c != Strings.NEWLINE) {
-      hasRealText = true
-      break
-    }
-  }
-
-  if (!hasRealText) return
-
-  for (i in pStart until pEnd) {
-    if (this[i] == Strings.ZERO_WIDTH_SPACE_CHAR) {
-      delete(i, i + 1)
-      return cleanParagraphZWS(pStart, pEnd - 1)
-    }
-  }
 }

@@ -107,12 +107,20 @@ fun Spannable.mergeSpannables(
 fun SpannableStringBuilder.removeZWS(
   start: Int,
   end: Int,
-) {
+): Pair<Int, Int> {
+  var removedLeft = 0
+  var removedRight = 0
+  val mid = (start + end) / 2
+
   for (i in (end - 1) downTo start) {
     if (this[i] == Strings.ZERO_WIDTH_SPACE_CHAR) {
+      if (i < mid) removedLeft++ else removedRight++
+
       delete(i, i + 1)
     }
   }
+
+  return removedLeft to removedRight
 }
 
 fun Spannable.getParagraphsBounds(
