@@ -152,7 +152,7 @@ class EnrichedSelection(
       val spanStart = spannable.getSpanStart(span)
       val spanEnd = spannable.getSpanEnd(span)
       if (span is EnrichedAlignmentSpan) {
-        view.spanState?.setAlignment(span.alignment)
+        view.spanState?.setAlignment(span.alignmentString)
       }
       if (start >= spanStart && end <= spanEnd) {
         styleStart = spanStart

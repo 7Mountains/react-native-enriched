@@ -1,6 +1,5 @@
 package com.swmansion.enriched.spans
 
-import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
@@ -101,8 +100,13 @@ object EnrichedSpans {
       TextStyle.MENTION to BaseSpanConfig(EnrichedMentionSpan::class.java),
     )
 
-  val allSpans: Map<TextStyle, ISpanConfig> =
-    inlineSpans + paragraphSpans + listSpans + parametrizedStyles
+  private val spanClassToStyle: Map<Class<out EnrichedSpan>, TextStyle> =
+    buildMap {
+      inlineSpans.forEach { (style, cfg) -> put(cfg.clazz, style) }
+      paragraphSpans.forEach { (style, cfg) -> put(cfg.clazz, style) }
+      listSpans.forEach { (style, cfg) -> put(cfg.clazz, style) }
+      parametrizedStyles.forEach { (style, cfg) -> put(cfg.clazz, style) }
+    }
 
   fun getMergingConfigForStyle(
     style: TextStyle,
@@ -384,6 +388,14 @@ object EnrichedSpans {
         )
       }
     }
+
+  fun getStyleNameByClassName(clazz: Class<out EnrichedSpan>): TextStyle? {
+    spanClassToStyle[clazz]?.let { return it }
+
+    return spanClassToStyle.entries
+      .firstOrNull { (base, _) -> base.isAssignableFrom(clazz) }
+      ?.value
+  }
 
   fun isTypeContinuous(type: Class<*>): Boolean = paragraphSpans.values.find { it.clazz == type }?.isContinuous == true
 }

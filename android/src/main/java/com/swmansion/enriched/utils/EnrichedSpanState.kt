@@ -16,7 +16,7 @@ class EnrichedSpanState(
 ) {
   private var previousPayload: WritableMap? = null
   private var previousDispatchedColor: Int? = null
-  private var previousDispatchedAlignment: Layout.Alignment? = null
+  private var previousDispatchedAlignment: String? = null
 
   var boldStart: Int? = null
     private set
@@ -62,7 +62,7 @@ class EnrichedSpanState(
     private set
   var typingColor: Int? = null
     private set
-  var paragraphAlignment: Layout.Alignment? = null
+  var paragraphAlignment: String? = null
     private set
   var alignmentStart: Int? = null
     private set
@@ -89,7 +89,7 @@ class EnrichedSpanState(
     setTypingColor(color)
   }
 
-  fun setAlignment(alignment: Layout.Alignment?) {
+  fun setAlignment(alignment: String?) {
     paragraphAlignment = alignment
     emitAlignmentChangeEvent(alignment)
   }
@@ -104,7 +104,7 @@ class EnrichedSpanState(
 
   fun setAlignmentStart(
     start: Int?,
-    alignment: Layout.Alignment?,
+    alignment: String?,
   ) {
     this.alignmentStart = start
     setAlignment(alignment)
@@ -336,8 +336,8 @@ class EnrichedSpanState(
     }
   }
 
-  private fun emitAlignmentChangeEvent(alignment: Layout.Alignment?) {
-    val resolvedAlignment = alignment ?: Layout.Alignment.ALIGN_NORMAL
+  private fun emitAlignmentChangeEvent(alignment: String?) {
+    val resolvedAlignment = alignment ?: "default"
 
     if (previousDispatchedAlignment == resolvedAlignment) return
 
@@ -352,7 +352,7 @@ class EnrichedSpanState(
         surfaceId,
         view.id,
         view.experimentalSynchronousEvents,
-        resolvedAlignment.toStringName(),
+        resolvedAlignment,
       ),
     )
   }

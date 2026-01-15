@@ -351,39 +351,6 @@ class InlineStyles(
     return true
   }
 
-  private fun createSpan(name: TextStyle): EnrichedInlineSpan? =
-    when (name) {
-      TextStyle.BOLD -> {
-        EnrichedBoldSpan()
-      }
-
-      TextStyle.ITALIC -> {
-        EnrichedItalicSpan()
-      }
-
-      TextStyle.UNDERLINE -> {
-        EnrichedUnderlineSpan()
-      }
-
-      TextStyle.STRIKETHROUGH -> {
-        EnrichedStrikeThroughSpan()
-      }
-
-      TextStyle.COLOR -> {
-        val color = view.spanState?.typingColor ?: 0
-        EnrichedColoredSpan(color)
-      }
-
-      TextStyle.INLINE_CODE -> {
-        EnrichedInlineCodeSpan(view.htmlStyle)
-      }
-
-      // fallback
-      else -> {
-        null
-      }
-    }
-
   fun getStyleRange(): Pair<Int, Int> = view.selection?.getInlineSelection() ?: Pair(0, 0)
 
   private fun createSpan(name: TextStyle): EnrichedInlineSpan? =
