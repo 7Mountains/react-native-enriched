@@ -26,7 +26,7 @@ class EnrichedUnorderedListSpan(
     // Do nothing, but inform layout that this span affects text metrics
   }
 
-  override fun getLeadingMargin(p0: Boolean): Int = htmlStyle.ulBulletSize + htmlStyle.ulGapWidth + htmlStyle.ulMarginLeft
+  override fun getLeadingMargin(p0: Boolean): Int = htmlStyle.ulBulletSize / 2 + htmlStyle.ulGapWidth + htmlStyle.ulMarginLeft
 
   override fun drawLeadingMargin(
     canvas: Canvas,
@@ -42,6 +42,9 @@ class EnrichedUnorderedListSpan(
     first: Boolean,
     layout: Layout?,
   ) {
+    if (!first) {
+      return
+    }
     val spannedText = text as Spanned
 
     if (spannedText.getSpanStart(this) == start) {

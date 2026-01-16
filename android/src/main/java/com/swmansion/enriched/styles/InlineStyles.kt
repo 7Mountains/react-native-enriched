@@ -249,6 +249,7 @@ class InlineStyles(
     val (start, end) = view.selection?.getInlineSelection() ?: return
 
     view.spanState?.setColorStart(null, null)
+
     if (start == end) {
       return
     }
@@ -264,7 +265,7 @@ class InlineStyles(
     for ((style, config) in EnrichedSpans.inlineSpans) {
       val start = view.spanState?.getStart(style) ?: continue
       var end = endCursorPosition
-      if (config.clazz == EnrichedColoredSpan::class.java) {
+      if (style == TextStyle.COLOR) {
         applyTypingColorIfActive(editable, end)
         continue
       }
@@ -350,6 +351,8 @@ class InlineStyles(
     return true
   }
 
+  fun getStyleRange(): Pair<Int, Int> = view.selection?.getInlineSelection() ?: Pair(0, 0)
+
   private fun createSpan(name: TextStyle): EnrichedInlineSpan? =
     when (name) {
       TextStyle.BOLD -> {
@@ -382,6 +385,4 @@ class InlineStyles(
         null
       }
     }
-
-  fun getStyleRange(): Pair<Int, Int> = view.selection?.getInlineSelection() ?: Pair(0, 0)
 }

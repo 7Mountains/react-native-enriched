@@ -8,4 +8,6 @@ interface EnrichedSpan {
   fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedSpan
 
   fun copy(): EnrichedSpan
+
+  fun copyWithDefaults(): EnrichedSpan = copy()
 }

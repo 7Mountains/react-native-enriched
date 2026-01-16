@@ -11,6 +11,8 @@ import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.spans.TextStyle
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
+import com.swmansion.enriched.utils.ParagraphUtils
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
@@ -35,10 +37,10 @@ class ListStyles(
     return null
   }
 
-  private fun <T> isPreviousParagraphList(
+  private fun isPreviousParagraphList(
     spannable: Spannable,
     s: Int,
-    type: Class<T>,
+    type: Class<out EnrichedSpan>,
   ): Boolean {
     val previousSpan = getPreviousParagraphSpan(spannable, s, type)
 
@@ -83,21 +85,45 @@ class ListStyles(
     }
   }
 
-  private fun <T> removeSpansForRange(
+  private fun removeSpansForRange(
     spannable: Spannable,
     start: Int,
     end: Int,
-    clazz: Class<T>,
+    clazz: Class<out EnrichedSpan>,
   ): Boolean {
     val ssb = spannable as SpannableStringBuilder
     val spans = ssb.getSpans(start, end, clazz)
     if (spans.isEmpty()) return false
 
+    val flag = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+
     for (span in spans) {
+      val spanStart = ssb.getSpanStart(span)
+      val spanEnd = ssb.getSpanEnd(span)
+
       ssb.removeSpan(span)
+
+      if (spanStart < start) {
+        ssb.setSpan(
+          span.copy(),
+          spanStart,
+          start,
+          flag,
+        )
+      }
+
+      if (spanEnd > end) {
+        ssb.setSpan(
+          span.copy(),
+          end,
+          spanEnd,
+          flag,
+        )
+      }
     }
 
     ssb.removeZWS(start, end)
+
     return true
   }
 
@@ -114,42 +140,44 @@ class ListStyles(
   }
 
   fun toggleStyle(name: TextStyle) {
-    if (view.selection == null) return
     val config = EnrichedSpans.listSpans[name] ?: return
     val spannable = view.text as SpannableStringBuilder
-    val (start, end) = view.selection.getParagraphSelection()
-    val styleStart = view.spanState?.getStart(name)
+    val selection = view.selection ?: return
+    val spanState = view.spanState ?: return
+    val (start, end) = selection.getParagraphSelection()
+    val styleStart = spanState.getStart(name)
 
     if (styleStart != null) {
-      view.spanState.setStart(name, null)
+      spanState.setStart(name, null)
       removeSpansForRange(spannable, start, end, config.clazz)
-      view.selection.validateStyles()
+      selection.validateStyles()
 
       return
     }
 
     if (start == end) {
-      spannable.insert(start, "\u200B")
-      view.spanState?.setStart(name, start + 1)
+      spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
+      spanState.setStart(name, start + 1)
       removeSpansForRange(spannable, start, end, config.clazz)
       setSpan(spannable, name, start, end + 1)
-
       return
     }
 
     var currentStart = start
-    val paragraphs = spannable.substring(start, end).split("\n")
+    val paragraphs = spannable.substring(start, end).split(Strings.NEWLINE_STRING)
     removeSpansForRange(spannable, start, end, config.clazz)
 
     for (paragraph in paragraphs) {
-      spannable.insert(currentStart, "\u200B")
+      spannable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
       val currentEnd = currentStart + paragraph.length + 1
       setSpan(spannable, name, currentStart, currentEnd)
 
       currentStart = currentEnd + 1
     }
 
-    view.spanState?.setStart(name, currentStart)
+    updateOrderedListIndexes(spannable, start)
+
+    view.spanState.setStart(name, currentStart)
   }
 
   private fun handleAfterTextChanged(
@@ -165,12 +193,9 @@ class ListStyles(
     val isBackspace = previousTextLength > s.length
     val isNewLine = cursorPosition > 0 && s[cursorPosition - 1] == Strings.NEWLINE
     val isShortcut = if (config.shortcut != null) s.substring(start, end).startsWith(config.shortcut) else false
-    val spans = s.getSpans(start, end, config.clazz)
 
-    // Remove spans if cursor is at the start of the paragraph and spans exist
-    if (isBackspace && start == cursorPosition && spans.isNotEmpty()) {
-      removeSpansForRange(s, start, end, config.clazz)
-      return
+    if (name == TextStyle.ORDERED_LIST && isPreviousParagraphList(s, start, config.clazz)) {
+      updateOrderedListIndexes(s, start)
     }
 
     if (!isBackspace && isShortcut) {
@@ -181,33 +206,49 @@ class ListStyles(
       return
     }
 
-    if (!isBackspace && isNewLine && isPreviousParagraphList(s, start, config.clazz)) {
-      s.insert(cursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
-      setSpan(s, name, start, end + 1)
-      // Inform that new span has been added
+    if (!isBackspace && isNewLine) {
+      val (currentStart, currentEnd) = s.getParagraphBounds(cursorPosition)
+
+      val prevParagraphEnd = currentStart - 1
+      if (prevParagraphEnd < 0) return
+
+      val (prevStart, prevEnd) = s.getParagraphBounds(prevParagraphEnd)
+
+      val prevSpans = s.getSpans(prevStart, prevEnd, config.clazz)
+      if (prevSpans.isEmpty()) return
+
+      val prevSpan = prevSpans.first()
+
+      s.removeSpan(prevSpan)
+
+      s.setSpan(
+        prevSpan.copy(),
+        prevStart,
+        prevEnd,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      )
+
+      if (currentEnd == currentStart) {
+        s.insert(cursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
+        setSpan(s, name, start, end + 1)
+        ParagraphUtils.copyPreviousAlignmentIfSameSpan(s, start, end + 1)
+      } else {
+        s.setSpan(
+          prevSpan.copyWithDefaults(),
+          currentStart,
+          currentEnd,
+          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+
+        ParagraphUtils.copyPreviousAlignmentIfSameSpan(
+          s,
+          currentStart,
+          currentEnd,
+        )
+      }
+
       view.selection?.validateStyles()
       return
-    }
-
-    if (spans.isNotEmpty()) {
-      val isCheckList = name == TextStyle.CHECK_LIST
-      val wasChecked =
-        if (isCheckList) {
-          getCurrentChecklistState(s, start, end)
-        } else {
-          false
-        }
-
-      for (span in spans) {
-        s.removeSpan(span)
-      }
-
-      if (isCheckList) {
-        val newSpan = EnrichedChecklistSpan(view.htmlStyle, wasChecked)
-        s.setSpan(newSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-      } else {
-        setSpan(s, name, start, end)
-      }
     }
   }
 
@@ -216,18 +257,9 @@ class ListStyles(
     endCursorPosition: Int,
     previousTextLength: Int,
   ) {
-    handleAfterTextChanged(s, TextStyle.ORDERED_LIST, endCursorPosition, previousTextLength)
-    handleAfterTextChanged(s, TextStyle.UNORDERED_LIST, endCursorPosition, previousTextLength)
-    handleAfterTextChanged(s, TextStyle.CHECK_LIST, endCursorPosition, previousTextLength)
-  }
-
-  private fun getCurrentChecklistState(
-    spannable: Spannable,
-    start: Int,
-    end: Int,
-  ): Boolean {
-    val spans = spannable.getSpans(start, end, EnrichedChecklistSpan::class.java)
-    return spans.firstOrNull()?.isChecked ?: false
+    for ((style) in EnrichedSpans.listSpans) {
+      handleAfterTextChanged(s, style, endCursorPosition, previousTextLength)
+    }
   }
 
   fun getStyleRange(): Pair<Int, Int> = view.selection?.getParagraphSelection() ?: Pair(0, 0)

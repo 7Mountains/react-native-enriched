@@ -14,8 +14,8 @@ import com.facebook.react.views.text.ReactTypefaceUtils.applyStyles
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontStyle
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
 import com.facebook.yoga.YogaMeasureOutput
+import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.styles.HtmlStyle
-import com.swmansion.enriched.utils.EnrichedParser
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.ceil
 

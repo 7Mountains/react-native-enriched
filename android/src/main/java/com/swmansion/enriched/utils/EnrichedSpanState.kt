@@ -1,13 +1,14 @@
 package com.swmansion.enriched.utils
 
+import android.text.Layout
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.events.OnAlignmentChangeEvent
 import com.swmansion.enriched.events.OnChangeStateEvent
 import com.swmansion.enriched.events.OnColorChangeEvent
-import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.TextStyle
 
 class EnrichedSpanState(
@@ -15,6 +16,7 @@ class EnrichedSpanState(
 ) {
   private var previousPayload: WritableMap? = null
   private var previousDispatchedColor: Int? = null
+  private var previousDispatchedAlignment: String? = null
 
   var boldStart: Int? = null
     private set
@@ -60,6 +62,10 @@ class EnrichedSpanState(
     private set
   var typingColor: Int? = null
     private set
+  var paragraphAlignment: String? = null
+    private set
+  var alignmentStart: Int? = null
+    private set
 
   fun setTypingColor(color: Int?) {
     typingColor = color
@@ -79,9 +85,29 @@ class EnrichedSpanState(
     color: Int?,
   ) {
     colorStart = start
-    typingColor = null
     emitStateChangeEvent()
     setTypingColor(color)
+  }
+
+  fun setAlignment(alignment: String?) {
+    paragraphAlignment = alignment
+    emitAlignmentChangeEvent(alignment)
+  }
+
+  fun setAlignmentStart(start: Int?) {
+    if (start == null) {
+      setAlignmentStart(null, null)
+    } else {
+      setAlignmentStart(start, paragraphAlignment)
+    }
+  }
+
+  fun setAlignmentStart(
+    start: Int?,
+    alignment: String?,
+  ) {
+    this.alignmentStart = start
+    setAlignment(alignment)
   }
 
   fun setBoldStart(start: Int?) {
@@ -185,6 +211,7 @@ class EnrichedSpanState(
   fun getStart(name: TextStyle): Int? {
     val start =
       when (name) {
+        TextStyle.ALIGNMENT -> alignmentStart
         TextStyle.BOLD -> boldStart
         TextStyle.ITALIC -> italicStart
         TextStyle.UNDERLINE -> underlineStart
@@ -217,6 +244,10 @@ class EnrichedSpanState(
     start: Int?,
   ) {
     when (name) {
+      TextStyle.ALIGNMENT -> {
+        setAlignmentStart(start)
+      }
+
       TextStyle.BOLD -> {
         setBoldStart(start)
       }
@@ -303,6 +334,27 @@ class EnrichedSpanState(
 
       else -> {}
     }
+  }
+
+  private fun emitAlignmentChangeEvent(alignment: String?) {
+    val resolvedAlignment = alignment ?: "default"
+
+    if (previousDispatchedAlignment == alignment) return
+
+    previousDispatchedAlignment = alignment
+
+    val context = view.context as ReactContext
+    val surfaceId = UIManagerHelper.getSurfaceId(context)
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
+
+    dispatcher?.dispatchEvent(
+      OnAlignmentChangeEvent(
+        surfaceId,
+        view.id,
+        view.experimentalSynchronousEvents,
+        resolvedAlignment,
+      ),
+    )
   }
 
   private fun emitColorChangeEvent(color: Int?) {

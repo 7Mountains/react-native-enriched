@@ -84,5 +84,5 @@ class EnrichedCodeBlockSpan(
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedCodeBlockSpan = EnrichedCodeBlockSpan(htmlStyle)
 
-  override fun copy(): EnrichedSpan = EnrichedCodeBlockSpan(htmlStyle)
+  override fun copy(): EnrichedCodeBlockSpan = EnrichedCodeBlockSpan(htmlStyle)
 }

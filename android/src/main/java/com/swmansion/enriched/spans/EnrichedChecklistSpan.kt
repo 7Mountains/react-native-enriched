@@ -8,6 +8,7 @@ import android.text.TextPaint
 import android.text.style.LeadingMarginSpan
 import android.text.style.MetricAffectingSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedChecklistSpan(
@@ -95,5 +96,7 @@ class EnrichedChecklistSpan(
 
   fun getAttributes(): Map<String, String> = mapOf("checked" to if (isChecked) "true" else "false")
 
-  override fun copy() = EnrichedChecklistSpan(htmlStyle)
+  override fun copy() = EnrichedChecklistSpan(htmlStyle, isChecked)
+
+  override fun copyWithDefaults(): EnrichedSpan = EnrichedChecklistSpan(htmlStyle, false)
 }

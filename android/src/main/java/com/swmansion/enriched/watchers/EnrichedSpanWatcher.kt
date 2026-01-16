@@ -7,10 +7,10 @@ import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnChangeHtmlEvent
+import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedHeadingSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
-import com.swmansion.enriched.utils.EnrichedParser
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 
 class EnrichedSpanWatcher(
@@ -25,7 +25,7 @@ class EnrichedSpanWatcher(
     end: Int,
   ) {
     updateNextLineLayout(what, text, end)
-    updateUnorderedListSpans(what, text, end)
+    updateOrderedListItems(what, text, end)
     emitEvent(text, what)
   }
 
@@ -36,7 +36,7 @@ class EnrichedSpanWatcher(
     end: Int,
   ) {
     updateNextLineLayout(what, text, end)
-    updateUnorderedListSpans(what, text, end)
+    updateOrderedListItems(what, text, end)
     emitEvent(text, what)
   }
 
@@ -51,7 +51,7 @@ class EnrichedSpanWatcher(
     // Do nothing for now
   }
 
-  private fun updateUnorderedListSpans(
+  private fun updateOrderedListItems(
     what: Any,
     text: Spannable,
     end: Int,
@@ -68,8 +68,6 @@ class EnrichedSpanWatcher(
     text: Spannable,
     end: Int,
   ) {
-    class EmptySpan : ParagraphStyle
-
     if (what is EnrichedHeadingSpan) {
       val finalStart = (end + 1)
       val finalEnd = text.length
@@ -103,5 +101,9 @@ class EnrichedSpanWatcher(
         view.experimentalSynchronousEvents,
       ),
     )
+  }
+
+  companion object {
+    private class EmptySpan : ParagraphStyle
   }
 }
