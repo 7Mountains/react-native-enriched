@@ -9,12 +9,10 @@ import com.swmansion.enriched.utils.toAlignment
 import com.swmansion.enriched.utils.toStringName
 
 class EnrichedAlignmentSpan(
-  val alignmentString: String?,
+  val alignmentString: String,
 ) : EnrichedParagraphSpan,
   AlignmentSpan {
-  private val alignment: Layout.Alignment = alignmentString?.toAlignment() ?: Layout.Alignment.ALIGN_NORMAL
-
-  constructor() : this("default")
+  private val alignment: Layout.Alignment = alignmentString.toAlignment()
 
   constructor(alignment: Layout.Alignment) : this(alignment.toStringName())
 

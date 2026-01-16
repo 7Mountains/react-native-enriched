@@ -123,7 +123,7 @@ class EnrichedContentSpan(
       src: String?,
       attributes: Map<String, String>,
       htmlStyle: HtmlStyle,
-    ): EnrichedContentSpan? {
+    ): EnrichedContentSpan {
       val params = ContentParams(text, type, src, attributes)
 
       return EnrichedContentSpan(params, htmlStyle)

@@ -33,6 +33,7 @@ import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.inputFilters.NonEditableParagraphFilter
 import com.swmansion.enriched.loaders.EnrichedImageLoader
+import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
@@ -47,7 +48,6 @@ import com.swmansion.enriched.styles.InlineStyles
 import com.swmansion.enriched.styles.ListStyles
 import com.swmansion.enriched.styles.ParagraphStyles
 import com.swmansion.enriched.styles.ParametrizedStyles
-import com.swmansion.enriched.utils.EnrichedParser
 import com.swmansion.enriched.utils.EnrichedSelection
 import com.swmansion.enriched.utils.EnrichedSpanState
 import com.swmansion.enriched.utils.mergeSpannables

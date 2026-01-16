@@ -103,7 +103,7 @@ class ParagraphStyles(
 
       if (isNewLine) {
         if (!config.isContinuous) {
-          spanState.setStart(style, null)
+          trimNonContinuousSpanAtNewLine(s, endCursorPosition, config.clazz)
           continue
         }
 
@@ -132,6 +132,33 @@ class ParagraphStyles(
         spanState.setStart(style, null)
         hasAppliedZWS = true
       }
+    }
+  }
+
+  private fun trimNonContinuousSpanAtNewLine(
+    s: Editable,
+    cursor: Int,
+    type: Class<out EnrichedSpan>,
+  ) {
+    val safeIndex = (cursor - 1).coerceAtLeast(0)
+    val (pStart, pEnd) = s.getParagraphBounds(safeIndex)
+
+    val spans = s.getSpans(pStart, pEnd, type)
+    if (spans.isEmpty()) return
+
+    val span = spans.first()
+    val spanStart = s.getSpanStart(span)
+
+    s.removeSpan(span)
+
+    if (spanStart < pEnd) {
+      val newSpan = span.copy()
+      s.setSpan(
+        newSpan,
+        spanStart,
+        pEnd,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      )
     }
   }
 
