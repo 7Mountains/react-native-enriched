@@ -31,7 +31,6 @@ class EnrichedTextWatcher(
     count: Int,
   ) {
     endCursorPosition = start + count
-    view.layoutManager.invalidateLayout()
     view.isRemovingMany = !view.isDuringTransaction && before > count + 1
   }
 

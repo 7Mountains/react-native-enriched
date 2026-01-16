@@ -5,23 +5,22 @@ import com.facebook.react.bridge.Arguments
 class EnrichedTextInputViewLayoutManager(
   private val view: EnrichedTextInputView,
 ) {
-  private var forceHeightRecalculationCounter: Int = 0
+  private var lastHeight = -1
+  private var counter = 0
 
-  fun invalidateLayout() {
-    val text = view.text
-    val paint = view.paint
+  fun invalidateLayoutIfNeeded() {
+    val layout = view.layout ?: return
+    val height = layout.height
 
-    val needUpdate = MeasurementStore.store(view.id, text, paint)
-    if (!needUpdate) return
+    if (height == lastHeight) return
+    lastHeight = height
 
-    val counter = forceHeightRecalculationCounter
-    forceHeightRecalculationCounter++
     val state = Arguments.createMap()
-    state.putInt("forceHeightRecalculationCounter", counter)
+    state.putInt("forceHeightRecalculationCounter", counter++)
     view.stateWrapper?.updateState(state)
   }
 
-  fun releaseMeasurementStore() {
-    MeasurementStore.release(view.id)
+  fun release() {
+    lastHeight = -1
   }
 }

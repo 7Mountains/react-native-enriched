@@ -91,6 +91,7 @@ class EnrichedTextInputView : AppCompatEditText {
       htmlStyle.invalidateStyles()
       reApplyFullWidthSpans(htmlStyle)
     }
+    layoutManager.invalidateLayoutIfNeeded()
   }
 
   val mentionHandler: MentionHandler? = MentionHandler(this)
@@ -431,7 +432,6 @@ class EnrichedTextInputView : AppCompatEditText {
 
     // This ensured that newly created spans will take the new font size into account
     htmlStyle.invalidateStyles()
-    layoutManager.invalidateLayout()
     forceScrollToSelection()
   }
 
@@ -510,8 +510,6 @@ class EnrichedTextInputView : AppCompatEditText {
     val newTypeface = applyStyles(typeface, fontStyle, fontWeight, fontFamily, context.assets)
     typeface = newTypeface
     paint.typeface = newTypeface
-
-    layoutManager.invalidateLayout()
   }
 
   private fun toggleStyle(name: TextStyle) {
@@ -534,8 +532,6 @@ class EnrichedTextInputView : AppCompatEditText {
       TextStyle.CHECK_LIST -> listStyles?.toggleStyle(TextStyle.CHECK_LIST)
       else -> Log.w("EnrichedTextInputView", "Unknown style: $name")
     }
-
-    layoutManager.invalidateLayout()
   }
 
   private fun removeStyle(
@@ -676,7 +672,6 @@ class EnrichedTextInputView : AppCompatEditText {
     if (!isValid) return
 
     parametrizedStyles?.setImageSpan(src, width, height)
-    layoutManager.invalidateLayout()
   }
 
   fun insertDivider() {
@@ -823,7 +818,6 @@ class EnrichedTextInputView : AppCompatEditText {
         selection?.validateStyles()
       }
     }
-    layoutManager.invalidateLayout()
     forceScrollToSelection()
   }
 

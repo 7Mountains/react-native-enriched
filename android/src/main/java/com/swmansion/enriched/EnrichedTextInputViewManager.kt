@@ -48,7 +48,6 @@ class EnrichedTextInputViewManager :
 
   override fun onDropViewInstance(view: EnrichedTextInputView) {
     super.onDropViewInstance(view)
-    view.layoutManager.releaseMeasurementStore()
   }
 
   override fun updateState(
