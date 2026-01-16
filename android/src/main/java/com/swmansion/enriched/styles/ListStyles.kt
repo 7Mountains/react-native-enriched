@@ -6,11 +6,13 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
+import com.swmansion.enriched.spans.EnrichedAlignmentSpan
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.spans.TextStyle
+import com.swmansion.enriched.utils.ParagraphUtils
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
@@ -184,7 +186,8 @@ class ListStyles(
     if (!isBackspace && isNewLine && isPreviousParagraphList(s, start, config.clazz)) {
       s.insert(cursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
       setSpan(s, name, start, end + 1)
-      // Inform that new span has been added
+      ParagraphUtils.copyPreviousAlignmentIfSameSpan(s, start, end + 1)
+
       view.selection?.validateStyles()
       return
     }

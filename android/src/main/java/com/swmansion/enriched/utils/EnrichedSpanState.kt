@@ -339,7 +339,7 @@ class EnrichedSpanState(
   private fun emitAlignmentChangeEvent(alignment: String?) {
     val resolvedAlignment = alignment ?: "default"
 
-    if (previousDispatchedAlignment == resolvedAlignment) return
+    if (previousDispatchedAlignment == alignment) return
 
     previousDispatchedAlignment = alignment
 

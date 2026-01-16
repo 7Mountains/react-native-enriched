@@ -1,11 +1,14 @@
 package com.swmansion.enriched.watchers
 
 import android.text.Editable
+import android.text.Spannable
 import android.text.TextWatcher
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnChangeTextEvent
+import com.swmansion.enriched.utils.ParagraphSpanNormalizer
+import com.swmansion.enriched.utils.ZWSNormalizer
 
 class EnrichedTextWatcher(
   private val view: EnrichedTextInputView,
@@ -43,9 +46,10 @@ class EnrichedTextWatcher(
 
   private fun applyStyles(s: Editable) {
     view.inlineStyles?.afterTextChanged(s, endCursorPosition)
-    view.paragraphStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
-    view.listStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
+    ParagraphSpanNormalizer.normalize(s, endCursorPosition)
     view.parametrizedStyles?.afterTextChanged(s, endCursorPosition)
+    view.listStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
+    view.paragraphStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
   }
 
   private fun emitChangeText(editable: Editable) {

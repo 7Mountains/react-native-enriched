@@ -83,7 +83,7 @@ object EnrichedSpans {
       TextStyle.CONTENT to ParagraphSpanConfig(EnrichedContentSpan::class.java, false, true),
       TextStyle.BLOCK_QUOTE to ParagraphSpanConfig(EnrichedBlockQuoteSpan::class.java, true, false),
       TextStyle.CODE_BLOCK to ParagraphSpanConfig(EnrichedCodeBlockSpan::class.java, true, false),
-      TextStyle.ALIGNMENT to ParagraphSpanConfig(EnrichedAlignmentSpan::class.java, false, false),
+      TextStyle.ALIGNMENT to ParagraphSpanConfig(EnrichedAlignmentSpan::class.java, true, false),
     )
 
   val listSpans: Map<TextStyle, ListSpanConfig> =
@@ -99,14 +99,6 @@ object EnrichedSpans {
       TextStyle.IMAGE to BaseSpanConfig(EnrichedImageSpan::class.java),
       TextStyle.MENTION to BaseSpanConfig(EnrichedMentionSpan::class.java),
     )
-
-  private val spanClassToStyle: Map<Class<out EnrichedSpan>, TextStyle> =
-    buildMap {
-      inlineSpans.forEach { (style, cfg) -> put(cfg.clazz, style) }
-      paragraphSpans.forEach { (style, cfg) -> put(cfg.clazz, style) }
-      listSpans.forEach { (style, cfg) -> put(cfg.clazz, style) }
-      parametrizedStyles.forEach { (style, cfg) -> put(cfg.clazz, style) }
-    }
 
   fun getMergingConfigForStyle(
     style: TextStyle,
@@ -388,14 +380,4 @@ object EnrichedSpans {
         )
       }
     }
-
-  fun getStyleNameByClassName(clazz: Class<out EnrichedSpan>): TextStyle? {
-    spanClassToStyle[clazz]?.let { return it }
-
-    return spanClassToStyle.entries
-      .firstOrNull { (base, _) -> base.isAssignableFrom(clazz) }
-      ?.value
-  }
-
-  fun isTypeContinuous(type: Class<*>): Boolean = paragraphSpans.values.find { it.clazz == type }?.isContinuous == true
 }
