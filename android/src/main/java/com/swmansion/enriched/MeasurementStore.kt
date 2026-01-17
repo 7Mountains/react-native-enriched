@@ -166,10 +166,6 @@ object MeasurementStore {
     val id = id ?: return initialMeasure(context, id, width, props)
     val value = data[id] ?: return initialMeasure(context, id, width, props)
 
-    // First measure has to be done using initialMeasure
-    // That way it's free of any side effects and async initializations
-    if (!value.initialized) return initialMeasure(context, id, width, props)
-
     if (width == value.cachedWidth) {
       return value.cachedSize
     }
