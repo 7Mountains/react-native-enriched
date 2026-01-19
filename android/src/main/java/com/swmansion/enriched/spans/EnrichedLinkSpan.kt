@@ -10,8 +10,11 @@ import com.swmansion.enriched.styles.HtmlStyle
 class EnrichedLinkSpan(
   private val url: String,
   private val htmlStyle: HtmlStyle,
+  val isManual: Boolean,
 ) : ClickableSpan(),
   EnrichedInlineSpan {
+  constructor(url: String, htmlStyle: HtmlStyle) : this(url, htmlStyle, false)
+
   override val dependsOnHtmlStyle: Boolean = true
 
   override fun onClick(view: View) {

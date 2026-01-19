@@ -86,7 +86,7 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 500) => {
+const generateHugeHtml = (repeat = 10) => {
   const parts: string[] = [];
   parts.push('<html>');
 

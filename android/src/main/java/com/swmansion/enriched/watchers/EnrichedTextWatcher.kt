@@ -14,6 +14,7 @@ class EnrichedTextWatcher(
 ) : TextWatcher {
   private var endCursorPosition: Int = 0
   private var previousTextLength: Int = 0
+  private var startCursorPosition: Int = 0
 
   override fun beforeTextChanged(
     s: CharSequence?,
@@ -22,6 +23,7 @@ class EnrichedTextWatcher(
     after: Int,
   ) {
     previousTextLength = s?.length ?: 0
+    startCursorPosition = start
   }
 
   override fun onTextChanged(
@@ -44,7 +46,7 @@ class EnrichedTextWatcher(
 
   private fun applyStyles(s: Editable) {
     view.inlineStyles?.afterTextChanged(s, endCursorPosition)
-    view.parametrizedStyles?.afterTextChanged(s, endCursorPosition)
+    view.parametrizedStyles?.afterTextChanged(s, startCursorPosition, endCursorPosition)
     ParagraphSpanNormalizer.normalize(s, endCursorPosition)
     view.listStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
     view.paragraphStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)

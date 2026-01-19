@@ -62,7 +62,7 @@ class ParametrizedStyles(
     }
 
     val spanEnd = start + text.length
-    val span = EnrichedLinkSpan(url, view.htmlStyle)
+    val span = EnrichedLinkSpan(url, view.htmlStyle, true)
     val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, spanEnd)
     spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
@@ -70,36 +70,59 @@ class ParametrizedStyles(
     isSettingLinkSpan = false
   }
 
-  fun afterTextChanged(
-    s: Editable,
-    endCursorPosition: Int,
-  ) {
-    val result = getWordAtIndex(s, endCursorPosition) ?: return
+  // After editing text we want to automatically detect links in the affected range
+  // Affected range is range + previous word + next word
+  private fun getLinksAffectedRange(
+    s: CharSequence,
+    start: Int,
+    end: Int,
+  ): IntRange {
+    var actualStart = start
+    var actualEnd = end
 
-    afterTextChangedLinks(result)
-    afterTextChangedMentions(result)
+    // Expand backward to find the start of the first affected word
+    while (actualStart > 0 && !Character.isWhitespace(s[actualStart - 1])) {
+      actualStart--
+    }
+
+    // Expand forward to find the end of the last affected word
+    while (actualEnd < s.length && !Character.isWhitespace(s[actualEnd])) {
+      actualEnd++
+    }
+
+    return actualStart..actualEnd
   }
 
   fun detectAllLinks() {
     val spannable = view.text as Spannable
+    val text = spannable.toString()
 
-    // TODO: Consider using more reliable regex, this one matches almost anything
-    val urlPattern =
-      android.util.Patterns.WEB_URL
-        .matcher(spannable)
-
-    val spans = spannable.getSpans(0, spannable.length, EnrichedLinkSpan::class.java)
-    for (span in spans) {
+    // Remove existing link spans
+    val existingSpans =
+      spannable.getSpans(
+        0,
+        spannable.length,
+        EnrichedLinkSpan::class.java,
+      )
+    for (span in existingSpans) {
       spannable.removeSpan(span)
     }
 
-    while (urlPattern.find()) {
-      val word = urlPattern.group()
-      val start = urlPattern.start()
-      val end = urlPattern.end()
-      val span = EnrichedLinkSpan(word, view.htmlStyle)
+    // Detect links using our URL_REGEX
+    for (match in URL_REGEX.findAll(text)) {
+      val start = match.range.first
+      val end = match.range.last + 1 // IntRange is inclusive
+
+      val url = match.value
+      val span = EnrichedLinkSpan(url, view.htmlStyle)
       val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, end)
-      spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+      spannable.setSpan(
+        span,
+        safeStart,
+        safeEnd,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      )
     }
   }
 
@@ -141,31 +164,73 @@ class ParametrizedStyles(
     return true
   }
 
-  private fun afterTextChangedLinks(result: TextRange) {
+  private fun afterTextChangedLinks(
+    editStart: Int,
+    editEnd: Int,
+  ) {
     // Do not detect link if it's applied manually
     if (isSettingLinkSpan || !canLinkBeApplied()) return
 
-    val spannable = view.text as Spannable
-    val (word, start, end) = result
+    val spannable = view.text as? Spannable ?: return
+    val affectedRange = getLinksAffectedRange(spannable, editStart, editEnd)
+    val contextText =
+      spannable
+        .subSequence(affectedRange.first, affectedRange.last)
+        .toString()
 
-    // TODO: Consider using more reliable regex, this one matches almost anything
-    val urlPattern =
-      android.util.Patterns.WEB_URL
-        .matcher(word)
-    val spans = spannable.getSpans(start, end, EnrichedLinkSpan::class.java)
+    // Remove existing link spans in affected range
+    val spans =
+      spannable
+        .getSpans(
+          affectedRange.first,
+          affectedRange.last,
+          EnrichedLinkSpan::class.java,
+        ).filter {
+          !it.isManual
+        }
     for (span in spans) {
       spannable.removeSpan(span)
     }
 
-    if (urlPattern.matches()) {
-      val span = EnrichedLinkSpan(word, view.htmlStyle)
-      val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, end)
-      spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    // Split into words and detect links
+    for (wordMatch in wordsRegex.findAll(contextText)) {
+      var word = wordMatch.value
+      var wordStart = wordMatch.range.first
+
+      // Do not include zero-width space in link detection
+      if (word.startsWith(Strings.ZERO_WIDTH_SPACE_CHAR)) {
+        word = word.substring(1)
+        wordStart += 1
+      }
+
+      // Detect links inside the word using URL_REGEX
+      for (match in URL_REGEX.findAll(word)) {
+        val linkStart = match.range.first
+        val linkEnd = match.range.last + 1 // inclusive range
+
+        val spanStart = affectedRange.first + wordStart + linkStart
+        val spanEnd = affectedRange.first + wordStart + linkEnd
+
+        val span = EnrichedLinkSpan(match.value, view.htmlStyle)
+        val (safeStart, safeEnd) =
+          spannable.getSafeSpanBoundaries(spanStart, spanEnd)
+
+        spannable.setSpan(
+          span,
+          safeStart,
+          safeEnd,
+          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+      }
     }
   }
 
-  private fun afterTextChangedMentions(currentWord: TextRange) {
+  private fun afterTextChangedMentions(
+    s: CharSequence,
+    endCursorPosition: Int,
+  ) {
     val mentionHandler = view.mentionHandler ?: return
+    val currentWord = getWordAtIndex(s, endCursorPosition) ?: return
     val spannable = view.text as Spannable
 
     val indicatorsPattern = mentionIndicators.joinToString("|") { Regex.escape(it) }
@@ -215,6 +280,15 @@ class ParametrizedStyles(
     }
 
     mentionHandler.onMention(indicator, text)
+  }
+
+  fun afterTextChanged(
+    s: Editable,
+    startCursorPosition: Int,
+    endCursorPosition: Int,
+  ) {
+    afterTextChangedLinks(startCursorPosition, endCursorPosition)
+    afterTextChangedMentions(s, startCursorPosition)
   }
 
   fun setImageSpan(
@@ -305,6 +379,18 @@ class ParametrizedStyles(
   }
 
   companion object {
+    val URL_REGEX =
+      Regex(
+        """^(https?|ftp)://""" +
+          """((([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})|""" + // domain
+          """(\d{1,3}(\.\d{1,3}){3}))""" + // IPv4
+          """(:\d{1,5})?""" + // port
+          """(/[-a-zA-Z0-9@:%_+.~#?&/=]*)?$""",
+        RegexOption.IGNORE_CASE,
+      )
+
+    val wordsRegex = Regex("\\S+")
+
     data class TextRange(
       val text: String,
       val start: Int,
