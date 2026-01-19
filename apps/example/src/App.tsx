@@ -87,7 +87,7 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 1) => {
+const generateHugeHtml = (repeat = 200) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -109,46 +109,42 @@ const generateHugeHtml = (repeat = 1) => {
       // Headings
       `\n<h1>Section ${i + 1}</h1>`,
       `\n<h2 alignment="center">Subsection ${i + 1}.1</h2>`,
-      `\n<h3>Topic ${i + 1}.1.a</h3>`
+      `\n<h3>Topic ${i + 1}.1.a</h3>`, // Paragraph with mixed inline styles
+      `\n<p>This is a <b>bold</b> and <i>italic</i> paragraph with <u>underline</u>, ` +
+        `<s>strike</s>, <code>inline_code_${i}</code>, ` +
+        `<a href="https://example.com/${i}">a link ${i}</a>, ` +
+        `<mention text="@alex_${i}" indicator="@">@alex_${i}</mention>, ` +
+        `<mention text="#general" indicator="#" text="#general">#general</mention>, ` +
+        `and some plain text to bulk it up.</p>`,
 
-      // // Paragraph with mixed inline styles
-      // `\n<p>This is a <b>bold</b> and <i>italic</i> paragraph with <u>underline</u>, ` +
-      //   `<s>strike</s>, <code>inline_code_${i}</code>, ` +
-      //   `<a href="https://example.com/${i}">a link ${i}</a>, ` +
-      //   `<mention text="@alex_${i}" indicator="@">@alex_${i}</mention>, ` +
-      //   `<mention text="#general" indicator="#" text="#general">#general</mention>, ` +
-      //   `and some plain text to bulk it up.</p>`,
+      // Line break
+      `\n<hr>`,
 
-      // // Line break
-      // `\n<hr>`,
+      // Unordered list
+      `<ul>`,
+      `<li>bullet A ${i}</li>`,
+      `<li>bullet B ${i}</li>`,
+      `<li>bullet C ${i}</li>`,
+      `</ul>`,
 
-      // // Unordered list
-      // `<ul>`,
-      // `<li>bullet A ${i}</li>`,
-      // `<li>bullet B ${i}</li>`,
-      // `<li>bullet C ${i}</li>`,
-      // `</ul>`,
+      // Ordered list
+      `\n<ol>`,
+      `\n<li>step 1.${i}</li>`,
+      `\n<li>step 2.${i}</li>`,
+      `\n<li>step 3.${i}</li>`,
+      `\n</ol>`,
 
-      // // Ordered list
-      // `\n<ol>`,
-      // `\n<li>step 1.${i}</li>`,
-      // `\n<li>step 2.${i}</li>`,
-      // `\n<li>step 3.${i}</li>`,
-      // `\n</ol>`,
+      // Blockquote
+      `\n<blockquote>`,
+      `\n<p>"Blockquote line 1 for ${i}."</p>`,
+      `\n<p>"Blockquote line 2 for ${i}."</p>`,
+      `\n</blockquote>`,
 
-      // // Blockquote
-      // `\n<blockquote>`,
-      // `\n<p>"Blockquote line 1 for ${i}."</p>`,
-      // `\n<p>"Blockquote line 2 for ${i}."</p>`,
-      // `\n</blockquote>`,
-
-      // // Code block (escaped characters)
-      // `\n<codeblock>`,
-      // `\n<p>for (let k = 0; k < ${i % 7}; k++) { console.log(&quot;block_${i}&quot;); }</p>`,
-      // `\n</codeblock>`,
-
-      // // Image (self-closing)
-      // `\n<p><img src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" width="${Math.min(imgW, 300)}" height="${imgH}" /></p>`
+      // Code block (escaped characters)
+      `\n<codeblock>`,
+      `\n<p>for (let k = 0; k < ${i % 7}; k++) { console.log(&quot;block_${i}&quot;); }</p>`,
+      `\n</codeblock>`,
+      `\n<content type="image" text="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" width="${Math.min(imgW, 300)}" height="${imgH}" />`
     );
   }
 
@@ -408,8 +404,8 @@ export default function App() {
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
             autoCapitalize="sentences"
-            onChangeText={(e) => handleChangeText(e.nativeEvent)}
-            onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
+            // onChangeText={(e) => handleChangeText(e.nativeEvent)}
+            // onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
             defaultValue={initialHugeHtml}
             onColorChangeInSelection={(e) => {
@@ -588,6 +584,7 @@ const htmlStyle: HtmlStyle = {
       imageBorderRadiusBottomLeft: 4,
       imageResizeMode: 'stretch',
       imageWidth: 50,
+      imageHeight: 56,
       fontSize: 14,
       fontWeight: '900',
       fallbackImageURI: Image.resolveAssetSource(

@@ -1,10 +1,12 @@
 package com.swmansion.enriched
 
 import android.content.Context
+import android.util.Log
 import androidx.core.graphics.toColorInt
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.StateWrapper
@@ -16,6 +18,7 @@ import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerDelegate
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerInterface
 import com.facebook.yoga.YogaMeasureMode
+import com.facebook.yoga.YogaMeasureOutput
 import com.swmansion.enriched.events.OnAlignmentChangeEvent
 import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.events.OnChangeSelectionEvent
@@ -28,7 +31,6 @@ import com.swmansion.enriched.events.OnLinkDetectedEvent
 import com.swmansion.enriched.events.OnMentionDetectedEvent
 import com.swmansion.enriched.events.OnMentionEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
-import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.utils.jsonStringToStringMap
@@ -39,12 +41,17 @@ class EnrichedTextInputViewManager :
   EnrichedTextInputViewManagerInterface<EnrichedTextInputView> {
   private val mDelegate: ViewManagerDelegate<EnrichedTextInputView> =
     EnrichedTextInputViewManagerDelegate(this)
+  private var view: EnrichedTextInputView? = null
 
   override fun getDelegate(): ViewManagerDelegate<EnrichedTextInputView>? = mDelegate
 
   override fun getName(): String = NAME
 
-  public override fun createViewInstance(context: ThemedReactContext): EnrichedTextInputView = EnrichedTextInputView(context)
+  public override fun createViewInstance(context: ThemedReactContext): EnrichedTextInputView {
+    val viewInstance = EnrichedTextInputView(context)
+    view = viewInstance
+    return viewInstance
+  }
 
   override fun onDropViewInstance(view: EnrichedTextInputView) {
     super.onDropViewInstance(view)
@@ -414,8 +421,53 @@ class EnrichedTextInputViewManager :
     heightMode: YogaMeasureMode?,
     attachmentsPositions: FloatArray?,
   ): Long {
-    val id = localData?.getInt("viewTag")
-    return MeasurementStore.getMeasureById(context, id, width, props)
+    val layout = view?.layout
+
+    val measuredWidthDip =
+      when {
+        widthMode == YogaMeasureMode.EXACTLY -> {
+          width
+        }
+
+        layout != null -> {
+          val contentWidthPx = layout.width
+          val contentWidthDip = PixelUtil.toDIPFromPixel(contentWidthPx.toFloat())
+
+          when (widthMode) {
+            YogaMeasureMode.AT_MOST -> contentWidthDip.coerceAtMost(width)
+            YogaMeasureMode.UNDEFINED, null -> contentWidthDip
+            else -> contentWidthDip
+          }
+        }
+
+        else -> {
+          0f
+        }
+      }
+
+    val measuredHeightDip =
+      when {
+        heightMode == YogaMeasureMode.EXACTLY -> {
+          height
+        }
+
+        layout != null -> {
+          val contentHeightPx = layout.height
+          val contentHeightDip = PixelUtil.toDIPFromPixel(contentHeightPx.toFloat())
+
+          when (heightMode) {
+            YogaMeasureMode.AT_MOST -> contentHeightDip.coerceAtMost(height)
+            YogaMeasureMode.UNDEFINED, null -> contentHeightDip
+            else -> contentHeightDip
+          }
+        }
+
+        else -> {
+          0f
+        }
+      }
+
+    return YogaMeasureOutput.make(measuredWidthDip, measuredHeightDip)
   }
 
   companion object {

@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.BlendMode
 import android.graphics.BlendModeColorFilter
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.text.LineBreaker
@@ -91,6 +92,10 @@ class EnrichedTextInputView : AppCompatEditText {
       htmlStyle.invalidateStyles()
       reApplyFullWidthSpans(htmlStyle)
     }
+  }
+
+  override fun onDraw(canvas: Canvas) {
+    super.onDraw(canvas)
     layoutManager.invalidateLayoutIfNeeded()
   }
 
