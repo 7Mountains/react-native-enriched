@@ -15,7 +15,7 @@ object ZWSNormalizer {
 
       val isEmptyParagraphWithZWS =
         text.all {
-          (it == Strings.NEWLINE || it == Strings.ZERO_WIDTH_SPACE_CHAR) && it != Strings.MAGIC_CHAR
+          (it == Strings.NEWLINE || it == Strings.ZERO_WIDTH_SPACE_CHAR)
         }
 
       if (!isEmptyParagraphWithZWS) {

@@ -2,7 +2,6 @@ package com.swmansion.enriched.parser
 
 import android.graphics.Color
 import android.text.Editable
-import android.text.Layout
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -33,8 +32,9 @@ import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedStrikeThroughSpan
 import com.swmansion.enriched.spans.EnrichedUnderlineSpan
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
-import com.swmansion.enriched.utils.toStringName
 import org.xml.sax.Attributes
 import org.xml.sax.ContentHandler
 import org.xml.sax.InputSource
@@ -52,6 +52,10 @@ class HtmlToSpannedConverter(
   private val textInputView: EnrichedTextInputView,
 ) : ContentHandler {
   private val mSpannableStringBuilder: SpannableStringBuilder = SpannableStringBuilder()
+  private var currentListItemIndex = 0
+  private var isInOrderedList = false
+  private var isEmptyTag = false
+  private val tagsStack = ArrayDeque<TagContext>()
 
   fun convert(): Spanned {
     parser.contentHandler = this
@@ -64,31 +68,52 @@ class HtmlToSpannedConverter(
       // TagSoup doesn't throw parse exceptions.
       throw RuntimeException(e)
     }
-
-    // We don't use ZeroWidthSpaceSpan in the final output, so we can remove them here.
-    // Fix flags and range for paragraph-type markup.
-//    Object[] obj =
-//        mSpannableStringBuilder.getSpans(0, mSpannableStringBuilder.length(), ParagraphStyle.class);
-//    for (int i = 0; i < obj.length; i++) {
-//      int start = mSpannableStringBuilder.getSpanStart(obj[i]);
-//      int end = mSpannableStringBuilder.getSpanEnd(obj[i]);
-//      // If the last line of the range is blank, back off by one.
-//      if (end - 2 >= 0) {
-//        if (mSpannableStringBuilder.charAt(end - 1) == Strings.NEWLINE
-//            && mSpannableStringBuilder.charAt(end - 2) == Strings.NEWLINE) {
-//          end--;
-//        }
-//      }
-//      if (end == start) {
-//        mSpannableStringBuilder.removeSpan(obj[i]);
-//      } else {
-//        // TODO: verify if Spannable.SPAN_EXCLUSIVE_EXCLUSIVE does not break anything.
-//        // Previously it was SPAN_PARAGRAPH. I've changed that in order to fix ranges for list
-//        // items.
-//        mSpannableStringBuilder.setSpan(obj[i], start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-//      }
-//    }
     return mSpannableStringBuilder
+  }
+
+  private fun pushTag(
+    tag: String,
+    attributes: Attributes?,
+  ) {
+    tagsStack.addLast(
+      TagContext(
+        tag = tag,
+        start = mSpannableStringBuilder.length,
+        attributes = attributes,
+      ),
+    )
+  }
+
+  private fun popTag(tag: String): TagContext? {
+    val last = tagsStack.lastOrNull()
+    if (last != null && last.tag == tag) {
+      return tagsStack.removeLast()
+    }
+
+    // fallback if we get some trash
+    for (i in tagsStack.lastIndex downTo 0) {
+      val ctx = tagsStack[i]
+      if (ctx.tag == tag) {
+        tagsStack.removeAt(i)
+        return ctx
+      }
+    }
+    return null
+  }
+
+  private fun applyInline(
+    ctx: TagContext,
+    createSpan: (Attributes?) -> EnrichedInlineSpan,
+  ) {
+    val end = mSpannableStringBuilder.length
+    if (ctx.start != end) {
+      mSpannableStringBuilder.setSpan(
+        createSpan(ctx.attributes),
+        ctx.start,
+        end,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      )
+    }
   }
 
   private fun handleStartTag(
@@ -96,107 +121,51 @@ class HtmlToSpannedConverter(
     attributes: Attributes?,
     htmlStyle: HtmlStyle,
   ) {
-    if (tag == null) return
-    when (tag.lowercase()) {
+    when (tag) {
       HtmlTags.BREAK_LINE -> {
         // no-op, handled on close
         return
       }
 
-      HtmlTags.PARAGRAPH -> {
+      HtmlTags.BOLD,
+      HtmlTags.ITALIC,
+      HtmlTags.UNDERLINE,
+      HtmlTags.STRIKE,
+      HtmlTags.STRIKE_THROUGH,
+      HtmlTags.CODE_INLINE,
+      -> {
+        pushTag(tag, attributes)
+        return
+      }
+
+      HtmlTags.H1,
+      HtmlTags.H2,
+      HtmlTags.H3,
+      HtmlTags.H4,
+      HtmlTags.H5,
+      HtmlTags.H6,
+      HtmlTags.PARAGRAPH,
+      HtmlTags.UNORDERED_LIST,
+      HtmlTags.BLOCK_QUOTE,
+      HtmlTags.CODE_BLOCK,
+      HtmlTags.ORDERED_LIST,
+      HtmlTags.CHECKLIST,
+      -> {
+        isInOrderedList = tag == HtmlTags.ORDERED_LIST
+        currentListItemIndex = 0
         isEmptyTag = true
-        startBlockElement(mSpannableStringBuilder, attributes)
-        return
-      }
-
-      HtmlTags.UNORDERED_LIST -> {
-        isInOrderedList = false
-        startBlockElement(mSpannableStringBuilder, attributes)
-        return
-      }
-
-      HtmlTags.ORDERED_LIST -> {
-        isInOrderedList = true
-        currentOrderedListItemIndex = 0
-        startBlockElement(mSpannableStringBuilder, attributes)
+        startParagraph(mSpannableStringBuilder, tag, attributes)
         return
       }
 
       HtmlTags.LIST_ITEM -> {
         isEmptyTag = true
-        startLi(mSpannableStringBuilder)
-        return
-      }
-
-      HtmlTags.BOLD -> {
-        start(mSpannableStringBuilder, Bold())
-        return
-      }
-
-      HtmlTags.ITALIC -> {
-        start(mSpannableStringBuilder, Italic())
-        return
-      }
-
-      HtmlTags.UNDERLINE -> {
-        start(mSpannableStringBuilder, Underline())
-        return
-      }
-
-      HtmlTags.STRIKE_THROUGH, HtmlTags.STRIKE -> {
-        start(mSpannableStringBuilder, Strikethrough())
-        return
-      }
-
-      HtmlTags.BLOCK_QUOTE -> {
-        isEmptyTag = true
-        startBlockquote(mSpannableStringBuilder, attributes)
-        return
-      }
-
-      HtmlTags.CODE_BLOCK -> {
-        isEmptyTag = true
-        startCodeBlock(mSpannableStringBuilder, attributes)
-        return
-      }
-
-      HtmlTags.CODE_INLINE -> {
-        start(mSpannableStringBuilder, Code())
+        startListItem(mSpannableStringBuilder, tag, attributes)
         return
       }
 
       HtmlTags.LINK -> {
-        startA(mSpannableStringBuilder, attributes)
-        return
-      }
-
-      HtmlTags.H1 -> {
-        startHeading(mSpannableStringBuilder, 1, attributes)
-        return
-      }
-
-      HtmlTags.H2 -> {
-        startHeading(mSpannableStringBuilder, 2, attributes)
-        return
-      }
-
-      HtmlTags.H3 -> {
-        startHeading(mSpannableStringBuilder, 3, attributes)
-        return
-      }
-
-      HtmlTags.H4 -> {
-        startHeading(mSpannableStringBuilder, 4, attributes)
-        return
-      }
-
-      HtmlTags.H5 -> {
-        startHeading(mSpannableStringBuilder, 5, attributes)
-        return
-      }
-
-      HtmlTags.H6 -> {
-        startHeading(mSpannableStringBuilder, 6, attributes)
+        pushTag(HtmlTags.LINK, attributes)
         return
       }
 
@@ -206,28 +175,22 @@ class HtmlToSpannedConverter(
       }
 
       HtmlTags.MENTION -> {
-        startMention(mSpannableStringBuilder, attributes)
+        pushTag(HtmlTags.MENTION, attributes)
         return
       }
 
       HtmlTags.HORIZONTAL_RULE -> {
-        addHr(mSpannableStringBuilder, htmlStyle)
+        addHr(mSpannableStringBuilder, htmlStyle, isEmptyTag)
         return
       }
 
       HtmlTags.CONTENT -> {
-        addContent(mSpannableStringBuilder, attributes, htmlStyle)
-        return
-      }
-
-      HtmlTags.CHECKLIST -> {
-        isEmptyTag = true
-        startChecklist(mSpannableStringBuilder, attributes)
+        addContent(mSpannableStringBuilder, attributes, htmlStyle, isEmptyTag)
         return
       }
 
       HtmlTags.FONT -> {
-        startFont(mSpannableStringBuilder, attributes)
+        pushTag(HtmlTags.FONT, attributes)
         return
       }
 
@@ -239,106 +202,188 @@ class HtmlToSpannedConverter(
   }
 
   private fun handleEndTag(tag: String?) {
-    if (tag == null) return
-
-    when (tag.lowercase()) {
+    when (tag) {
       HtmlTags.BREAK_LINE -> {
         handleBr(mSpannableStringBuilder)
         return
       }
 
-      HtmlTags.PARAGRAPH, HtmlTags.UNORDERED_LIST -> {
-        endBlockElement(mSpannableStringBuilder)
+      HtmlTags.PARAGRAPH -> {
+        endParagraphTag(mSpannableStringBuilder, tag, isEmptyTag)
+        return
+      }
+
+      HtmlTags.UNORDERED_LIST, HtmlTags.ORDERED_LIST -> {
+        val ctx = popTag(tag) ?: return
+
+        var end = mSpannableStringBuilder.length
+
+        if (end > ctx.start && mSpannableStringBuilder[end - 1] == Strings.NEWLINE) {
+          end--
+        }
+        addAlignmentSpanIfNeeded(mSpannableStringBuilder, ctx.start, end, ctx.attributes)
         return
       }
 
       HtmlTags.LIST_ITEM -> {
-        endLi(mSpannableStringBuilder, mStyle)
+        endListItem(mSpannableStringBuilder)
         return
       }
 
       HtmlTags.BOLD -> {
-        end(mSpannableStringBuilder, Bold::class.java, EnrichedBoldSpan())
+        val ctx = popTag(tag) ?: return
+        applyInline(ctx) { EnrichedBoldSpan() }
         return
       }
 
       HtmlTags.ITALIC -> {
-        end(mSpannableStringBuilder, Italic::class.java, EnrichedItalicSpan())
+        val ctx = popTag(tag) ?: return
+        applyInline(ctx) { EnrichedItalicSpan() }
         return
       }
 
       HtmlTags.UNDERLINE -> {
-        end(mSpannableStringBuilder, Underline::class.java, EnrichedUnderlineSpan())
+        val ctx = popTag(tag) ?: return
+        applyInline(ctx) { EnrichedUnderlineSpan() }
         return
       }
 
-      HtmlTags.STRIKE_THROUGH, HtmlTags.STRIKE -> {
-        end(mSpannableStringBuilder, Strikethrough::class.java, EnrichedStrikeThroughSpan())
-        return
-      }
-
-      HtmlTags.BLOCK_QUOTE -> {
-        endBlockquote(mSpannableStringBuilder, mStyle)
-        return
-      }
-
-      HtmlTags.CODE_BLOCK -> {
-        endCodeBlock(mSpannableStringBuilder, mStyle)
-        return
-      }
-
-      HtmlTags.LINK -> {
-        endA(mSpannableStringBuilder, mStyle)
-        return
-      }
-
-      HtmlTags.H1 -> {
-        endHeading(mSpannableStringBuilder, mStyle, 1)
-        return
-      }
-
-      HtmlTags.H2 -> {
-        endHeading(mSpannableStringBuilder, mStyle, 2)
-        return
-      }
-
-      HtmlTags.H3 -> {
-        endHeading(mSpannableStringBuilder, mStyle, 3)
-        return
-      }
-
-      HtmlTags.H4 -> {
-        endHeading(mSpannableStringBuilder, mStyle, 4)
-        return
-      }
-
-      HtmlTags.H5 -> {
-        endHeading(mSpannableStringBuilder, mStyle, 5)
-        return
-      }
-
-      HtmlTags.H6 -> {
-        endHeading(mSpannableStringBuilder, mStyle, 6)
+      HtmlTags.STRIKE, HtmlTags.STRIKE_THROUGH -> {
+        val ctx = popTag(tag) ?: return
+        applyInline(ctx) { EnrichedStrikeThroughSpan() }
         return
       }
 
       HtmlTags.CODE_INLINE -> {
-        end(mSpannableStringBuilder, Code::class.java, EnrichedInlineCodeSpan(mStyle))
+        val ctx = popTag(tag) ?: return
+        applyInline(ctx) { EnrichedInlineCodeSpan(mStyle) }
         return
       }
 
+      HtmlTags.BLOCK_QUOTE -> {
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedBlockQuoteSpan(mStyle),
+          isEmptyTag,
+        )
+        return
+      }
+
+      HtmlTags.CODE_BLOCK -> {
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedCodeBlockSpan(mStyle),
+          isEmptyTag,
+        )
+        return
+      }
+
+      HtmlTags.LINK -> {
+        val ctx = popTag(tag) ?: return
+        val href = ctx.attributes?.getValue("", "href") ?: return
+
+        applyInline(ctx) {
+          EnrichedLinkSpan(href, mStyle)
+        }
+        return
+      }
+
+      HtmlTags.H1 -> {
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedH1Span(mStyle),
+          isEmptyTag,
+        )
+      }
+
+      HtmlTags.H2 -> {
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedH2Span(mStyle),
+          isEmptyTag,
+        )
+      }
+
+      HtmlTags.H3 -> {
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedH3Span(mStyle),
+          isEmptyTag,
+        )
+      }
+
+      HtmlTags.H4 -> {
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedH4Span(mStyle),
+          isEmptyTag,
+        )
+      }
+
+      HtmlTags.H5 -> {
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedH5Span(mStyle),
+          isEmptyTag,
+        )
+      }
+
+      HtmlTags.H6 -> {
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedH6Span(mStyle),
+          isEmptyTag,
+        )
+      }
+
       HtmlTags.MENTION -> {
-        endMention(mSpannableStringBuilder, mStyle)
+        val ctx = popTag(tag) ?: return
+        val text = ctx.attributes?.getValue("", "text") ?: return
+        val indicator = ctx.attributes.getValue("", "indicator") ?: ""
+
+        val attrs = mutableMapOf<String, String>()
+        ctx.attributes.let { a ->
+          for (i in 0 until a.length) {
+            val name = a.getLocalName(i)
+            if (name != "text" && name != "indicator") {
+              attrs[name] = a.getValue(i)
+            }
+          }
+        }
+
+        applyInline(ctx) {
+          EnrichedMentionSpan(text, indicator, attrs, mStyle)
+        }
         return
       }
 
       HtmlTags.CHECKLIST -> {
-        endCheckList(mSpannableStringBuilder, mStyle)
+        val isChecked = popTag(tag)?.attributes?.getValue("", "checked") == "true"
+        endParagraphTag(
+          mSpannableStringBuilder,
+          tag,
+          EnrichedChecklistSpan(mStyle, isChecked),
+          isEmptyTag,
+        )
         return
       }
 
       HtmlTags.FONT -> {
-        endFont(mSpannableStringBuilder)
+        val ctx = popTag(tag) ?: return
+        val colorValue = ctx.attributes?.getValue("", "color") ?: return
+        val color = parseCssColor(colorValue)
+
+        applyInline(ctx) {
+          EnrichedColoredSpan(color)
+        }
         return
       }
 
@@ -349,50 +394,122 @@ class HtmlToSpannedConverter(
     }
   }
 
-  private fun startLi(text: Editable) {
-    startBlockElement(text, null)
+  private fun startListItem(
+    text: Editable,
+    tag: String,
+    attributes: Attributes?,
+  ) {
+    if (currentListItemIndex != 0) {
+      appendNewlines(text, 1)
+    }
 
-    if (isInOrderedList) {
-      currentOrderedListItemIndex++
-      start(text, List(HtmlTags.ORDERED_LIST, currentOrderedListItemIndex))
+    currentListItemIndex++
+
+    pushTag(tag, attributes)
+  }
+
+  private fun endListItem(text: Editable) {
+    val ctx = popTag(HtmlTags.LIST_ITEM) ?: return
+
+    var end = text.length
+    if (isEmptyTag) {
+      text.append(Strings.ZERO_WIDTH_SPACE_CHAR)
+      end++
+    }
+
+    if (end > ctx.start && text[end - 1] == Strings.NEWLINE) {
+      end--
+    }
+
+    val span = if (isInOrderedList) EnrichedOrderedListSpan(currentListItemIndex, mStyle) else EnrichedUnorderedListSpan(mStyle)
+
+    text.setSpan(span, ctx.start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    appendNewlines(text, 1)
+  }
+
+  private fun startParagraph(
+    text: Editable,
+    tag: String,
+    attributes: Attributes?,
+  ) {
+    appendNewlines(text, 1)
+    pushTag(tag, attributes)
+  }
+
+  private fun endParagraphTag(
+    text: Editable,
+    tag: String,
+    isEmptyTag: Boolean,
+  ) {
+    val ctx = popTag(tag) ?: return
+
+    var end = text.length
+    if (isEmptyTag) {
+      text.append(Strings.ZERO_WIDTH_SPACE_CHAR)
+      end++
+    }
+
+    if (end > ctx.start && text[end - 1] == Strings.NEWLINE) {
+      end--
+    }
+    addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
+    appendNewlines(text, 1)
+  }
+
+  private fun endParagraphTag(
+    text: Editable,
+    tag: String,
+    span: EnrichedSpan,
+    isEmptyTag: Boolean,
+  ) {
+    val ctx = popTag(tag) ?: return
+
+    var end = text.length
+    if (isEmptyTag) {
+      text.append(Strings.ZERO_WIDTH_SPACE_CHAR)
+      end++
+    }
+
+    if (end > ctx.start && text[end - 1] == Strings.NEWLINE) {
+      end--
+    }
+
+    val isSimpleParagraph = ctx.tag == HtmlTags.PARAGRAPH
+
+    if (isSimpleParagraph) {
+      addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
     } else {
-      start(text, List(HtmlTags.UNORDERED_LIST, 0))
+      addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
+      text.setSpan(span, ctx.start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
+
+    appendNewlines(text, 1)
   }
 
-  private fun startChecklist(
+  private fun addAlignmentSpanIfNeeded(
     text: Editable,
+    start: Int,
+    end: Int,
     attributes: Attributes?,
   ) {
-    if (attributes == null) {
-      return
-    }
-    val checked = attributes.getValue("checked") == "true"
+    if (attributes == null) return
 
-    startBlockElement(text, attributes)
-    start(text, Checklist(checked))
-  }
+    val alignmentString = attributes.getValue("", "alignment")
+    if (alignmentString == null) return
 
-  private fun startBlockquote(
-    text: Editable,
-    attributes: Attributes?,
-  ) {
-    startBlockElement(text, attributes)
-    start(text, Blockquote())
-  }
-
-  private fun startCodeBlock(
-    text: Editable,
-    attributes: Attributes?,
-  ) {
-    startBlockElement(text, attributes)
-    start(text, CodeBlock())
+    text.setSpan(
+      EnrichedAlignmentSpan(alignmentString),
+      start,
+      end,
+      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+    )
   }
 
   private fun addContent(
     editable: Editable,
     attributes: Attributes?,
     htmlStyle: HtmlStyle,
+    isEmptyTag: Boolean,
   ) {
     if (attributes == null) {
       return
@@ -410,6 +527,9 @@ class HtmlToSpannedConverter(
         attributesMap.put(localName, attributes.getValue(i))
       }
     }
+    if (isEmptyTag) {
+      editable.append(Strings.NEWLINE)
+    }
     val builder = SpannableStringBuilder()
     builder.append(Strings.MAGIC_CHAR)
     val span =
@@ -422,33 +542,8 @@ class HtmlToSpannedConverter(
       )
     span.attachTo(textInputView)
     builder.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    editable.append(Strings.NEWLINE)
     editable.append(builder)
     editable.append(Strings.NEWLINE)
-  }
-
-  private fun endA(
-    text: Editable,
-    style: HtmlStyle,
-  ) {
-    val h: Href? = getLast(text, Href::class.java)
-    if (h != null) {
-      if (h.mHref != null) {
-        setSpanFromMark(text, h, EnrichedLinkSpan(h.mHref!!, style))
-      }
-    }
-  }
-
-  private fun endMention(
-    text: Editable,
-    style: HtmlStyle,
-  ) {
-    val m: Mention? = getLast(text, Mention::class.java)
-
-    if (m == null) return
-    if (m.mText == null) return
-
-    setSpanFromMark(text, m, EnrichedMentionSpan(m.mText!!, m.mIndicator, m.mAttributes, style))
   }
 
   override fun setDocumentLocator(locator: Locator?) {}
@@ -460,7 +555,8 @@ class HtmlToSpannedConverter(
   override fun startPrefixMapping(
     prefix: String?,
     uri: String?,
-  ) {}
+  ) {
+  }
 
   override fun endPrefixMapping(prefix: String?) {}
 
@@ -496,19 +592,20 @@ class HtmlToSpannedConverter(
     for (i in 0..<length) {
       val c = ch[i + start]
       if (c == Strings.SPACE_CHAR || c == Strings.NEWLINE) {
-        val pred: Char
+        val prev: Char
         var len = sb.length
         if (len == 0) {
           len = mSpannableStringBuilder.length
-          if (len == 0) {
-            pred = Strings.NEWLINE
-          } else {
-            pred = mSpannableStringBuilder.get(len - 1)
-          }
+          prev =
+            if (len == 0) {
+              Strings.NEWLINE
+            } else {
+              mSpannableStringBuilder[len - 1]
+            }
         } else {
-          pred = sb.get(len - 1)
+          prev = sb[len - 1]
         }
-        if (pred != Strings.SPACE_CHAR && pred != Strings.NEWLINE) {
+        if (prev != Strings.SPACE_CHAR && prev != Strings.NEWLINE) {
           sb.append(Strings.SPACE_CHAR)
         }
       } else {
@@ -522,77 +619,24 @@ class HtmlToSpannedConverter(
     ch: CharArray?,
     start: Int,
     length: Int,
-  ) {}
+  ) {
+  }
 
   override fun processingInstruction(
     target: String?,
     data: String?,
-  ) {}
+  ) {
+  }
+
+  private data class TagContext(
+    val tag: String,
+    val start: Int,
+    val attributes: Attributes?,
+  )
 
   override fun skippedEntity(name: String?) {}
 
-  private class H1
-
-  private class H2
-
-  private class H3
-
-  private class H4
-
-  private class H5
-
-  private class H6
-
-  private class Bold
-
-  private class Italic
-
-  private class Underline
-
-  private class Code
-
-  private class CodeBlock
-
-  private class Strikethrough
-
-  private class Blockquote
-
-  private class List(
-    var mType: String,
-    var mIndex: Int,
-  )
-
-  private class Checklist(
-    var mChecked: Boolean,
-  )
-
-  private class Font(
-    var color: Int,
-  )
-
-  private class Mention(
-    var mIndicator: String,
-    var mText: String?,
-    var mAttributes: MutableMap<String, String>,
-  )
-
-  private class Href(
-    var mHref: String?,
-  )
-
-  private class Newline(
-    val numNewLines: Int,
-  )
-
-  private class Alignment(
-    val mAlignment: Layout.Alignment,
-  )
-
   companion object {
-    private var currentOrderedListItemIndex = 0
-    private var isInOrderedList = false
-    private var isEmptyTag = false
-
     private fun appendNewlines(
       text: Editable,
       minNewline: Int,
@@ -612,154 +656,19 @@ class HtmlToSpannedConverter(
       }
     }
 
-    private fun startBlockElement(
-      text: Editable,
-      attributes: Attributes?,
-    ) {
-      appendNewlines(text, 1)
-      start(text, Newline(1))
-      startAlignment(text, attributes)
-    }
-
-    private fun endBlockElementWithoutAlignment(text: Editable) {
-      val n: Newline? = getLast(text, Newline::class.java)
-      if (n != null) {
-        appendNewlines(text, n.numNewLines)
-        text.removeSpan(n)
-      }
-    }
-
-    private fun endBlockElement(text: Editable) {
-      val n: Newline? = getLast(text, Newline::class.java)
-      if (n != null) {
-        appendNewlines(text, n.numNewLines)
-        text.removeSpan(n)
-      }
-      endAlignment(text)
-    }
-
     private fun handleBr(text: Editable) {
-      text.append('\n')
-    }
-
-    private fun endCheckList(
-      text: Editable,
-      style: HtmlStyle,
-    ) {
-      endBlockElement(text)
-      val last: Checklist? = getLast(text, Checklist::class.java)
-
-      if (last == null) {
-        return
-      }
-
-      setParagraphSpanFromMark(text, last, EnrichedChecklistSpan(style, last.mChecked))
-    }
-
-    private fun endLi(
-      text: Editable,
-      style: HtmlStyle,
-    ) {
-      endBlockElementWithoutAlignment(text)
-
-      val l: List? = getLast(text, List::class.java)
-      if (l != null) {
-        if (l.mType == HtmlTags.ORDERED_LIST) {
-          setParagraphSpanFromMark(text, l, EnrichedOrderedListSpan(l.mIndex, style))
-        } else {
-          setParagraphSpanFromMark(text, l, EnrichedUnorderedListSpan(style))
-        }
-      }
-
-      endBlockElementWithoutAlignment(text)
-    }
-
-    private fun endBlockquote(
-      text: Editable,
-      style: HtmlStyle,
-    ) {
-      endBlockElement(text)
-      val last: Blockquote? = getLast(text, Blockquote::class.java)
-      setParagraphSpanFromMark(text, last, EnrichedBlockQuoteSpan(style))
-    }
-
-    private fun endCodeBlock(
-      text: Editable,
-      style: HtmlStyle,
-    ) {
-      endBlockElement(text)
-      val last: CodeBlock? = getLast(text, CodeBlock::class.java)
-      setParagraphSpanFromMark(text, last, EnrichedCodeBlockSpan(style))
-    }
-
-    private fun startHeading(
-      text: Editable,
-      level: Int,
-      attributes: Attributes?,
-    ) {
-      startBlockElement(text, attributes)
-
-      when (level) {
-        1 -> start(text, H1())
-        2 -> start(text, H2())
-        3 -> start(text, H3())
-        4 -> start(text, H4())
-        5 -> start(text, H5())
-        6 -> start(text, H6())
-        else -> throw IllegalArgumentException("Unsupported heading level: " + level)
-      }
-    }
-
-    private fun endHeading(
-      text: Editable,
-      style: HtmlStyle,
-      level: Int,
-    ) {
-      endBlockElement(text)
-
-      when (level) {
-        1 -> {
-          val lastH1: H1? = getLast(text, H1::class.java)
-          setParagraphSpanFromMark(text, lastH1, EnrichedH1Span(style))
-        }
-
-        2 -> {
-          val lastH2: H2? = getLast(text, H2::class.java)
-          setParagraphSpanFromMark(text, lastH2, EnrichedH2Span(style))
-        }
-
-        3 -> {
-          val lastH3: H3? = getLast(text, H3::class.java)
-          setParagraphSpanFromMark(text, lastH3, EnrichedH3Span(style))
-        }
-
-        4 -> {
-          val lastH4: H4? = getLast(text, H4::class.java)
-          setParagraphSpanFromMark(text, lastH4, EnrichedH4Span(style))
-        }
-
-        5 -> {
-          val lastH5: H5? = getLast(text, H5::class.java)
-          setParagraphSpanFromMark(text, lastH5, EnrichedH5Span(style))
-        }
-
-        6 -> {
-          val lastH6: H6? = getLast(text, H6::class.java)
-          setParagraphSpanFromMark(text, lastH6, EnrichedH6Span(style))
-        }
-
-        else -> {
-          throw IllegalArgumentException("Unsupported heading level: $level")
-        }
-      }
+      text.append(Strings.NEWLINE)
     }
 
     private fun addHr(
       text: Editable,
       htmlStyle: HtmlStyle,
+      isEmptyTag: Boolean,
     ) {
+      if (isEmptyTag) {
+        text.append(Strings.NEWLINE)
+      }
       val builder = SpannableStringBuilder()
-      text.append(Strings.NEWLINE)
       builder.append(Strings.MAGIC_CHAR)
       builder.setSpan(
         EnrichedHorizontalRuleSpan(htmlStyle),
@@ -769,83 +678,6 @@ class HtmlToSpannedConverter(
       )
       text.append(builder)
       text.append(Strings.NEWLINE)
-    }
-
-    private fun <T> getLast(
-      text: Spanned,
-      kind: Class<T>,
-    ): T? {
-      /*
-* This knows that the last returned object from getSpans()
-* will be the most recently added.
-*/
-      val objs = text.getSpans(0, text.length, kind)
-      return if (objs.size == 0) {
-        null
-      } else {
-        objs[objs.size - 1]
-      }
-    }
-
-    private fun setSpanFromMark(
-      text: Spannable,
-      mark: Any?,
-      vararg spans: Any?,
-    ) {
-      val where = text.getSpanStart(mark)
-      text.removeSpan(mark)
-      val len = text.length
-      if (where != len) {
-        for (span in spans) {
-          text.setSpan(span, where, len, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        }
-      }
-    }
-
-    private fun setParagraphSpanFromMark(
-      text: Editable,
-      mark: Any?,
-      vararg spans: Any?,
-    ) {
-      val where = text.getSpanStart(mark)
-      text.removeSpan(mark)
-      var len = text.length
-
-      // Block spans require at least one character to be applied.
-      if (isEmptyTag) {
-        text.append(Strings.ZERO_WIDTH_SPACE_CHAR)
-        len++
-      }
-
-      // Adjust the end position to exclude the newline character, if present
-      if (len > 0 && text.get(len - 1) == Strings.NEWLINE) {
-        len--
-      }
-
-      if (where != len) {
-        for (span in spans) {
-          text.setSpan(span, where, len, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        }
-      }
-    }
-
-    private fun start(
-      text: Editable,
-      mark: Any?,
-    ) {
-      val len = text.length
-      text.setSpan(mark, len, len, Spannable.SPAN_INCLUSIVE_EXCLUSIVE)
-    }
-
-    private fun end(
-      text: Editable,
-      kind: Class<*>,
-      repl: Any,
-    ) {
-      val obj: Any? = getLast(text, kind)
-      if (obj != null) {
-        setSpanFromMark(text, obj, repl)
-      }
     }
 
     private fun startImg(
@@ -867,88 +699,15 @@ class HtmlToSpannedConverter(
           width.toInt(),
           height.toInt(),
         )
-      text.append(Strings.SPACE_CHAR)
+      text.append(Strings.MAGIC_CHAR)
       text.setSpan(span, len, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-    }
-
-    private fun startA(
-      text: Editable,
-      attributes: Attributes?,
-    ) {
-      if (attributes == null) {
-        return
-      }
-      val href = attributes.getValue("", "href")
-      start(text, Href(href))
-    }
-
-    private fun startFont(
-      text: Editable,
-      attributes: Attributes?,
-    ) {
-      if (attributes == null) {
-        return
-      }
-
-      val color: Int = parseCssColor(attributes.getValue("", "color"))
-
-      start(text, Font(color))
-    }
-
-    private fun endFont(text: Editable) {
-      val font: Font? = getLast(text, Font::class.java)
-
-      if (font == null) {
-        return
-      }
-
-      setSpanFromMark(text, font, EnrichedColoredSpan(font.color))
-    }
-
-    private fun startAlignment(
-      text: Editable,
-      attributes: Attributes?,
-    ) {
-      if (attributes == null) return
-
-      val alignmentString = attributes.getValue("", "alignment")
-      if (alignmentString == null) return
-
-      val alignment =
-        when (alignmentString.lowercase()) {
-          "center" -> Layout.Alignment.ALIGN_CENTER
-          "right" -> Layout.Alignment.ALIGN_OPPOSITE
-          "left" -> Layout.Alignment.ALIGN_NORMAL
-          else -> null
-        }
-
-      if (alignment != null) {
-        start(text, Alignment(alignment))
-      }
-    }
-
-    private fun endAlignment(text: Editable) {
-      val mark: Alignment? = getLast(text, Alignment::class.java) ?: return
-      if (mark == null) {
-        return
-      }
-      val where = text.getSpanStart(mark)
-      text.removeSpan(mark)
-      val end = text.length
-
-      text.setSpan(
-        EnrichedAlignmentSpan(mark.mAlignment.toStringName()),
-        where,
-        end,
-        Spanned.SPAN_INCLUSIVE_EXCLUSIVE,
-      )
     }
 
     private fun parseCssColor(css: String?): Int {
       var css = css
       if (css == null) return Color.BLACK
 
-      css = css.trim { it <= ' ' }
+      css = css.trim { it <= Strings.SPACE_CHAR }
 
       try {
         return css.toColorInt()
@@ -962,9 +721,9 @@ class HtmlToSpannedConverter(
             .split(",".toRegex())
             .dropLastWhile { it.isEmpty() }
             .toTypedArray()
-        val r = parts[0]!!.trim { it <= ' ' }.toInt()
-        val g = parts[1]!!.trim { it <= ' ' }.toInt()
-        val b = parts[2]!!.trim { it <= ' ' }.toInt()
+        val r = parts[0]!!.trim { it <= Strings.SPACE_CHAR }.toInt()
+        val g = parts[1]!!.trim { it <= Strings.SPACE_CHAR }.toInt()
+        val b = parts[2]!!.trim { it <= Strings.SPACE_CHAR }.toInt()
         return Color.rgb(r, g, b)
       }
 
@@ -975,36 +734,14 @@ class HtmlToSpannedConverter(
             .split(",".toRegex())
             .dropLastWhile { it.isEmpty() }
             .toTypedArray()
-        val r = parts[0]!!.trim { it <= ' ' }.toInt()
-        val g = parts[1]!!.trim { it <= ' ' }.toInt()
-        val b = parts[2]!!.trim { it <= ' ' }.toInt()
-        val a = parts[3]!!.trim { it <= ' ' }.toFloat()
+        val r = parts[0]!!.trim { it <= Strings.SPACE_CHAR }.toInt()
+        val g = parts[1]!!.trim { it <= Strings.SPACE_CHAR }.toInt()
+        val b = parts[2]!!.trim { it <= Strings.SPACE_CHAR }.toInt()
+        val a = parts[3]!!.trim { it <= Strings.SPACE_CHAR }.toFloat()
         return Color.argb((a * 255).toInt(), r, g, b)
       }
 
       return Color.BLACK
-    }
-
-    private fun startMention(
-      mention: Editable,
-      attributes: Attributes?,
-    ) {
-      if (attributes == null) {
-        return
-      }
-      val text = attributes.getValue("", "text")
-      val indicator = attributes.getValue("", "indicator")
-
-      val attributesMap: MutableMap<String, String> = HashMap()
-      for (i in 0..<attributes.length) {
-        val localName = attributes.getLocalName(i)
-
-        if ("text" != localName && "indicator" != localName) {
-          attributesMap.put(localName, attributes.getValue(i))
-        }
-      }
-
-      start(mention, Mention(indicator, text, attributesMap))
     }
   }
 }

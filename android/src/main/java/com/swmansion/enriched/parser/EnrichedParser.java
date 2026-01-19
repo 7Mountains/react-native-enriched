@@ -67,9 +67,8 @@ public class EnrichedParser {
       // Should not happen.
       throw new RuntimeException(e);
     }
-    HtmlToSpannedConverter converter =
-        new HtmlToSpannedConverter(source, style, imageGetter, parser, textInputView);
-    return converter.convert();
+
+    return new HtmlToSpannedConverter(source, style, imageGetter, parser, textInputView).convert();
   }
 
   public static String toHtml(Spanned text) {
