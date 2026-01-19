@@ -296,7 +296,8 @@ interface NativeCommands {
   ) => void;
   requestHTML: (
     viewRef: React.ElementRef<ComponentType>,
-    requestId: Int32
+    requestId: Int32,
+    pretify: boolean
   ) => void;
   toggleCheckList: (viewRef: React.ElementRef<ComponentType>) => void;
   setColor: (viewRef: React.ElementRef<ComponentType>, color: string) => void;

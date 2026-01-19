@@ -19,7 +19,7 @@
     "cpp",
     "tsconfig.build.json",
     "tsconfig.json",
-     "lib",
+    "lib",
     "*.podspec",
     "react-native.config.js",
     "!ios/build",

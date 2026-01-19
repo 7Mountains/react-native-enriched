@@ -8,11 +8,9 @@ import {
 } from 'react-native';
 import {
   EnrichedTextInput,
-  type OnChangeTextEvent,
   type EnrichedTextInputInstance,
   type OnLinkDetected,
   type OnChangeMentionEvent,
-  type OnChangeHtmlEvent,
   type OnChangeStateEvent,
   type OnChangeSelectionEvent,
   type HtmlStyle,
@@ -35,6 +33,7 @@ import {
   prepareImageDimensions,
 } from './utils/prepareImageDimensions';
 import ColorPreview from './components/ColorPreview';
+import { Rectangle } from './Rectangle';
 
 type StylesState = OnChangeStateEvent;
 
@@ -87,7 +86,7 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 200) => {
+const generateHugeHtml = (repeat = 500) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -160,7 +159,7 @@ export default function App() {
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isValueModalOpen, setIsValueModalOpen] = useState(false);
-  const [currentHtml, setCurrentHtml] = useState('');
+  const [currentHtml] = useState('');
   const [paragraphAlignment, setParagraphAlignment] =
     useState<string>('default');
 
@@ -182,15 +181,6 @@ export default function App() {
     selection &&
     selection.start >= currentLink.start &&
     selection.end <= currentLink.end;
-
-  const handleChangeText = (e: OnChangeTextEvent) => {
-    console.log('Text changed:', e.value);
-  };
-
-  const handleChangeHtml = (e: OnChangeHtmlEvent) => {
-    console.log('HTML changed:', e.value);
-    setCurrentHtml(e.value);
-  };
 
   const handleChangeState = (state: OnChangeStateEvent) => {
     setStylesState(state);
@@ -383,13 +373,15 @@ export default function App() {
         <Text style={styles.label}>
           Enriched Text Input {paragraphAlignment}
         </Text>
+        <Rectangle />
         <Button
           title="Request html"
           onPress={async () => {
             const start = performance.now();
+            console.log('Requesting HTML...');
             const result = await ref.current?.getHTML();
             const end = performance.now();
-            console.log('HTML:', result?.length);
+            console.log('HTML:', result);
             console.log('Time taken:', end - start, 'ms');
           }}
         />

@@ -1291,7 +1291,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self setCustomSelection:start end:end];
   } else if ([commandName isEqualToString:@"requestHTML"]) {
     NSInteger requestId = [((NSNumber *)args[0]) integerValue];
-    [self requestHTML:requestId];
+    BOOL pretify = args[1];
+    [self requestHTML:requestId pretify:pretify];
   } else if ([commandName isEqualToString:@"toggleCheckList"]) {
     [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
   } else if ([commandName isEqualToString:@"addDividerAtNewLine"]) {
@@ -1527,23 +1528,26 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
   }
 }
-- (void)requestHTML:(NSInteger)requestId {
+- (void)requestHTML:(NSInteger)requestId pretify:(BOOL)pretify {
   auto emitter = [self getEventEmitter];
   if (!emitter) {
     return;
   }
 
-  [self->parser parseToHTMLAsync:^(NSString *_Nullable html,
-                                   NSError *_Nullable error) {
-    if (error || !html) {
-      emitter->onRequestHtmlResult({.requestId = static_cast<int>(requestId),
-                                    .html = folly::dynamic(nullptr)});
-      return;
-    }
+  [self->parser parseToHTMLAsync:pretify,
+                      completion:^(NSString *_Nullable html,
+                                   NSError *_Nullable error)completion {
+                        if (error || !html) {
+                          emitter->onRequestHtmlResult(
+                              {.requestId = static_cast<int>(requestId),
+                               .html = folly::dynamic(nullptr)});
+                          return;
+                        }
 
-    emitter->onRequestHtmlResult(
-        {.requestId = static_cast<int>(requestId), .html = [html toCppString]});
-  }];
+                        emitter->onRequestHtmlResult(
+                            {.requestId = static_cast<int>(requestId),
+                             .html = [html toCppString]});
+                      }];
 }
 
 // MARK: - Styles manipulation

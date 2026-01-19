@@ -87,7 +87,7 @@ class EnrichedSpanWatcher(
     if (what != null && what !is EnrichedSpan) return
 
     val html = EnrichedParser.toHtml(s)
-    if (html == previousHtml) return
+    if (html == previousHtml || html == null) return
 
     previousHtml = html
     val context = view.context as ReactContext

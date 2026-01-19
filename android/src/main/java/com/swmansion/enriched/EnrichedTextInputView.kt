@@ -710,10 +710,13 @@ class EnrichedTextInputView : AppCompatEditText {
 
   fun removeColor() = inlineStyles?.removeColorSpan()
 
-  fun requestHTML(requestId: Int) {
+  fun requestHTML(
+    requestId: Int,
+    pretify: Boolean,
+  ) {
     val html =
       try {
-        EnrichedParser.toHtmlWithDefault(text)
+        EnrichedParser.toHtmlWithDefault(text, pretify)
       } catch (e: Exception) {
         null
       }

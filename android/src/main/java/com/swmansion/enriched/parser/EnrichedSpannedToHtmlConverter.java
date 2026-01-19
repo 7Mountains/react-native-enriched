@@ -23,9 +23,16 @@ import java.util.Map;
 public class EnrichedSpannedToHtmlConverter {
 
   private final Spanned text;
+  private final boolean pretify;
+
+  public EnrichedSpannedToHtmlConverter(Spanned text, boolean pretify) {
+    this.text = text;
+    this.pretify = pretify;
+  }
 
   public EnrichedSpannedToHtmlConverter(Spanned text) {
     this.text = text;
+    this.pretify = false;
   }
 
   public String convert() {
@@ -108,7 +115,9 @@ public class EnrichedSpannedToHtmlConverter {
           }
 
           appendSelfClosingTag(out, tag, attrs);
-          out.append(Strings.NEWLINE);
+          if (pretify) {
+            out.append(Strings.NEWLINE);
+          }
           next++;
           continue;
         }
@@ -180,7 +189,7 @@ public class EnrichedSpannedToHtmlConverter {
 
   private void appendClosingTag(StringBuilder out, String tag, boolean withNewLine) {
     out.append(Strings.LT_SLASH).append(tag).append(Strings.GT);
-    if (withNewLine) out.append(Strings.NEWLINE);
+    if (withNewLine && pretify) out.append(Strings.NEWLINE);
   }
 
   private void appendOpenTagWithAttributes(
@@ -190,7 +199,7 @@ public class EnrichedSpannedToHtmlConverter {
     appendAttributes(out, attrs);
     out.append(Strings.GT);
 
-    if (withNewLine) out.append(Strings.NEWLINE);
+    if (withNewLine && pretify) out.append(Strings.NEWLINE);
   }
 
   private void appendAttributes(StringBuilder out, Map<String, String> attrs) {
