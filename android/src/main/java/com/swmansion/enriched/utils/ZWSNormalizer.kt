@@ -1,14 +1,11 @@
 package com.swmansion.enriched.utils
 
-import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
-import android.util.Log
 import com.swmansion.enriched.constants.Strings
 
 object ZWSNormalizer {
-  fun normalizeNonEmptyParagraphs(spannable: Spannable): Boolean {
-    var changed = false
+  fun normalizeNonEmptyParagraphs(spannable: Spannable) {
     var index = 0
 
     while (index < spannable.length) {
@@ -16,28 +13,17 @@ object ZWSNormalizer {
       val pEnd = findParagraphEnd(spannable, index)
       val text = spannable.subSequence(pStart, pEnd).toString()
 
-      val isEmpty =
+      val isEmptyParagraphWithZWS =
         text.all {
           (it == Strings.NEWLINE || it == Strings.ZERO_WIDTH_SPACE_CHAR) && it != Strings.MAGIC_CHAR
         }
 
-      if (!isEmpty) {
-        if (Strings.ZERO_WIDTH_SPACE_CHAR in text) {
-          val cleaned = text.replace(Strings.ZERO_WIDTH_SPACE_STRING, "")
-          when (spannable) {
-            is Editable -> spannable.replace(pStart, pEnd, cleaned)
-            is SpannableStringBuilder -> spannable.replace(pStart, pEnd, cleaned)
-            else -> return false
-          }
-
-          changed = true
-        }
+      if (!isEmptyParagraphWithZWS) {
+        (spannable as SpannableStringBuilder).removeZWS(pStart, pEnd)
       }
 
       index = pEnd + 1
     }
-
-    return changed
   }
 
   private fun findParagraphStart(
