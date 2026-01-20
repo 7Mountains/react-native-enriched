@@ -209,14 +209,21 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   [self setNeedsLayout];
 }
 
+- (void)setTypingAttributes:
+    (NSDictionary<NSAttributedStringKey, id> *)typingAttributes {
+  [super setTypingAttributes:typingAttributes];
+  if (self.textStorage.length == 0) {
+    [self refreshPlaceholder];
+  }
+}
+
 - (void)refreshPlaceholder {
   EnrichedTextInputView *typedInput = (EnrichedTextInputView *)_input;
   if (typedInput == nullptr) {
     return;
   }
 
-  NSMutableDictionary *attributes =
-      [typedInput->defaultTypingAttributes mutableCopy];
+  NSMutableDictionary *attributes = [self.typingAttributes mutableCopy];
 
   if (_placeholderColor) {
     attributes[NSForegroundColorAttributeName] = _placeholderColor;
@@ -232,7 +239,6 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 
   [self setNeedsLayout];
 }
-
 - (void)layoutSubviews {
   [super layoutSubviews];
 
