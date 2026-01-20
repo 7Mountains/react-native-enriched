@@ -151,6 +151,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 
   NSString *text = input->textView.textStorage.string;
   NSUInteger textLength = text.length;
+  CGFloat gap = input->config.blockquoteGapWidth;
 
   [text
       enumerateSubstringsInRange:visibleCharRange
@@ -179,7 +180,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                               input->config.blockquoteBorderColor
                         };
 
-                        __block BOOL didDraw = NO;
+                        __block BOOL isFirstLine = YES;
 
                         [self
                             enumerateLineFragmentsForGlyphRange:glyphRange
@@ -190,49 +191,41 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                                              *container,
                                                          NSRange lineGlyphRange,
                                                          BOOL *stop) {
-                                                       if (didDraw) {
-                                                         *stop = YES;
-                                                         return;
-                                                       }
-
-                                                       CGFloat lineLeft =
-                                                           origin.x +
-                                                           rect.origin.x;
+                                                       CGFloat y =
+                                                           origin.y +
+                                                           rect.origin.y;
                                                        CGFloat textLeft =
-                                                           lineLeft +
+                                                           origin.x +
+                                                           rect.origin.x +
                                                            usedRect.origin.x;
                                                        CGFloat textRight =
                                                            textLeft +
                                                            usedRect.size.width;
 
-                                                       CGFloat y =
-                                                           origin.y +
-                                                           rect.origin.y;
+                                                       if (isFirstLine) {
+                                                         [@"“" drawAtPoint:
+                                                                   CGPointMake(
+                                                                       textLeft -
+                                                                           gap *
+                                                                               2,
+                                                                       y)
+                                                             withAttributes:
+                                                                 drawAttrs];
+                                                         isFirstLine = NO;
+                                                       }
 
-                                                       NSString *open = @"“";
-                                                       NSString *close = @"”";
-
-                                                       CGSize openSize = [open
-                                                           sizeWithAttributes:
-                                                               drawAttrs];
-
-                                                       [open drawAtPoint:
-                                                                 CGPointMake(
-                                                                     textLeft -
-                                                                         openSize
-                                                                             .width,
-                                                                     y)
-                                                           withAttributes:
-                                                               drawAttrs];
-                                                       [close drawAtPoint:
-                                                                  CGPointMake(
-                                                                      textRight,
-                                                                      y)
-                                                           withAttributes:
-                                                               drawAttrs];
-
-                                                       didDraw = YES;
-                                                       *stop = YES;
+                                                       if (NSMaxRange(
+                                                               lineGlyphRange) >=
+                                                           NSMaxRange(
+                                                               glyphRange)) {
+                                                         [@"”" drawAtPoint:
+                                                                   CGPointMake(
+                                                                       textRight +
+                                                                           gap,
+                                                                       y)
+                                                             withAttributes:
+                                                                 drawAttrs];
+                                                       }
                                                      }];
                       }];
 }

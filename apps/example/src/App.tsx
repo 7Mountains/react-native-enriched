@@ -533,7 +533,7 @@ const htmlStyle: HtmlStyle = {
   blockquote: {
     borderColor: 'navy',
     borderWidth: 4,
-    gapWidth: 16,
+    gapWidth: 4,
     color: 'black',
   },
   codeblock: {
