@@ -1,25 +1,10 @@
 package com.swmansion.enriched.utils
 
-import android.text.Editable
 import android.text.Spannable
-import android.text.SpannableStringBuilder
-import android.text.Spanned
 import android.util.Log
-import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
-import com.swmansion.enriched.styles.HtmlStyle
-
-fun Spannable.isListParagraph(
-  start: Int,
-  end: Int,
-): Boolean {
-  if (start < 0 || end > length || start >= end) return false
-
-  return getSpans(start, end, EnrichedUnorderedListSpan::class.java).isNotEmpty() ||
-    getSpans(start, end, EnrichedOrderedListSpan::class.java).isNotEmpty()
-}
 
 fun Spannable.expandUp(
   start: Int,
@@ -60,21 +45,31 @@ fun Spannable.expandDown(
   return cursor
 }
 
-fun Editable.paragraphRangeAt(index: Int): IntRange {
-  val start = lastIndexOf(Strings.NEWLINE, index - 1).let { if (it == -1) 0 else it + 1 }
-  val end = indexOf(Strings.NEWLINE, index).let { if (it == -1) length else it + 1 }
-  return start until end
-}
+fun Spannable.getListParagraphSpanClass(
+  pStart: Int,
+  pEnd: Int,
+): Class<out EnrichedSpan>? =
+  when {
+    getSpans(pStart, pEnd, EnrichedOrderedListSpan::class.java).isNotEmpty() -> {
+      EnrichedOrderedListSpan::class.java
+    }
 
-fun Editable.isParagraphZeroOrOneAndEmpty(range: IntRange): Boolean {
-  val text = substring(range)
+    getSpans(pStart, pEnd, EnrichedUnorderedListSpan::class.java).isNotEmpty() -> {
+      EnrichedUnorderedListSpan::class.java
+    }
 
-  if (text.length > 1) return false
-  if (text.isEmpty()) return true
+    getSpans(
+      pStart,
+      pEnd,
+      com.swmansion.enriched.spans.EnrichedChecklistSpan::class.java,
+    ).isNotEmpty() -> {
+      com.swmansion.enriched.spans.EnrichedChecklistSpan::class.java
+    }
 
-  val c = text[0]
-  return c == Strings.SPACE_CHAR || c == Strings.ZERO_WIDTH_SPACE_CHAR || c == Strings.NEWLINE
-}
+    else -> {
+      null
+    }
+  }
 
 fun <T> Spannable.getPreviousParagraphSpan(
   paragraphStart: Int,
@@ -98,74 +93,22 @@ fun <T> Spannable.getNextParagraphSpan(
   return spans.firstOrNull()
 }
 
-fun <T> Spannable.setContinuousSpan(
-  start: Int,
-  end: Int,
-  type: Class<T>,
-  html: HtmlStyle,
-) where T : EnrichedSpan {
-  val prev = getPreviousParagraphSpan(start, type)
-  val next = getNextParagraphSpan(end, type)
+fun Spannable.expandListBlockAtCursor(cursor: Int): IntRange? {
+  if (isEmpty()) return null
 
-  val template = prev ?: next
-  val newSpan = (template?.copy()) ?: type.getDeclaredConstructor(HtmlStyle::class.java).newInstance(html)
+  val safeCursor =
+    cursor.coerceIn(0, length.coerceAtLeast(1) - 1)
 
-  var newStart = start
-  var newEnd = end
+  val (pStart, pEnd) = getParagraphBounds(safeCursor)
 
-  prev?.let {
-    newStart = getSpanStart(it)
-    removeSpan(it)
+  val spanClass = getListParagraphSpanClass(pStart, pEnd) ?: return null
+
+  val sameClass: (Int, Int) -> Boolean = { s, e ->
+    getSpans(s, e, spanClass).isNotEmpty()
   }
 
-  next?.let {
-    newEnd = getSpanEnd(it)
-    removeSpan(it)
-  }
+  val blockStart = expandUp(pStart, sameClass)
+  val blockEnd = expandDown(pEnd, sameClass)
 
-  val (safeStart, safeEnd) = getSafeSpanBoundaries(newStart, newEnd)
-  setSpan(newSpan, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-}
-
-fun <T> Spannable.mergeOrSetSpan(
-  start: Int,
-  end: Int,
-  type: Class<T>,
-  html: HtmlStyle,
-) where T : EnrichedSpan {
-  val spans = getSpans(start, end, type)
-  if (spans.isEmpty()) {
-    val span = type.getDeclaredConstructor(HtmlStyle::class.java).newInstance(html)
-    val (s, e) = getSafeSpanBoundaries(start, end)
-    setSpan(span, s, e, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    return
-  }
-
-  val template = spans.first() as EnrichedSpan
-  spans.forEach { removeSpan(it) }
-
-  val merged = template.copy()
-  setSpan(merged, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-}
-
-fun <T> Spannable.removeSpansForRange(
-  start: Int,
-  end: Int,
-  clazz: Class<T>,
-): Boolean {
-  val ssb = this as SpannableStringBuilder
-  val spans = ssb.getSpans(start, end, clazz)
-  if (spans.isEmpty()) return false
-
-  var newStart = start
-  var newEnd = end
-
-  spans.forEach {
-    newStart = ssb.getSpanStart(it).coerceAtMost(newStart)
-    newEnd = ssb.getSpanEnd(it).coerceAtLeast(newEnd)
-    ssb.removeSpan(it)
-  }
-
-  ssb.replace(newStart, newEnd, ssb.substring(newStart, newEnd).replace("\u200B", ""))
-  return true
+  return blockStart until blockEnd
 }

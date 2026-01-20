@@ -21,10 +21,10 @@ import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.ParagraphUtils
 import com.swmansion.enriched.utils.expandDown
+import com.swmansion.enriched.utils.expandListBlockAtCursor
 import com.swmansion.enriched.utils.expandUp
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getParagraphsBounds
-import com.swmansion.enriched.utils.isListParagraph
 import com.swmansion.enriched.utils.removeZWS
 
 class ParagraphStyles(
@@ -260,16 +260,32 @@ class ParagraphStyles(
     val selection = view.selection ?: return
     val spanState = view.spanState ?: return
     val spannable = view.text as Spannable
-    var (start, end) = selection.getParagraphSelection()
+    val (start) = selection.getParagraphSelection()
+    val spannableStringBuilder = spannable as SpannableStringBuilder
+    val (pStart, pEnd) = spannableStringBuilder.getParagraphBounds(start)
+
+    val originalCursor = start
 
     spanState.setAlignmentStart(start, alignment)
 
-    if (start == end) {
-      view.text?.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
-      end = start + 1
+    if (pStart == pEnd) {
+      val zwsBuilder =
+        SpannableStringBuilder(Strings.ZERO_WIDTH_SPACE_STRING).apply {
+          setSpan(
+            EnrichedAlignmentSpan(alignment),
+            0,
+            1,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+          )
+        }
+
+      spannableStringBuilder.replace(pStart, pEnd, zwsBuilder)
+      view.selection.validateStyles()
+      return
     }
 
-    val (expandedStart, expandedEnd) = expandListRange(spannable, start, end)
+    val (expandedStart, expandedEnd) =
+      expandListRange(spannable, originalCursor, originalCursor)
 
     spannable
       .getSpans(expandedStart, expandedEnd, EnrichedAlignmentSpan::class.java)
@@ -294,22 +310,34 @@ class ParagraphStyles(
     val safeStart = start.coerceIn(0, spannable.length)
     val safeEnd = end.coerceIn(0, spannable.length)
 
-    if (!spannable.isListParagraph(safeStart, safeEnd)) {
-      return safeStart to safeEnd
+    val isCollapsed = safeStart == safeEnd
+
+    return if (isCollapsed) {
+      spannable
+        .expandListBlockAtCursor(safeStart)
+        ?.let { it.first to (it.last + 1) }
+        ?: (safeStart to safeEnd)
+    } else {
+      val newStart =
+        spannable.expandUp(safeStart) { pS, pE ->
+          paragraphIntersectsSelection(pS, pE, safeStart, safeEnd)
+        }
+
+      val newEnd =
+        spannable.expandDown(safeEnd) { pS, pE ->
+          paragraphIntersectsSelection(pS, pE, safeStart, safeEnd)
+        }
+
+      newStart to newEnd
     }
-
-    val newStart =
-      spannable.expandUp(safeStart) { pS, pE ->
-        spannable.isListParagraph(pS, pE)
-      }
-
-    val newEnd =
-      spannable.expandDown(safeEnd) { pS, pE ->
-        spannable.isListParagraph(pS, pE)
-      }
-
-    return newStart to newEnd
   }
+
+  private fun paragraphIntersectsSelection(
+    pStart: Int,
+    pEnd: Int,
+    selStart: Int,
+    selEnd: Int,
+  ): Boolean = pStart < selEnd && pEnd > selStart
 
   private fun createSpan(name: TextStyle): EnrichedSpan? =
     when (name) {

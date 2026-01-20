@@ -668,8 +668,7 @@ class HtmlToSpannedConverter(
       if (isEmptyTag) {
         text.append(Strings.NEWLINE)
       }
-      val builder = SpannableStringBuilder()
-      builder.append(Strings.MAGIC_CHAR)
+      val builder = SpannableStringBuilder(Strings.MAGIC_STRING)
       builder.setSpan(
         EnrichedHorizontalRuleSpan(htmlStyle),
         0,

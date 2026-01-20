@@ -10,29 +10,26 @@ object ParagraphSpanNormalizer {
   fun normalize(
     spannable: Spannable,
     cursor: Int,
-  ): Boolean {
-    if (spannable.isEmpty()) return false
+  ) {
+    if (spannable.isEmpty()) return
     val (pStart, pEnd) = spannable.getParagraphBounds(cursor)
 
-    val normalizedParagraph = normalizeParagraphStyle(spannable, pStart, pEnd)
-
-    val normalizedAlignment = normalizeAlignment(spannable, pStart, pEnd)
-
-    return normalizedParagraph || normalizedAlignment
+    normalizeParagraphStyle(spannable, pStart, pEnd)
+    normalizeAlignment(spannable, pStart, pEnd)
   }
 
   private fun normalizeParagraphStyle(
     spannable: Spannable,
     pStart: Int,
     pEnd: Int,
-  ): Boolean {
+  ) {
     val spans =
       spannable
         .getSpans(pStart, pEnd, EnrichedParagraphSpan::class.java)
         .filter { it !is EnrichedAlignmentSpan }
         .sortedBy { spannable.getSpanStart(it) }
 
-    if (spans.isEmpty()) return false
+    if (spans.isEmpty()) return
 
     if (spans.size == 1) {
       val span = spans[0]
@@ -43,9 +40,9 @@ object ParagraphSpanNormalizer {
         val nextStart = if (spanStart < pStart) spanStart else pStart
         spannable.removeSpan(span)
         spannable.setSpan(span.copy(), nextStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        return true
+        return
       }
-      return false
+      return
     }
 
     val winner = spans.first().copy()
@@ -53,23 +50,22 @@ object ParagraphSpanNormalizer {
     spans.forEach { spannable.removeSpan(it) }
 
     spannable.setSpan(winner, pStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    return true
+    return
   }
 
   private fun normalizeAlignment(
     spannable: Spannable,
     pStart: Int,
     pEnd: Int,
-  ): Boolean {
+  ) {
     val spans =
       spannable
         .getSpans(pStart, pEnd, EnrichedAlignmentSpan::class.java)
         .sortedBy { spannable.getSpanStart(it) }
 
-    if (spans.isEmpty()) return false
+    if (spans.isEmpty()) return
 
     val flag = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-    var changed = false
 
     val winner = spans.first()
     val winnerAlignment = winner.alignment
@@ -79,7 +75,6 @@ object ParagraphSpanNormalizer {
       val end = spannable.getSpanEnd(span)
 
       spannable.removeSpan(span)
-      changed = true
 
       val isWinner = (span === winner)
 
@@ -104,9 +99,6 @@ object ParagraphSpanNormalizer {
     if (!hasSpanNow) {
       val middle = EnrichedAlignmentSpan(winnerAlignment)
       spannable.setSpan(middle, pStart, pEnd, flag)
-      changed = true
     }
-
-    return changed
   }
 }

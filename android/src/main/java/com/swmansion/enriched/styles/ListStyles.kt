@@ -14,44 +14,67 @@ import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.ParagraphUtils
 import com.swmansion.enriched.utils.getParagraphBounds
+import com.swmansion.enriched.utils.getPreviousParagraphSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
 
 class ListStyles(
   private val view: EnrichedTextInputView,
 ) {
-  private fun <T> getPreviousParagraphSpan(
-    spannable: Spannable,
-    s: Int,
-    type: Class<T>,
-  ): T? {
-    if (s <= 0) return null
+  private fun findOrderedListBounds(
+    text: Spannable,
+    position: Int,
+  ): Pair<Int, Int>? {
+    val spans = text.getSpans(position, position, EnrichedOrderedListSpan::class.java)
+    if (spans.isEmpty()) return null
 
-    val (previousParagraphStart, previousParagraphEnd) = spannable.getParagraphBounds(s - 1)
-    val spans = spannable.getSpans(previousParagraphStart, previousParagraphEnd, type)
+    val currentSpan = spans.first()
+    var start = text.getSpanStart(currentSpan)
+    var end = text.getSpanEnd(currentSpan)
 
-    if (spans.isNotEmpty()) {
-      return spans.last()
+    var cursor = start - 1
+    while (cursor >= 0) {
+      val (pStart, pEnd) = text.getParagraphBounds(cursor)
+      val prev = text.getSpans(pStart, pEnd, EnrichedOrderedListSpan::class.java)
+      if (prev.isEmpty()) break
+      start = pStart
+      cursor = pStart - 1
     }
 
-    return null
+    cursor = end + 1
+    while (cursor < text.length) {
+      val (pStart, pEnd) = text.getParagraphBounds(cursor)
+      val next = text.getSpans(pStart, pEnd, EnrichedOrderedListSpan::class.java)
+      if (next.isEmpty()) break
+      end = pEnd
+      cursor = pEnd + 1
+    }
+
+    return start to end
   }
 
-  private fun isPreviousParagraphList(
-    spannable: Spannable,
-    s: Int,
-    type: Class<out EnrichedSpan>,
-  ): Boolean {
-    val previousSpan = getPreviousParagraphSpan(spannable, s, type)
+  fun updateOrderedListIndexes(
+    text: Spannable,
+    position: Int,
+  ) {
+    val bounds = findOrderedListBounds(text, position) ?: return
+    val (start, end) = bounds
 
-    return previousSpan != null
+    val spans =
+      text
+        .getSpans(start, end, EnrichedOrderedListSpan::class.java)
+        .sortedBy { text.getSpanStart(it) }
+
+    spans.forEachIndexed { index, span ->
+      span.setIndex(index + 1)
+    }
   }
 
   private fun getOrderedListIndex(
     spannable: Spannable,
     s: Int,
   ): Int {
-    val span = getPreviousParagraphSpan(spannable, s, EnrichedOrderedListSpan::class.java)
+    val span = spannable.getPreviousParagraphSpan(s, EnrichedOrderedListSpan::class.java)
     val index = span?.getIndex() ?: 0
     return index + 1
   }
@@ -127,18 +150,6 @@ class ListStyles(
     return true
   }
 
-  fun updateOrderedListIndexes(
-    text: Spannable,
-    position: Int,
-  ) {
-    val spans = text.getSpans(position + 1, text.length, EnrichedOrderedListSpan::class.java)
-    for (span in spans) {
-      val spanStart = text.getSpanStart(span)
-      val index = getOrderedListIndex(text, spanStart)
-      span.setIndex(index)
-    }
-  }
-
   fun toggleStyle(name: TextStyle) {
     val config = EnrichedSpans.listSpans[name] ?: return
     val spannable = view.text as SpannableStringBuilder
@@ -192,18 +203,9 @@ class ListStyles(
 
     val isBackspace = previousTextLength > s.length
     val isNewLine = cursorPosition > 0 && s[cursorPosition - 1] == Strings.NEWLINE
-    val isShortcut = if (config.shortcut != null) s.substring(start, end).startsWith(config.shortcut) else false
 
-    if (name == TextStyle.ORDERED_LIST && isPreviousParagraphList(s, start, config.clazz)) {
+    if (name == TextStyle.ORDERED_LIST) {
       updateOrderedListIndexes(s, start)
-    }
-
-    if (!isBackspace && isShortcut) {
-      s.replace(start, cursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
-      setSpan(s, name, start, start + 1)
-      // Inform that new span has been added
-      view.selection?.validateStyles()
-      return
     }
 
     if (!isBackspace && isNewLine) {
