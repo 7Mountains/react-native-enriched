@@ -1534,20 +1534,20 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     return;
   }
 
-  [self->parser parseToHTMLAsync:pretify,
-                      completion:^(NSString *_Nullable html,
-                                   NSError *_Nullable error)completion {
-                        if (error || !html) {
-                          emitter->onRequestHtmlResult(
-                              {.requestId = static_cast<int>(requestId),
-                               .html = folly::dynamic(nullptr)});
-                          return;
-                        }
+  [self->parser
+      parseToHTMLAsync:pretify
+            completion:^(NSString *_Nullable html, NSError *_Nullable error) {
+              if (error || !html) {
+                emitter->onRequestHtmlResult(
+                    {.requestId = static_cast<int>(requestId),
+                     .html = folly::dynamic(nullptr)});
+                return;
+              }
 
-                        emitter->onRequestHtmlResult(
-                            {.requestId = static_cast<int>(requestId),
-                             .html = [html toCppString]});
-                      }];
+              emitter->onRequestHtmlResult(
+                  {.requestId = static_cast<int>(requestId),
+                   .html = [html toCppString]});
+            }];
 }
 
 // MARK: - Styles manipulation
