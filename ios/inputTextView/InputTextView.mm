@@ -12,20 +12,22 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 }
 
 @implementation InputTextView {
-  UILabel *placeholderView;
+  UILabel *_placeholderView;
   CGSize _lastCommittedSize;
 };
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if ((self = [super initWithFrame:frame])) {
-    placeholderView = [[UILabel alloc] initWithFrame:self.bounds];
-    placeholderView.isAccessibilityElement = NO;
-    placeholderView.numberOfLines = 0;
-    [self addSubview:placeholderView];
+    _placeholderView = [[UILabel alloc] initWithFrame:self.bounds];
+    _placeholderView.isAccessibilityElement = NO;
+    _placeholderView.numberOfLines = 0;
+    _placeholderView.adjustsFontForContentSizeCategory = YES;
+    [self addSubview:_placeholderView];
 
     self.textContainer.lineFragmentPadding = 0;
     self.scrollEnabled = YES;
     self.scrollsToTop = NO;
+    self.alwaysBounceVertical = YES;
     _lastCommittedSize = CGSizeZero;
   }
   return self;
@@ -177,7 +179,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   BOOL shouldShow =
       self.placeholderText.length > 0 && self.textStorage.length == 0;
 
-  placeholderView.hidden = !shouldShow;
+  _placeholderView.hidden = !shouldShow;
 }
 
 - (void)setText:(NSString *)text {
@@ -201,9 +203,33 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   NSMutableDictionary *attributes =
       [typedInput->defaultTypingAttributes mutableCopy];
   attributes[NSForegroundColorAttributeName] = _placeholderColor;
-  placeholderView.attributedText =
+  _placeholderView.attributedText =
       [[NSAttributedString alloc] initWithString:placeholderText
                                       attributes:attributes];
+  [self setNeedsLayout];
+}
+
+- (void)refreshPlaceholder {
+  EnrichedTextInputView *typedInput = (EnrichedTextInputView *)_input;
+  if (typedInput == nullptr) {
+    return;
+  }
+
+  NSMutableDictionary *attributes =
+      [typedInput->defaultTypingAttributes mutableCopy];
+
+  if (_placeholderColor) {
+    attributes[NSForegroundColorAttributeName] = _placeholderColor;
+  }
+
+  NSString *placeholder = _placeholderText ?: @"";
+
+  _placeholderView.attributedText =
+      [[NSAttributedString alloc] initWithString:placeholder
+                                      attributes:attributes];
+
+  [self updatePlaceholderVisibility];
+
   [self setNeedsLayout];
 }
 
@@ -213,9 +239,9 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   CGRect textFrame =
       UIEdgeInsetsInsetRect(self.bounds, self.textContainerInset);
   CGFloat placeholderHeight =
-      [placeholderView sizeThatFits:textFrame.size].height;
+      [_placeholderView sizeThatFits:textFrame.size].height;
   textFrame.size.height = MIN(placeholderHeight, textFrame.size.height);
-  placeholderView.frame = textFrame;
+  _placeholderView.frame = textFrame;
   CGRect usedRect =
       [self.layoutManager usedRectForTextContainer:self.textContainer];
 
