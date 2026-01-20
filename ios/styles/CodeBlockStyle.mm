@@ -3,6 +3,7 @@
 #import "FontExtension.h"
 #import "OccurenceUtils.h"
 #import "ParagraphsUtils.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
@@ -100,7 +101,7 @@ static NSString *const CodeBlockMarker = @"codeblock";
          [[NSCharacterSet newlineCharacterSet]
              characterIsMember:[_input->textView.textStorage.string
                                    characterAtIndex:pRange.location]])) {
-      [TextInsertionUtils insertText:@"\u200B"
+      [TextInsertionUtils insertText:ZWS
                                   at:pRange.location
                 additionalAttributes:nullptr
                                input:_input

@@ -12,6 +12,7 @@
 #import "RCTFabricComponentsPlugins.h"
 #import "RCTImagePrimitivesConversions.h"
 #import "StringExtension.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextBlockTapGestureRecognizer.h"
 #import "UIView+React.h"
@@ -1291,7 +1292,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self setCustomSelection:start end:end];
   } else if ([commandName isEqualToString:@"requestHTML"]) {
     NSInteger requestId = [((NSNumber *)args[0]) integerValue];
-    BOOL pretify = args[1];
+    BOOL pretify = [args[1] boolValue];
     [self requestHTML:requestId pretify:pretify];
   } else if ([commandName isEqualToString:@"toggleCheckList"]) {
     [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
@@ -1359,7 +1360,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
     // If the current char is not a hidden space, it counts towards our visible
     // index.
-    if ([text characterAtIndex:actualIndex] != 0x200B) {
+    if ([text characterAtIndex:actualIndex] != ZWSChar) {
       currentVisibleCount++;
     }
 
@@ -1901,7 +1902,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
       // emit string without zero width spaces
       NSString *stringToBeEmitted = [[textView.textStorage.string
-          stringByReplacingOccurrencesOfString:@"\u200B"
+          stringByReplacingOccurrencesOfString:ZWS
                                     withString:@""] copy];
 
       emitter->onChangeText({.value = [stringToBeEmitted toCppString]});

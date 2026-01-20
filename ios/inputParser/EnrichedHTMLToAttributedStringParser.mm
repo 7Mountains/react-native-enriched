@@ -2,6 +2,7 @@
 #import "EnrichedHTMLToAttributedStringParserUtils.h"
 #import "StylesStack.h"
 
+#import "Strings.h"
 #import <libxml/HTMLparser.h>
 #import <libxml/tree.h>
 
@@ -127,7 +128,7 @@
 
   // <br> handling
   if (isBrTag(tagChar)) {
-    [_plain appendString:@"\n"];
+    [_plain appendString:NewLine];
     return;
   }
 
@@ -214,7 +215,7 @@
 
 - (void)appendEmptyLineToBLockTag {
   NSUInteger start = _plain.length;
-  [_plain appendString:@"\n"];
+  [_plain appendString:NewLine];
 
   NSRange newlineRange = NSMakeRange(start, 1);
 
@@ -223,7 +224,7 @@
 
 - (void)appendEmptyBlockPlaceholder {
   // ZWS
-  [self appendText:@"\u200B"];
+  [self appendText:ZWS];
 }
 
 #pragma mark - Self closing
@@ -236,18 +237,13 @@
   // if it's a block tag close previous style
   if (isBlock && _plain.length > 0) {
     unichar last = [_plain characterAtIndex:_plain.length - 1];
-    if (last != '\n') {
+    if (last != NewLineUnsinedChar) {
       [self appendEmptyLineToBLockTag];
     }
   }
 
-  // append U+FFFC
-  static const unichar replacementChar = 0xFFFC;
-  NSString *placeholder = [NSString stringWithCharacters:&replacementChar
-                                                  length:1];
-
   const NSUInteger start = _plain.length;
-  [_plain appendString:placeholder];
+  [_plain appendString:ORC];
 
   const NSRange inlineRange = NSMakeRange(start, 1);
 

@@ -14,7 +14,6 @@ static const unichar HtmlLessThanChar = '<';
 static const unichar HtmlGreaterThanChar = '>';
 static const unichar HtmlAmpersandChar = '&';
 
-static const char *NewLine = "\n";
 static const char *NewlineOpenTag = "\n<";
 
 static const char *OpenTagStart = "<";

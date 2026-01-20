@@ -4,6 +4,7 @@
 #import "HtmlAttributeNames.h"
 #import "ImageLabelAttachment.h"
 #import "OccurenceUtils.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 #import "UIView+React.h"
@@ -11,7 +12,6 @@
 #import <React/RCTFont.h>
 
 static NSString *const ContentAttributeName = @"ContentAttributeName";
-static NSString *const placeholder = @"\uFFFC";
 
 @implementation ContentStyle {
   EnrichedTextInputView *_input;
@@ -197,7 +197,7 @@ static NSString *const placeholder = @"\uFFFC";
     return nil;
 
   unichar c = [_input->textView.textStorage.string characterAtIndex:location];
-  if (c != 0xFFFC)
+  if (c != ORCChar)
     return nil;
 
   NSRange effective;

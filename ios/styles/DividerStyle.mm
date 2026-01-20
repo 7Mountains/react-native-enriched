@@ -1,10 +1,9 @@
 #import "DividerAttachment.h"
 #import "EnrichedTextInputView.h"
 #import "OccurenceUtils.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
-
-static NSString *const placeholder = @"\uFFFC";
 
 @implementation DividerStyle {
   EnrichedTextInputView *_input;
@@ -214,20 +213,20 @@ static NSString *const placeholder = @"\uFFFC";
   NSUInteger dividerIndex = paragraphRange.location;
 
   // Insert divider placeholder
-  [TextInsertionUtils insertText:placeholder
+  [TextInsertionUtils insertText:ORC
                               at:dividerIndex
             additionalAttributes:input->defaultTypingAttributes
                            input:input
                    withSelection:NO];
 
   NSRange dividerRange = NSMakeRange(dividerIndex, 1);
-  [TextInsertionUtils replaceText:placeholder
+  [TextInsertionUtils replaceText:ORC
                                at:dividerRange
              additionalAttributes:dividerAttrs
                             input:input
                     withSelection:NO];
 
-  [TextInsertionUtils insertText:@"\n"
+  [TextInsertionUtils insertText:NewLine
                               at:dividerIndex + 1
             additionalAttributes:input->defaultTypingAttributes
                            input:input

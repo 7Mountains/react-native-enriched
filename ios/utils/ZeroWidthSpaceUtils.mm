@@ -1,10 +1,9 @@
 #import "ZeroWidthSpaceUtils.h"
 #import "EnrichedTextInputView.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 #import "UIView+React.h"
-
-static NSString *const kZWSP = @"\u200B";
 
 @implementation ZeroWidthSpaceUtils
 + (void)handleZeroWidthSpacesInInput:(id)input {
@@ -87,7 +86,7 @@ static NSString *const kZWSP = @"\u200B";
 
   for (NSUInteger i = 0; i < length; i++) {
     unichar ch = CFStringGetCharacterFromInlineBuffer(&buffer, i);
-    if (ch != 0x200B)
+    if (ch != ZWSChar)
       continue;
 
     NSRange range = NSMakeRange(i, 1);
@@ -164,7 +163,7 @@ static NSString *const kZWSP = @"\u200B";
     BOOL isEnd = (i == length);
     unichar ch = isEnd ? 0 : CFStringGetCharacterFromInlineBuffer(&buffer, i);
 
-    if (!isEnd && ch != '\n')
+    if (!isEnd && ch != NewLineUnsinedChar)
       continue;
 
     NSUInteger paragraphLength = i - paragraphStart + (isEnd ? 0 : 1);
@@ -187,7 +186,7 @@ static NSString *const kZWSP = @"\u200B";
       enumerateIndexesWithOptions:NSEnumerationReverse
                        usingBlock:^(NSUInteger idx, BOOL *stop) {
                          BOOL isAtEnd = (idx == length);
-                         NSString *text = isAtEnd ? kZWSP : @"\u200B\n";
+                         NSString *text = isAtEnd ? ZWS : ZWSWithNewLine;
 
                          if (isAtEnd) {
                            [TextInsertionUtils insertText:text
@@ -234,7 +233,7 @@ static NSString *const kZWSP = @"\u200B";
   unichar character =
       [typedInput->textView.textStorage.string characterAtIndex:range.location];
   // zero-width space got backspaced
-  if (character == 0x200B) {
+  if (character == ZWSChar) {
     // in such case: remove the whole line without the endline if there is one
 
     NSRange paragraphRange =

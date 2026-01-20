@@ -2,6 +2,7 @@
 #import "EnrichedAttributedStringHTMLSerializerTagUtils.h"
 #import "HtmlNode.h"
 #import "ParagraphModifierStyle.h"
+#import "Strings.h"
 #import "StyleDescriptor.h"
 #import "StyleHeaders.h"
 #import "objc/runtime.h"
@@ -417,7 +418,7 @@
   }
 
   if (addNewLineAfter)
-    appendC(buffer, NewLine);
+    appendC(buffer, NewLineChar);
 
   appendCloseTag(buffer, element.tag);
 }

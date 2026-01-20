@@ -2,6 +2,7 @@
 #import "FontExtension.h"
 #import "OccurenceUtils.h"
 #import "ParagraphsUtils.h"
+#import "Strings.h"
 #import "StyleConstants.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
@@ -116,7 +117,7 @@ static NSArray<NSTextList *> *const TextLists = @[ bullet ];
          [[NSCharacterSet newlineCharacterSet]
              characterIsMember:[_input->textView.textStorage.string
                                    characterAtIndex:fixedRange.location]])) {
-      [TextInsertionUtils insertText:@"\u200B"
+      [TextInsertionUtils insertText:ZWS
                                   at:fixedRange.location
                 additionalAttributes:nullptr
                                input:_input

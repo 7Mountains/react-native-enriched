@@ -3,6 +3,7 @@
 #import "FontExtension.h"
 #import "OccurenceUtils.h"
 #import "ParagraphsUtils.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 
 @implementation InlineCodeStyle {
@@ -170,7 +171,7 @@
   for (NSUInteger i = 0; i < length; i++) {
     unichar ch = CFStringGetCharacterFromInlineBuffer(&buffer, i);
     // check new lines
-    if (ch != '\n' && ch != '\r')
+    if (ch != NewLineUnsinedChar && ch != '\r')
       continue;
 
     NSRange newlineRange = NSMakeRange(i, 1);

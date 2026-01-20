@@ -2,6 +2,7 @@
 #import "ImageAttachment.h"
 #import "MediaAttachment.h"
 #import "OccurenceUtils.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
@@ -88,10 +89,8 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   attrs[NSAttachmentAttributeName] = attachment;
   attrs[ImageAttributeName] = imageData;
 
-  NSString *placeholderChar = @"\uFFFC";
   NSAttributedString *replacement =
-      [[NSAttributedString alloc] initWithString:placeholderChar
-                                      attributes:attrs];
+      [[NSAttributedString alloc] initWithString:ORC attributes:attrs];
   [attributedString replaceCharactersInRange:range
                         withAttributedString:replacement];
 }
@@ -189,18 +188,14 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
   NSDictionary *attributes =
       @{NSAttachmentAttributeName : attachment, ImageAttributeName : imageData};
 
-  // Use the Object Replacement Character for Image.
-  // This tells TextKit "something non-text goes here".
-  NSString *placeholderChar = @"\uFFFC";
-
   if (range.length == 0) {
-    [TextInsertionUtils insertText:placeholderChar
+    [TextInsertionUtils insertText:ORC
                                 at:range.location
               additionalAttributes:attributes
                              input:_input
                      withSelection:withSelection];
   } else {
-    [TextInsertionUtils replaceText:placeholderChar
+    [TextInsertionUtils replaceText:ORC
                                  at:range
                additionalAttributes:attributes
                               input:_input

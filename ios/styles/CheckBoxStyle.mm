@@ -4,12 +4,13 @@
 #import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
 #import "ParagraphsUtils.h"
+#import "Strings.h"
 #import "StyleConstants.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
-static NSString *const CheckedValueString = @"true";
-static NSString *const UnckedValueString = @"false";
+static NSString *const CheckedValueString = @"1";
+static NSString *const UnckedValueString = @"0";
 
 static NSArray<NSTextList *> *const CheckedLists =
     @[ [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerCheck
@@ -355,7 +356,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
 
   // If paragraph ends with a newline, put cursor before newline
   if (lineEnd > 0 && [_input->textView.textStorage.string
-                         characterAtIndex:lineEnd - 1] == '\n') {
+                         characterAtIndex:lineEnd - 1] == NewLineUnsinedChar) {
     lineEnd -= 1;
   }
 
@@ -389,7 +390,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
                                    characterAtIndex:fixed.location]]);
 
     if (shouldInsert) {
-      [TextInsertionUtils insertText:@"\u200B"
+      [TextInsertionUtils insertText:ZWS
                                   at:fixed.location
                 additionalAttributes:nullptr
                                input:_input

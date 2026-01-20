@@ -1,6 +1,7 @@
 #import "InputTextView.h"
 #import "EnrichedTextInputView.h"
 #import "StringExtension.h"
+#import "Strings.h"
 #import "TextInsertionUtils.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
@@ -40,7 +41,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   NSString *plainText = [typedInput->textView.textStorage.string
       substringWithRange:typedInput->textView.selectedRange];
   NSString *fixedPlainText =
-      [plainText stringByReplacingOccurrencesOfString:@"\u200B" withString:@""];
+      [plainText stringByReplacingOccurrencesOfString:ZWS withString:@""];
 
   NSString *parsedHtml = [typedInput->parser
       parseToHtmlFromRange:typedInput->textView.selectedRange];
@@ -49,7 +50,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
       attributedSubstringFromRange:typedInput->textView.selectedRange]
       mutableCopy];
   NSRange fullAttrStrRange = NSMakeRange(0, attrStr.length);
-  [attrStr.mutableString replaceOccurrencesOfString:@"\u200B"
+  [attrStr.mutableString replaceOccurrencesOfString:ZWS
                                          withString:@""
                                             options:0
                                               range:fullAttrStrRange];
