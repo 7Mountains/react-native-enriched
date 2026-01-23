@@ -86,7 +86,7 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 10) => {
+const generateHugeHtml = (repeat = 1) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -162,6 +162,7 @@ export default function App() {
   const [currentHtml] = useState('');
   const [paragraphAlignment, setParagraphAlignment] =
     useState<string>('default');
+  const [requestHtmlTime, setRequestHtmlTime] = useState<number | null>(null);
 
   const [selection, setSelection] = useState<Selection>();
   const [stylesState, setStylesState] = useState<StylesState>(DEFAULT_STYLE);
@@ -371,7 +372,10 @@ export default function App() {
         contentContainerStyle={styles.content}
       >
         <Text style={styles.label}>
-          Enriched Text Input {paragraphAlignment}
+          Enriched Text Input {paragraphAlignment}{' '}
+          {requestHtmlTime !== null
+            ? `- Last HTML request time: ${requestHtmlTime.toFixed(2)} ms`
+            : ''}
         </Text>
         <Rectangle />
         <Button
@@ -382,7 +386,7 @@ export default function App() {
             const result = await ref.current?.getHTML();
             const end = performance.now();
             console.log('HTML:', result);
-            console.log('Time taken:', end - start, 'ms');
+            setRequestHtmlTime(end - start);
           }}
         />
         <View style={styles.editor}>
