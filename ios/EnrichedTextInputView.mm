@@ -3,6 +3,7 @@
 #import "AttachmentInvalidationBatcher.h"
 #import "BaseLabelAttachment.h"
 #import "ColorExtension.h"
+#import "EnrichedCommandHandler.h"
 #import "EnrichedTextConfigBuilder.h"
 #import "EnrichedTextStyleFactory.h"
 #import "HeadingsParagraphInvariantUtils.h"
@@ -48,6 +49,7 @@ using namespace facebook::react;
   NSString *_recentlyEmittedAlignment;
   AttachmentInvalidationBatcher *_attachmentBatcher;
   BOOL _emitChangeText;
+  EnrichedCommandHandler *_commandHandler;
 }
 
 // MARK: - Component utils
@@ -104,6 +106,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   blockingStyles = [EnrichedTextStyleFactory makeBlockingStyles];
 
   parser = [[InputParser alloc] initWithInput:self];
+  _commandHandler = [[EnrichedCommandHandler alloc] initWithInput:self];
 }
 
 - (void)setupTextView {
@@ -516,91 +519,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 // MARK: - Native commands and events
 
 - (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {
-  if ([commandName isEqualToString:@"focus"]) {
-    [self focus];
-  } else if ([commandName isEqualToString:@"blur"]) {
-    [self blur];
-  } else if ([commandName isEqualToString:@"setValue"]) {
-    NSString *value = (NSString *)args[0];
-    [self setValue:value];
-  } else if ([commandName isEqualToString:@"toggleBold"]) {
-    [self toggleRegularStyle:[BoldStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleItalic"]) {
-    [self toggleRegularStyle:[ItalicStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleUnderline"]) {
-    [self toggleRegularStyle:[UnderlineStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleStrikeThrough"]) {
-    [self toggleRegularStyle:[StrikethroughStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"setColor"]) {
-    NSString *colorText = (NSString *)args[0];
-    UIColor *color = [UIColor colorFromString:colorText];
-    id<BaseStyleProtocol> baseStyle = stylesDict[@(Colored)];
-    if ([baseStyle isKindOfClass:[ColorStyle class]]) {
-      ColorStyle *colorStyle = (ColorStyle *)baseStyle;
-      [colorStyle applyStyle:textView.selectedRange color:color];
-    }
-    [self anyTextMayHaveBeenModified];
-  } else if ([commandName isEqualToString:@"removeColor"]) {
-    [self removeColor];
-    [self anyTextMayHaveBeenModified];
-  } else if ([commandName isEqualToString:@"toggleInlineCode"]) {
-    [self toggleRegularStyle:[InlineCodeStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"addLink"]) {
-    NSInteger start = [((NSNumber *)args[0]) integerValue];
-    NSInteger end = [((NSNumber *)args[1]) integerValue];
-    NSString *text = (NSString *)args[2];
-    NSString *url = (NSString *)args[3];
-    [self addLinkAt:start end:end text:text url:url];
-  } else if ([commandName isEqualToString:@"addMention"]) {
-    NSString *indicator = (NSString *)args[0];
-    NSString *text = (NSString *)args[1];
-    NSString *attributes = (NSString *)args[2];
-    [self addMention:indicator text:text attributes:attributes];
-  } else if ([commandName isEqualToString:@"startMention"]) {
-    NSString *indicator = (NSString *)args[0];
-    [self startMentionWithIndicator:indicator];
-  } else if ([commandName isEqualToString:@"toggleH1"]) {
-    [self toggleParagraphStyle:[H1Style getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleH2"]) {
-    [self toggleParagraphStyle:[H2Style getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleH3"]) {
-    [self toggleParagraphStyle:[H3Style getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleH4"]) {
-    [self toggleParagraphStyle:[H4Style getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleH5"]) {
-    [self toggleParagraphStyle:[H5Style getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleH6"]) {
-    [self toggleParagraphStyle:[H6Style getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleUnorderedList"]) {
-    [self toggleParagraphStyle:[UnorderedListStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleOrderedList"]) {
-    [self toggleParagraphStyle:[OrderedListStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleBlockQuote"]) {
-    [self toggleParagraphStyle:[BlockQuoteStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"toggleCodeBlock"]) {
-    [self toggleParagraphStyle:[CodeBlockStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"addImage"]) {
-    NSString *uri = (NSString *)args[0];
-    CGFloat imgWidth = [(NSNumber *)args[1] floatValue];
-    CGFloat imgHeight = [(NSNumber *)args[2] floatValue];
-    [self addImage:uri width:imgWidth height:imgHeight];
-  } else if ([commandName isEqualToString:@"setSelection"]) {
-    NSInteger start = [((NSNumber *)args[0]) integerValue];
-    NSInteger end = [((NSNumber *)args[1]) integerValue];
-    [self setCustomSelection:start end:end];
-  } else if ([commandName isEqualToString:@"requestHTML"]) {
-    NSInteger requestId = [((NSNumber *)args[0]) integerValue];
-    BOOL prettify = [args[1] boolValue];
-    [self requestHTML:requestId prettify:prettify];
-  } else if ([commandName isEqualToString:@"toggleCheckList"]) {
-    [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
-  } else if ([commandName isEqualToString:@"addDividerAtNewLine"]) {
-    [self addDividerAtNewLine];
-  } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
-    NSString *alignment = (NSString *)args[0];
-    [self setParagraphAlignment:alignment];
-    [self anyTextMayHaveBeenModified];
-  }
+  [_commandHandler handleCommand:(NSString *)commandName args:(NSArray *)args];
 }
 
 - (std::shared_ptr<EnrichedTextInputViewEventEmitter>)getEventEmitter {
