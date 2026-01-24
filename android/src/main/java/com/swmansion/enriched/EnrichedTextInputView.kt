@@ -712,11 +712,11 @@ class EnrichedTextInputView : AppCompatEditText {
 
   fun requestHTML(
     requestId: Int,
-    pretify: Boolean,
+    prettify: Boolean,
   ) {
     val html =
       try {
-        EnrichedParser.toHtmlWithDefault(text, pretify)
+        EnrichedParser.toHtmlWithDefault(text, prettify)
       } catch (e: Exception) {
         null
       }

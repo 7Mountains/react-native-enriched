@@ -46,7 +46,7 @@ object TagsRegistry {
         ),
       EnrichedAlignmentSpan::class to
         TagInfo(
-          tag = "",
+          tag = "p",
           isSelfClosing = false,
           attributes = { span ->
             mapOf("alignment" to (span as EnrichedAlignmentSpan).alignmentString)

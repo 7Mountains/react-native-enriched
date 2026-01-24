@@ -45,7 +45,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   blur: () => void;
   setValue: (value: string) => void;
   setSelection: (start: number, end: number) => void;
-  getHTML: (pretify?: boolean) => Promise<string>;
+  getHTML: (prettify?: boolean) => Promise<string>;
 
   // Text formatting commands
   toggleBold: () => void;
@@ -290,11 +290,15 @@ export const EnrichedTextInput = ({
     setValue: (value: string) => {
       Commands.setValue(nullthrows(nativeRef.current), value);
     },
-    getHTML: (pretify: boolean = false) =>
+    getHTML: (prettify: boolean = false) =>
       new Promise<string>((resolve, reject) => {
         const requestId = nextHtmlRequestId.current++;
         pendingHtmlRequests.current.set(requestId, { resolve, reject });
-        Commands.requestHTML(nullthrows(nativeRef.current), requestId, pretify);
+        Commands.requestHTML(
+          nullthrows(nativeRef.current),
+          requestId,
+          prettify
+        );
       }),
     toggleBold: () => {
       Commands.toggleBold(nullthrows(nativeRef.current));

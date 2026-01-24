@@ -47,6 +47,6 @@ object Strings {
   const val END_OF_BUFFER_MARKER = ZERO_WIDTH_SPACE_CHAR
   const val END_OF_BUFFER_MARKER_STRING = "" + END_OF_BUFFER_MARKER
 
-  const val HTML_OPEN = "<html>\n"
-  const val HTML_CLOSE = "\n</html>"
+  const val HTML_OPEN = "<html>"
+  const val HTML_CLOSE = "</html>"
 }

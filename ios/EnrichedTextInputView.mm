@@ -1292,8 +1292,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self setCustomSelection:start end:end];
   } else if ([commandName isEqualToString:@"requestHTML"]) {
     NSInteger requestId = [((NSNumber *)args[0]) integerValue];
-    BOOL pretify = [args[1] boolValue];
-    [self requestHTML:requestId pretify:pretify];
+    BOOL prettify = [args[1] boolValue];
+    [self requestHTML:requestId prettify:prettify];
   } else if ([commandName isEqualToString:@"toggleCheckList"]) {
     [self toggleParagraphStyle:[CheckBoxStyle getStyleType]];
   } else if ([commandName isEqualToString:@"addDividerAtNewLine"]) {
@@ -1529,14 +1529,14 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
   }
 }
-- (void)requestHTML:(NSInteger)requestId pretify:(BOOL)pretify {
+- (void)requestHTML:(NSInteger)requestId prettify:(BOOL)prettify {
   auto emitter = [self getEventEmitter];
   if (!emitter) {
     return;
   }
 
   [self->parser
-      parseToHTMLAsync:pretify
+      parseToHTMLAsync:prettify
             completion:^(NSString *_Nullable html, NSError *_Nullable error) {
               if (error || !html) {
                 emitter->onRequestHtmlResult(

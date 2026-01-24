@@ -395,9 +395,9 @@ class EnrichedTextInputViewManager :
   override fun requestHTML(
     view: EnrichedTextInputView?,
     requestId: Int,
-    pretify: Boolean,
+    prettify: Boolean,
   ) {
-    view?.requestHTML(requestId, pretify)
+    view?.requestHTML(requestId, prettify)
   }
 
   override fun toggleCheckList(view: EnrichedTextInputView?) {

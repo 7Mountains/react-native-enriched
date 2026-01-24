@@ -23,16 +23,16 @@ import java.util.Map;
 public class EnrichedSpannedToHtmlConverter {
 
   private final Spanned text;
-  private final boolean pretify;
+  private final boolean prettify;
 
-  public EnrichedSpannedToHtmlConverter(Spanned text, boolean pretify) {
+  public EnrichedSpannedToHtmlConverter(Spanned text, boolean prettify) {
     this.text = text;
-    this.pretify = pretify;
+    this.prettify = prettify;
   }
 
   public EnrichedSpannedToHtmlConverter(Spanned text) {
     this.text = text;
-    this.pretify = false;
+    this.prettify = false;
   }
 
   public String convert() {
@@ -93,9 +93,9 @@ public class EnrichedSpannedToHtmlConverter {
           isInOlList = false;
           appendClosingTag(out, HtmlTags.ORDERED_LIST, true);
         }
-        appendOpenTag(out, HtmlTags.BREAK_LINE, true);
+        appendOpenTag(out, HtmlTags.PARAGRAPH, true);
+        appendClosingTag(out, HtmlTags.PARAGRAPH, true);
       } else {
-
         EnrichedParagraphSpan[] paragraphStyles =
             text.getSpans(i, next, EnrichedParagraphSpan.class);
 
@@ -115,7 +115,7 @@ public class EnrichedSpannedToHtmlConverter {
           }
 
           appendSelfClosingTag(out, tag, attrs);
-          if (pretify) {
+          if (prettify) {
             out.append(Strings.NEWLINE);
           }
           next++;
@@ -180,7 +180,7 @@ public class EnrichedSpannedToHtmlConverter {
 
   private void appendOpenTag(StringBuilder out, String tag, boolean withNewLine) {
     out.append(Strings.LT).append(tag).append(Strings.GT);
-    if (withNewLine) out.append(Strings.NEWLINE);
+    if (withNewLine && prettify) out.append(Strings.NEWLINE);
   }
 
   private void appendClosingTag(StringBuilder out, String tag) {
@@ -189,7 +189,7 @@ public class EnrichedSpannedToHtmlConverter {
 
   private void appendClosingTag(StringBuilder out, String tag, boolean withNewLine) {
     out.append(Strings.LT_SLASH).append(tag).append(Strings.GT);
-    if (withNewLine && pretify) out.append(Strings.NEWLINE);
+    if (withNewLine && prettify) out.append(Strings.NEWLINE);
   }
 
   private void appendOpenTagWithAttributes(
@@ -199,7 +199,7 @@ public class EnrichedSpannedToHtmlConverter {
     appendAttributes(out, attrs);
     out.append(Strings.GT);
 
-    if (withNewLine && pretify) out.append(Strings.NEWLINE);
+    if (withNewLine && prettify) out.append(Strings.NEWLINE);
   }
 
   private void appendAttributes(StringBuilder out, Map<String, String> attrs) {

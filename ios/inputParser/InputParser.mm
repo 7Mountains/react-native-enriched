@@ -41,10 +41,10 @@
       [_input->textView.textStorage attributedSubstringFromRange:range];
 
   return [_attributedStringHTMLSerializer buildHtmlFromAttributedString:sub
-                                                                pretify:NO];
+                                                               prettify:NO];
 }
 
-- (void)parseToHTMLAsync:(BOOL)pretify
+- (void)parseToHTMLAsync:(BOOL)prettify
               completion:(void (^_Nonnull)(NSString *_Nullable,
                                            NSError *_Nullable))completion {
   NSAttributedString *snapshot = [[NSAttributedString alloc]
@@ -53,7 +53,7 @@
                  ^{
                    NSString *html = [self->_attributedStringHTMLSerializer
                        buildHtmlFromAttributedString:snapshot
-                                             pretify:pretify];
+                                            prettify:prettify];
 
                    dispatch_async(dispatch_get_main_queue(), ^{
                      if (completion) {

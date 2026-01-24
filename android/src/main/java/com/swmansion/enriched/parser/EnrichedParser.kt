@@ -59,15 +59,15 @@ object EnrichedParser {
 
   fun toHtml(
     text: Spanned?,
-    pretify: Boolean = false,
-  ): String? = EnrichedSpannedToHtmlConverter(text, pretify).convert()
+    prettify: Boolean = false,
+  ): String? = EnrichedSpannedToHtmlConverter(text, prettify).convert()
 
   fun toHtmlWithDefault(
     text: CharSequence?,
-    pretify: Boolean,
+    prettify: Boolean,
   ): String? {
     if (text is Spanned) {
-      return toHtml(text, pretify)
+      return toHtml(text, prettify)
     }
     return Strings.HTML_OPEN + "<p></p>\n" + Strings.HTML_CLOSE
   }

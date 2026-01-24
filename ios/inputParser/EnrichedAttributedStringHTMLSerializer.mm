@@ -83,14 +83,14 @@
 #pragma mark - Public
 
 - (NSString *)buildHtmlFromAttributedString:(NSAttributedString *)text
-                                    pretify:(BOOL)pretify {
+                                   prettify:(BOOL)prettify {
   if (text.length == 0)
     return DefaultHtmlValue;
 
   HTMLElement *root = [self buildRootNodeFromAttributedString:text];
 
   NSMutableData *buffer = [NSMutableData data];
-  [self createHtmlFromNode:root into:buffer pretify:pretify];
+  [self createHtmlFromNode:root into:buffer prettify:prettify];
 
   return [[NSString alloc] initWithData:buffer encoding:NSUTF8StringEncoding];
 }
@@ -103,9 +103,9 @@
   HTMLElement *root = [HTMLElement new];
   root.tag = HtmlTagHTML;
 
-  HTMLElement *br = [HTMLElement new];
-  br.tag = HtmlTagBR;
-  br.selfClosing = YES;
+  HTMLElement *emptyParagraph = [HTMLElement new];
+  emptyParagraph.tag = HtmlParagraphTag;
+  emptyParagraph.selfClosing = NO;
 
   __block const StyleDescriptor *previousParagraphDescriptor = nil;
   __block HTMLElement *previousNode = nil;
@@ -120,7 +120,7 @@
                         @autoreleasepool {
 
                           if (paragraphRange.length == 0) {
-                            [root.children addObject:br];
+                            [root.children addObject:emptyParagraph];
                             previousParagraphDescriptor = nil;
                             previousNode = nil;
                             return;
@@ -388,7 +388,7 @@
 
 - (void)createHtmlFromNode:(HTMLNode *)node
                       into:(NSMutableData *)buffer
-                   pretify:(BOOL)pretify {
+                  prettify:(BOOL)prettify {
 
   if ([node isKindOfClass:[HTMLTextNode class]]) {
     HTMLTextNode *textNode = (HTMLTextNode *)node;
@@ -401,8 +401,8 @@
 
   HTMLElement *element = (HTMLElement *)node;
 
-  BOOL addNewLineBefore = pretify && isBlockTag(element.tag);
-  BOOL addNewLineAfter = pretify && needsNewLineAfter(element.tag);
+  BOOL addNewLineBefore = prettify && isBlockTag(element.tag);
+  BOOL addNewLineAfter = prettify && needsNewLineAfter(element.tag);
 
   if (element.selfClosing) {
     appendSelfClosingTag(buffer, element.tag, element.attributes,
@@ -414,7 +414,7 @@
                 addNewLineBefore);
 
   for (HTMLNode *child in element.children) {
-    [self createHtmlFromNode:child into:buffer pretify:pretify];
+    [self createHtmlFromNode:child into:buffer prettify:prettify];
   }
 
   if (addNewLineAfter)
