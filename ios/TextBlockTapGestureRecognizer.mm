@@ -8,6 +8,23 @@
   NSTextAttachment *_attachment;
 }
 
+- (instancetype)initWithTarget:(id)target
+                        action:(SEL)action
+                      textView:(UITextView *)textView
+                         input:(EnrichedTextInputView *)input {
+
+  self = [super initWithTarget:target action:action];
+  if (self) {
+    _textView = textView;
+    _input = input;
+
+    self.cancelsTouchesInView = YES;
+    self.delaysTouchesBegan = YES;
+    self.delaysTouchesEnded = YES;
+  }
+  return self;
+}
+
 - (TextBlockTapKind)tapKind {
   return _tapKind;
 }

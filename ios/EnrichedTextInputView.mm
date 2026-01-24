@@ -364,28 +364,26 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)setupTextView {
   textView = [[InputTextView alloc] init];
   textView.backgroundColor = UIColor.clearColor;
-  textView.textContainerInset = UIEdgeInsetsMake(0, 0, 0, 0);
+  textView.textContainerInset = UIEdgeInsetsZero;
   textView.textContainer.lineFragmentPadding = 0;
   textView.delegate = self;
   textView.input = self;
   textView.layoutManager.input = self;
   textView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-  TextBlockTapGestureRecognizer *blockTap =
+
+  TextBlockTapGestureRecognizer *blockTapGesture =
       [[TextBlockTapGestureRecognizer alloc]
           initWithTarget:self
-                  action:@selector(onTextBlockTap:)];
+                  action:@selector(onTextBlockTap:)
+                textView:textView
+                   input:self];
 
-  blockTap.textView = textView;
-  blockTap.input = self;
-  blockTap.cancelsTouchesInView = YES;
-  blockTap.delaysTouchesBegan = YES;
-  blockTap.delaysTouchesEnded = YES;
-
-  for (UIGestureRecognizer *gr in textView.gestureRecognizers) {
-    [gr requireGestureRecognizerToFail:blockTap];
+  for (UIGestureRecognizer *gestureRecognizer in textView.gestureRecognizers) {
+    [gestureRecognizer requireGestureRecognizerToFail:blockTapGesture];
   }
-  [textView addGestureRecognizer:blockTap];
+
+  [textView addGestureRecognizer:blockTapGesture];
 }
 
 // MARK: - Props
