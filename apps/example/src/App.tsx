@@ -134,10 +134,8 @@ const generateHugeHtml = (repeat = 1) => {
       `\n</ol>`,
 
       // Blockquote
-      `\n<blockquote>`,
-      `\n<p>"Blockquote line 1 for ${i}."</p>`,
-      `\n<p>"Blockquote line 2 for ${i}."</p>`,
-      `\n</blockquote>`,
+      `\n<blockquote>"Blockquote line 1 for ${i}."</blockquote>`,
+      `\n<blockquote>"Blockquote line 2 for ${i}."</blockquote>`,
 
       // Code block (escaped characters)
       `\n<codeblock>`,

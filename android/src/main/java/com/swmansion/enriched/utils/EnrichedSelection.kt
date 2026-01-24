@@ -5,6 +5,7 @@ import android.text.Spannable
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.events.OnChangeSelectionEvent
 import com.swmansion.enriched.events.OnLinkDetectedEvent
 import com.swmansion.enriched.events.OnMentionDetectedEvent
@@ -169,7 +170,7 @@ class EnrichedSelection(
     var styleStart: Int? = null
 
     var paragraphStart = start
-    val paragraphs = spannable.substring(start, end).split("\n")
+    val paragraphs = spannable.substring(start, end).split(Strings.NEWLINE_STRING)
     pi@ for (paragraph in paragraphs) {
       val paragraphEnd = paragraphStart + paragraph.length
       val spans = spannable.getSpans(paragraphStart, paragraphEnd, type)

@@ -8,6 +8,7 @@ import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.EnrichedAlignmentSpan
 import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan
+import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.spans.EnrichedCodeBlockSpan
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
@@ -16,15 +17,19 @@ import com.swmansion.enriched.spans.EnrichedH4Span
 import com.swmansion.enriched.spans.EnrichedH5Span
 import com.swmansion.enriched.spans.EnrichedH6Span
 import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
+import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.spans.TextStyle
+import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
+import com.swmansion.enriched.utils.EnrichedSelection
 import com.swmansion.enriched.utils.ParagraphUtils
-import com.swmansion.enriched.utils.expandDown
-import com.swmansion.enriched.utils.expandListBlockAtCursor
-import com.swmansion.enriched.utils.expandUp
+import com.swmansion.enriched.utils.asBuilder
+import com.swmansion.enriched.utils.getListRange
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getParagraphsBounds
+import com.swmansion.enriched.utils.isTheSameParagraphInSelection
 import com.swmansion.enriched.utils.removeZWS
 
 class ParagraphStyles(
@@ -36,7 +41,7 @@ class ParagraphStyles(
     end: Int,
     clazz: Class<out EnrichedSpan>,
   ): Boolean {
-    val spannableStringBuilder = spannable as SpannableStringBuilder
+    val spannableStringBuilder = spannable.asBuilder()
     val paragraphRanges = spannable.getParagraphsBounds(start, end)
     var removedAny = false
 
@@ -77,9 +82,8 @@ class ParagraphStyles(
     pStart: Int,
     pEnd: Int,
   ) {
-    val spans = spannable.getSpans(pStart, pEnd, span::class.java)
-    for (existing in spans) {
-      spannable.removeSpan(existing)
+    spannable.getSpans(pStart, pEnd, span::class.java).forEach {
+      spannable.removeSpan(it)
     }
 
     spannable.setSpan(span, pStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -164,7 +168,7 @@ class ParagraphStyles(
 
   fun toggleStyle(name: TextStyle) {
     val selection = view.selection ?: return
-    val ssb = view.text as SpannableStringBuilder
+    val ssb = view.text?.asBuilder() ?: return
     val (start, end) = selection.getParagraphSelection()
 
     val config = EnrichedSpans.paragraphSpans[name] ?: return
@@ -257,18 +261,40 @@ class ParagraphStyles(
   }
 
   fun setParagraphAlignmentSpan(alignment: String) {
+    val canApply = view.verifyStyle(TextStyle.ALIGNMENT)
+
+    if (!canApply) {
+      return
+    }
+
     val selection = view.selection ?: return
     val spanState = view.spanState ?: return
     val spannable = view.text as Spannable
     val (start) = selection.getParagraphSelection()
-    val spannableStringBuilder = spannable as SpannableStringBuilder
+    val spannableStringBuilder = spannable.asBuilder()
     val (pStart, pEnd) = spannableStringBuilder.getParagraphBounds(start)
-
-    val originalCursor = start
 
     spanState.setAlignmentStart(start, alignment)
 
-    if (pStart == pEnd) {
+    val isSingleParagraphSelection = spannable.isTheSameParagraphInSelection(selection)
+
+    if (isSingleParagraphSelection) {
+      applySingleParagraphAlignment(spannable, pStart, pEnd, alignment)
+    } else {
+      applyMultiParagraphAlignment(spannable, selection, alignment)
+    }
+
+    view.selection.validateStyles()
+  }
+
+  private fun applySingleParagraphAlignment(
+    spannable: Spannable,
+    paragraphStart: Int,
+    paragraphEnd: Int,
+    alignment: String,
+  ) {
+    if (paragraphStart == paragraphEnd) {
+      val spannableStringBuilder = spannable.asBuilder()
       val zwsBuilder =
         SpannableStringBuilder(Strings.ZERO_WIDTH_SPACE_STRING).apply {
           setSpan(
@@ -279,65 +305,73 @@ class ParagraphStyles(
           )
         }
 
-      spannableStringBuilder.replace(pStart, pEnd, zwsBuilder)
-      view.selection.validateStyles()
+      spannableStringBuilder.replace(paragraphStart, paragraphEnd, zwsBuilder)
       return
     }
 
-    val (expandedStart, expandedEnd) =
-      expandListRange(spannable, originalCursor, originalCursor)
+    val isListItemParagraph = isListParagraph(spannable, paragraphStart, paragraphEnd)
 
-    spannable
-      .getSpans(expandedStart, expandedEnd, EnrichedAlignmentSpan::class.java)
-      .forEach { spannable.removeSpan(it) }
+    if (isListItemParagraph) {
+      val listSpan =
+        spannable
+          .getSpans(paragraphStart, paragraphEnd, EnrichedParagraphSpan::class.java)
+          .firstOrNull {
+            it is EnrichedOrderedListSpan ||
+              it is EnrichedUnorderedListSpan ||
+              it is EnrichedChecklistSpan
+          } ?: return
 
-    val alignmentSpan = EnrichedAlignmentSpan(alignment)
-    spannable.setSpan(
-      alignmentSpan,
-      expandedStart,
-      expandedEnd,
-      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-    )
+      val (listStart, listEnd) =
+        spannable.getListRange(paragraphStart, paragraphEnd, listSpan)
 
-    view.selection.validateStyles()
-  }
-
-  private fun expandListRange(
-    spannable: Spannable,
-    start: Int,
-    end: Int,
-  ): Pair<Int, Int> {
-    val safeStart = start.coerceIn(0, spannable.length)
-    val safeEnd = end.coerceIn(0, spannable.length)
-
-    val isCollapsed = safeStart == safeEnd
-
-    return if (isCollapsed) {
       spannable
-        .expandListBlockAtCursor(safeStart)
-        ?.let { it.first to (it.last + 1) }
-        ?: (safeStart to safeEnd)
+        .getSpans(listStart, listEnd, EnrichedAlignmentSpan::class.java)
+        .forEach { spannable.removeSpan(it) }
+
+      spannable.setSpan(
+        EnrichedAlignmentSpan(alignment),
+        listStart,
+        listEnd,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      )
     } else {
-      val newStart =
-        spannable.expandUp(safeStart) { pS, pE ->
-          paragraphIntersectsSelection(pS, pE, safeStart, safeEnd)
-        }
-
-      val newEnd =
-        spannable.expandDown(safeEnd) { pS, pE ->
-          paragraphIntersectsSelection(pS, pE, safeStart, safeEnd)
-        }
-
-      newStart to newEnd
+      spannable.getSpans(paragraphStart, paragraphEnd, EnrichedAlignmentSpan::class.java).forEach {
+        spannable.removeSpan(it)
+      }
+      spannable.setSpan(EnrichedAlignmentSpan(alignment), paragraphStart, paragraphEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
   }
 
-  private fun paragraphIntersectsSelection(
-    pStart: Int,
-    pEnd: Int,
-    selStart: Int,
-    selEnd: Int,
-  ): Boolean = pStart < selEnd && pEnd > selStart
+  private fun applyMultiParagraphAlignment(
+    spannable: Spannable,
+    selection: EnrichedSelection,
+    alignment: String,
+  ) {
+    val (selStart, selEnd) = selection.getInlineSelection()
+
+    val paragraphRanges = spannable.getParagraphsBounds(selStart, selEnd)
+
+    for (range in paragraphRanges) {
+      val paragraphStart = range.first
+      val paragraphEnd = range.last
+
+      applySingleParagraphAlignment(
+        spannable,
+        paragraphStart,
+        paragraphEnd,
+        alignment,
+      )
+    }
+  }
+
+  private fun isListParagraph(
+    spannable: Spannable,
+    paragraphStart: Int,
+    paragraphEnd: Int,
+  ): Boolean =
+    spannable.getSpans(paragraphStart, paragraphEnd, EnrichedParagraphSpan::class.java).any {
+      it is EnrichedChecklistSpan || it is EnrichedOrderedListSpan || it is EnrichedUnorderedListSpan
+    }
 
   private fun createSpan(name: TextStyle): EnrichedSpan? =
     when (name) {
