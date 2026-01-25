@@ -7,6 +7,7 @@ interface ToolbarButtonIconProps {
   icon: IconName;
   isActive: boolean;
   onPress: () => void;
+  disabled?: boolean;
 }
 
 interface ToolbarButtonTextProps {
@@ -14,6 +15,7 @@ interface ToolbarButtonTextProps {
   icon?: never;
   isActive: boolean;
   onPress: () => void;
+  disabled?: boolean;
 }
 
 export type ToolbarButtonProps =
@@ -25,11 +27,17 @@ export const ToolbarButton: FC<ToolbarButtonProps> = ({
   text,
   isActive,
   onPress,
+  disabled,
 }) => {
   return (
     <Pressable
-      style={[styles.container, isActive && styles.containerActive]}
+      style={[
+        styles.container,
+        isActive && styles.containerActive,
+        disabled && styles.disabledButton,
+      ]}
       onPress={onPress}
+      disabled={disabled}
     >
       {icon ? (
         <Icon name={icon} size={20} color="white" />
@@ -50,6 +58,9 @@ const styles = StyleSheet.create({
   },
   containerActive: {
     backgroundColor: 'rgb(0, 26, 114)',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   text: {
     color: 'white',

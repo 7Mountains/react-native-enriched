@@ -168,11 +168,10 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
                           inRange:range
                     withCondition:condition];
   } else {
-    return [OccurenceUtils detect:ContentAttributeName
-                        withInput:_input
-                          atIndex:range.location
-                    checkPrevious:NO
-                    withCondition:condition];
+    UITextView *textView = _input->textView;
+    NSRange paragraphRange =
+        [textView.textStorage.string paragraphRangeForRange:range];
+    return [self anyOccurence:paragraphRange];
   }
 }
 
@@ -200,10 +199,8 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
   if (c != ORCChar)
     return nil;
 
-  NSRange effective;
-  NSDictionary *attrs =
-      [_input->textView.textStorage attributesAtIndex:location
-                                       effectiveRange:&effective];
+  NSDictionary *attrs = [_input->textView.textStorage attributesAtIndex:location
+                                                         effectiveRange:NULL];
 
   id value = attrs[ContentAttributeName];
   return [value isKindOfClass:[ContentParams class]] ? value : nil;

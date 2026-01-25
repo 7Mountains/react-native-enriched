@@ -1,6 +1,5 @@
 package com.swmansion.enriched.utils
 
-import android.text.Layout
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.WritableMap
@@ -9,6 +8,7 @@ import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnAlignmentChangeEvent
 import com.swmansion.enriched.events.OnChangeStateEvent
 import com.swmansion.enriched.events.OnColorChangeEvent
+import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.TextStyle
 
 class EnrichedSpanState(
@@ -66,6 +66,12 @@ class EnrichedSpanState(
     private set
   var alignmentStart: Int? = null
     private set
+  var contentStart: Int? = null
+    private set
+
+  fun setContentStart(start: Int?) {
+    contentStart = start
+  }
 
   fun setTypingColor(color: Int?) {
     typingColor = color
@@ -218,6 +224,7 @@ class EnrichedSpanState(
         TextStyle.STRIKETHROUGH -> strikethroughStart
         TextStyle.INLINE_CODE -> inlineCodeStart
         TextStyle.COLOR -> colorStart
+        TextStyle.CONTENT -> contentStart
         TextStyle.H1 -> h1Start
         TextStyle.H2 -> h2Start
         TextStyle.H3 -> h3Start
@@ -233,7 +240,6 @@ class EnrichedSpanState(
         TextStyle.IMAGE -> imageStart
         TextStyle.MENTION -> mentionStart
         TextStyle.DIVIDER -> dividerStart
-        else -> null
       }
 
     return start
@@ -332,7 +338,9 @@ class EnrichedSpanState(
         setDividerStart(start)
       }
 
-      else -> {}
+      TextStyle.CONTENT -> {
+        setContentStart(start)
+      }
     }
   }
 
@@ -383,27 +391,52 @@ class EnrichedSpanState(
   }
 
   private fun emitStateChangeEvent() {
-    val payload: WritableMap = Arguments.createMap()
-    payload.putBoolean("isBold", boldStart != null)
-    payload.putBoolean("isItalic", italicStart != null)
-    payload.putBoolean("isUnderline", underlineStart != null)
-    payload.putBoolean("isStrikeThrough", strikethroughStart != null)
-    payload.putBoolean("isInlineCode", inlineCodeStart != null)
-    payload.putBoolean("isH1", h1Start != null)
-    payload.putBoolean("isH2", h2Start != null)
-    payload.putBoolean("isH3", h3Start != null)
-    payload.putBoolean("isH4", h4Start != null)
-    payload.putBoolean("isH5", h5Start != null)
-    payload.putBoolean("isH6", h6Start != null)
-    payload.putBoolean("isCodeBlock", codeBlockStart != null)
-    payload.putBoolean("isBlockQuote", blockQuoteStart != null)
-    payload.putBoolean("isOrderedList", orderedListStart != null)
-    payload.putBoolean("isUnorderedList", unorderedListStart != null)
-    payload.putBoolean("isLink", linkStart != null)
-    payload.putBoolean("isImage", imageStart != null)
-    payload.putBoolean("isMention", mentionStart != null)
-    payload.putBoolean("isCheckList", checklistStart != null)
-    payload.putBoolean("isColored", colorStart != null)
+    val activeStyles =
+      listOfNotNull(
+        if (boldStart != null) TextStyle.BOLD else null,
+        if (italicStart != null) TextStyle.ITALIC else null,
+        if (underlineStart != null) TextStyle.UNDERLINE else null,
+        if (strikethroughStart != null) TextStyle.STRIKETHROUGH else null,
+        if (inlineCodeStart != null) TextStyle.INLINE_CODE else null,
+        if (h1Start != null) TextStyle.H1 else null,
+        if (h2Start != null) TextStyle.H2 else null,
+        if (h3Start != null) TextStyle.H3 else null,
+        if (h4Start != null) TextStyle.H4 else null,
+        if (h5Start != null) TextStyle.H5 else null,
+        if (h6Start != null) TextStyle.H6 else null,
+        if (codeBlockStart != null) TextStyle.CODE_BLOCK else null,
+        if (blockQuoteStart != null) TextStyle.BLOCK_QUOTE else null,
+        if (orderedListStart != null) TextStyle.ORDERED_LIST else null,
+        if (unorderedListStart != null) TextStyle.UNORDERED_LIST else null,
+        if (checklistStart != null) TextStyle.CHECK_LIST else null,
+        if (dividerStart != null) TextStyle.DIVIDER else null,
+        if (contentStart != null) TextStyle.CONTENT else null,
+        if (linkStart != null) TextStyle.LINK else null,
+        if (imageStart != null) TextStyle.IMAGE else null,
+        if (mentionStart != null) TextStyle.MENTION else null,
+      )
+    val payload = Arguments.createMap()
+    payload.putMap("bold", getStyleState(activeStyles, TextStyle.BOLD))
+    payload.putMap("italic", getStyleState(activeStyles, TextStyle.ITALIC))
+    payload.putMap("underline", getStyleState(activeStyles, TextStyle.UNDERLINE))
+    payload.putMap("strikeThrough", getStyleState(activeStyles, TextStyle.STRIKETHROUGH))
+    payload.putMap("inlineCode", getStyleState(activeStyles, TextStyle.INLINE_CODE))
+    payload.putMap("colored", getStyleState(activeStyles, TextStyle.COLOR))
+    payload.putMap("h1", getStyleState(activeStyles, TextStyle.H1))
+    payload.putMap("h2", getStyleState(activeStyles, TextStyle.H2))
+    payload.putMap("h3", getStyleState(activeStyles, TextStyle.H3))
+    payload.putMap("h4", getStyleState(activeStyles, TextStyle.H4))
+    payload.putMap("h5", getStyleState(activeStyles, TextStyle.H5))
+    payload.putMap("h6", getStyleState(activeStyles, TextStyle.H6))
+    payload.putMap("codeBlock", getStyleState(activeStyles, TextStyle.CODE_BLOCK))
+    payload.putMap("blockQuote", getStyleState(activeStyles, TextStyle.BLOCK_QUOTE))
+    payload.putMap("orderedList", getStyleState(activeStyles, TextStyle.ORDERED_LIST))
+    payload.putMap("unorderedList", getStyleState(activeStyles, TextStyle.UNORDERED_LIST))
+    payload.putMap("link", getStyleState(activeStyles, TextStyle.LINK))
+    payload.putMap("image", getStyleState(activeStyles, TextStyle.IMAGE))
+    payload.putMap("mention", getStyleState(activeStyles, TextStyle.MENTION))
+    payload.putMap("checkList", getStyleState(activeStyles, TextStyle.CHECK_LIST))
+    payload.putMap("content", getStyleState(activeStyles, TextStyle.CONTENT))
 
     // Do not emit event if payload is the same
     if (previousPayload == payload) {
@@ -414,7 +447,6 @@ class EnrichedSpanState(
       Arguments.createMap().apply {
         merge(payload)
       }
-
     val context = view.context as ReactContext
     val surfaceId = UIManagerHelper.getSurfaceId(context)
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
@@ -426,6 +458,27 @@ class EnrichedSpanState(
         view.experimentalSynchronousEvents,
       ),
     )
+  }
+
+  private fun getStyleState(
+    activeStyles: List<TextStyle>,
+    type: TextStyle,
+  ): WritableMap {
+    val mergingConfig = EnrichedSpans.getMergingConfigForStyle(type, view.htmlStyle)
+    val blockingList = mergingConfig?.blockingStyles
+    val conflictingList = mergingConfig?.conflictingStyles
+
+    val state = Arguments.createMap()
+
+    state.putBoolean("isActive", activeStyles.contains(type))
+
+    val hasBlockingStyles = blockingList?.any { activeStyles.contains(it) } ?: false
+    state.putBoolean("canBeApplied", hasBlockingStyles)
+
+    val isConflicting = conflictingList?.any { activeStyles.contains(it) } ?: false
+    state.putBoolean("isConflicting", isConflicting)
+
+    return state
   }
 
   companion object {

@@ -30,10 +30,18 @@ using namespace facebook::react;
                                      UITextViewDelegate, NSObject>
 @end
 
+#define GET_STYLE_STATE(TYPE_ENUM)                                             \
+  {                                                                            \
+    .isActive = [_activeStyles containsObject:@(TYPE_ENUM)],                   \
+    .canBeApplied = [self isStyle:TYPE_ENUM activeInMap:blockingStyles],       \
+    .isConflicting = [self isStyle:TYPE_ENUM activeInMap:conflictingStyles]    \
+  }
+
 @implementation EnrichedTextInputView {
   EnrichedTextInputViewShadowNode::ConcreteState::Shared _state;
   int _componentViewHeightUpdateCounter;
   NSMutableSet<NSNumber *> *_activeStyles;
+  NSMutableSet<NSNumber *> *_blockedStyles;
   LinkData *_recentlyActiveLinkData;
   NSRange _recentlyActiveLinkRange;
   NSString *_recentInputString;
@@ -85,7 +93,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)setDefaults {
   _componentViewHeightUpdateCounter = 0;
-  _activeStyles = [[NSMutableSet alloc] init];
+  _activeStyles = [[NSMutableSet alloc] initWithCapacity:stylesDict.count];
+  _blockedStyles = [[NSMutableSet alloc] initWithCapacity:stylesDict.count];
   _recentlyActiveLinkRange = NSMakeRange(0, 0);
   _recentlyActiveMentionRange = NSMakeRange(0, 0);
   recentlyChangedRange = NSMakeRange(0, 0);
@@ -356,6 +365,22 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   return CGSizeMake(maxWidth, height);
 }
 
+- (BOOL)isStyle:(StyleType)type activeInMap:(NSDictionary *)styleMap {
+  NSArray *relatedStyles = styleMap[@(type)];
+
+  if (!relatedStyles) {
+    return NO;
+  }
+
+  for (NSNumber *style in relatedStyles) {
+    if ([_activeStyles containsObject:style]) {
+      return YES;
+    }
+  }
+
+  return NO;
+}
+
 // MARK: - Active styles
 
 - (void)tryUpdatingActiveStyles {
@@ -366,6 +391,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // active styles are kept in a separate set until we're sure they can be
   // emitted
   NSMutableSet *newActiveStyles = [_activeStyles mutableCopy];
+
+  // currently blocked styles are subject to change (e.g. bold being blocked by
+  // headings might change in reaction to prop change) so they also are kept
+  // separately
+  NSMutableSet *newBlockedStyles = [_blockedStyles mutableCopy];
 
   // data for onLinkDetected event
   LinkData *detectedLinkData;
@@ -379,13 +409,26 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   for (NSNumber *type in stylesDict) {
     id<BaseStyleProtocol> style = stylesDict[type];
     BOOL wasActive = [newActiveStyles containsObject:type];
+    BOOL wasBlocked = [newBlockedStyles containsObject:type];
     BOOL isActive = [style detectStyle:selectionRange];
+    BOOL isBlocked = [self isStyle:(StyleType)[type integerValue]
+                       activeInMap:blockingStyles];
     if (wasActive != isActive) {
       updateNeeded = YES;
       if (isActive) {
         [newActiveStyles addObject:type];
       } else {
         [newActiveStyles removeObject:type];
+      }
+    }
+
+    // blocked state change for a style also needs an update
+    if (wasBlocked != isBlocked) {
+      updateNeeded = YES;
+      if (isBlocked) {
+        [newBlockedStyles addObject:type];
+      } else {
+        [newBlockedStyles removeObject:type];
       }
     }
 
@@ -453,42 +496,30 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     if (emitter != nullptr) {
       // update activeStyles only if emitter is available
       _activeStyles = newActiveStyles;
+      _blockedStyles = newBlockedStyles;
 
-      emitter->onChangeState({
-        .isBold = [_activeStyles containsObject:@([BoldStyle getStyleType])],
-        .isItalic =
-            [_activeStyles containsObject:@([ItalicStyle getStyleType])],
-        .isUnderline =
-            [_activeStyles containsObject:@([UnderlineStyle getStyleType])],
-        .isStrikeThrough =
-            [_activeStyles containsObject:@([StrikethroughStyle getStyleType])],
-        .isColored =
-            [_activeStyles containsObject:@([ColorStyle getStyleType])],
-        .isInlineCode =
-            [_activeStyles containsObject:@([InlineCodeStyle getStyleType])],
-        .isLink = [_activeStyles containsObject:@([LinkStyle getStyleType])],
-        .isMention =
-            [_activeStyles containsObject:@([MentionStyle getStyleType])],
-        .isH1 = [_activeStyles containsObject:@([H1Style getStyleType])],
-        .isH2 = [_activeStyles containsObject:@([H2Style getStyleType])],
-        .isH3 = [_activeStyles containsObject:@([H3Style getStyleType])],
-        .isH4 = [_activeStyles containsObject:@([H4Style getStyleType])],
-        .isH5 = [_activeStyles containsObject:@([H5Style getStyleType])],
-        .isH6 = [_activeStyles containsObject:@([H6Style getStyleType])],
-        .isUnorderedList =
-            [_activeStyles containsObject:@([UnorderedListStyle getStyleType])],
-        .isOrderedList =
-            [_activeStyles containsObject:@([OrderedListStyle getStyleType])],
-        .isBlockQuote =
-            [_activeStyles containsObject:@([BlockQuoteStyle getStyleType])],
-        .isCodeBlock =
-            [_activeStyles containsObject:@([CodeBlockStyle getStyleType])],
-        .isImage = [_activeStyles containsObject:@([ImageStyle getStyleType])],
-        .isCheckList =
-            [_activeStyles containsObject:@([CheckBoxStyle getStyleType])],
-        .isContent =
-            [_activeStyles containsObject:@([ContentStyle getStyleType])]
-      });
+      emitter->onChangeState(
+          {.bold = GET_STYLE_STATE([BoldStyle getStyleType]),
+           .italic = GET_STYLE_STATE([ItalicStyle getStyleType]),
+           .underline = GET_STYLE_STATE([UnderlineStyle getStyleType]),
+           .strikeThrough = GET_STYLE_STATE([StrikethroughStyle getStyleType]),
+           .colored = GET_STYLE_STATE([ColorStyle getStyleType]),
+           .inlineCode = GET_STYLE_STATE([InlineCodeStyle getStyleType]),
+           .link = GET_STYLE_STATE([LinkStyle getStyleType]),
+           .mention = GET_STYLE_STATE([MentionStyle getStyleType]),
+           .h1 = GET_STYLE_STATE([H1Style getStyleType]),
+           .h2 = GET_STYLE_STATE([H2Style getStyleType]),
+           .h3 = GET_STYLE_STATE([H3Style getStyleType]),
+           .h4 = GET_STYLE_STATE([H4Style getStyleType]),
+           .h5 = GET_STYLE_STATE([H5Style getStyleType]),
+           .h6 = GET_STYLE_STATE([H6Style getStyleType]),
+           .unorderedList = GET_STYLE_STATE([UnorderedListStyle getStyleType]),
+           .orderedList = GET_STYLE_STATE([OrderedListStyle getStyleType]),
+           .blockQuote = GET_STYLE_STATE([BlockQuoteStyle getStyleType]),
+           .codeBlock = GET_STYLE_STATE([CodeBlockStyle getStyleType]),
+           .image = GET_STYLE_STATE([ImageStyle getStyleType]),
+           .checkList = GET_STYLE_STATE([CheckBoxStyle getStyleType]),
+           .content = GET_STYLE_STATE([ContentStyle getStyleType])});
     }
   }
 

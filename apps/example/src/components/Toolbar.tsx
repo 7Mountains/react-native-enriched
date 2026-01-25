@@ -176,46 +176,50 @@ export const Toolbar: FC<ToolbarProps> = ({
     editorRef?.current?.setColor(color);
   };
 
-  const isActive = (item: Item) => {
+  const getStyleStateByName = (item: Item) => {
     switch (item.name) {
       case 'bold':
-        return stylesState.isBold;
+        return stylesState.bold;
       case 'italic':
-        return stylesState.isItalic;
+        return stylesState.italic;
       case 'underline':
-        return stylesState.isUnderline;
+        return stylesState.underline;
       case 'strikethrough':
-        return stylesState.isStrikeThrough;
+        return stylesState.strikeThrough;
       case 'inline-code':
-        return stylesState.isInlineCode;
+        return stylesState.inlineCode;
       case 'heading-1':
-        return stylesState.isH1;
+        return stylesState.h1;
       case 'heading-2':
-        return stylesState.isH2;
+        return stylesState.h2;
       case 'heading-3':
-        return stylesState.isH3;
+        return stylesState.h3;
       case 'heading-4':
-        return stylesState.isH4;
+        return stylesState.h4;
       case 'heading-5':
-        return stylesState.isH5;
+        return stylesState.h5;
       case 'heading-6':
-        return stylesState.isH6;
+        return stylesState.h6;
       case 'code-block':
-        return stylesState.isCodeBlock;
+        return stylesState.codeBlock;
       case 'quote':
-        return stylesState.isBlockQuote;
+        return stylesState.blockQuote;
       case 'unordered-list':
-        return stylesState.isUnorderedList;
+        return stylesState.unorderedList;
       case 'ordered-list':
-        return stylesState.isOrderedList;
+        return stylesState.orderedList;
       case 'link':
-        return stylesState.isLink;
+        return stylesState.link;
       case 'image':
-        return stylesState.isImage;
+        return stylesState.image;
       case 'mention':
-        return stylesState.isMention;
+        return stylesState.mention;
       default:
-        return false;
+        return {
+          isActive: false,
+          isConflicting: false,
+          canBeApplied: false,
+        };
     }
   };
 
@@ -225,16 +229,19 @@ export const Toolbar: FC<ToolbarProps> = ({
         onPress={handleColorButtonPress}
         color={item.value}
         text={item.text}
-        isActive={stylesState.isColored && selectionColor === item.value}
+        isActive={stylesState.colored.isActive && selectionColor === item.value}
       />
     ) : (
       <ToolbarButton
         {...item}
-        isActive={isActive(item)}
+        disabled={getStyleStateByName(item).canBeApplied}
+        isActive={getStyleStateByName(item).isActive}
         onPress={() => handlePress(item)}
       />
     );
   };
+
+  console.log(stylesState);
 
   const keyExtractor = (item: Item) =>
     item.name === 'color' ? item.value : item.name;

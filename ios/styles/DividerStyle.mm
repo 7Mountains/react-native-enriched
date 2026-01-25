@@ -99,13 +99,9 @@
                       return [self styleCondition:value range:range];
                     }];
   } else {
-    return [OccurenceUtils detect:NSAttachmentAttributeName
-                        withInput:_input
-                          atIndex:range.location
-                    checkPrevious:NO
-                    withCondition:^BOOL(id _Nullable value, NSRange range) {
-                      return [self styleCondition:value range:range];
-                    }];
+    NSRange paragraphRange =
+        [_input->textView.textStorage.string paragraphRangeForRange:range];
+    return [self anyOccurence:paragraphRange];
   }
 }
 

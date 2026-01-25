@@ -35,8 +35,6 @@ import {
 import ColorPreview from './components/ColorPreview';
 import { Rectangle } from './Rectangle';
 
-type StylesState = OnChangeStateEvent;
-
 type CurrentLinkState = OnLinkDetected;
 
 interface Selection {
@@ -47,28 +45,112 @@ interface Selection {
 
 const PRIMARY_COLOR = '#000000';
 
-const DEFAULT_STYLE: StylesState = {
-  isBold: false,
-  isItalic: false,
-  isUnderline: false,
-  isStrikeThrough: false,
-  isInlineCode: false,
-  isH1: false,
-  isH2: false,
-  isH3: false,
-  isH4: false,
-  isH5: false,
-  isH6: false,
-  isBlockQuote: false,
-  isCodeBlock: false,
-  isOrderedList: false,
-  isUnorderedList: false,
-  isLink: false,
-  isImage: false,
-  isMention: false,
-  isCheckList: false,
-  isColored: false,
-  isContent: false,
+const DEFAULT_STYLE: OnChangeStateEvent = {
+  bold: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  italic: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  underline: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  strikeThrough: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  inlineCode: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  h1: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  h2: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  h3: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  h4: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  h5: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  h6: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  blockQuote: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  codeBlock: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  orderedList: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  unorderedList: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  link: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  image: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  mention: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  checkList: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  colored: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
+  content: {
+    isActive: false,
+    canBeApplied: false,
+    isConflicting: false,
+  },
 };
 
 const DEFAULT_LINK_STATE = {
@@ -163,7 +245,8 @@ export default function App() {
   const [requestHtmlTime, setRequestHtmlTime] = useState<number | null>(null);
 
   const [selection, setSelection] = useState<Selection>();
-  const [stylesState, setStylesState] = useState<StylesState>(DEFAULT_STYLE);
+  const [stylesState, setStylesState] =
+    useState<OnChangeStateEvent>(DEFAULT_STYLE);
   const [currentLink, setCurrentLink] =
     useState<CurrentLinkState>(DEFAULT_LINK_STATE);
   const [selectionColor, setSelectionColor] = useState<string>(PRIMARY_COLOR);
@@ -174,7 +257,7 @@ export default function App() {
   const channelMention = useChannelMention();
 
   const insideCurrentLink =
-    stylesState.isLink &&
+    stylesState.link.isActive &&
     currentLink.url.length > 0 &&
     (currentLink.start || currentLink.end) &&
     selection &&
@@ -467,7 +550,7 @@ export default function App() {
           title="set default alignment"
           onPress={() => ref.current?.setParagraphAlignment('default')}
         />
-        <Text>is Check list {stylesState.isCheckList ? 'true' : 'false'}</Text>
+        <Text>is Check list {stylesState.checkList.isActive}</Text>
         <HtmlSection currentHtml={currentHtml} />
         {DEBUG_SCROLLABLE && <View style={styles.scrollPlaceholder} />}
         <ColorPreview color={selectionColor} />
