@@ -411,6 +411,13 @@ class EnrichedTextInputViewManager :
     view?.setParagraphAlignmentSpan(alignment)
   }
 
+  override fun setKeyboardDismissMode(
+    view: EnrichedTextInputView?,
+    value: String?,
+  ) {
+    // iOS only prop
+  }
+
   override fun measure(
     context: Context,
     localData: ReadableMap?,

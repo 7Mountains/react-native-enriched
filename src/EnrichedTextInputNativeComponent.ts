@@ -294,6 +294,7 @@ export interface NativeProps extends ViewProps {
   autoCapitalize?: string;
   htmlStyle?: HtmlStyleInternal;
   scrollEnabled?: boolean;
+  keyboardDismissMode?: string;
 
   // event callbacks
   onInputFocus?: DirectEventHandler<null>;

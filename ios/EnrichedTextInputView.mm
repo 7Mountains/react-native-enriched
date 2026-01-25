@@ -7,6 +7,7 @@
 #import "EnrichedTextConfigBuilder.h"
 #import "EnrichedTextStyleFactory.h"
 #import "HeadingsParagraphInvariantUtils.h"
+#import "KeyboardDismissModeConverter.h"
 #import "LayoutManagerExtension.h"
 #import "ParagraphAttributesUtils.h"
 #import "StringExtension.h"
@@ -171,6 +172,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [textView setScrollEnabled:newViewProps.scrollEnabled];
   }
 
+  if (newViewProps.keyboardDismissMode != oldViewProps.keyboardDismissMode) {
+  }
+
   BOOL defaultValueChanged =
       newViewProps.defaultValue != oldViewProps.defaultValue;
 
@@ -220,6 +224,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // editable
   if (newViewProps.editable != textView.editable) {
     textView.editable = newViewProps.editable;
+  }
+
+  if (newViewProps.keyboardDismissMode != oldViewProps.keyboardDismissMode) {
+    auto mode = KeyboardDismissModeFromString(
+        (std::string)newViewProps.keyboardDismissMode);
+    textView.keyboardDismissMode = mode;
   }
 
   // default value - must be set before placeholder to make sure it correctly

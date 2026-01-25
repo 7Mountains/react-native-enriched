@@ -162,6 +162,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   htmlStyle?: HtmlStyle;
   style?: ViewStyle | TextStyle;
   scrollEnabled?: boolean;
+  keyboardDismissMode?: 'none' | 'interactive' | 'on-drag';
   onFocus?: () => void;
   onBlur?: () => void;
   onChangeText?: (e: NativeSyntheticEvent<OnChangeTextEvent>) => void;
@@ -238,6 +239,7 @@ export const EnrichedTextInput = ({
   onParagraphAlignmentChange,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
+  keyboardDismissMode = 'none',
   ...rest
 }: EnrichedTextInputProps) => {
   const nativeRef = useRef<ComponentType | null>(null);
@@ -475,6 +477,7 @@ export const EnrichedTextInput = ({
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }
+      keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}
       {...rest}
     />
