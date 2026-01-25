@@ -133,7 +133,7 @@ static NSArray<NSTextList *> *const TextLists = @[ bullet ];
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      [_cachedAttributes mutableCopy];
+                      [[self prepareAttributes] mutableCopy];
                   pStyle.alignment = value != nil
                                          ? ((NSParagraphStyle *)value).alignment
                                          : NSTextAlignmentNatural;

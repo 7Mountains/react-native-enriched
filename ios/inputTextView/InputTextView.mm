@@ -239,6 +239,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 
   [self setNeedsLayout];
 }
+
 - (void)layoutSubviews {
   [super layoutSubviews];
 
