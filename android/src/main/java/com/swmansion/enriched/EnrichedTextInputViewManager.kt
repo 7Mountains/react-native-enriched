@@ -270,7 +270,7 @@ class EnrichedTextInputViewManager :
     view: EnrichedTextInputView?,
     text: String,
   ) {
-    view?.setValue(text)
+    view?.setValue(text, true)
   }
 
   override fun setSelection(

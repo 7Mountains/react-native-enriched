@@ -307,7 +307,10 @@ class EnrichedTextInputView : AppCompatEditText {
     }
   }
 
-  fun setValue(value: CharSequence?) {
+  fun setValue(
+    value: CharSequence?,
+    withSelection: Boolean = false,
+  ) {
     if (value == null) return
 
     runAsATransaction {
@@ -317,9 +320,10 @@ class EnrichedTextInputView : AppCompatEditText {
       observeAsyncImages()
       // Assign SpanWatcher one more time as our previous spannable has been replaced
       addSpanWatcher(EnrichedSpanWatcher(this))
-
-      // Scroll to the last line of text
-      setSelection(text?.length ?: 0)
+      if (withSelection) {
+        // Scroll to the last line of text
+        setSelection(text?.length ?: 0)
+      }
     }
   }
 

@@ -224,24 +224,24 @@ export const Toolbar: FC<ToolbarProps> = ({
   };
 
   const renderItem = ({ item }: ListRenderItemInfo<Item>) => {
+    const state = getStyleStateByName(item);
+
     return item.name === 'color' ? (
       <ToolbarColorButton
         onPress={handleColorButtonPress}
         color={item.value}
         text={item.text}
-        isActive={stylesState.colored.isActive && selectionColor === item.value}
+        isActive={state.isActive && selectionColor === item.value}
       />
     ) : (
       <ToolbarButton
         {...item}
-        disabled={getStyleStateByName(item).canBeApplied}
-        isActive={getStyleStateByName(item).isActive}
+        disabled={state.canBeApplied}
+        isActive={state.isActive}
         onPress={() => handlePress(item)}
       />
     );
   };
-
-  console.log(stylesState);
 
   const keyExtractor = (item: Item) =>
     item.name === 'color' ? item.value : item.name;
