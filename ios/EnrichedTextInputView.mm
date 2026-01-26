@@ -158,6 +158,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     isFirstMount = YES;
   }
 
+  // rich text style
+
   InputConfig *newConfig =
       [EnrichedTextConfigBuilder makeConfigFromProps:newViewProps
                                         oldViewProps:oldViewProps
@@ -165,14 +167,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   BOOL configHasChanged = newConfig != config;
 
-  // rich text style
-
   if (newViewProps.scrollEnabled != oldViewProps.scrollEnabled ||
       textView.scrollEnabled != newViewProps.scrollEnabled) {
     [textView setScrollEnabled:newViewProps.scrollEnabled];
-  }
-
-  if (newViewProps.keyboardDismissMode != oldViewProps.keyboardDismissMode) {
   }
 
   BOOL defaultValueChanged =
