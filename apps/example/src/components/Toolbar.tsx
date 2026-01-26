@@ -178,6 +178,8 @@ export const Toolbar: FC<ToolbarProps> = ({
 
   const getStyleStateByName = (item: Item) => {
     switch (item.name) {
+      case 'color':
+        return stylesState.colored;
       case 'bold':
         return stylesState.bold;
       case 'italic':

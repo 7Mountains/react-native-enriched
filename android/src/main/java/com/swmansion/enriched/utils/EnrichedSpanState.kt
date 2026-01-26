@@ -394,6 +394,7 @@ class EnrichedSpanState(
     val activeStyles =
       listOfNotNull(
         if (boldStart != null) TextStyle.BOLD else null,
+        if (colorStart != null) TextStyle.COLOR else null,
         if (italicStart != null) TextStyle.ITALIC else null,
         if (underlineStart != null) TextStyle.UNDERLINE else null,
         if (strikethroughStart != null) TextStyle.STRIKETHROUGH else null,
@@ -417,11 +418,11 @@ class EnrichedSpanState(
       )
     val payload = Arguments.createMap()
     payload.putMap("bold", getStyleState(activeStyles, TextStyle.BOLD))
+    payload.putMap("colored", getStyleState(activeStyles, TextStyle.COLOR))
     payload.putMap("italic", getStyleState(activeStyles, TextStyle.ITALIC))
     payload.putMap("underline", getStyleState(activeStyles, TextStyle.UNDERLINE))
     payload.putMap("strikeThrough", getStyleState(activeStyles, TextStyle.STRIKETHROUGH))
     payload.putMap("inlineCode", getStyleState(activeStyles, TextStyle.INLINE_CODE))
-    payload.putMap("colored", getStyleState(activeStyles, TextStyle.COLOR))
     payload.putMap("h1", getStyleState(activeStyles, TextStyle.H1))
     payload.putMap("h2", getStyleState(activeStyles, TextStyle.H2))
     payload.putMap("h3", getStyleState(activeStyles, TextStyle.H3))
