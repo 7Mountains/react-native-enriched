@@ -128,10 +128,10 @@ public class EnrichedSpannedToHtmlConverter {
         // close previous lists
         if (isInUlList && !isUlListItem) {
           isInUlList = false;
-          appendClosingTag(out, tag, true);
+          appendClosingTag(out, HtmlTags.UNORDERED_LIST, true);
         } else if (isInOlList && !isOlListItem) {
           isInOlList = false;
-          appendClosingTag(out, tag, true);
+          appendClosingTag(out, HtmlTags.ORDERED_LIST, true);
         }
 
         // open new lists
