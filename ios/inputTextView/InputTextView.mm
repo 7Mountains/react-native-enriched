@@ -203,6 +203,8 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   NSMutableDictionary *attributes =
       [typedInput->defaultTypingAttributes mutableCopy];
   attributes[NSForegroundColorAttributeName] = _placeholderColor;
+  attributes[NSUnderlineColorAttributeName] = _placeholderColor;
+  attributes[NSStrikethroughColorAttributeName] = _placeholderColor;
   _placeholderView.attributedText =
       [[NSAttributedString alloc] initWithString:placeholderText
                                       attributes:attributes];
@@ -227,6 +229,8 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 
   if (_placeholderColor) {
     attributes[NSForegroundColorAttributeName] = _placeholderColor;
+    attributes[NSUnderlineColorAttributeName] = _placeholderColor;
+    attributes[NSStrikethroughColorAttributeName] = _placeholderColor;
   }
 
   NSString *placeholder = _placeholderText ?: @"";
@@ -243,15 +247,24 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 - (void)layoutSubviews {
   [super layoutSubviews];
 
-  CGRect textFrame =
-      UIEdgeInsetsInsetRect(self.bounds, self.textContainerInset);
+  UIEdgeInsets contentInsets = self.adjustedContentInset;
+
+  UIEdgeInsets combinedInsets =
+      UIEdgeInsetsMake(self.textContainerInset.top + contentInsets.top,
+                       self.textContainerInset.left + contentInsets.left,
+                       self.textContainerInset.bottom + contentInsets.bottom,
+                       self.textContainerInset.right + contentInsets.right);
+
+  CGRect textFrame = UIEdgeInsetsInsetRect(self.bounds, combinedInsets);
+
   CGFloat placeholderHeight =
       [_placeholderView sizeThatFits:textFrame.size].height;
   textFrame.size.height = MIN(placeholderHeight, textFrame.size.height);
+
   _placeholderView.frame = textFrame;
+
   CGRect usedRect =
       [self.layoutManager usedRectForTextContainer:self.textContainer];
-
   CGSize newSize = usedRect.size;
 
   if (CGSizeAlmostEqual(newSize, _lastCommittedSize, 0.5)) {
@@ -259,8 +272,17 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   }
 
   _lastCommittedSize = newSize;
-
   [_input commitSize:newSize];
+}
+
+- (void)setContentInset:(UIEdgeInsets)contentInset {
+  [super setContentInset:contentInset];
+  [self setNeedsLayout];
+}
+
+- (void)setTextContainerInset:(UIEdgeInsets)textContainerInset {
+  [super setTextContainerInset:textContainerInset];
+  [self setNeedsLayout];
 }
 
 @end
