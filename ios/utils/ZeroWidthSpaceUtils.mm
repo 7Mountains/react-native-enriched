@@ -191,15 +191,13 @@
                          if (isAtEnd) {
                            [TextInsertionUtils insertText:text
                                                        at:idx
-                                     additionalAttributes:input->textView
-                                                              .typingAttributes
+                                     additionalAttributes:nullptr
                                                     input:input
                                             withSelection:NO];
                          } else {
                            [TextInsertionUtils replaceText:text
                                                         at:NSMakeRange(idx, 1)
-                                      additionalAttributes:input->textView
-                                                               .typingAttributes
+                                      additionalAttributes:nullptr
                                                      input:input
                                              withSelection:NO];
                          }
