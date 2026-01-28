@@ -366,13 +366,7 @@ class HtmlToSpannedConverter(
       }
 
       HtmlTags.CHECKLIST -> {
-        val isChecked = popTag(tag)?.attributes?.getValue("", "checked") == "true"
-        endParagraphTag(
-          mSpannableStringBuilder,
-          tag,
-          EnrichedChecklistSpan(mStyle, isChecked),
-          isEmptyTag,
-        )
+        endChecklist(mSpannableStringBuilder, isEmptyTag)
         return
       }
 
@@ -453,6 +447,38 @@ class HtmlToSpannedConverter(
       end--
     }
     addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
+    appendNewlines(text, 1)
+  }
+
+  private fun endChecklist(
+    text: Editable,
+    isEmptyTag: Boolean,
+  ) {
+    val ctx = popTag(HtmlTags.CHECKLIST) ?: return
+    val isChecked = ctx.attributes?.getValue("", "checked") == "true"
+    var end = text.length
+    if (isEmptyTag) {
+      text.append(Strings.ZERO_WIDTH_SPACE_CHAR)
+      end++
+    }
+
+    if (end > ctx.start && text[end - 1] == Strings.NEWLINE) {
+      end--
+    }
+
+    if (end > ctx.start && text[end - 1] == Strings.NEWLINE) {
+      end--
+    }
+
+    val isSimpleParagraph = ctx.tag == HtmlTags.PARAGRAPH
+
+    if (isSimpleParagraph) {
+      addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
+    } else {
+      addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
+      text.setSpan(EnrichedChecklistSpan(mStyle, isChecked), ctx.start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+
     appendNewlines(text, 1)
   }
 
