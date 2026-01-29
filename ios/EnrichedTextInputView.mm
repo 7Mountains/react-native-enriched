@@ -58,6 +58,7 @@ using namespace facebook::react;
   NSString *_recentlyEmittedAlignment;
   AttachmentInvalidationBatcher *_attachmentBatcher;
   BOOL _emitChangeText;
+  BOOL _emitOnScroll;
   EnrichedCommandHandler *_commandHandler;
 }
 
@@ -107,6 +108,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _emitFocusBlur = YES;
   _recentlyEmittedAlignment = nil;
   _emitChangeText = NO;
+  _emitOnScroll = NO;
 
   defaultTypingAttributes =
       [[NSMutableDictionary<NSAttributedStringKey, id> alloc] init];
@@ -301,6 +303,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   // isOnChangeTextSet
   _emitChangeText = newViewProps.isOnChangeTextSet;
+
+  // isOnScrollSet
+  _emitOnScroll = newViewProps.isOnScrollSet;
 
   [super updateProps:props oldProps:oldProps];
 
@@ -1443,6 +1448,57 @@ static inline NSString *DebugChar(unichar ch) {
 // in anyTextMayHaveBeenModified
 - (void)textViewDidChange:(UITextView *)textView {
   [self anyTextMayHaveBeenModified];
+}
+
+// MARK: - Scroll delegate methods
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+  auto emitter = [self getEventEmitter];
+  if (!emitter)
+    return;
+
+  UIEdgeInsets inset = scrollView.contentInset;
+  CGPoint offset = scrollView.contentOffset;
+  CGSize contentSize = scrollView.contentSize;
+  CGSize layoutSize = scrollView.bounds.size;
+
+  if (!_emitOnScroll) {
+    return;
+  }
+
+  CGPoint velocity = CGPointZero;
+  if (scrollView.panGestureRecognizer) {
+    velocity = [scrollView.panGestureRecognizer velocityInView:scrollView];
+  }
+
+  emitter->onInputScroll({.contentInset =
+                              {
+                                  .top = inset.top,
+                                  .bottom = inset.bottom,
+                                  .left = inset.left,
+                                  .right = inset.right,
+                              },
+                          .contentOffset =
+                              {
+                                  .x = offset.x,
+                                  .y = offset.y,
+                              },
+                          .contentSize =
+                              {
+                                  .width = contentSize.width,
+                                  .height = contentSize.height,
+                              },
+                          .layoutMeasurement =
+                              {
+                                  .width = layoutSize.width,
+                                  .height = layoutSize.height,
+                              },
+                          .velocity =
+                              {
+                                  .x = velocity.x,
+                                  .y = velocity.y,
+                              },
+                          .target = (int)[self.reactTag integerValue]});
 }
 
 // MARK: - Media attachments delegate

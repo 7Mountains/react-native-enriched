@@ -493,6 +493,9 @@ export default function App() {
               console.log(e.nativeEvent.alignment);
             }}
             onLinkDetected={handleLinkDetected}
+            onScroll={(e) => {
+              console.log('scroll', e.nativeEvent);
+            }}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}
             onChangeMention={handleChangeMention}

@@ -23,6 +23,7 @@ import EnrichedTextInputNativeComponent, {
   type OnChangeColorEvent,
   type ContentStyleProperties,
   type OnParagraphAlignmentChangeEvent,
+  type OnScrollEvent,
 } from './EnrichedTextInputNativeComponent';
 import type {
   ColorValue,
@@ -77,6 +78,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   addDividerAtNewLine: () => void;
   setParagraphAlignment: (alignment: string) => void;
   scrollTo: (x: number, y: number, animated?: boolean) => void;
+  onScroll?: (event: NativeSyntheticEvent<OnScrollEvent>) => void;
 }
 
 export interface OnChangeMentionEvent {
@@ -181,6 +183,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   onParagraphAlignmentChange?: (
     e: NativeSyntheticEvent<OnParagraphAlignmentChangeEvent>
   ) => void;
+  onScroll?: (e: NativeSyntheticEvent<OnScrollEvent>) => void;
   /**
    * If true, Android will use experimental synchronous events.
    * This will prevent from input flickering when updating component size.
@@ -238,6 +241,7 @@ export const EnrichedTextInput = ({
   onChangeSelection,
   onColorChangeInSelection,
   onParagraphAlignmentChange,
+  onScroll,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
   keyboardDismissMode = 'none',
@@ -478,6 +482,8 @@ export const EnrichedTextInput = ({
       onColorChangeInSelection={onColorChangeInSelection}
       onParagraphAlignmentChange={onParagraphAlignmentChange}
       isOnChangeTextSet={onChangeText !== undefined}
+      isOnScrollSet={onScroll !== undefined}
+      onInputScroll={onScroll}
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }

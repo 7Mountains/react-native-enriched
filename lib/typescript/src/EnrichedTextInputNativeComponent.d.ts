@@ -245,6 +245,31 @@ export interface HtmlStyleInternal {
         thickness?: Float;
     };
 }
+export interface OnScrollEvent {
+    contentInset: {
+        top: Float;
+        bottom: Float;
+        left: Float;
+        right: Float;
+    };
+    contentOffset: {
+        x: Float;
+        y: Float;
+    };
+    contentSize: {
+        width: Float;
+        height: Float;
+    };
+    layoutMeasurement: {
+        width: Float;
+        height: Float;
+    };
+    velocity: {
+        x: Float;
+        y: Float;
+    };
+    target: Int32;
+}
 export interface NativeProps extends ViewProps {
     autoFocus?: boolean;
     editable?: boolean;
@@ -270,6 +295,7 @@ export interface NativeProps extends ViewProps {
     onRequestHtmlResult?: DirectEventHandler<OnRequestHtmlResultEvent>;
     onColorChangeInSelection?: DirectEventHandler<OnChangeColorEvent>;
     onParagraphAlignmentChange?: DirectEventHandler<OnParagraphAlignmentChangeEvent>;
+    onInputScroll?: DirectEventHandler<OnScrollEvent>;
     color?: ColorValue;
     fontSize?: Float;
     fontFamily?: string;
@@ -277,6 +303,7 @@ export interface NativeProps extends ViewProps {
     fontStyle?: string;
     isOnChangeHtmlSet: boolean;
     isOnChangeTextSet: boolean;
+    isOnScrollSet: boolean;
     androidExperimentalSynchronousEvents: boolean;
 }
 type ComponentType = HostComponent<NativeProps>;
@@ -310,6 +337,7 @@ interface NativeCommands {
     removeColor: (viewRef: React.ElementRef<ComponentType>) => void;
     addDividerAtNewLine: (viewRef: React.ElementRef<ComponentType>) => void;
     setParagraphAlignment: (viewRef: React.ElementRef<ComponentType>, alignment: string) => void;
+    scrollTo: (viewRef: React.ElementRef<ComponentType>, x: Float, y: Float, animated: boolean) => void;
 }
 export declare const Commands: NativeCommands;
 declare const _default: HostComponent<NativeProps>;

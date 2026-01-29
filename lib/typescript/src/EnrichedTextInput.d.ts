@@ -1,5 +1,5 @@
 import { type RefObject } from 'react';
-import { type OnChangeHtmlEvent, type OnChangeSelectionEvent, type OnChangeStateEvent, type OnChangeTextEvent, type OnLinkDetected, type OnMentionDetected, type MentionStyleProperties, type OnChangeColorEvent, type ContentStyleProperties, type OnParagraphAlignmentChangeEvent } from './EnrichedTextInputNativeComponent';
+import { type OnChangeHtmlEvent, type OnChangeSelectionEvent, type OnChangeStateEvent, type OnChangeTextEvent, type OnLinkDetected, type OnMentionDetected, type MentionStyleProperties, type OnChangeColorEvent, type ContentStyleProperties, type OnParagraphAlignmentChangeEvent, type OnScrollEvent } from './EnrichedTextInputNativeComponent';
 import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, TextStyle, ViewProps, ViewStyle } from 'react-native';
 export interface EnrichedTextInputInstance extends NativeMethods {
     focus: () => void;
@@ -31,6 +31,8 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     removeColor: () => void;
     addDividerAtNewLine: () => void;
     setParagraphAlignment: (alignment: string) => void;
+    scrollTo: (x: number, y: number, animated?: boolean) => void;
+    onScroll?: (event: NativeSyntheticEvent<OnScrollEvent>) => void;
 }
 export interface OnChangeMentionEvent {
     indicator: string;
@@ -127,6 +129,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     onChangeSelection?: (e: NativeSyntheticEvent<OnChangeSelectionEvent>) => void;
     onColorChangeInSelection?: (color: NativeSyntheticEvent<OnChangeColorEvent>) => void;
     onParagraphAlignmentChange?: (e: NativeSyntheticEvent<OnParagraphAlignmentChangeEvent>) => void;
+    onScroll?: (e: NativeSyntheticEvent<OnScrollEvent>) => void;
     /**
      * If true, Android will use experimental synchronous events.
      * This will prevent from input flickering when updating component size.
@@ -136,6 +139,6 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
      */
     androidExperimentalSynchronousEvents?: boolean;
 }
-export declare const EnrichedTextInput: ({ ref, autoFocus, editable, mentionIndicators, defaultValue, placeholder, placeholderTextColor, cursorColor, selectionColor, style, autoCapitalize, htmlStyle, onFocus, onBlur, onChangeText, onChangeHtml, onChangeState, onLinkDetected, onMentionDetected, onStartMention, onChangeMention, onEndMention, onChangeSelection, onColorChangeInSelection, onParagraphAlignmentChange, androidExperimentalSynchronousEvents, scrollEnabled, keyboardDismissMode, ...rest }: EnrichedTextInputProps) => import("react/jsx-runtime").JSX.Element;
+export declare const EnrichedTextInput: ({ ref, autoFocus, editable, mentionIndicators, defaultValue, placeholder, placeholderTextColor, cursorColor, selectionColor, style, autoCapitalize, htmlStyle, onFocus, onBlur, onChangeText, onChangeHtml, onChangeState, onLinkDetected, onMentionDetected, onStartMention, onChangeMention, onEndMention, onChangeSelection, onColorChangeInSelection, onParagraphAlignmentChange, onScroll, androidExperimentalSynchronousEvents, scrollEnabled, keyboardDismissMode, ...rest }: EnrichedTextInputProps) => import("react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=EnrichedTextInput.d.ts.map

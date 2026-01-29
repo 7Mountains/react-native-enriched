@@ -31,9 +31,11 @@ import com.swmansion.enriched.events.OnLinkDetectedEvent
 import com.swmansion.enriched.events.OnMentionDetectedEvent
 import com.swmansion.enriched.events.OnMentionEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
+import com.swmansion.enriched.events.OnScrollEvent
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.utils.jsonStringToStringMap
+import com.swmansion.enriched.watchers.EnrichedScrollWatcher
 
 @ReactModule(name = EnrichedTextInputViewManager.NAME)
 class EnrichedTextInputViewManager :
@@ -80,6 +82,7 @@ class EnrichedTextInputViewManager :
     map.put(OnRequestHtmlResultEvent.EVENT_NAME, mapOf("registrationName" to OnRequestHtmlResultEvent.EVENT_NAME))
     map.put(OnColorChangeEvent.EVENT_NAME, mapOf("registrationName" to OnColorChangeEvent.EVENT_NAME))
     map.put(OnAlignmentChangeEvent.EVENT_NAME, mapOf("registrationName" to OnAlignmentChangeEvent.EVENT_NAME))
+    map.put(OnScrollEvent.TOP_EVENT_NAME, mapOf("registrationName" to OnScrollEvent.EVENT_NAME))
 
     return map
   }
@@ -416,6 +419,17 @@ class EnrichedTextInputViewManager :
     value: String?,
   ) {
     // iOS only prop
+  }
+
+  override fun setIsOnScrollSet(
+    view: EnrichedTextInputView?,
+    onScroll: Boolean,
+  ) {
+    if (onScroll) {
+      view?.setScrollWatcher(EnrichedScrollWatcher(view))
+    } else {
+      view?.setScrollWatcher(null)
+    }
   }
 
   override fun scrollTo(

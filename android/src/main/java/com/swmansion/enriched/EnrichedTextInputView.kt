@@ -52,6 +52,7 @@ import com.swmansion.enriched.styles.ParametrizedStyles
 import com.swmansion.enriched.utils.EnrichedSelection
 import com.swmansion.enriched.utils.EnrichedSpanState
 import com.swmansion.enriched.utils.mergeSpannables
+import com.swmansion.enriched.watchers.EnrichedScrollWatcher
 import com.swmansion.enriched.watchers.EnrichedSpanWatcher
 import com.swmansion.enriched.watchers.EnrichedTextWatcher
 import kotlin.math.ceil
@@ -68,6 +69,7 @@ class EnrichedTextInputView : AppCompatEditText {
   var isRemovingMany: Boolean = false
   var scrollEnabled: Boolean = true
   private var detectScrollMovement: Boolean = false
+  private var scrollWatcher: EnrichedScrollWatcher? = null
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
@@ -831,6 +833,20 @@ class EnrichedTextInputView : AppCompatEditText {
       }
     }
     forceScrollToSelection()
+  }
+
+  override fun onScrollChanged(
+    horiz: Int,
+    vert: Int,
+    oldHoriz: Int,
+    oldVert: Int,
+  ) {
+    super.onScrollChanged(horiz, vert, oldHoriz, oldVert)
+    scrollWatcher?.onScrollChanged(horiz, vert, oldHoriz, oldVert)
+  }
+
+  fun setScrollWatcher(scrollWatcher: EnrichedScrollWatcher?) {
+    this.scrollWatcher = scrollWatcher
   }
 
   override fun onAttachedToWindow() {

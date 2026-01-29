@@ -281,6 +281,32 @@ export interface HtmlStyleInternal {
   };
 }
 
+export interface OnScrollEvent {
+  contentInset: {
+    top: Float;
+    bottom: Float;
+    left: Float;
+    right: Float;
+  };
+  contentOffset: {
+    x: Float;
+    y: Float;
+  };
+  contentSize: {
+    width: Float;
+    height: Float;
+  };
+  layoutMeasurement: {
+    width: Float;
+    height: Float;
+  };
+  velocity: {
+    x: Float;
+    y: Float;
+  };
+  target: Int32;
+}
+
 export interface NativeProps extends ViewProps {
   // base props
   autoFocus?: boolean;
@@ -309,6 +335,7 @@ export interface NativeProps extends ViewProps {
   onRequestHtmlResult?: DirectEventHandler<OnRequestHtmlResultEvent>;
   onColorChangeInSelection?: DirectEventHandler<OnChangeColorEvent>;
   onParagraphAlignmentChange?: DirectEventHandler<OnParagraphAlignmentChangeEvent>;
+  onInputScroll?: DirectEventHandler<OnScrollEvent>;
 
   // Style related props - used for generating proper setters in component's manager
   // These should not be passed as regular props
@@ -322,6 +349,8 @@ export interface NativeProps extends ViewProps {
   isOnChangeHtmlSet: boolean;
   // Used for onChangeText event performance optimization
   isOnChangeTextSet: boolean;
+  // used for onScroll event performance optimization
+  isOnScrollSet: boolean;
 
   // Experimental
   androidExperimentalSynchronousEvents: boolean;
@@ -392,6 +421,12 @@ interface NativeCommands {
     viewRef: React.ElementRef<ComponentType>,
     alignment: string
   ) => void;
+  scrollTo: (
+    viewRef: React.ElementRef<ComponentType>,
+    x: Float,
+    y: Float,
+    animated: boolean
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -428,6 +463,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'removeColor',
     'addDividerAtNewLine',
     'setParagraphAlignment',
+    'scrollTo',
   ],
 });
 
