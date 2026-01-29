@@ -158,6 +158,12 @@ type Heading = {
     fontSize?: Float;
     bold?: boolean;
 };
+export type Insets = {
+    top: Float;
+    left: Float;
+    bottom: Float;
+    right: Float;
+};
 export interface ContentStyleProperties {
     textColor?: ColorValue;
     borderStyle?: 'solid' | 'dashed' | 'dotted';
@@ -278,6 +284,8 @@ export interface NativeProps extends ViewProps {
     isOnChangeHtmlSet: boolean;
     isOnChangeTextSet: boolean;
     androidExperimentalSynchronousEvents: boolean;
+    contentInsets?: Insets;
+    scrollIndicatorInsets?: Insets;
 }
 type ComponentType = HostComponent<NativeProps>;
 interface NativeCommands {
@@ -310,6 +318,7 @@ interface NativeCommands {
     removeColor: (viewRef: React.ElementRef<ComponentType>) => void;
     addDividerAtNewLine: (viewRef: React.ElementRef<ComponentType>) => void;
     setParagraphAlignment: (viewRef: React.ElementRef<ComponentType>, alignment: string) => void;
+    scrollTo: (viewRef: React.ElementRef<ComponentType>, x: Float, y: Float, animated: boolean) => void;
 }
 export declare const Commands: NativeCommands;
 declare const _default: HostComponent<NativeProps>;

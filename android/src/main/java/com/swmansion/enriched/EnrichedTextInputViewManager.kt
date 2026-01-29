@@ -418,6 +418,14 @@ class EnrichedTextInputViewManager :
     // iOS only prop
   }
 
+  override fun setContentInsets(view: EnrichedTextInputView?, value: ReadableMap?) {
+    // iOS only prop
+  }
+
+  override fun setScrollIndicatorInsets(view: EnrichedTextInputView?, value: ReadableMap?) {
+    // iOS only prop
+  }
+
   override fun measure(
     context: Context,
     localData: ReadableMap?,

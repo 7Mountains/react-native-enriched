@@ -4,6 +4,14 @@
 #import "EnrichedTextInputView.h"
 #import "StyleHeaders.h"
 
+static inline void RunOnMainThread(void (^block)(void)) {
+  if ([NSThread isMainThread]) {
+    block();
+  } else {
+    dispatch_async(dispatch_get_main_queue(), block);
+  }
+}
+
 @implementation EnrichedCommandHandler {
   __weak EnrichedTextInputView *_input;
 }
@@ -115,6 +123,15 @@
   } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
     [_input setParagraphAlignment:args[0]];
     [_input anyTextMayHaveBeenModified];
+  } else if ([commandName isEqualToString:@"scrollTo"]) {
+    CGFloat x = [args[0] floatValue];
+    CGFloat y = [args[1] floatValue];
+    BOOL animated = [args[2] boolValue];
+
+    RunOnMainThread(^{
+      [self->_input->textView setContentOffset:CGPointMake(x, y)
+                                      animated:animated];
+    });
   }
 }
 
