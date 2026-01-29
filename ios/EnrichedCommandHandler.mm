@@ -4,6 +4,14 @@
 #import "EnrichedTextInputView.h"
 #import "StyleHeaders.h"
 
+static inline void RunOnMainThread(void (^block)(void)) {
+  if ([NSThread isMainThread]) {
+    block();
+  } else {
+    dispatch_async(dispatch_get_main_queue(), block);
+  }
+}
+
 @implementation EnrichedCommandHandler {
   __weak EnrichedTextInputView *_input;
 }
@@ -115,6 +123,33 @@
   } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
     [_input setParagraphAlignment:args[0]];
     [_input anyTextMayHaveBeenModified];
+  } else if ([commandName isEqualToString:@"scrollTo"]) {
+    CGFloat x = [args[0] floatValue];
+    CGFloat y = [args[1] floatValue];
+    BOOL animated = [args[2] boolValue];
+
+    RunOnMainThread(^{
+      UIScrollView *scrollView = self->_input->textView;
+
+      UIEdgeInsets inset = scrollView.contentInset;
+      CGSize contentSize = scrollView.contentSize;
+      CGSize boundsSize = scrollView.bounds.size;
+
+      CGFloat minX = -inset.left;
+      CGFloat minY = -inset.top;
+
+      CGFloat maxX = contentSize.width - boundsSize.width + inset.right;
+      CGFloat maxY = contentSize.height - boundsSize.height + inset.bottom;
+
+      maxX = MAX(minX, maxX);
+      maxY = MAX(minY, maxY);
+
+      CGFloat clampedX = MIN(MAX(x, minX), maxX);
+      CGFloat clampedY = MIN(MAX(y, minY), maxY);
+
+      [scrollView setContentOffset:CGPointMake(clampedX, clampedY)
+                          animated:animated];
+    });
   }
 }
 

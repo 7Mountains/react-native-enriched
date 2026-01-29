@@ -392,6 +392,12 @@ interface NativeCommands {
     viewRef: React.ElementRef<ComponentType>,
     alignment: string
   ) => void;
+  scrollTo: (
+    viewRef: React.ElementRef<ComponentType>,
+    x: Float,
+    y: Float,
+    animated: boolean
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -428,6 +434,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'removeColor',
     'addDividerAtNewLine',
     'setParagraphAlignment',
+    'scrollTo',
   ],
 });
 

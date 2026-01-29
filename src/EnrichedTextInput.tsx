@@ -76,6 +76,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   removeColor: () => void;
   addDividerAtNewLine: () => void;
   setParagraphAlignment: (alignment: string) => void;
+  scrollTo: (x: number, y: number, animated?: boolean) => void;
 }
 
 export interface OnChangeMentionEvent {
@@ -391,6 +392,9 @@ export const EnrichedTextInput = ({
       Commands.addDividerAtNewLine(nullthrows(nativeRef.current)),
     setParagraphAlignment: (alignment: string) => {
       Commands.setParagraphAlignment(nullthrows(nativeRef.current), alignment);
+    },
+    scrollTo: (x: number, y: number, animated: boolean = true) => {
+      Commands.scrollTo(nullthrows(nativeRef.current), x, y, animated);
     },
   }));
 

@@ -418,6 +418,35 @@ class EnrichedTextInputViewManager :
     // iOS only prop
   }
 
+  override fun scrollTo(
+    view: EnrichedTextInputView?,
+    x: Float,
+    y: Float,
+    animated: Boolean,
+  ) {
+    if (view == null) return
+    if (!x.isFinite() || !y.isFinite()) return
+
+    view.post {
+      val layout = view.layout ?: return@post
+
+      val visibleWidth = view.width - view.paddingLeft - view.paddingRight
+      val visibleHeight = view.height - view.paddingTop - view.paddingBottom
+
+      if (visibleWidth <= 0 || visibleHeight <= 0) return@post
+
+      val contentWidth = layout.width
+      val contentHeight = layout.height
+
+      val maxX = (contentWidth - visibleWidth).coerceAtLeast(0)
+      val maxY = (contentHeight - visibleHeight).coerceAtLeast(0)
+
+      val clampedX = x.toInt().coerceIn(0, maxX)
+      val clampedY = y.toInt().coerceIn(0, maxY)
+      view.scrollTo(clampedX, clampedY)
+    }
+  }
+
   override fun measure(
     context: Context,
     localData: ReadableMap?,
