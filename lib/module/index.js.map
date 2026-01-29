@@ -1,1 +1,1 @@
-{"version":3,"names":[],"sourceRoot":"../../src","sources":["index.tsx"],"mappings":";;AAAA,cAAc,wBAAqB;AACnC,cAAc,kCAA+B","ignoreList":[]}
+{"version":3,"names":["default","useReanimatedScrollOffset"],"sourceRoot":"../../src","sources":["index.tsx"],"mappings":";;AAAA,cAAc,wBAAqB;AACnC,cAAc,kCAA+B;AAoB7C,SAASA,OAAO,IAAIC,yBAAyB,QAAQ,4CAAmC","ignoreList":[]}

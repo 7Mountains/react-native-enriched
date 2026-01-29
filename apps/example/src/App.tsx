@@ -9,12 +9,18 @@ import {
 } from 'react-native-safe-area-context';
 import ReanimatedEditorScreen from './ReanimatedEditorScreen';
 
-const Stack = createNativeStackNavigator();
+export type RootStackParamList = {
+  Main: undefined;
+  Editor: undefined;
+  ReanimatedEditor: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
-    <KeyboardProvider preload>
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <KeyboardProvider preload>
         <NavigationContainer>
           <Stack.Navigator>
             <Stack.Screen name="Main" component={MainScreen} />
@@ -25,7 +31,7 @@ export default function App() {
             />
           </Stack.Navigator>
         </NavigationContainer>
-      </SafeAreaProvider>
-    </KeyboardProvider>
+      </KeyboardProvider>
+    </SafeAreaProvider>
   );
 }

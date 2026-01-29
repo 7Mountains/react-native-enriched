@@ -7,6 +7,7 @@ import {
   Image,
 } from 'react-native';
 import {
+  EnrichedTextInput,
   type EnrichedTextInputInstance,
   type OnLinkDetected,
   type OnChangeMentionEvent,
@@ -14,29 +15,25 @@ import {
   type OnChangeSelectionEvent,
   type HtmlStyle,
   type OnChangeColorEvent,
-  EnrichedReanimatedTextInput,
 } from 'react-native-enriched';
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
+import { Button } from './components/Button';
+import { Toolbar } from './components/Toolbar';
 import { LinkModal } from './components/LinkModal';
 import { ValueModal } from './components/ValueModal';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { type MentionItem, MentionPopup } from './components/MentionPopup';
 import { useUserMention } from './hooks/useUserMention';
 import { useChannelMention } from './hooks/useChannelMention';
+import { HtmlSection } from './components/HtmlSection';
 import { ImageModal } from './components/ImageModal';
 import {
   DEFAULT_IMAGE_HEIGHT,
   DEFAULT_IMAGE_WIDTH,
   prepareImageDimensions,
 } from './utils/prepareImageDimensions';
-import {
-  useAnimatedProps,
-  useAnimatedRef,
-  useSharedValue,
-  dispatchCommand,
-} from 'react-native-reanimated';
-import { useKeyboardHandler } from 'react-native-keyboard-controller';
-import { runOnUI } from 'react-native-worklets';
+import ColorPreview from './components/ColorPreview';
+import { Rectangle } from './Rectangle';
 
 type CurrentLinkState = OnLinkDetected;
 
@@ -163,13 +160,15 @@ const DEFAULT_LINK_STATE = {
   end: 0,
 };
 
+const DEBUG_SCROLLABLE = false;
+
 // Enabling this prop fixes input flickering while auto growing.
 // However, it's still experimental and not tested well.
 // Disabled for now, as it's causing some strange issues.
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 10) => {
+const generateHugeHtml = (repeat = 1) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -244,14 +243,6 @@ export default function EditorScreen() {
   const [paragraphAlignment, setParagraphAlignment] =
     useState<string>('default');
   const [requestHtmlTime, setRequestHtmlTime] = useState<number | null>(null);
-  const keyboardHeight = useSharedValue(0);
-
-  useKeyboardHandler({
-    onMove: (event) => {
-      'worklet';
-      keyboardHeight.set(event.height);
-    },
-  });
 
   const [selection, setSelection] = useState<Selection>();
   const [stylesState, setStylesState] =
@@ -260,7 +251,7 @@ export default function EditorScreen() {
     useState<CurrentLinkState>(DEFAULT_LINK_STATE);
   const [selectionColor, setSelectionColor] = useState<string>(PRIMARY_COLOR);
 
-  const ref = useAnimatedRef<EnrichedTextInputInstance>();
+  const ref = useRef<EnrichedTextInputInstance>(null);
 
   const userMention = useUserMention();
   const channelMention = useChannelMention();
@@ -455,72 +446,115 @@ export default function EditorScreen() {
     }
   };
 
-  const animatedProps = useAnimatedProps(
-    () => ({
-      contentInsets: {
-        bottom: keyboardHeight.get(),
-        top: 0,
-        left: 0,
-        right: 0,
-      },
-      scrollIndicatorInsets: {
-        bottom: keyboardHeight.get(),
-        top: 0,
-        left: 0,
-        right: 0,
-      },
-    }),
-    [keyboardHeight]
-  );
-
-  useEffect(() => {
-    setTimeout(() => {
-      runOnUI(() => {
-        'worklet';
-        dispatchCommand(ref, 'scrollTo', [0, 1500, false]);
-      })();
-    }, 1500);
-  }, [ref]);
-
   return (
     <>
-      <EnrichedReanimatedTextInput
-        ref={ref}
-        animatedProps={animatedProps}
-        mentionIndicators={['@', '#']}
-        style={styles.editorInput}
-        htmlStyle={htmlStyle}
-        placeholder="Type something here..."
-        placeholderTextColor="rgb(0, 26, 114)"
-        selectionColor="deepskyblue"
-        cursorColor="dodgerblue"
-        autoCapitalize="sentences"
-        // onChangeText={(e) => handleChangeText(e.nativeEvent)}
-        // onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
-        onChangeState={(e) => handleChangeState(e.nativeEvent)}
-        defaultValue={initialHugeHtml}
-        onLayout={(e) => {
-          console.log(e.nativeEvent.layout);
-        }}
-        onColorChangeInSelection={(e) => {
-          handleSelectionColorChange(e.nativeEvent);
-        }}
-        onParagraphAlignmentChange={(e) => {
-          setParagraphAlignment(e.nativeEvent.alignment);
-          console.log(e.nativeEvent.alignment);
-        }}
-        onLinkDetected={handleLinkDetected}
-        onMentionDetected={console.log}
-        onStartMention={handleStartMention}
-        onChangeMention={handleChangeMention}
-        onEndMention={handleEndMention}
-        onFocus={handleFocusEvent}
-        onBlur={handleBlurEvent}
-        onChangeSelection={(e) => handleSelectionChangeEvent(e.nativeEvent)}
-        androidExperimentalSynchronousEvents={
-          ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS
-        }
-      />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <Text style={styles.label}>
+          Enriched Text Input {paragraphAlignment}{' '}
+          {requestHtmlTime !== null
+            ? `- Last HTML request time: ${requestHtmlTime.toFixed(2)} ms`
+            : ''}
+        </Text>
+        <Rectangle />
+        <Button
+          title="Request html"
+          onPress={async () => {
+            const start = performance.now();
+            console.log('Requesting HTML...');
+            const result = await ref.current?.getHTML();
+            const end = performance.now();
+            console.log('HTML:', result);
+            setRequestHtmlTime(end - start);
+          }}
+        />
+        <View style={styles.editor}>
+          <EnrichedTextInput
+            ref={ref}
+            mentionIndicators={['@', '#']}
+            style={styles.editorInput}
+            htmlStyle={htmlStyle}
+            placeholder="Type something here..."
+            placeholderTextColor="rgb(0, 26, 114)"
+            selectionColor="deepskyblue"
+            cursorColor="dodgerblue"
+            autoCapitalize="sentences"
+            // onChangeText={(e) => handleChangeText(e.nativeEvent)}
+            // onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
+            onChangeState={(e) => handleChangeState(e.nativeEvent)}
+            defaultValue={initialHugeHtml}
+            onColorChangeInSelection={(e) => {
+              handleSelectionColorChange(e.nativeEvent);
+            }}
+            onParagraphAlignmentChange={(e) => {
+              setParagraphAlignment(e.nativeEvent.alignment);
+              console.log(e.nativeEvent.alignment);
+            }}
+            onLinkDetected={handleLinkDetected}
+            onMentionDetected={console.log}
+            onStartMention={handleStartMention}
+            onChangeMention={handleChangeMention}
+            onEndMention={handleEndMention}
+            onFocus={handleFocusEvent}
+            onBlur={handleBlurEvent}
+            onChangeSelection={(e) => handleSelectionChangeEvent(e.nativeEvent)}
+            androidExperimentalSynchronousEvents={
+              ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS
+            }
+          />
+          <Toolbar
+            stylesState={stylesState}
+            editorRef={ref}
+            selectionColor={selectionColor}
+            onOpenLinkModal={openLinkModal}
+            onSelectImage={openImageModal}
+          />
+        </View>
+        <View style={styles.buttonStack}>
+          <Button title="Focus" onPress={handleFocus} style={styles.button} />
+          <Button title="Blur" onPress={handleBlur} style={styles.button} />
+        </View>
+        <Button
+          title="Add Divider"
+          onPress={() => ref.current?.addDividerAtNewLine()}
+          style={styles.valueButton}
+        />
+        <Button
+          title="Set input's value"
+          onPress={openValueModal}
+          style={styles.valueButton}
+        />
+        <Button
+          title="toggle check list"
+          onPress={() => ref.current?.toggleCheckList()}
+        />
+        <Button
+          title="remove color"
+          onPress={() => ref.current?.removeColor()}
+        />
+        <Button
+          title="set right alignment"
+          onPress={() => ref.current?.setParagraphAlignment('right')}
+        />
+        <Button
+          title="set left alignment"
+          onPress={() => ref.current?.setParagraphAlignment('left')}
+        />
+        <Button
+          title="set center alignment"
+          onPress={() => ref.current?.setParagraphAlignment('center')}
+        />
+        <Button
+          title="set default alignment"
+          onPress={() => ref.current?.setParagraphAlignment('default')}
+        />
+        <Text>is Check list {stylesState.checkList.isActive}</Text>
+        <HtmlSection currentHtml={currentHtml} />
+        {DEBUG_SCROLLABLE && <View style={styles.scrollPlaceholder} />}
+        <ColorPreview color={selectionColor} />
+      </ScrollView>
       <LinkModal
         isOpen={isLinkModalOpen}
         editedText={
@@ -735,14 +769,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   editorInput: {
+    marginTop: 24,
     width: '100%',
-    flex: 1,
+    maxHeight: 300,
     backgroundColor: 'gainsboro',
     fontSize: 18,
     fontFamily: 'Nunito-Regular',
     paddingVertical: 12,
     paddingHorizontal: 14,
-    paddingBottom: 0,
     color: 'black',
   },
   scrollPlaceholder: {

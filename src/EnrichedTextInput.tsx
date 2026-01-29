@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
 import EnrichedTextInputNativeComponent from './EnrichedTextInputNativeComponent';
 import { normalizeHtmlStyle } from './normalizeHtmlStyle';
-import type { EnrichedTextInputProps, HtmlRequest } from './types';
+import type {
+  ComponentType,
+  EnrichedTextInputProps,
+  HtmlRequest,
+} from './types';
 import { useCommands } from './hooks/useCommands';
 import { useHandlers } from './hooks/useHandlers';
 
@@ -46,6 +50,7 @@ export const EnrichedTextInput = ({
   keyboardDismissMode = 'none',
   ...rest
 }: EnrichedTextInputProps) => {
+  const nativeRef = useRef<ComponentType | null>(null);
   const nextHtmlRequestId = useRef(1);
   const pendingHtmlRequests = useRef(new Map<number, HtmlRequest>());
 
@@ -64,7 +69,13 @@ export const EnrichedTextInput = ({
     [htmlStyle, mentionIndicators]
   );
 
-  useCommands(ref, mentionIndicators, nextHtmlRequestId, pendingHtmlRequests);
+  useCommands(
+    ref,
+    nativeRef,
+    mentionIndicators,
+    nextHtmlRequestId,
+    pendingHtmlRequests
+  );
 
   const {
     handleMentionEvent,
@@ -82,8 +93,7 @@ export const EnrichedTextInput = ({
 
   return (
     <EnrichedTextInputNativeComponent
-      // @ts-ignore
-      ref={ref}
+      ref={nativeRef}
       mentionIndicators={mentionIndicators}
       editable={editable}
       contentInsets={contentInsets}

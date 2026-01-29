@@ -18,3 +18,5 @@ export type {
   OnChangeColorEvent,
   OnParagraphAlignmentChangeEvent,
 } from './EnrichedTextInputNativeComponent';
+
+export { default as useReanimatedScrollOffset } from './hooks/useReanimatedScrollOffset';

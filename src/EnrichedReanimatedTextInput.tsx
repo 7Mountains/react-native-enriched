@@ -1,14 +1,28 @@
-import { type ComponentProps, useEffect, useMemo, useRef } from 'react';
-import EnrichedTextInputNativeComponent from './EnrichedTextInputNativeComponent';
+import {
+  type ComponentProps,
+  type RefObject,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
+import EnrichedTextInputNativeComponent, {
+  type OnScrollEvent,
+} from './EnrichedTextInputNativeComponent';
 import { normalizeHtmlStyle } from './normalizeHtmlStyle';
 import type {
+  ComponentType,
   EnrichedTextInputInstance,
   EnrichedTextInputProps,
   HtmlRequest,
 } from './types';
 import { useCommands } from './hooks/useCommands';
 import { useHandlers } from './hooks/useHandlers';
-import Reanimated, { type AnimatedRef } from 'react-native-reanimated';
+import Reanimated, {
+  useAnimatedRef,
+  type AnimatedRef,
+  type EventHandlerProcessed,
+} from 'react-native-reanimated';
+import type { NativeSyntheticEvent } from 'react-native';
 
 const DEFAULT_INSETS = {
   top: 0,
@@ -20,6 +34,17 @@ const DEFAULT_INSETS = {
 const EnrichedReanimatedNativeComponent = Reanimated.createAnimatedComponent(
   EnrichedTextInputNativeComponent
 );
+
+type Props = Omit<EnrichedTextInputProps, 'onScroll'> &
+  Pick<
+    ComponentProps<typeof EnrichedReanimatedNativeComponent>,
+    'animatedProps' | 'style'
+  > & {
+    onScroll?:
+      | EventHandlerProcessed<OnScrollEvent, never>
+      | ((event: NativeSyntheticEvent<OnScrollEvent>) => void);
+    ref?: AnimatedRef<EnrichedTextInputInstance>;
+  };
 
 export const EnrichedReanimatedTextInput = ({
   ref,
@@ -51,14 +76,10 @@ export const EnrichedReanimatedTextInput = ({
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
   keyboardDismissMode = 'none',
+  onScroll,
   ...rest
-}: EnrichedTextInputProps &
-  Exclude<
-    ComponentProps<typeof EnrichedReanimatedNativeComponent>,
-    'htmlStyle'
-  > & {
-    ref?: AnimatedRef<EnrichedTextInputInstance>;
-  }) => {
+}: Props) => {
+  const nativeRef = useAnimatedRef();
   const nextHtmlRequestId = useRef(1);
   const pendingHtmlRequests = useRef(new Map<number, HtmlRequest>());
 
@@ -77,7 +98,13 @@ export const EnrichedReanimatedTextInput = ({
     [htmlStyle, mentionIndicators]
   );
 
-  useCommands(ref, mentionIndicators, nextHtmlRequestId, pendingHtmlRequests);
+  useCommands(
+    ref,
+    nativeRef as RefObject<ComponentType | null>,
+    mentionIndicators,
+    nextHtmlRequestId,
+    pendingHtmlRequests
+  );
 
   const {
     handleMentionEvent,
@@ -95,7 +122,7 @@ export const EnrichedReanimatedTextInput = ({
 
   return (
     <EnrichedReanimatedNativeComponent
-      ref={ref}
+      ref={nativeRef}
       {...rest}
       mentionIndicators={mentionIndicators}
       editable={editable}
@@ -125,6 +152,12 @@ export const EnrichedReanimatedTextInput = ({
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }
+      onInputScroll={
+        onScroll as
+          | ((event: NativeSyntheticEvent<OnScrollEvent>) => void)
+          | undefined
+      }
+      isOnScrollSet={onScroll !== undefined}
       contentInsets={contentInsets}
       keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}

@@ -62,6 +62,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   addDividerAtNewLine: () => void;
   setParagraphAlignment: (alignment: string) => void;
   scrollTo: (x: number, y: number, animated?: boolean) => void;
+  getNativeRef: () => Component<NativeProps, {}, any> & NativeMethods;
 }
 
 export interface OnChangeMentionEvent {

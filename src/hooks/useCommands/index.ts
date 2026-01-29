@@ -28,13 +28,15 @@ const warnAboutMissconfiguredMentions = (indicator: string) => {
 
 const useCommands = (
   ref: RefObject<EnrichedTextInputInstance | null> | undefined,
+  nativeRef: RefObject<ComponentType | null>,
   mentionIndicators: string[] | undefined,
   nextHtmlRequestId: RefObject<number>,
   pendingHtmlRequests: RefObject<Map<number, HtmlRequest>>
 ) =>
   useImperativeHandle(ref, () => {
-    const typedRef = ref?.current as ComponentType | null;
-    return Object.assign(ref?.current ?? {}, {
+    const typedRef = nativeRef?.current;
+    return {
+      ...typedRef,
       measureInWindow: (callback: MeasureInWindowOnSuccessCallback) => {
         nullthrows(ref?.current).measureInWindow(callback);
       },
@@ -163,7 +165,14 @@ const useCommands = (
       scrollTo: (x: number, y: number, animated: boolean = false) => {
         Commands.scrollTo(nullthrows(typedRef), x, y, animated);
       },
-    });
-  });
+      getNativeRef: () => nullthrows(typedRef),
+    };
+  }, [
+    mentionIndicators,
+    nextHtmlRequestId,
+    pendingHtmlRequests,
+    nativeRef,
+    ref,
+  ]);
 
 export { useCommands };
