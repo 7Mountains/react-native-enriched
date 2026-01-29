@@ -183,6 +183,13 @@ type Heading = {
   bold?: boolean;
 };
 
+export type Insets = {
+  top: Float;
+  left: Float;
+  bottom: Float;
+  right: Float;
+};
+
 export interface ContentStyleProperties {
   textColor?: ColorValue;
   borderStyle?: 'solid' | 'dashed' | 'dotted';
@@ -364,6 +371,8 @@ export interface NativeProps extends ViewProps {
 
   // Experimental
   androidExperimentalSynchronousEvents: boolean;
+  contentInsets?: Insets;
+  scrollIndicatorInsets?: Insets;
 }
 
 type ComponentType = HostComponent<NativeProps>;

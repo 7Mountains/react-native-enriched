@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { type RefObject } from 'react';
 import { type OnChangeHtmlEvent, type OnChangeSelectionEvent, type OnChangeStateEvent, type OnChangeTextEvent, type OnLinkDetected, type OnMentionDetected, type MentionStyleProperties, type OnChangeColorEvent, type ContentStyleProperties, type OnParagraphAlignmentChangeEvent, type OnScrollEvent, type Insets } from './EnrichedTextInputNativeComponent';
 import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, TextStyle, ViewProps, ViewStyle } from 'react-native';
@@ -143,4 +144,8 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
 }
 export declare const EnrichedTextInput: ({ ref, autoFocus, editable, contentInsets, scrollIndicatorInsets, mentionIndicators, defaultValue, placeholder, placeholderTextColor, cursorColor, selectionColor, style, autoCapitalize, htmlStyle, onFocus, onBlur, onChangeText, onChangeHtml, onChangeState, onLinkDetected, onMentionDetected, onStartMention, onChangeMention, onEndMention, onChangeSelection, onColorChangeInSelection, onParagraphAlignmentChange, onScroll, androidExperimentalSynchronousEvents, scrollEnabled, keyboardDismissMode, ...rest }: EnrichedTextInputProps) => import("react/jsx-runtime").JSX.Element;
 export {};
+=======
+import type { EnrichedTextInputProps } from './types';
+export declare const EnrichedTextInput: ({ ref, autoFocus, editable, mentionIndicators, defaultValue, placeholder, placeholderTextColor, cursorColor, selectionColor, style, autoCapitalize, htmlStyle, onFocus, onBlur, onChangeText, onChangeHtml, onChangeState, onLinkDetected, onMentionDetected, onStartMention, onChangeMention, onEndMention, onChangeSelection, onColorChangeInSelection, onParagraphAlignmentChange, contentInsets, androidExperimentalSynchronousEvents, scrollEnabled, keyboardDismissMode, ...rest }: EnrichedTextInputProps) => import("react/jsx-runtime").JSX.Element;
+>>>>>>> 4823717 (feat: better keyboard handling)
 //# sourceMappingURL=EnrichedTextInput.d.ts.map

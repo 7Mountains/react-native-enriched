@@ -1,4 +1,10 @@
-import { type Component, useEffect, useMemo, useRef } from 'react';
+import {
+  type Component,
+  type ComponentProps,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import EnrichedTextInputNativeComponent, {
   type NativeProps,
 } from './EnrichedTextInputNativeComponent';
@@ -7,6 +13,7 @@ import { normalizeHtmlStyle } from './normalizeHtmlStyle';
 import type { EnrichedTextInputProps } from './types';
 import { useCommands } from './hooks/useCommands';
 import { useHandlers } from './hooks/useHandlers';
+import Reanimated from 'react-native-reanimated';
 
 type ComponentType = (Component<NativeProps, {}, any> & NativeMethods) | null;
 
@@ -22,12 +29,14 @@ const DEFAULT_INSETS = {
   right: 0,
 };
 
-export const EnrichedTextInput = ({
+const EnrichedReanimatedNativeComponent = Reanimated.createAnimatedComponent(
+  EnrichedTextInputNativeComponent
+);
+
+export const EnrichedReanimatedTextInput = ({
   ref,
   autoFocus,
   editable = true,
-  contentInsets = DEFAULT_INSETS,
-  scrollIndicatorInsets = DEFAULT_INSETS,
   mentionIndicators = ['@'],
   defaultValue,
   placeholder,
@@ -50,12 +59,16 @@ export const EnrichedTextInput = ({
   onChangeSelection,
   onColorChangeInSelection,
   onParagraphAlignmentChange,
-  onScroll,
+  contentInsets = DEFAULT_INSETS,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
   keyboardDismissMode = 'none',
   ...rest
-}: EnrichedTextInputProps) => {
+}: EnrichedTextInputProps &
+  Exclude<
+    ComponentProps<typeof EnrichedReanimatedNativeComponent>,
+    'htmlStyle'
+  >) => {
   const nativeRef = useRef<ComponentType | null>(null);
 
   const nextHtmlRequestId = useRef(1);
@@ -99,12 +112,11 @@ export const EnrichedTextInput = ({
   });
 
   return (
-    <EnrichedTextInputNativeComponent
+    <EnrichedReanimatedNativeComponent
       ref={nativeRef}
+      {...rest}
       mentionIndicators={mentionIndicators}
       editable={editable}
-      contentInsets={contentInsets}
-      scrollIndicatorInsets={scrollIndicatorInsets}
       autoFocus={autoFocus}
       defaultValue={defaultValue}
       placeholder={placeholder}
@@ -128,14 +140,12 @@ export const EnrichedTextInput = ({
       onColorChangeInSelection={onColorChangeInSelection}
       onParagraphAlignmentChange={onParagraphAlignmentChange}
       isOnChangeTextSet={onChangeText !== undefined}
-      isOnScrollSet={onScroll !== undefined}
-      onInputScroll={onScroll}
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }
+      contentInsets={contentInsets}
       keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}
-      {...rest}
     />
   );
 };
