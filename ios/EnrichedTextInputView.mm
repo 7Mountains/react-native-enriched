@@ -281,35 +281,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
         setPlaceholderText:[NSString fromCppString:newViewProps.placeholder]];
   }
 
-  if (newViewProps.contentInsets.left != oldViewProps.contentInsets.left ||
-      newViewProps.contentInsets.right != oldViewProps.contentInsets.right ||
-      newViewProps.contentInsets.top != oldViewProps.contentInsets.top ||
-      newViewProps.contentInsets.bottom != oldViewProps.contentInsets.bottom) {
-    UIEdgeInsets propInsets = UIEdgeInsetsMake(
-        newViewProps.contentInsets.top, newViewProps.contentInsets.left,
-        newViewProps.contentInsets.bottom, newViewProps.contentInsets.right);
-
-    _customContentInsets = propInsets;
-    textView.textContainerInset =
-        UIEdgeInsetsMake(_layoutInsets.top + _customContentInsets.top,
-                         _layoutInsets.left + _customContentInsets.left,
-                         _layoutInsets.bottom + _customContentInsets.bottom,
-                         _layoutInsets.right + _customContentInsets.right);
-  }
-
-  if (newViewProps.scrollIndicatorInsets.left !=
-          oldViewProps.scrollIndicatorInsets.left ||
-      newViewProps.scrollIndicatorInsets.right !=
-          oldViewProps.scrollIndicatorInsets.right ||
-      newViewProps.scrollIndicatorInsets.top !=
-          oldViewProps.scrollIndicatorInsets.top ||
-      newViewProps.scrollIndicatorInsets.bottom !=
-          oldViewProps.scrollIndicatorInsets.bottom) {
-    auto insets = newViewProps.scrollIndicatorInsets;
-    textView.scrollIndicatorInsets =
-        UIEdgeInsetsMake(insets.top, insets.left, insets.bottom, insets.right);
-  }
-
   // selection color sets both selection and cursor on iOS (just as in RN)
   if (newViewProps.selectionColor != oldViewProps.selectionColor) {
     if (isColorMeaningful(newViewProps.selectionColor)) {
