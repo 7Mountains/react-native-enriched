@@ -6,7 +6,7 @@ import type {
   OnMentionEvent,
   OnRequestHtmlResultEvent,
 } from '../../EnrichedTextInputNativeComponent';
-import type { OnChangeMentionEvent } from '../../types';
+import type { OnChangeMentionEvent, HtmlRequest } from '../../types';
 import type { NativeSyntheticEvent } from 'react-native';
 
 type Props = {
@@ -15,15 +15,7 @@ type Props = {
   onEndMention?: (indicator: string) => void;
   onLinkDetected?: (event: OnLinkDetected) => void;
   onMentionDetected?: (event: OnMentionDetected) => void;
-  pendingHtmlRequests: RefObject<
-    Map<
-      number,
-      {
-        resolve: (html: string) => void;
-        reject: (error: Error) => void;
-      }
-    >
-  >;
+  pendingHtmlRequests: RefObject<Map<number, HtmlRequest>>;
 };
 
 const useHandlers = ({

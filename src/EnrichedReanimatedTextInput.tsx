@@ -1,26 +1,14 @@
-import {
-  type Component,
-  type ComponentProps,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
-import EnrichedTextInputNativeComponent, {
-  type NativeProps,
-} from './EnrichedTextInputNativeComponent';
-import type { NativeMethods } from 'react-native';
+import { type ComponentProps, useEffect, useMemo, useRef } from 'react';
+import EnrichedTextInputNativeComponent from './EnrichedTextInputNativeComponent';
 import { normalizeHtmlStyle } from './normalizeHtmlStyle';
-import type { EnrichedTextInputProps } from './types';
+import type {
+  EnrichedTextInputInstance,
+  EnrichedTextInputProps,
+  HtmlRequest,
+} from './types';
 import { useCommands } from './hooks/useCommands';
 import { useHandlers } from './hooks/useHandlers';
-import Reanimated from 'react-native-reanimated';
-
-type ComponentType = (Component<NativeProps, {}, any> & NativeMethods) | null;
-
-type HtmlRequest = {
-  resolve: (html: string) => void;
-  reject: (error: Error) => void;
-};
+import Reanimated, { type AnimatedRef } from 'react-native-reanimated';
 
 const DEFAULT_INSETS = {
   top: 0,
@@ -68,9 +56,9 @@ export const EnrichedReanimatedTextInput = ({
   Exclude<
     ComponentProps<typeof EnrichedReanimatedNativeComponent>,
     'htmlStyle'
-  >) => {
-  const nativeRef = useRef<ComponentType | null>(null);
-
+  > & {
+    ref?: AnimatedRef<EnrichedTextInputInstance>;
+  }) => {
   const nextHtmlRequestId = useRef(1);
   const pendingHtmlRequests = useRef(new Map<number, HtmlRequest>());
 
@@ -89,13 +77,7 @@ export const EnrichedReanimatedTextInput = ({
     [htmlStyle, mentionIndicators]
   );
 
-  useCommands(
-    ref,
-    nativeRef,
-    mentionIndicators,
-    nextHtmlRequestId,
-    pendingHtmlRequests
-  );
+  useCommands(ref, mentionIndicators, nextHtmlRequestId, pendingHtmlRequests);
 
   const {
     handleMentionEvent,
@@ -113,7 +95,7 @@ export const EnrichedReanimatedTextInput = ({
 
   return (
     <EnrichedReanimatedNativeComponent
-      ref={nativeRef}
+      ref={ref}
       {...rest}
       mentionIndicators={mentionIndicators}
       editable={editable}

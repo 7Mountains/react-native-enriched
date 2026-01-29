@@ -11,6 +11,10 @@ export default function MainScreen() {
         title="Open Editor"
         onPress={() => navigation.navigate('Editor')}
       />
+      <Button
+        title="Open reanimated Editor"
+        onPress={() => navigation.navigate('ReanimatedEditor')}
+      />
     </View>
   );
 }

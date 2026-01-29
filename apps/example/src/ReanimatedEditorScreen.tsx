@@ -234,16 +234,12 @@ const generateHugeHtml = (repeat = 10) => {
 
 const initialHugeHtml = generateHugeHtml();
 
-export default function EditorScreen() {
+export default function ReanimatedEditorScreen() {
   const [isChannelPopupOpen, setIsChannelPopupOpen] = useState(false);
   const [isUserPopupOpen, setIsUserPopupOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isValueModalOpen, setIsValueModalOpen] = useState(false);
-  const [currentHtml] = useState('');
-  const [paragraphAlignment, setParagraphAlignment] =
-    useState<string>('default');
-  const [requestHtmlTime, setRequestHtmlTime] = useState<number | null>(null);
   const keyboardHeight = useSharedValue(0);
 
   useKeyboardHandler({
@@ -258,7 +254,6 @@ export default function EditorScreen() {
     useState<OnChangeStateEvent>(DEFAULT_STYLE);
   const [currentLink, setCurrentLink] =
     useState<CurrentLinkState>(DEFAULT_LINK_STATE);
-  const [selectionColor, setSelectionColor] = useState<string>(PRIMARY_COLOR);
 
   const ref = useAnimatedRef<EnrichedTextInputInstance>();
 
@@ -473,15 +468,6 @@ export default function EditorScreen() {
     [keyboardHeight]
   );
 
-  useEffect(() => {
-    setTimeout(() => {
-      runOnUI(() => {
-        'worklet';
-        dispatchCommand(ref, 'scrollTo', [0, 1500, false]);
-      })();
-    }, 1500);
-  }, [ref]);
-
   return (
     <>
       <EnrichedReanimatedTextInput
@@ -506,7 +492,6 @@ export default function EditorScreen() {
           handleSelectionColorChange(e.nativeEvent);
         }}
         onParagraphAlignmentChange={(e) => {
-          setParagraphAlignment(e.nativeEvent.alignment);
           console.log(e.nativeEvent.alignment);
         }}
         onLinkDetected={handleLinkDetected}

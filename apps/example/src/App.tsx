@@ -7,6 +7,7 @@ import {
   SafeAreaProvider,
   initialWindowMetrics,
 } from 'react-native-safe-area-context';
+import ReanimatedEditorScreen from './ReanimatedEditorScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,10 @@ export default function App() {
           <Stack.Navigator>
             <Stack.Screen name="Main" component={MainScreen} />
             <Stack.Screen name="Editor" component={EditorScreen} />
+            <Stack.Screen
+              name="ReanimatedEditor"
+              component={ReanimatedEditorScreen}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
