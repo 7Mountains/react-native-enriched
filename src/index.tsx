@@ -1,4 +1,13 @@
 export * from './EnrichedTextInput';
+export * from './EnrichedReanimatedTextInput';
+export type {
+  EnrichedTextInputInstance,
+  EnrichedTextInputProps,
+  OnChangeMentionEvent,
+  ComponentType,
+  HtmlRequest,
+  HtmlStyle,
+} from './types';
 export type {
   OnChangeTextEvent,
   OnChangeHtmlEvent,
@@ -9,3 +18,5 @@ export type {
   OnChangeColorEvent,
   OnParagraphAlignmentChangeEvent,
 } from './EnrichedTextInputNativeComponent';
+
+export { default as useReanimatedScrollOffset } from './hooks/useReanimatedScrollOffset';

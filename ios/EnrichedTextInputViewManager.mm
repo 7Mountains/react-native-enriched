@@ -9,5 +9,6 @@
 RCT_EXPORT_MODULE(EnrichedTextInputView)
 
 RCT_EXPORT_VIEW_PROPERTY(defaultValue, NSString)
+RCT_EXPORT_VIEW_PROPERTY(onInputScroll, RCTDirectEventBlock?)
 
 @end

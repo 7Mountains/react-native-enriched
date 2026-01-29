@@ -1197,8 +1197,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
   }
 
-  [self debugLogAttributesAroundSelection:60];
-
   // update active styles as well
   [self tryUpdatingActiveStyles];
 }
@@ -1276,104 +1274,6 @@ static inline NSString *DebugChar(unichar ch) {
   default:
     return [NSString stringWithFormat:@"%C", ch];
   }
-}
-
-- (void)debugLogAttributesAroundSelection:(NSInteger)radius {
-  NSTextStorage *ts = self->textView.textStorage;
-  NSString *s = ts.string;
-  if (s.length == 0) {
-    NSLog(@"[DBG] <empty text>");
-    return;
-  }
-
-  NSRange sel = self->textView.selectedRange;
-  NSInteger center = (NSInteger)sel.location;
-
-  NSInteger start = MAX(0, center - radius);
-  NSInteger end = MIN((NSInteger)s.length, center + radius);
-  if (end <= start)
-    end = MIN((NSInteger)s.length, start + 1);
-
-  NSLog(@"\n[DBG] ===== ATTRS ===== len=%lu sel=(%lu,%lu) window=[%ld..%ld)\n",
-        (unsigned long)s.length, (unsigned long)sel.location,
-        (unsigned long)sel.length, (long)start, (long)end);
-
-  for (NSInteger i = start; i < end; i++) {
-    unichar ch = [s characterAtIndex:(NSUInteger)i];
-
-    NSDictionary<NSAttributedStringKey, id> *attrs =
-        [ts attributesAtIndex:(NSUInteger)i effectiveRange:nil];
-
-    UIFont *font = attrs[NSFontAttributeName];
-    NSNumber *baseline = attrs[NSBaselineOffsetAttributeName];
-    NSParagraphStyle *p = attrs[NSParagraphStyleAttributeName];
-
-    // paragraph style details
-    NSString *align = @"nil";
-    NSString *lists = @"nil";
-    NSString *lineHeights = @"nil";
-    NSString *indents = @"nil";
-
-    if (p) {
-      switch (p.alignment) {
-      case NSTextAlignmentLeft:
-        align = @"left";
-        break;
-      case NSTextAlignmentRight:
-        align = @"right";
-        break;
-      case NSTextAlignmentCenter:
-        align = @"center";
-        break;
-      case NSTextAlignmentJustified:
-        align = @"justified";
-        break;
-      case NSTextAlignmentNatural:
-        align = @"natural";
-        break;
-      default:
-        align = [NSString stringWithFormat:@"(%ld)", (long)p.alignment];
-      }
-
-      if (p.textLists.count > 0) {
-        NSMutableArray *arr = [NSMutableArray new];
-        for (NSTextList *l in p.textLists) {
-          [arr addObject:l.markerFormat ?: @"<nil>"];
-        }
-        lists = [NSString
-            stringWithFormat:@"(%@)", [arr componentsJoinedByString:@","]];
-      } else {
-        lists = @"()";
-      }
-
-      lineHeights = [NSString
-          stringWithFormat:@"min=%.2f max=%.2f mult=%.2f", p.minimumLineHeight,
-                           p.maximumLineHeight, p.lineHeightMultiple];
-
-      indents = [NSString stringWithFormat:@"head=%.2f first=%.2f tail=%.2f",
-                                           p.headIndent, p.firstLineHeadIndent,
-                                           p.tailIndent];
-    }
-
-    NSString *fontStr =
-        font ? [NSString stringWithFormat:@"%@ %.1f (lh=%.2f)", font.fontName,
-                                          font.pointSize, font.lineHeight]
-             : @"nil";
-
-    NSString *baselineStr = baseline ? baseline.stringValue : @"nil";
-
-    // mark selection borders
-    BOOL isSelStart = (i == (NSInteger)sel.location);
-    BOOL isSelEnd = (i == (NSInteger)(sel.location + sel.length));
-    NSString *mark = (isSelStart || isSelEnd) ? @" <== " : @"";
-
-    NSLog(@"[DBG] %04ld %@%@ | font=%@ | baseline=%@ | align=%@ | %@ | %@ | "
-          @"lists=%@",
-          (long)i, DebugChar(ch), mark, fontStr, baselineStr, align, indents,
-          lineHeights, lists);
-  }
-
-  NSLog(@"[DBG] =================\n");
 }
 
 - (bool)textView:(UITextView *)textView
