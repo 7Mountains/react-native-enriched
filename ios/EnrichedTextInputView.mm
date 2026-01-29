@@ -7,6 +7,7 @@
 #import "EnrichedTextConfigBuilder.h"
 #import "EnrichedTextStyleFactory.h"
 #import "HeadingsParagraphInvariantUtils.h"
+#import "InsetsOperators.h"
 #import "KeyboardDismissModeConverter.h"
 #import "LayoutManagerExtension.h"
 #import "ParagraphAttributesUtils.h"
@@ -60,6 +61,8 @@ using namespace facebook::react;
   BOOL _emitChangeText;
   BOOL _emitOnScroll;
   EnrichedCommandHandler *_commandHandler;
+  UIEdgeInsets _customContentInsets;
+  UIEdgeInsets _layoutInsets;
 }
 
 // MARK: - Component utils
@@ -119,6 +122,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   parser = [[InputParser alloc] initWithInput:self];
   _commandHandler = [[EnrichedCommandHandler alloc] initWithInput:self];
+  _customContentInsets = UIEdgeInsetsZero;
+  _layoutInsets = UIEdgeInsetsZero;
 }
 
 - (void)setupTextView {
@@ -172,6 +177,18 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   if (newViewProps.scrollEnabled != oldViewProps.scrollEnabled ||
       textView.scrollEnabled != newViewProps.scrollEnabled) {
     [textView setScrollEnabled:newViewProps.scrollEnabled];
+  }
+
+  if (newViewProps.contentInsets != oldViewProps.contentInsets) {
+    _customContentInsets = toUIEdgeInsets(newViewProps.contentInsets);
+    textView.textContainerInset = _layoutInsets + newViewProps.contentInsets;
+  }
+
+  if (newViewProps.scrollIndicatorInsets !=
+      oldViewProps.scrollIndicatorInsets) {
+    auto insets = newViewProps.scrollIndicatorInsets;
+    textView.scrollIndicatorInsets =
+        UIEdgeInsetsMake(insets.top, insets.left, insets.bottom, insets.right);
   }
 
   BOOL defaultValueChanged =
@@ -329,8 +346,15 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   textView.frame = UIEdgeInsetsInsetRect(
       self.bounds, RCTUIEdgeInsetsFromEdgeInsets(layoutMetrics.borderWidth));
-  textView.textContainerInset = RCTUIEdgeInsetsFromEdgeInsets(
+  UIEdgeInsets layoutInsets = RCTUIEdgeInsetsFromEdgeInsets(
       layoutMetrics.contentInsets - layoutMetrics.borderWidth);
+  _layoutInsets = layoutInsets;
+
+  textView.textContainerInset =
+      UIEdgeInsetsMake(layoutInsets.top + _customContentInsets.top,
+                       layoutInsets.left + _customContentInsets.left,
+                       layoutInsets.bottom + _customContentInsets.bottom,
+                       layoutInsets.right + _customContentInsets.right);
 }
 
 // make sure the newest state is kept in _state property

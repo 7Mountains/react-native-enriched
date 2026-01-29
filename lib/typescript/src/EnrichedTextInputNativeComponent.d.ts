@@ -270,6 +270,12 @@ export interface OnScrollEvent {
     };
     target: Int32;
 }
+export type Insets = {
+    top: Float;
+    left: Float;
+    bottom: Float;
+    right: Float;
+};
 export interface NativeProps extends ViewProps {
     autoFocus?: boolean;
     editable?: boolean;
@@ -304,6 +310,8 @@ export interface NativeProps extends ViewProps {
     isOnChangeHtmlSet: boolean;
     isOnChangeTextSet: boolean;
     isOnScrollSet: boolean;
+    contentInsets?: Insets;
+    scrollIndicatorInsets?: Insets;
     androidExperimentalSynchronousEvents: boolean;
 }
 type ComponentType = HostComponent<NativeProps>;

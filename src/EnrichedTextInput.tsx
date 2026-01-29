@@ -24,6 +24,7 @@ import EnrichedTextInputNativeComponent, {
   type ContentStyleProperties,
   type OnParagraphAlignmentChangeEvent,
   type OnScrollEvent,
+  type Insets,
 } from './EnrichedTextInputNativeComponent';
 import type {
   ColorValue,
@@ -154,6 +155,8 @@ export interface HtmlStyle {
 export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   ref?: RefObject<EnrichedTextInputInstance | null>;
   autoFocus?: boolean;
+  contentInsets?: Insets;
+  scrollIndicatorInsets?: Insets;
   editable?: boolean;
   mentionIndicators?: string[];
   defaultValue?: string;
@@ -215,10 +218,19 @@ type HtmlRequest = {
   reject: (error: Error) => void;
 };
 
+const DEFAULT_INSETS = {
+  top: 0,
+  left: 0,
+  bottom: 0,
+  right: 0,
+};
+
 export const EnrichedTextInput = ({
   ref,
   autoFocus,
   editable = true,
+  contentInsets = DEFAULT_INSETS,
+  scrollIndicatorInsets = DEFAULT_INSETS,
   mentionIndicators = ['@'],
   defaultValue,
   placeholder,
@@ -459,6 +471,8 @@ export const EnrichedTextInput = ({
       ref={nativeRef}
       mentionIndicators={mentionIndicators}
       editable={editable}
+      contentInsets={contentInsets}
+      scrollIndicatorInsets={scrollIndicatorInsets}
       autoFocus={autoFocus}
       defaultValue={defaultValue}
       placeholder={placeholder}

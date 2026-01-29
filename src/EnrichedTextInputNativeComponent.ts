@@ -307,6 +307,13 @@ export interface OnScrollEvent {
   target: Int32;
 }
 
+export type Insets = {
+  top: Float;
+  left: Float;
+  bottom: Float;
+  right: Float;
+};
+
 export interface NativeProps extends ViewProps {
   // base props
   autoFocus?: boolean;
@@ -351,6 +358,9 @@ export interface NativeProps extends ViewProps {
   isOnChangeTextSet: boolean;
   // used for onScroll event performance optimization
   isOnScrollSet: boolean;
+
+  contentInsets?: Insets;
+  scrollIndicatorInsets?: Insets;
 
   // Experimental
   androidExperimentalSynchronousEvents: boolean;
