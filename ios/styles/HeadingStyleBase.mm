@@ -58,9 +58,27 @@
 - (void)addAttributes:(NSRange)range
     withTypingAttributes:(BOOL)withTypingAttributes {
   [[self typedInput]->textView.textStorage beginEditing];
-  [self addAttributesInAttributedString:[self typedInput]->textView.textStorage
-                                  range:range
-                             attributes:nullptr];
+  NSMutableAttributedString *attributedString =
+      [self typedInput]->textView.textStorage;
+  auto fontSize = [self getHeadingFontSize];
+  BOOL isHeadingBold = [self isHeadingBold];
+  [attributedString
+      enumerateAttribute:NSFontAttributeName
+                 inRange:range
+                 options:0
+              usingBlock:^(id _Nullable value, NSRange range,
+                           BOOL *_Nonnull stop) {
+                UIFont *font = (UIFont *)value;
+                if (font != nullptr) {
+                  UIFont *newFont = [font copyWithFontSize:fontSize];
+                  if (isHeadingBold) {
+                    newFont = [newFont setBold];
+                  }
+                  [attributedString addAttribute:NSFontAttributeName
+                                           value:newFont
+                                           range:range];
+                }
+              }];
   [[self typedInput]->textView.textStorage endEditing];
   if (withTypingAttributes) {
     // also toggle typing attributes
@@ -103,7 +121,8 @@
   if (currentFontAttr != nullptr) {
     NSMutableDictionary *newTypingAttrs =
         [[self typedInput]->textView.typingAttributes mutableCopy];
-    UIFont *newFont = [currentFontAttr setSize:[self getHeadingFontSize]];
+    UIFont *newFont =
+        [currentFontAttr copyWithFontSize:[self getHeadingFontSize]];
     if ([self isHeadingBold]) {
       newFont = [newFont setBold];
     }
@@ -126,8 +145,8 @@
                            BOOL *_Nonnull stop) {
                 if ([self styleCondition:value range:range]) {
                   UIFont *newFont = [(UIFont *)value
-                      setSize:[[[self typedInput]->config primaryFontSize]
-                                  floatValue]];
+                      copyWithFontSize:[[[self typedInput]->config
+                                               primaryFontSize] floatValue]];
                   if ([self isHeadingBold]) {
                     newFont = [newFont removeBold];
                   }
@@ -147,7 +166,8 @@
     NSMutableDictionary *newTypingAttrs =
         [[self typedInput]->textView.typingAttributes mutableCopy];
     UIFont *newFont = [currentFontAttr
-        setSize:[[[self typedInput]->config primaryFontSize] floatValue]];
+        copyWithFontSize:[[[self typedInput]->config primaryFontSize]
+                             floatValue]];
     if ([self isHeadingBold]) {
       newFont = [newFont removeBold];
     }

@@ -189,4 +189,18 @@ static FontVariants *VariantsForFont(UIFont *font) {
   return v.regular ?: resized;
 }
 
+- (UIFont *)copyWithFontSize:(CGFloat)size {
+  if (fabs(self.pointSize - size) < 0.01) {
+    return self;
+  }
+
+  UIFont *resized = [UIFont fontWithDescriptor:self.fontDescriptor size:size];
+  if (!resized) {
+    RCTLogWarn(@"[EnrichedTextInput]: Couldn't apply font size %.2f", size);
+    return self;
+  }
+
+  return [resized withFontTraits:self];
+}
+
 @end

@@ -10,4 +10,5 @@
 - (UIFont *)removeItalic;
 - (UIFont *)withFontTraits:(UIFont *)from;
 - (UIFont *)setSize:(CGFloat)size;
+- (UIFont *)copyWithFontSize:(CGFloat)size;
 @end
