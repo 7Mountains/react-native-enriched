@@ -49,6 +49,7 @@ import com.swmansion.enriched.styles.InlineStyles
 import com.swmansion.enriched.styles.ListStyles
 import com.swmansion.enriched.styles.ParagraphStyles
 import com.swmansion.enriched.styles.ParametrizedStyles
+import com.swmansion.enriched.textinput.utils.EnrichedEditableFactory
 import com.swmansion.enriched.utils.EnrichedSelection
 import com.swmansion.enriched.utils.EnrichedSpanState
 import com.swmansion.enriched.utils.mergeSpannables
@@ -70,6 +71,7 @@ class EnrichedTextInputView : AppCompatEditText {
   var scrollEnabled: Boolean = true
   private var detectScrollMovement: Boolean = false
   private var scrollWatcher: EnrichedScrollWatcher? = null
+  var spanWatcher: EnrichedSpanWatcher? = null
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
@@ -110,7 +112,6 @@ class EnrichedTextInputView : AppCompatEditText {
         reApplyHtmlStyleForSpans(prev, value)
       }
     }
-  var spanWatcher: EnrichedSpanWatcher? = null
   var layoutManager: EnrichedTextInputViewLayoutManager = EnrichedTextInputViewLayoutManager(this)
 
   // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L295C1-L296C1
@@ -193,7 +194,9 @@ class EnrichedTextInputView : AppCompatEditText {
     setPadding(0, 0, 0, 0)
     setBackgroundColor(Color.TRANSPARENT)
 
-    addSpanWatcher(EnrichedSpanWatcher(this))
+    val spanWatcher = EnrichedSpanWatcher(this)
+    this.spanWatcher = spanWatcher
+    setEditableFactory(EnrichedEditableFactory(spanWatcher))
     addTextChangedListener(EnrichedTextWatcher(this))
     filters = arrayOf(NonEditableParagraphFilter())
   }
@@ -320,8 +323,6 @@ class EnrichedTextInputView : AppCompatEditText {
       setText(newText)
 
       observeAsyncImages()
-      // Assign SpanWatcher one more time as our previous spannable has been replaced
-      addSpanWatcher(EnrichedSpanWatcher(this))
       if (withSelection) {
         // Scroll to the last line of text
         setSelection(text?.length ?: 0)
@@ -647,12 +648,6 @@ class EnrichedTextInputView : AppCompatEditText {
     }
 
     return true
-  }
-
-  private fun addSpanWatcher(watcher: EnrichedSpanWatcher) {
-    val spannable = text as Spannable
-    spannable.setSpan(watcher, 0, spannable.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
-    spanWatcher = watcher
   }
 
   fun verifyAndToggleStyle(name: TextStyle) {
