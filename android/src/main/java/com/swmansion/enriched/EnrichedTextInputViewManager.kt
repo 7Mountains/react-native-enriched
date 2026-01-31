@@ -474,6 +474,19 @@ class EnrichedTextInputViewManager :
     }
   }
 
+  override fun addContent(
+    view: EnrichedTextInputView?,
+    text: String,
+    type: String,
+    src: String,
+    headers: String,
+    attributes: String,
+  ) {
+    val headersMap = jsonStringToStringMap(headers)
+    val attributesMap = jsonStringToStringMap(attributes)
+    view?.addContent(text, type, src, headersMap, attributesMap)
+  }
+
   override fun measure(
     context: Context,
     localData: ReadableMap?,

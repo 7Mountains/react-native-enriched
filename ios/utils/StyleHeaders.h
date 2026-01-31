@@ -144,6 +144,7 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 @interface ContentStyle
     : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (ContentParams *)getContentParams:(NSUInteger)location;
+- (void)addContent:(ContentParams *)params;
 @end
 
 @interface ParagraphAlignmentStyle

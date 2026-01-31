@@ -437,6 +437,14 @@ interface NativeCommands {
     y: Float,
     animated: boolean
   ) => void;
+  addContent: (
+    viewRef: React.ElementRef<ComponentType>,
+    text: string,
+    type: string,
+    src: string,
+    headers: string,
+    attributes: string
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -474,6 +482,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'addDividerAtNewLine',
     'setParagraphAlignment',
     'scrollTo',
+    'addContent',
   ],
 });
 

@@ -10,6 +10,7 @@ import com.swmansion.enriched.spans.EnrichedAlignmentSpan
 import com.swmansion.enriched.spans.EnrichedBlockQuoteSpan
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.spans.EnrichedCodeBlockSpan
+import com.swmansion.enriched.spans.EnrichedContentSpan
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
@@ -31,6 +32,8 @@ import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getParagraphsBounds
 import com.swmansion.enriched.utils.isTheSameParagraphInSelection
 import com.swmansion.enriched.utils.removeZWS
+import kotlin.collections.plusAssign
+import kotlin.compareTo
 
 class ParagraphStyles(
   private val view: EnrichedTextInputView,
@@ -216,38 +219,29 @@ class ParagraphStyles(
   fun getStyleRange(): Pair<Int, Int> = view.selection?.getParagraphSelection() ?: Pair(0, 0)
 
   fun insertDivider() {
-    val editable = view.editableText as Editable
-    val index = view.selection?.end ?: return
-
-    val safeIndex = index.coerceIn(0, editable.length)
-    val paragraphRange = editable.paragraphRangeAt(safeIndex)
-
-    if (!editable.isParagraphZeroOrOneAndEmpty(paragraphRange)) {
-      return
-    }
-
-    if (paragraphRange.count() == 1) {
-      editable.delete(paragraphRange.first, paragraphRange.last)
-    }
-
     view.spanState?.setStart(TextStyle.DIVIDER, null)
 
-    val dividerIndex = paragraphRange.first
+    insertEscapingParagraph(
+      EnrichedHorizontalRuleSpan(view.htmlStyle),
+    )
+    view.selection?.validateStyles()
+  }
 
-    val builder =
-      SpannableStringBuilder().apply {
-        append(Strings.MAGIC_STRING)
-        setSpan(
-          EnrichedHorizontalRuleSpan(view.htmlStyle),
-          0,
-          1,
-          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
-      }
+  fun addContent(
+    text: String,
+    type: String,
+    src: String,
+    headers: Map<String, String>?,
+    attributes: Map<String, String>?,
+  ) {
+    view.spanState?.setStart(TextStyle.CONTENT, null)
+    val span = EnrichedContentSpan.createEnrichedContentSpan(text, type, src, headers, attributes, view.htmlStyle)
+    span.attachTo(view)
+    insertEscapingParagraph(
+      span,
+    )
 
-    editable.insert(dividerIndex, builder)
-
-    editable.append(Strings.NEWLINE)
+    view.selection?.validateStyles()
   }
 
   fun removeStyle(
@@ -385,12 +379,45 @@ class ParagraphStyles(
       TextStyle.CODE_BLOCK -> EnrichedCodeBlockSpan(view.htmlStyle)
       else -> null
     }
-}
 
-private fun Editable.paragraphRangeAt(index: Int): IntRange {
-  val start = lastIndexOf(Strings.NEWLINE, index - 1).let { if (it == -1) 0 else it + 1 }
-  val end = indexOf(Strings.NEWLINE, index).let { if (it == -1) length else it + 1 }
-  return start until end
+  private fun insertEscapingParagraph(span: EnrichedSpan?) {
+    val editable = view.editableText as Editable
+    val index = view.selection?.end ?: return
+
+    val text = editable.toString()
+
+    val hasNewlineBefore = index > 0 && text[index - 1] == Strings.NEWLINE
+    val hasNewlineAfter = index < text.length && text[index] == Strings.NEWLINE
+
+    val isParagraphEmpty =
+      (index == 0 || hasNewlineBefore) &&
+        (index == text.length || hasNewlineAfter)
+
+    var insertIndex = index
+
+    if (!isParagraphEmpty && !hasNewlineBefore) {
+      editable.insert(insertIndex, Strings.NEWLINE_STRING)
+      insertIndex += 1
+    }
+
+    val builder =
+      SpannableStringBuilder().apply {
+        append(Strings.MAGIC_CHAR)
+        if (span != null) {
+          setSpan(span, 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+      }
+
+    editable.insert(insertIndex, builder)
+    insertIndex += builder.length
+
+    if (!hasNewlineAfter) {
+      editable.insert(insertIndex, Strings.NEWLINE_STRING)
+      insertIndex += 1
+    }
+
+    view.setSelection(insertIndex)
+  }
 }
 
 private fun Editable.isParagraphZeroOrOneAndEmpty(range: IntRange): Boolean {

@@ -34,6 +34,7 @@ import {
 } from './utils/prepareImageDimensions';
 import ColorPreview from './components/ColorPreview';
 import { Rectangle } from './Rectangle';
+import { ContentModal } from './components/ContentModal';
 
 type CurrentLinkState = OnLinkDetected;
 
@@ -239,6 +240,7 @@ export default function EditorScreen() {
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isValueModalOpen, setIsValueModalOpen] = useState(false);
+  const [isContentModalVisible, setIsContentModalVisible] = useState(false);
   const [currentHtml] = useState('');
   const [paragraphAlignment, setParagraphAlignment] =
     useState<string>('default');
@@ -446,6 +448,25 @@ export default function EditorScreen() {
     }
   };
 
+  const handleContentButtonPress = () => {
+    setIsContentModalVisible(true);
+  };
+
+  const handleContentModalClose = () => {
+    setIsContentModalVisible(false);
+  };
+
+  const handleContentSubmit = (
+    text: string,
+    type: string,
+    src: string,
+    headers: string,
+    attributes: string
+  ) => {
+    ref.current?.addContent(text, type, src, headers, attributes);
+    handleContentModalClose();
+  };
+
   return (
     <>
       <ScrollView
@@ -510,6 +531,7 @@ export default function EditorScreen() {
             selectionColor={selectionColor}
             onOpenLinkModal={openLinkModal}
             onSelectImage={openImageModal}
+            onContentButtonPress={handleContentButtonPress}
           />
         </View>
         <View style={styles.buttonStack}>
@@ -585,6 +607,11 @@ export default function EditorScreen() {
         data={channelMention.data}
         isOpen={isChannelPopupOpen}
         onItemPress={handleChannelMentionSelected}
+      />
+      <ContentModal
+        visible={isContentModalVisible}
+        onClose={handleContentModalClose}
+        onSubmit={handleContentSubmit}
       />
     </>
   );

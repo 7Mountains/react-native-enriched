@@ -14,4 +14,11 @@
                    input:(id)input
            withSelection:(BOOL)withSelection;
 ;
++ (void)insertEscapingParagraphsAtIndex:(NSUInteger)index
+                                   text:(NSString *)text
+                             attributes:
+                                 (NSDictionary<NSAttributedStringKey, id> *)
+                                     attributes
+                                  input:(id)input
+                          withSelection:(BOOL)withSelection;
 @end

@@ -346,6 +346,7 @@ interface NativeCommands {
     addDividerAtNewLine: (viewRef: React.ElementRef<ComponentType>) => void;
     setParagraphAlignment: (viewRef: React.ElementRef<ComponentType>, alignment: string) => void;
     scrollTo: (viewRef: React.ElementRef<ComponentType>, x: Float, y: Float, animated: boolean) => void;
+    addContent: (viewRef: React.ElementRef<ComponentType>, text: string, type: string, src: string, headers: string, attributes: string) => void;
 }
 export declare const Commands: NativeCommands;
 declare const _default: HostComponent<NativeProps>;

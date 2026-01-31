@@ -165,7 +165,22 @@ const useCommands = (
       scrollTo: (x: number, y: number, animated: boolean = false) => {
         Commands.scrollTo(nullthrows(typedRef), x, y, animated);
       },
-      getNativeRef: () => nullthrows(typedRef),
+      addContent: (
+        text: string,
+        type: string,
+        src: string,
+        headers: string,
+        attributes: string
+      ) => {
+        Commands.addContent(
+          nullthrows(typedRef),
+          text,
+          type,
+          src,
+          headers,
+          attributes
+        );
+      },
     };
   }, [
     mentionIndicators,

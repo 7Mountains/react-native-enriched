@@ -905,6 +905,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [self anyTextMayHaveBeenModified];
 }
 
+- (void)addContent:(ContentParams *)params {
+  ContentStyle *contentStyle =
+      (ContentStyle *)stylesDict[@([ContentStyle getStyleType])];
+  [contentStyle addContent:params];
+  [self anyTextMayHaveBeenModified];
+}
+
 - (void)addMention:(NSString *)indicator
               text:(NSString *)text
         attributes:(NSString *)attributes {

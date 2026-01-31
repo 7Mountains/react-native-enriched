@@ -123,6 +123,11 @@ static inline void RunOnMainThread(void (^block)(void)) {
   } else if ([commandName isEqualToString:@"setParagraphAlignment"]) {
     [_input setParagraphAlignment:args[0]];
     [_input anyTextMayHaveBeenModified];
+  } else if ([commandName isEqualToString:@"addContent"]) {
+    ContentParams *params = [ContentParams paramsFromArgs:args];
+    if (params) {
+      [_input addContent:params];
+    }
   } else if ([commandName isEqualToString:@"scrollTo"]) {
     CGFloat x = [args[0] floatValue];
     CGFloat y = [args[1] floatValue];

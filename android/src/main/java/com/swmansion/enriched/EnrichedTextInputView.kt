@@ -680,9 +680,15 @@ class EnrichedTextInputView : AppCompatEditText {
     parametrizedStyles?.setImageSpan(src, width, height)
   }
 
-  fun insertDivider() {
-    paragraphStyles?.insertDivider()
-  }
+  fun insertDivider() = paragraphStyles?.insertDivider()
+
+  fun addContent(
+    text: String,
+    type: String,
+    src: String,
+    headers: Map<String, String>?,
+    attributes: Map<String, String>?,
+  ) = paragraphStyles?.addContent(text, type, src, headers, attributes)
 
   fun startMention(indicator: String) {
     val isValid = verifyStyle(TextStyle.MENTION)

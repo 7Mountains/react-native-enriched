@@ -18,7 +18,8 @@ data class ContentParams(
   val text: String,
   val type: String,
   val src: String?,
-  val attributes: Map<String, String>,
+  val headers: Map<String, String>?,
+  val attributes: Map<String, String>?,
 )
 
 class EnrichedContentSpan(
@@ -121,10 +122,11 @@ class EnrichedContentSpan(
       text: String,
       type: String,
       src: String?,
-      attributes: Map<String, String>,
+      headers: Map<String, String>?,
+      attributes: Map<String, String>?,
       htmlStyle: HtmlStyle,
     ): EnrichedContentSpan {
-      val params = ContentParams(text, type, src, attributes)
+      val params = ContentParams(text, type, src, headers, attributes)
 
       return EnrichedContentSpan(params, htmlStyle)
     }

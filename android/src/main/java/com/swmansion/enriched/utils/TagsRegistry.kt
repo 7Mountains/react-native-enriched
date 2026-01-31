@@ -62,7 +62,9 @@ object TagsRegistry {
               put("text", params.text)
               put("type", params.type)
               put("src", params.src ?: "")
-              putAll(params.attributes)
+              if (params.attributes != null) {
+                putAll(params.attributes)
+              }
             }
           },
         ),

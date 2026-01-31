@@ -150,113 +150,23 @@
   return _cachedAttributes;
 }
 
-- (BOOL)isParagraphEmpty:(NSRange)paragraphRange
-             textStorage:(NSTextStorage *)textStorage {
-  if (paragraphRange.length == 0)
-    return YES;
-
-  NSString *text = [[textStorage string] substringWithRange:paragraphRange];
-
-  // Trim whitespace & newlines
-  NSString *trimmed = [text
-      stringByTrimmingCharactersInSet:NSCharacterSet
-                                          .whitespaceAndNewlineCharacterSet];
-
-  if (trimmed.length > 0)
-    return NO;
-
-  // Check attachments inside paragraph
-  __block BOOL hasAttachment = NO;
-  [textStorage enumerateAttribute:NSAttachmentAttributeName
-                          inRange:paragraphRange
-                          options:0
-                       usingBlock:^(id value, NSRange range, BOOL *stop) {
-                         if (value) {
-                           hasAttachment = YES;
-                           *stop = YES;
-                         }
-                       }];
-
-  return !hasAttachment;
-}
-
 #pragma mark - Divider Insertion
-- (void)insertDividerAt:(NSUInteger)index setSelection:(BOOL)setSelection {
-
-  EnrichedTextInputView *input = _input;
-  UITextView *textView = input->textView;
-  NSTextStorage *textStorage = textView.textStorage;
-  NSString *string = textStorage.string;
-
-  NSDictionary *dividerAttrs = [self prepareAttributes];
-  input->blockEmitting = YES;
-
-  NSRange paragraphRange =
-      [string paragraphRangeForRange:NSMakeRange(index, 0)];
-
-  if (![self isParagraphEmpty:paragraphRange textStorage:textStorage]) {
-    input->blockEmitting = NO;
-    return;
-  }
-
-  [textStorage beginEditing];
-
-  // Remove paragraph contents (only whitespace/newlines)
-  if (paragraphRange.length > 0) {
-    [textStorage replaceCharactersInRange:paragraphRange withString:@""];
-  }
-
-  NSUInteger dividerIndex = paragraphRange.location;
-
-  // Insert divider placeholder
-  [TextInsertionUtils insertText:ORC
-                              at:dividerIndex
-            additionalAttributes:input->defaultTypingAttributes
-                           input:input
-                   withSelection:NO];
-
-  NSRange dividerRange = NSMakeRange(dividerIndex, 1);
-  [TextInsertionUtils replaceText:ORC
-                               at:dividerRange
-             additionalAttributes:dividerAttrs
-                            input:input
-                    withSelection:NO];
-
-  [TextInsertionUtils insertText:NewLine
-                              at:dividerIndex + 1
-            additionalAttributes:input->defaultTypingAttributes
-                           input:input
-                   withSelection:NO];
-
-  [textStorage endEditing];
-
-  if (setSelection) {
-    textView.selectedRange = NSMakeRange(dividerIndex + 2, 0);
-  }
-
-  input->blockEmitting = NO;
-}
-
-- (void)insertDividerAtline:(NSRange *)at withSelection:(BOOL)withSelection {
-  UITextView *tv = _input->textView;
-  NSString *string = tv.textStorage.string;
-
-  NSRange selection = tv.selectedRange;
-  NSRange lineRange = [string lineRangeForRange:selection];
-  NSUInteger index = lineRange.location + lineRange.length;
-
-  [self insertDividerAt:index setSelection:withSelection];
-}
 
 - (void)insertDividerAtNewLine {
-  UITextView *tv = _input->textView;
-  NSString *string = tv.textStorage.string;
+  UITextView *textView = _input->textView;
+  NSString *string = textView.textStorage.string;
 
-  NSRange selection = tv.selectedRange;
+  NSRange selection = textView.selectedRange;
   NSRange lineRange = [string lineRangeForRange:selection];
   NSUInteger index = lineRange.location + lineRange.length;
-
-  [self insertDividerAt:index setSelection:YES];
+  NSDictionary *dividerAttrs = [self prepareAttributes];
+  _input->blockEmitting = YES;
+  [TextInsertionUtils insertEscapingParagraphsAtIndex:index
+                                                 text:ORC
+                                           attributes:dividerAttrs
+                                                input:_input
+                                        withSelection:YES];
+  _input->blockEmitting = NO;
 }
 
 @end

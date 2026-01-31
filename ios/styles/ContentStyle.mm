@@ -233,16 +233,32 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 }
 
 - (NSDictionary *)prepareAttributes:(ContentParams *)params {
-  InputConfig *config = _input->config;
+  NSMutableDictionary *attributes =
+      [_input->defaultTypingAttributes mutableCopy];
+  attributes[NSAttachmentAttributeName] = [self prepareAttachment:params];
+  attributes[ContentAttributeName] = params;
+  attributes[ReadOnlyParagraphKey] = @YES;
+  return attributes;
+}
 
-  return @{
-    NSParagraphStyleAttributeName : [NSParagraphStyle new],
-    NSAttachmentAttributeName : [self prepareAttachment:params],
-    NSFontAttributeName : config.primaryFont,
-    NSForegroundColorAttributeName : config.primaryColor,
-    ContentAttributeName : params,
-    ReadOnlyParagraphKey : @(YES)
-  };
+- (void)addContent:(ContentParams *)params {
+  if (!_input || !params)
+    return;
+
+  UITextView *textView = _input->textView;
+  NSString *string = textView.textStorage.string;
+
+  NSRange selection = textView.selectedRange;
+  NSRange lineRange = [string lineRangeForRange:selection];
+  NSUInteger index = lineRange.location + lineRange.length;
+
+  NSDictionary *attrs = [self prepareAttributes:params];
+
+  [TextInsertionUtils insertEscapingParagraphsAtIndex:index
+                                                 text:ORC
+                                           attributes:attrs
+                                                input:_input
+                                        withSelection:YES];
 }
 
 @end

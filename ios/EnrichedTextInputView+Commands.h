@@ -1,5 +1,7 @@
 #import "EnrichedTextInputView.h"
 
+@class ContentParams;
+
 @interface EnrichedTextInputView (Commands)
 
 - (void)focus;
@@ -33,5 +35,7 @@
 - (void)setParagraphAlignment:(NSString *)alignment;
 
 - (void)anyTextMayHaveBeenModified;
+
+- (void)addContent:(ContentParams *)params;
 
 @end

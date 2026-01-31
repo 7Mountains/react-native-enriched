@@ -90,6 +90,18 @@ const STYLE_ITEMS = [
     value: '#E6FF5C',
     text: 'A',
   },
+  {
+    name: 'checkbox-list',
+    icon: 'check-square-o',
+  },
+  {
+    name: 'divider',
+    icon: 'minus',
+  },
+  {
+    name: 'content',
+    icon: 'plus',
+  },
 ] as const;
 
 type Item = (typeof STYLE_ITEMS)[number];
@@ -100,6 +112,7 @@ export interface ToolbarProps {
   editorRef?: React.RefObject<EnrichedTextInputInstance | null>;
   onOpenLinkModal: () => void;
   onSelectImage: () => void;
+  onContentButtonPress?: () => void;
   selectionColor: string | null;
 }
 
@@ -108,6 +121,7 @@ export const Toolbar: FC<ToolbarProps> = ({
   editorRef,
   onOpenLinkModal,
   onSelectImage,
+  onContentButtonPress,
   selectionColor,
 }) => {
   const handlePress = (item: Item) => {
@@ -169,6 +183,15 @@ export const Toolbar: FC<ToolbarProps> = ({
       case 'mention':
         editorRef.current?.startMention('@');
         break;
+      case 'checkbox-list':
+        editorRef.current?.toggleCheckList();
+        break;
+      case 'divider':
+        editorRef.current?.addDividerAtNewLine();
+        break;
+      case 'content':
+        onContentButtonPress?.();
+        break;
     }
   };
 
@@ -216,6 +239,8 @@ export const Toolbar: FC<ToolbarProps> = ({
         return stylesState.image;
       case 'mention':
         return stylesState.mention;
+      case 'checkbox-list':
+        return stylesState.checkList;
       default:
         return {
           isActive: false,
