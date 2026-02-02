@@ -329,6 +329,7 @@ export default function EditorScreen() {
         onChangeState={(e) => {
           setToolbarState(e.nativeEvent);
         }}
+        automaticallyAdjustsScrollIndicatorInsets={false}
         onScroll={scrollHandler}
         defaultValue={initialHugeHtml}
         placeholder="Type something here..."

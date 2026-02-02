@@ -252,6 +252,14 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     textView.keyboardDismissMode = mode;
   }
 
+  if (newViewProps.automaticallyAdjustsScrollIndicatorInsets !=
+          oldViewProps.automaticallyAdjustsScrollIndicatorInsets ||
+      textView.automaticallyAdjustsScrollIndicatorInsets !=
+          newViewProps.automaticallyAdjustsScrollIndicatorInsets) {
+    [textView setAutomaticallyAdjustsScrollIndicatorInsets:
+                  newViewProps.automaticallyAdjustsScrollIndicatorInsets];
+  }
+
   // default value - must be set before placeholder to make sure it correctly
   // shows on first mount
   if (defaultValueChanged) {

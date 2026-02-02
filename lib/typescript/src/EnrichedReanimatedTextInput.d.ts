@@ -8,6 +8,6 @@ type Props = Omit<EnrichedTextInputProps, 'onScroll'> & Pick<ComponentProps<type
     onScroll?: EventHandlerProcessed<OnScrollEvent, never> | ((event: NativeSyntheticEvent<OnScrollEvent>) => void);
     ref?: AnimatedRef<EnrichedTextInputInstance>;
 };
-export declare const EnrichedReanimatedTextInput: ({ ref, autoFocus, editable, mentionIndicators, defaultValue, placeholder, placeholderTextColor, cursorColor, selectionColor, style, autoCapitalize, htmlStyle, onFocus, onBlur, onChangeText, onChangeHtml, onChangeState, onLinkDetected, onMentionDetected, onStartMention, onChangeMention, onEndMention, onChangeSelection, onColorChangeInSelection, onParagraphAlignmentChange, contentInsets, androidExperimentalSynchronousEvents, scrollEnabled, keyboardDismissMode, onScroll, ...rest }: Props) => import("react/jsx-runtime").JSX.Element;
+export declare const EnrichedReanimatedTextInput: ({ ref, automaticallyAdjustsScrollIndicatorInsets, autoFocus, editable, mentionIndicators, defaultValue, placeholder, placeholderTextColor, cursorColor, selectionColor, style, autoCapitalize, htmlStyle, onFocus, onBlur, onChangeText, onChangeHtml, onChangeState, onLinkDetected, onMentionDetected, onStartMention, onChangeMention, onEndMention, onChangeSelection, onColorChangeInSelection, onParagraphAlignmentChange, contentInsets, androidExperimentalSynchronousEvents, scrollEnabled, keyboardDismissMode, onScroll, ...rest }: Props) => import("react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=EnrichedReanimatedTextInput.d.ts.map

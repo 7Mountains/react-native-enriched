@@ -312,6 +312,7 @@ export interface NativeProps extends ViewProps {
     isOnScrollSet: boolean;
     contentInsets?: Insets;
     scrollIndicatorInsets?: Insets;
+    automaticallyAdjustsScrollIndicatorInsets?: boolean;
     androidExperimentalSynchronousEvents: boolean;
 }
 type ComponentType = HostComponent<NativeProps>;

@@ -19,6 +19,7 @@ const DEFAULT_INSETS = {
 export const EnrichedTextInput = ({
   ref,
   autoFocus,
+  automaticallyAdjustsScrollIndicatorInsets = true,
   editable = true,
   contentInsets = DEFAULT_INSETS,
   scrollIndicatorInsets = DEFAULT_INSETS,
@@ -98,6 +99,9 @@ export const EnrichedTextInput = ({
       editable={editable}
       contentInsets={contentInsets}
       scrollIndicatorInsets={scrollIndicatorInsets}
+      automaticallyAdjustsScrollIndicatorInsets={
+        automaticallyAdjustsScrollIndicatorInsets
+      }
       autoFocus={autoFocus}
       defaultValue={defaultValue}
       placeholder={placeholder}
