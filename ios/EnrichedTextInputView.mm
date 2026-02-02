@@ -1274,23 +1274,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   return NO;
 }
 
-// MARK: - Debug attributed text
-
-static inline NSString *DebugChar(unichar ch) {
-  switch (ch) {
-  case 0x200B:
-    return @"[ZWS]";
-  case '\n':
-    return @"[NL]";
-  case 0xFFFC:
-    return @"[ORC]";
-  case ' ':
-    return @"[SP]";
-  default:
-    return [NSString stringWithFormat:@"%C", ch];
-  }
-}
-
 - (bool)textView:(UITextView *)textView
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text {
