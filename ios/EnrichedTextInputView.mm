@@ -1269,7 +1269,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (bool)textView:(UITextView *)textView
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text {
-  if (![text isEqualToString:@"\n"] &&
+  return YES;
+  if (![text isEqualToString:NewLine] &&
       [self isReadOnlyParagraphAtLocation:range.location]) {
     if (text.length == 0)
       return YES;
@@ -1422,13 +1423,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)mediaAttachmentDidUpdate:(NSTextAttachment *)attachment {
   [_attachmentBatcher enqueueAttachment:attachment];
-}
-
-- (CGPoint)adjustedPointForViewPoint:(CGPoint)pt {
-  CGPoint tvPoint = [self convertPoint:pt toView:textView];
-  tvPoint.x -= textView.textContainerInset.left;
-  tvPoint.y -= textView.textContainerInset.top;
-  return tvPoint;
 }
 
 - (void)onTextBlockTap:(TextBlockTapGestureRecognizer *)gr {

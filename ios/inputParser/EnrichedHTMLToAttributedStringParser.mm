@@ -164,7 +164,8 @@
     [self collectParagraphModifiersIfNeeded:attributes];
     if (!HTMLIsLastParagraphInBlockContext(
             cur, cur->name, cur->parent ? cur->parent->name : NULL,
-            isLastRenderable)) {
+            isLastRenderable) &&
+        !isLastRenderable) {
       [self appendEmptyLineToBLockTag];
     }
   }
