@@ -8,13 +8,14 @@
 #import "EnrichedTextStyleFactory.h"
 #import "HeadingsParagraphInvariantUtils.h"
 #import "InsetsOperators.h"
-#import "KeyboardDismissModeConverter.h"
 #import "LayoutManagerExtension.h"
+#import "NSString+Autocapitalization.h"
 #import "ParagraphAttributesUtils.h"
 #import "StringExtension.h"
 #import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextBlockTapGestureRecognizer.h"
+#import "UIScrollViewKeyboardDismissMode+Parsing.h"
 #import "UIView+React.h"
 #import "WordsUtils.h"
 #import "ZeroWidthSpaceUtils.h"
@@ -247,8 +248,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   if (newViewProps.keyboardDismissMode != oldViewProps.keyboardDismissMode) {
-    auto mode = KeyboardDismissModeFromString(
-        (std::string)newViewProps.keyboardDismissMode);
+    auto mode = [UIScrollView
+        fromString:[NSString fromCppString:newViewProps.keyboardDismissMode]];
     textView.keyboardDismissMode = mode;
   }
 
@@ -302,16 +303,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // autoCapitalize
   if (newViewProps.autoCapitalize != oldViewProps.autoCapitalize) {
     NSString *str = [NSString fromCppString:newViewProps.autoCapitalize];
-    if ([str isEqualToString:@"none"]) {
-      textView.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    } else if ([str isEqualToString:@"sentences"]) {
-      textView.autocapitalizationType = UITextAutocapitalizationTypeSentences;
-    } else if ([str isEqualToString:@"words"]) {
-      textView.autocapitalizationType = UITextAutocapitalizationTypeWords;
-    } else if ([str isEqualToString:@"characters"]) {
-      textView.autocapitalizationType =
-          UITextAutocapitalizationTypeAllCharacters;
-    }
+    textView.autocapitalizationType = [str autocapitalizationType];
 
     // textView needs to be refocused on autocapitalization type change and we
     // don't want to emit these events

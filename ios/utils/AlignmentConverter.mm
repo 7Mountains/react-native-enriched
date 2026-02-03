@@ -1,10 +1,5 @@
 #import "AlignmentConverter.h"
-
-static NSString *const LeftAlignmentString = @"left";
-static NSString *const RightAlignmentString = @"right";
-static NSString *const CenterAlignmentString = @"center";
-static NSString *const JustifyAlignmentString = @"justify";
-static NSString *const NeuturalAlignmentString = @"default";
+#import "Alignments.h"
 
 @implementation AlignmentConverter
 
@@ -19,7 +14,7 @@ static NSString *const NeuturalAlignmentString = @"default";
       LeftAlignmentString : @(NSTextAlignmentLeft),
       RightAlignmentString : @(NSTextAlignmentRight),
       CenterAlignmentString : @(NSTextAlignmentCenter),
-      NeuturalAlignmentString : @(NSTextAlignmentNatural),
+      NaturalAlignmentString : @(NSTextAlignmentNatural),
       JustifyAlignmentString : @(NSTextAlignmentJustified)
     };
   });
@@ -40,7 +35,7 @@ static NSString *const NeuturalAlignmentString = @"default";
     return JustifyAlignmentString;
   case NSTextAlignmentNatural:
   default:
-    return NeuturalAlignmentString;
+    return NaturalAlignmentString;
   }
 }
 

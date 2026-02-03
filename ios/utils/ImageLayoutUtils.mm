@@ -3,21 +3,21 @@
 @implementation ImageLayoutUtils
 
 + (ImageResizeMode)resizeModeFromString:(NSString *)name {
-  NSString *m = name.lowercaseString;
+  NSString *mode = name.lowercaseString;
 
-  if ([m isEqualToString:@"cover"])
+  if ([mode isEqualToString:@"cover"])
     return ImageResizeModeCover;
-  if ([m isEqualToString:@"contain"])
+  if ([mode isEqualToString:@"contain"])
     return ImageResizeModeContain;
-  if ([m isEqualToString:@"fill"])
+  if ([mode isEqualToString:@"fill"])
     return ImageResizeModeFill;
-  if ([m isEqualToString:@"stretch"])
+  if ([mode isEqualToString:@"stretch"])
     return ImageResizeModeFill;
-  if ([m isEqualToString:@"none"])
+  if ([mode isEqualToString:@"none"])
     return ImageResizeModeNone;
-  if ([m isEqualToString:@"center"])
+  if ([mode isEqualToString:@"center"])
     return ImageResizeModeNone;
-  if ([m isEqualToString:@"scale-down"])
+  if ([mode isEqualToString:@"scale-down"])
     return ImageResizeModeScaleDown;
 
   return ImageResizeModeInvalid;
