@@ -1269,7 +1269,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (bool)textView:(UITextView *)textView
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text {
-  return YES;
+
   if (![text isEqualToString:NewLine] &&
       [self isReadOnlyParagraphAtLocation:range.location]) {
     if (text.length == 0)
