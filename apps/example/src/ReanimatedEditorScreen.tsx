@@ -96,109 +96,114 @@ type SelectionPosition = {
 };
 
 const DEFAULT_STYLE: OnChangeStateEvent = {
+  alignment: {
+    isActive: false,
+    canNotBeApplied: false,
+    isConflicting: false,
+  },
   bold: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   italic: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   underline: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   strikeThrough: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   inlineCode: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   h1: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   h2: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   h3: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   h4: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   h5: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   h6: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   blockQuote: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   codeBlock: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   orderedList: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   unorderedList: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   link: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   image: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   mention: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   checkList: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   colored: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
   content: {
     isActive: false,
-    canBeApplied: false,
+    canNotBeApplied: false,
     isConflicting: false,
   },
 };

@@ -36,7 +36,7 @@ using namespace facebook::react;
 #define GET_STYLE_STATE(TYPE_ENUM)                                             \
   {                                                                            \
     .isActive = [_activeStyles containsObject:@(TYPE_ENUM)],                   \
-    .canBeApplied = [self isStyle:TYPE_ENUM activeInMap:blockingStyles],       \
+    .canNotBeApplied = [self isStyle:TYPE_ENUM activeInMap:blockingStyles],    \
     .isConflicting = [self isStyle:TYPE_ENUM activeInMap:conflictingStyles]    \
   }
 
@@ -539,7 +539,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       _blockedStyles = newBlockedStyles;
 
       emitter->onChangeState(
-          {.bold = GET_STYLE_STATE([BoldStyle getStyleType]),
+          {.alignment = GET_STYLE_STATE([BoldStyle getStyleType]),
+           .bold = GET_STYLE_STATE([BoldStyle getStyleType]),
            .italic = GET_STYLE_STATE([ItalicStyle getStyleType]),
            .underline = GET_STYLE_STATE([UnderlineStyle getStyleType]),
            .strikeThrough = GET_STYLE_STATE([StrikethroughStyle getStyleType]),

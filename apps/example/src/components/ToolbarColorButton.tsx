@@ -6,6 +6,7 @@ interface ColorButtonProps {
   isActive: boolean;
   onPress: (color: string) => void;
   color: string;
+  disabled?: boolean;
 }
 
 export const ToolbarColorButton: FC<ColorButtonProps> = ({
@@ -13,6 +14,7 @@ export const ToolbarColorButton: FC<ColorButtonProps> = ({
   isActive,
   onPress,
   color,
+  disabled,
 }) => {
   const handlePress = () => {
     onPress(color);
@@ -22,12 +24,13 @@ export const ToolbarColorButton: FC<ColorButtonProps> = ({
     () => [
       styles.container,
       { backgroundColor: isActive ? color : 'rgba(0, 26, 114, 0.8)' },
+      disabled && styles.disabled,
     ],
-    [isActive, color]
+    [isActive, color, disabled]
   );
 
   return (
-    <Pressable style={containerStyle} onPress={handlePress}>
+    <Pressable style={containerStyle} onPress={handlePress} disabled={disabled}>
       <Text style={[styles.text, !isActive && { color }]}>{text}</Text>
     </Pressable>
   );
@@ -43,5 +46,8 @@ const styles = StyleSheet.create({
   text: {
     color: 'white',
     fontSize: 20,
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });

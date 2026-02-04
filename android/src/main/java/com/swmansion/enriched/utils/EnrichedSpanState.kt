@@ -393,6 +393,7 @@ class EnrichedSpanState(
   private fun emitStateChangeEvent() {
     val activeStyles =
       listOfNotNull(
+        if (alignmentStart != null) TextStyle.ALIGNMENT else null,
         if (boldStart != null) TextStyle.BOLD else null,
         if (colorStart != null) TextStyle.COLOR else null,
         if (italicStart != null) TextStyle.ITALIC else null,
@@ -417,6 +418,7 @@ class EnrichedSpanState(
         if (mentionStart != null) TextStyle.MENTION else null,
       )
     val payload = Arguments.createMap()
+    payload.putMap("alignment", getStyleState(activeStyles, TextStyle.ALIGNMENT))
     payload.putMap("bold", getStyleState(activeStyles, TextStyle.BOLD))
     payload.putMap("colored", getStyleState(activeStyles, TextStyle.COLOR))
     payload.putMap("italic", getStyleState(activeStyles, TextStyle.ITALIC))
@@ -474,7 +476,7 @@ class EnrichedSpanState(
     state.putBoolean("isActive", activeStyles.contains(type))
 
     val hasBlockingStyles = blockingList?.any { activeStyles.contains(it) } ?: false
-    state.putBoolean("canBeApplied", hasBlockingStyles)
+    state.putBoolean("canNotBeApplied", hasBlockingStyles)
 
     val isConflicting = conflictingList?.any { activeStyles.contains(it) } ?: false
     state.putBoolean("isConflicting", isConflicting)

@@ -46,112 +46,35 @@ interface Selection {
 
 const PRIMARY_COLOR = '#000000';
 
+const DEFAULT_STATE = {
+  isActive: false,
+  canNotBeApplied: false,
+  isConflicting: false,
+};
+
 const DEFAULT_STYLE: OnChangeStateEvent = {
-  bold: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  italic: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  underline: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  strikeThrough: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  inlineCode: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  h1: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  h2: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  h3: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  h4: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  h5: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  h6: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  blockQuote: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  codeBlock: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  orderedList: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  unorderedList: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  link: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  image: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  mention: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  checkList: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  colored: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
-  content: {
-    isActive: false,
-    canBeApplied: false,
-    isConflicting: false,
-  },
+  alignment: DEFAULT_STATE,
+  bold: DEFAULT_STATE,
+  italic: DEFAULT_STATE,
+  underline: DEFAULT_STATE,
+  strikeThrough: DEFAULT_STATE,
+  inlineCode: DEFAULT_STATE,
+  h1: DEFAULT_STATE,
+  h2: DEFAULT_STATE,
+  h3: DEFAULT_STATE,
+  h4: DEFAULT_STATE,
+  h5: DEFAULT_STATE,
+  h6: DEFAULT_STATE,
+  blockQuote: DEFAULT_STATE,
+  codeBlock: DEFAULT_STATE,
+  orderedList: DEFAULT_STATE,
+  unorderedList: DEFAULT_STATE,
+  link: DEFAULT_STATE,
+  image: DEFAULT_STATE,
+  mention: DEFAULT_STATE,
+  checkList: DEFAULT_STATE,
+  colored: DEFAULT_STATE,
+  content: DEFAULT_STATE,
 };
 
 const DEFAULT_LINK_STATE = {
@@ -455,6 +378,8 @@ export default function EditorScreen() {
   const handleContentModalClose = () => {
     setIsContentModalVisible(false);
   };
+
+  console.log(stylesState);
 
   const handleContentSubmit = (
     text: string,

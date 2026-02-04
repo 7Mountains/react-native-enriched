@@ -245,7 +245,7 @@ export const Toolbar: FC<ToolbarProps> = ({
         return {
           isActive: false,
           isConflicting: false,
-          canBeApplied: false,
+          canNotBeApplied: false,
         };
     }
   };
@@ -259,11 +259,12 @@ export const Toolbar: FC<ToolbarProps> = ({
         color={item.value}
         text={item.text}
         isActive={state.isActive && selectionColor === item.value}
+        disabled={state.canNotBeApplied}
       />
     ) : (
       <ToolbarButton
         {...item}
-        disabled={state.canBeApplied}
+        disabled={state.canNotBeApplied}
         isActive={state.isActive}
         onPress={() => handlePress(item)}
       />

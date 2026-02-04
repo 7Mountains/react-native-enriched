@@ -8,110 +8,115 @@ export interface OnChangeHtmlEvent {
     value: string;
 }
 export interface OnChangeStateEvent {
+    alignment: {
+        isActive: boolean;
+        isConflicting: boolean;
+        canNotBeApplied: boolean;
+    };
     bold: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     italic: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     underline: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     strikeThrough: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     inlineCode: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     h1: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     h2: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     h3: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     h4: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     h5: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     h6: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     codeBlock: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     blockQuote: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     orderedList: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     unorderedList: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     link: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     image: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     mention: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     checkList: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     colored: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
     content: {
         isActive: boolean;
         isConflicting: boolean;
-        canBeApplied: boolean;
+        canNotBeApplied: boolean;
     };
 }
 export interface OnLinkDetected {

@@ -377,6 +377,7 @@ object EnrichedSpans {
       TextStyle.COLOR -> {
         StylesMergingConfig(
           conflictingStyles = arrayOf(TextStyle.MENTION),
+          blockingStyles = arrayOf(TextStyle.CONTENT, TextStyle.DIVIDER),
         )
       }
     }

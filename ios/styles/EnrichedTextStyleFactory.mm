@@ -66,7 +66,8 @@
       @([MentionStyle getStyleType]) : @[
         @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]),
         @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]),
-        @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType])
+        @([UnderlineStyle getStyleType]), @([StrikethroughStyle getStyleType]),
+        @([DividerStyle getStyleType]), @([ContentStyle getStyleType])
       ],
       @([H1Style getStyleType]) : @[
         @([H2Style getStyleType]), @([H3Style getStyleType]),
@@ -175,6 +176,7 @@
         @([CodeBlockStyle getStyleType]),
       ],
       @([ContentStyle getStyleType]) : @[],
+      @([ParagraphAlignmentStyle getStyleType]) : @[]
     };
   });
   return conflicts;
@@ -257,8 +259,10 @@
         @([InlineCodeStyle getStyleType]), @([DividerStyle getStyleType]),
         @([ContentStyle getStyleType])
       ],
-      @([CheckBoxStyle getStyleType]) :
-          @[ @([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType]) ],
+      @([CheckBoxStyle getStyleType]) : @[
+        @([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType]),
+        @([DividerStyle getStyleType])
+      ],
       @([DividerStyle getStyleType]) : @[
         @([CheckBoxStyle getStyleType]), @([H1Style getStyleType]),
         @([H2Style getStyleType]), @([H3Style getStyleType]),
@@ -278,7 +282,9 @@
         @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]),
         @([LinkStyle getStyleType]), @([MentionStyle getStyleType]),
         @([DividerStyle getStyleType])
-      ]
+      ],
+      @([ParagraphAlignmentStyle getStyleType]) :
+          @[ @([ContentStyle getStyleType]), @([DividerStyle getStyleType]) ]
     };
   });
   return blocking;
