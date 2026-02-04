@@ -20,6 +20,7 @@ export const EnrichedTextInput = ({
   ref,
   autoFocus,
   automaticallyAdjustsScrollIndicatorInsets = true,
+  automaticallyAdjustContentInsets = true,
   editable = true,
   contentInsets = DEFAULT_INSETS,
   scrollIndicatorInsets = DEFAULT_INSETS,
@@ -102,6 +103,7 @@ export const EnrichedTextInput = ({
       automaticallyAdjustsScrollIndicatorInsets={
         automaticallyAdjustsScrollIndicatorInsets
       }
+      automaticallyAdjustContentInsets={automaticallyAdjustContentInsets}
       autoFocus={autoFocus}
       defaultValue={defaultValue}
       placeholder={placeholder}

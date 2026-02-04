@@ -347,6 +347,7 @@ export interface NativeProps extends ViewProps {
   contentInsets?: Insets;
   scrollIndicatorInsets?: Insets;
   automaticallyAdjustsScrollIndicatorInsets?: boolean;
+  automaticallyAdjustContentInsets?: boolean;
 
   // Experimental
   androidExperimentalSynchronousEvents: boolean;

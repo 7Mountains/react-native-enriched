@@ -261,6 +261,19 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                   newViewProps.automaticallyAdjustsScrollIndicatorInsets];
   }
 
+  UIScrollViewContentInsetAdjustmentBehavior contentInsetAdjustmentBehaviour =
+      newViewProps.automaticallyAdjustContentInsets
+          ? UIScrollViewContentInsetAdjustmentAutomatic
+          : UIScrollViewContentInsetAdjustmentNever;
+
+  if (newViewProps.automaticallyAdjustContentInsets !=
+          oldViewProps.automaticallyAdjustContentInsets ||
+      textView.contentInsetAdjustmentBehavior !=
+          contentInsetAdjustmentBehaviour) {
+    [textView
+        setContentInsetAdjustmentBehavior:contentInsetAdjustmentBehaviour];
+  }
+
   // default value - must be set before placeholder to make sure it correctly
   // shows on first mount
   if (defaultValueChanged) {

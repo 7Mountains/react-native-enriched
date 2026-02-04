@@ -441,6 +441,13 @@ class EnrichedTextInputViewManager :
     // iOS only prop
   }
 
+  override fun setAutomaticallyAdjustContentInsets(
+    view: EnrichedTextInputView?,
+    value: Boolean,
+  ) {
+    // iOS only prop
+  }
+
   override fun setIsOnScrollSet(
     view: EnrichedTextInputView?,
     onScroll: Boolean,

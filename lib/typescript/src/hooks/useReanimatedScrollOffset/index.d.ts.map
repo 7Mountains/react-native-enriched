@@ -1,1 +1,1 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../../../src/hooks/useReanimatedScrollOffset/index.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,wCAAwC,CAAC;AAyB5E,QAAA,MAAM,yBAAyB;;;CAc9B,CAAC;AAEF,eAAe,yBAAyB,CAAC"}
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../../../src/hooks/useReanimatedScrollOffset/index.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,wCAAwC,CAAC;AAyB5E,QAAA,MAAM,yBAAyB;;;CAqB9B,CAAC;AAEF,eAAe,yBAAyB,CAAC"}

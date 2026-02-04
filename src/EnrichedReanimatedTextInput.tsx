@@ -49,6 +49,7 @@ type Props = Omit<EnrichedTextInputProps, 'onScroll'> &
 export const EnrichedReanimatedTextInput = ({
   ref,
   automaticallyAdjustsScrollIndicatorInsets = true,
+  automaticallyAdjustContentInsets = true,
   autoFocus,
   editable = true,
   mentionIndicators = ['@'],
@@ -128,6 +129,7 @@ export const EnrichedReanimatedTextInput = ({
       automaticallyAdjustsScrollIndicatorInsets={
         automaticallyAdjustsScrollIndicatorInsets
       }
+      automaticallyAdjustContentInsets={automaticallyAdjustContentInsets}
       mentionIndicators={mentionIndicators}
       editable={editable}
       autoFocus={autoFocus}

@@ -1,4 +1,4 @@
-import { StyleSheet, Image, View } from 'react-native';
+import { StyleSheet, Image } from 'react-native';
 import {
   type EnrichedTextInputInstance,
   type HtmlStyle,
@@ -7,12 +7,12 @@ import {
   useReanimatedScrollOffset,
 } from 'react-native-enriched';
 import { useCallback, useState } from 'react';
-import {
+import Reanimated, {
   useAnimatedProps,
   useAnimatedRef,
   useSharedValue,
-  interpolate,
   scrollTo,
+  useAnimatedStyle,
 } from 'react-native-reanimated';
 import {
   useFocusedInputHandler,
@@ -21,6 +21,7 @@ import {
   useWindowDimensions,
 } from 'react-native-keyboard-controller';
 import { Toolbar } from './components/Toolbar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const generateHugeHtml = (repeat = 2) => {
   const parts: string[] = [];
@@ -87,7 +88,7 @@ const generateHugeHtml = (repeat = 2) => {
 
 const initialHugeHtml = generateHugeHtml();
 
-const bottomOffset = 0;
+const bottomOffset = 56;
 
 type SelectionPosition = {
   x: number;
@@ -241,42 +242,35 @@ export default function EditorScreen() {
   const maybeScroll = useCallback(
     (keyboardHeightEvent: number) => {
       'worklet';
+
       const inputLayout = input?.get()?.layout;
       if (!inputLayout) return;
 
       const cursor = currentSelectionPosition.get();
-      const absoluteCaretY =
-        inputLayout.absoluteY + (cursor.y - scrollOffsetBeforeKeyboard.get());
 
-      const finalScrollDistance =
-        scrollOffsetBeforeKeyboard.get() +
-        (absoluteCaretY - (height - nextKeyboardHeight.get()) + bottomOffset);
+      const caretAbsoluteY =
+        inputLayout.absoluteY + cursor.y - scrollOffset.get().contentOffset.y;
 
-      if (finalScrollDistance >= scrollOffsetBeforeKeyboard.get()) {
-        const targetScrollY = interpolate(
-          keyboardHeightEvent,
-          [0, nextKeyboardHeight.get()],
-          [scrollOffsetBeforeKeyboard.get(), finalScrollDistance]
-        );
+      const visibleHeight = height - keyboardHeightEvent - bottomOffset;
 
-        scrollTo(ref, 0, targetScrollY, false);
+      if (caretAbsoluteY <= visibleHeight) {
+        return;
       }
+
+      const delta = caretAbsoluteY - visibleHeight;
+
+      const targetScrollY = scrollOffset.get().contentOffset.y + delta;
+
+      scrollTo(ref, 0, targetScrollY, false);
     },
-    [
-      input,
-      currentSelectionPosition,
-      scrollOffsetBeforeKeyboard,
-      height,
-      nextKeyboardHeight,
-      ref,
-    ]
+    [input, currentSelectionPosition, scrollOffset, height, ref]
   );
 
   useKeyboardHandler(
     {
       onStart: (e) => {
         'worklet';
-        scrollOffsetBeforeKeyboard.set(scrollOffset.get());
+        scrollOffsetBeforeKeyboard.set(scrollOffset.get().contentOffset.y);
         nextKeyboardHeight.set(e.height);
       },
       onMove: (event) => {
@@ -290,12 +284,14 @@ export default function EditorScreen() {
     [maybeScroll, nextKeyboardHeight, scrollOffset, scrollOffsetBeforeKeyboard]
   );
 
+  const { bottom } = useSafeAreaInsets();
+
   const animatedProps = useAnimatedProps(
     () => ({
       contentInsets: {
         bottom:
           nextKeyboardHeight.get() === 0
-            ? keyboardHeight.get()
+            ? keyboardHeight.get() + bottom
             : nextKeyboardHeight.get() + bottomOffset,
         top: 0,
         left: 0,
@@ -314,19 +310,22 @@ export default function EditorScreen() {
     [keyboardHeight, bottomOffset, nextKeyboardHeight]
   );
 
+  const toolbarAnimatedStyle = useAnimatedStyle(
+    () => ({
+      position: 'absolute',
+      bottom:
+        nextKeyboardHeight.get() === 0 ? -bottomOffset : keyboardHeight.get(),
+      left: 0,
+      right: 0,
+    }),
+    []
+  );
+
   return (
     <>
-      <View>
-        <Toolbar
-          editorRef={ref}
-          stylesState={toolbarState}
-          onOpenLinkModal={() => {}}
-          onSelectImage={() => {}}
-          selectionColor={null}
-        />
-      </View>
       <EnrichedReanimatedTextInput
         ref={ref}
+        automaticallyAdjustContentInsets={false}
         animatedProps={animatedProps}
         mentionIndicators={['@', '#']}
         style={styles.editorInput}
@@ -343,6 +342,15 @@ export default function EditorScreen() {
         cursorColor="dodgerblue"
         autoCapitalize="sentences"
       />
+      <Reanimated.View style={toolbarAnimatedStyle}>
+        <Toolbar
+          editorRef={ref}
+          stylesState={toolbarState}
+          onOpenLinkModal={() => {}}
+          onSelectImage={() => {}}
+          selectionColor={null}
+        />
+      </Reanimated.View>
     </>
   );
 }

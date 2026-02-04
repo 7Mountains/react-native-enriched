@@ -105,6 +105,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     ref?: RefObject<EnrichedTextInputInstance | null>;
     autoFocus?: boolean;
     automaticallyAdjustsScrollIndicatorInsets?: boolean;
+    automaticallyAdjustContentInsets?: boolean;
     editable?: boolean;
     mentionIndicators?: string[];
     defaultValue?: string;
