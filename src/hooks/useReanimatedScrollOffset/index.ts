@@ -25,20 +25,13 @@ function useReanimatedScrollHandler(
 }
 
 const useReanimatedScrollOffset = () => {
-  const scrollOffset = useSharedValue<OnScrollEvent>({
-    contentOffset: { x: 0, y: 0 },
-    contentInset: { top: 0, left: 0, bottom: 0, right: 0 },
-    contentSize: { width: 0, height: 0 },
-    layoutMeasurement: { width: 0, height: 0 },
-    velocity: { x: 0, y: 0 },
-    target: -1,
-  });
+  const scrollOffset = useSharedValue<number>(0);
 
   const scrollHandler = useReanimatedScrollHandler(
     {
       onScroll: (event) => {
         'worklet';
-        scrollOffset.set(event);
+        scrollOffset.set(event.contentOffset.y);
       },
     },
     [scrollOffset]

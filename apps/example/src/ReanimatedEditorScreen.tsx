@@ -249,7 +249,7 @@ export default function EditorScreen() {
       const cursor = currentSelectionPosition.get();
 
       const caretAbsoluteY =
-        inputLayout.absoluteY + cursor.y - scrollOffset.get().contentOffset.y;
+        inputLayout.absoluteY + cursor.y - scrollOffset.get();
 
       const visibleHeight = height - keyboardHeightEvent - bottomOffset;
 
@@ -259,7 +259,7 @@ export default function EditorScreen() {
 
       const delta = caretAbsoluteY - visibleHeight;
 
-      const targetScrollY = scrollOffset.get().contentOffset.y + delta;
+      const targetScrollY = scrollOffset.get() + delta;
 
       scrollTo(ref, 0, targetScrollY, false);
     },
@@ -270,7 +270,7 @@ export default function EditorScreen() {
     {
       onStart: (e) => {
         'worklet';
-        scrollOffsetBeforeKeyboard.set(scrollOffset.get().contentOffset.y);
+        scrollOffsetBeforeKeyboard.set(scrollOffset.get());
         nextKeyboardHeight.set(e.height);
       },
       onMove: (event) => {
