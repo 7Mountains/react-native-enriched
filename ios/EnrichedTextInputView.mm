@@ -4,6 +4,8 @@
 #import "BaseLabelAttachment.h"
 #import "ColorExtension.h"
 #import "EnrichedCommandHandler.h"
+#import "EnrichedCookieManager.h"
+#import "EnrichedCookiesOperators.h"
 #import "EnrichedTextConfigBuilder.h"
 #import "EnrichedTextStyleFactory.h"
 #import "HeadingsParagraphInvariantUtils.h"
@@ -190,6 +192,21 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     auto insets = newViewProps.scrollIndicatorInsets;
     textView.scrollIndicatorInsets =
         UIEdgeInsetsMake(insets.top, insets.left, insets.bottom, insets.right);
+  }
+
+  if (newViewProps.loaderCookies != oldViewProps.loaderCookies) {
+
+    NSMutableArray *cookies = [NSMutableArray array];
+
+    for (const auto &cookie : newViewProps.loaderCookies) {
+      [cookies addObject:@{
+        @"domain" : [NSString fromCppString:cookie.domain],
+        @"name" : [NSString fromCppString:cookie.name],
+        @"value" : [NSString fromCppString:cookie.value]
+      }];
+    }
+
+    [[EnrichedCookieManager shared] setCookies:cookies];
   }
 
   BOOL defaultValueChanged =

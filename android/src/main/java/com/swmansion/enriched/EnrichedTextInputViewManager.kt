@@ -31,6 +31,7 @@ import com.swmansion.enriched.events.OnMentionDetectedEvent
 import com.swmansion.enriched.events.OnMentionEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.events.OnScrollEvent
+import com.swmansion.enriched.loaders.EnrichedCookieManager
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.utils.jsonStringToStringMap
@@ -448,6 +449,42 @@ class EnrichedTextInputViewManager :
     // iOS only prop
   }
 
+  override fun setLoaderCookies(
+    view: EnrichedTextInputView?,
+    value: ReadableArray?,
+  ) {
+    if (value == null) {
+      EnrichedCookieManager.clear()
+      return
+    }
+
+    val cookies = mutableListOf<EnrichedCookieManager.Cookie>()
+
+    for (i in 0 until value.size()) {
+      val item = value.getMap(i) ?: continue
+
+      val domain = item.getString("domain")
+      val name = item.getString("name")
+      val valueStr = item.getString("value")
+
+      if (domain.isNullOrEmpty() ||
+        name.isNullOrEmpty() ||
+        valueStr.isNullOrEmpty()
+      ) {
+        continue
+      }
+
+      cookies +=
+        EnrichedCookieManager.Cookie(
+          domain = domain,
+          name = name,
+          value = valueStr,
+        )
+    }
+
+    EnrichedCookieManager.setCookies(cookies)
+  }
+
   override fun setIsOnScrollSet(
     view: EnrichedTextInputView?,
     onScroll: Boolean,
@@ -493,12 +530,10 @@ class EnrichedTextInputViewManager :
     text: String,
     type: String,
     src: String,
-    headers: String,
     attributes: String,
   ) {
-    val headersMap = jsonStringToStringMap(headers)
     val attributesMap = jsonStringToStringMap(attributes)
-    view?.addContent(text, type, src, headersMap, attributesMap)
+    view?.addContent(text, type, src, attributesMap)
   }
 
   override fun measure(

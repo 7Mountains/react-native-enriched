@@ -15,6 +15,7 @@ import {
   type OnChangeSelectionEvent,
   type HtmlStyle,
   type OnChangeColorEvent,
+  type Cookie,
 } from 'react-native-enriched';
 import { useRef, useState } from 'react';
 import { Button } from './components/Button';
@@ -111,49 +112,33 @@ const generateHugeHtml = (repeat = 1) => {
     const imgH = 100 + (i % 3) * 30;
 
     parts.push(
-      // Headings
-      `\n<h1>Section ${i + 1}</h1>`,
-      `\n<h2 alignment="center">Subsection ${i + 1}.1</h2>`,
-      `\n<h3>Topic ${i + 1}.1.a</h3>`, // Paragraph with mixed inline styles
-      `\n<p>This is a <b>bold</b> and <i>italic</i> paragraph with <u>underline</u>, ` +
-        `<s>strike</s>, <code>inline_code_${i}</code>, ` +
-        `<a href="https://example.com/${i}">a link ${i}</a>, ` +
-        `<mention text="@alex_${i}" indicator="@">@alex_${i}</mention>, ` +
-        `<mention text="#general" indicator="#" text="#general">#general</mention>, ` +
-        `and some plain text to bulk it up.</p>`,
-
-      // Line break
-      `\n<hr>`,
-
-      // Unordered list
-      `<ul>`,
-      `<li>bullet A ${i}</li>`,
-      `<li>bullet B ${i}</li>`,
-      `<li>bullet C ${i}</li>`,
-      `</ul>`,
-
-      // Ordered list
-      `\n<ol>`,
-      `\n<li>step 1.${i}</li>`,
-      `\n<li>step 2.${i}</li>`,
-      `\n<li>step 3.${i}</li>`,
-      `\n</ol>`,
-
-      // Blockquote
-      `\n<blockquote>"Blockquote line 1 for ${i}."</blockquote>`,
-      `\n<blockquote>"Blockquote line 2 for ${i}."</blockquote>`,
-
-      // Code block (escaped characters)
-      `\n<codeblock>`,
-      `\n<p>for (let k = 0; k < ${i % 7}; k++) { console.log(&quot;block_${i}&quot;); }</p>`,
-      `\n</codeblock>`,
-      `\n<content type="image" text="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" width="${Math.min(imgW, 300)}" height="${imgH}" />`
+      `\n<content type="image" src="https://master.saganews.app/datastore/dailyNote/media/162f789f-08e3-416a-a6f1-218454399072/thumb_162f789f-08e3-416a-a6f1-218454399072.jpg" text="Test text" width="${Math.min(imgW, 300)}" height="${imgH}" />`
     );
   }
 
   parts.push('\n</html>');
   return parts.join('').replaceAll('\n', '');
 };
+
+export const cookies: Cookie[] = [
+  {
+    domain: 'master.saganews.app',
+    name: 'CloudFront-Key-Pair-Id',
+    value: 'KXHKVUTKYURDE',
+  },
+  {
+    domain: 'master.saganews.app',
+    name: 'CloudFront-Signature',
+    value:
+      'nuRb~TAfjnt59ON0mdBLaLLCeamhU2qdrcwQhiitxx4-8awjLvYw8xhqea0pbPI8c3jIJaPAobw9pNqQEhFXy7iKr6DLqumP3PHKciUvyF47hS-dNvojmlSAA7OeukJ0A8fp04gILqdGnthRcXcEr3VtTjjuH2eFLP8bMQSLBFbe882loTU5aqSoxJb2JKAyRhTpJbGRYCu4fCbDIdP1C0jv56upi5jJARGbMfLYeJ~BBDxgv~Ux7lcwmvlw3tlc3ufHuRs4CS-CT-FoFqBjYAjiKBy9sWg-8ennsuVvtd3vCT2EOo1jAA-8eBMoJimScSDsGugqtA6byZxQngQ45A__',
+  },
+  {
+    domain: 'master.saganews.app',
+    name: 'CloudFront-Policy',
+    value:
+      'eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9tYXN0ZXIuc2FnYW5ld3MuYXBwL2RhdGFzdG9yZS8qIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzcwMzgzNjgwfX19XX0_',
+  },
+];
 
 const initialHugeHtml = generateHugeHtml();
 
@@ -379,16 +364,13 @@ export default function EditorScreen() {
     setIsContentModalVisible(false);
   };
 
-  console.log(stylesState);
-
   const handleContentSubmit = (
     text: string,
     type: string,
     src: string,
-    headers: string,
     attributes: string
   ) => {
-    ref.current?.addContent(text, type, src, headers, attributes);
+    ref.current?.addContent(text, type, src, attributes);
     handleContentModalClose();
   };
 
@@ -445,6 +427,7 @@ export default function EditorScreen() {
             onEndMention={handleEndMention}
             onFocus={handleFocusEvent}
             onBlur={handleBlurEvent}
+            loaderCookies={cookies}
             onChangeSelection={(e) => handleSelectionChangeEvent(e.nativeEvent)}
             androidExperimentalSynchronousEvents={
               ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS

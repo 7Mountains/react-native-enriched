@@ -1,5 +1,5 @@
 import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, TextStyle, ViewProps, ViewStyle } from 'react-native';
-import type { ContentStyleProperties, Insets, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent } from './EnrichedTextInputNativeComponent';
+import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
 export interface EnrichedTextInputInstance extends NativeMethods {
     focus: () => void;
@@ -32,7 +32,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     addDividerAtNewLine: () => void;
     setParagraphAlignment: (alignment: string) => void;
     scrollTo: (x: number, y: number, animated?: boolean) => void;
-    addContent: (text: string, type: string, src: string, headers: string, attributes: string) => void;
+    addContent: (text: string, type: string, src: string, attributes: string) => void;
 }
 export interface OnChangeMentionEvent {
     indicator: string;
@@ -142,6 +142,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     contentInsets?: Insets;
     scrollIndicatorInsets?: Insets;
     onScroll?: (event: NativeSyntheticEvent<OnScrollEvent>) => void;
+    loaderCookies?: Cookie[];
 }
 export type ComponentType = (Component<NativeProps, {}, any> & NativeMethods) | null;
 export type HtmlRequest = {

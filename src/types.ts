@@ -10,6 +10,7 @@ import type {
 import type {
   ContentStyleProperties,
   Insets,
+  Cookie,
   MentionStyleProperties,
   NativeProps,
   OnChangeColorEvent,
@@ -66,7 +67,6 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     text: string,
     type: string,
     src: string,
-    headers: string,
     attributes: string
   ) => void;
 }
@@ -186,6 +186,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   contentInsets?: Insets;
   scrollIndicatorInsets?: Insets;
   onScroll?: (event: NativeSyntheticEvent<OnScrollEvent>) => void;
+  loaderCookies?: Cookie[];
 }
 
 export type ComponentType =

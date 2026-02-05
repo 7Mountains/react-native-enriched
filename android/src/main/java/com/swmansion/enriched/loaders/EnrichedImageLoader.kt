@@ -17,7 +17,9 @@ import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.imagepipeline.image.CloseableBitmap
 import com.facebook.imagepipeline.image.CloseableImage
 import com.facebook.imagepipeline.request.ImageRequestBuilder
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
+import com.facebook.react.modules.fresco.ReactNetworkImageRequest
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 
 class EnrichedImageLoader private constructor(
@@ -85,12 +87,22 @@ class EnrichedImageLoader private constructor(
   ) {
     val uri = url.toUri()
 
-    val request =
-      ImageRequestBuilder
-        .newBuilderWithSource(uri)
-        .build()
+    val requestBuilder =
+      ImageRequestBuilder.newBuilderWithSource(uri)
+    val cookieHeader =
+      EnrichedCookieManager.cookieHeaderForUrl(url)
 
-    val dataSource = Fresco.getImagePipeline().fetchDecodedImage(request, null)
+    val headersMap = Arguments.createMap()
+    if (cookieHeader != null) {
+      headersMap.putString("Cookie", cookieHeader)
+    }
+
+    val imageRequest =
+      ReactNetworkImageRequest
+        .fromBuilderWithHeaders(requestBuilder, headersMap)
+
+    val dataSource =
+      Fresco.getImagePipeline().fetchDecodedImage(imageRequest, null)
 
     dataSource.subscribe(
       object : DataSubscriber<CloseableReference<CloseableImage>> {
@@ -101,14 +113,10 @@ class EnrichedImageLoader private constructor(
           val image = ref.get()
 
           val bmp = (image as? CloseableBitmap)?.underlyingBitmap
-
           val safeBitmap =
             bmp?.copy(bmp.config ?: Bitmap.Config.ARGB_8888, false)
 
-          mainHandler.post {
-            callback(safeBitmap)
-          }
-
+          mainHandler.post { callback(safeBitmap) }
           CloseableReference.closeSafely(ref)
         }
 
@@ -120,9 +128,7 @@ class EnrichedImageLoader private constructor(
           mainHandler.post { callback(null) }
         }
 
-        override fun onProgressUpdate(dataSource: DataSource<CloseableReference<CloseableImage>?>) {
-          // no-op
-        }
+        override fun onProgressUpdate(dataSource: DataSource<CloseableReference<CloseableImage>?>) {}
       },
       CallerThreadExecutor.getInstance(),
     )

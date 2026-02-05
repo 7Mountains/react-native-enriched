@@ -104,11 +104,6 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
     params.url = url;
   }
 
-  id headers = attributes[ContentHeadersAttributeName];
-  if ([headers isKindOfClass:NSDictionary.class]) {
-    params.headers = headers;
-  }
-
   NSMutableDictionary *extra = [attributes mutableCopy];
   [extra removeObjectsForKeys:@[
     ContentSrcAttributeName, ContentTypeAttributeName, ContentTextAttributeName

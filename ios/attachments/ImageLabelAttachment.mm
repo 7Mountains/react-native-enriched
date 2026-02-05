@@ -6,7 +6,6 @@
 #import "ImageLayoutUtils.h"
 
 @implementation ImageLabelAttachment {
-  NSDictionary *_headers;
   NSAttributedString *_labelText;
   NSString *_fallbackUri;
 
@@ -237,7 +236,6 @@
     if (!strongSelf)
       return;
 
-    NSDictionary *headers = strongSelf->_headers;
     NSURL *url = [NSURL URLWithString:strongSelf.uri];
 
     void (^completion)(UIImage *) = ^(UIImage *img) {
@@ -247,13 +245,7 @@
       img ? [strongSelf updateImage:img] : [strongSelf loadFallbackAsync];
     };
 
-    if (headers.count == 0) {
-      [[EnrichedImageLoader shared] loadImage:url completion:completion];
-    } else {
-      [[EnrichedImageLoader shared] loadImage:url
-                                      headers:headers
-                                   completion:completion];
-    }
+    [EnrichedImageLoader.shared loadImage:url completion:completion];
   });
 }
 

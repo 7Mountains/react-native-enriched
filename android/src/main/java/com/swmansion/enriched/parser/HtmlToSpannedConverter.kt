@@ -5,6 +5,7 @@ import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
+import android.util.Log
 import androidx.core.graphics.toColorInt
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.HtmlTags
@@ -531,27 +532,6 @@ class HtmlToSpannedConverter(
     )
   }
 
-  private fun parseHeadersFromString(headerString: String?): Map<String, String> {
-    if (headerString.isNullOrBlank()) return emptyMap()
-
-    val result = mutableMapOf<String, String>()
-    val parts = headerString.split(",")
-
-    for (part in parts) {
-      val kv = part.split(":", limit = 2)
-      if (kv.size < 2) continue
-
-      val key = kv[0].trim()
-      val value = kv[1].trim()
-
-      if (key.isNotEmpty() && value.isNotEmpty()) {
-        result[key] = value
-      }
-    }
-
-    return result
-  }
-
   private fun addContent(
     editable: Editable,
     attributes: Attributes?,
@@ -565,15 +545,12 @@ class HtmlToSpannedConverter(
     val text = attributes.getValue("", "text")
     val type = attributes.getValue("", "type")
     val src = attributes.getValue("", "src")
-    val headers = attributes.getValue("", "headers")
-
-    val headersMap = parseHeadersFromString(headers)
 
     val attributesMap: MutableMap<String, String> = HashMap()
     for (i in 0..<attributes.length) {
       val localName = attributes.getLocalName(i)
 
-      if (("text" != localName) && ("type" != localName) && ("src" != localName) && ("headers" != localName)) {
+      if (("text" != localName) && ("type" != localName) && ("src" != localName)) {
         attributesMap.put(localName, attributes.getValue(i))
       }
     }
@@ -587,7 +564,6 @@ class HtmlToSpannedConverter(
         text,
         type,
         src,
-        headersMap,
         attributesMap,
         htmlStyle,
       )

@@ -9,7 +9,6 @@ type Props = {
     text: string,
     type: string,
     src: string,
-    headers: string,
     attributes: string
   ) => void;
   onClose: () => void;
@@ -27,15 +26,7 @@ export const ContentModal: FC<Props> = ({ visible, onClose, onSubmit }) => {
       test: 'value',
       test2: 'value2',
     };
-    onSubmit(
-      text,
-      TYPE,
-      src,
-      JSON.stringify({
-        testHeaderOne: 'headerValue1',
-      }),
-      JSON.stringify(someAdditionalAttributes)
-    );
+    onSubmit(text, TYPE, src, JSON.stringify(someAdditionalAttributes));
   }, [onSubmit, src, text]);
 
   return (

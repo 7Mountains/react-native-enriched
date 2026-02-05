@@ -1,7 +1,9 @@
 #import "EnrichedImageLoader.h"
+#import "EnrichedCookieManager.h"
 #import <React/RCTUtils.h>
 
 @implementation EnrichedImageLoader
+
 + (instancetype)shared {
   static EnrichedImageLoader *shared;
   static dispatch_once_t onceToken;
@@ -23,38 +25,24 @@
     return;
   }
 
-  [self.sdManager
-      loadImageWithURL:url
-               options:SDWebImageHighPriority
-              progress:nil
-             completed:^(UIImage *_Nullable image, NSData *_Nullable data,
-                         NSError *_Nullable error, SDImageCacheType cacheType,
-                         BOOL finished, NSURL *_Nullable imageURL) {
-               completion(image);
-             }];
-}
-// Since we use claudfron urls we have to make a request with claudfront headers
-- (void)loadImage:(NSURL *)url
-          headers:(NSDictionary<NSString *, NSString *> *)headers
-       completion:(void (^)(UIImage *image))completion {
-  if (!url) {
-    completion(nil);
-    return;
-  }
-
-  SDWebImageDownloaderRequestModifier *requestModifier =
+  SDWebImageDownloaderRequestModifier *modifier =
       [SDWebImageDownloaderRequestModifier
           requestModifierWithBlock:^NSURLRequest *_Nullable(
               NSURLRequest *_Nonnull request) {
-            NSMutableURLRequest *modifiedRequest = [request mutableCopy];
-            for (NSString *key in headers) {
-              [modifiedRequest setValue:headers[key] forHTTPHeaderField:key];
+            NSMutableURLRequest *r = [request mutableCopy];
+
+            NSString *cookie =
+                [[EnrichedCookieManager shared] cookieHeaderForURL:request.URL];
+
+            if (cookie.length) {
+              [r setValue:cookie forHTTPHeaderField:@"Cookie"];
             }
-            return modifiedRequest;
+
+            return r;
           }];
 
   SDWebImageContext *context =
-      @{SDWebImageContextDownloadRequestModifier : requestModifier};
+      @{SDWebImageContextDownloadRequestModifier : modifier};
 
   [self.sdManager
       loadImageWithURL:url

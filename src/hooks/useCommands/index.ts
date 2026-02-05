@@ -169,17 +169,9 @@ const useCommands = (
         text: string,
         type: string,
         src: string,
-        headers: string,
         attributes: string
       ) => {
-        Commands.addContent(
-          nullthrows(typedRef),
-          text,
-          type,
-          src,
-          headers,
-          attributes
-        );
+        Commands.addContent(nullthrows(typedRef), text, type, src, attributes);
       },
     };
   }, [

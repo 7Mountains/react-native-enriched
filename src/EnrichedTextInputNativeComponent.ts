@@ -299,6 +299,12 @@ export type Insets = {
   right: Float;
 };
 
+export interface Cookie {
+  domain: string;
+  name: string;
+  value: string;
+}
+
 export interface NativeProps extends ViewProps {
   // base props
   autoFocus?: boolean;
@@ -351,6 +357,7 @@ export interface NativeProps extends ViewProps {
 
   // Experimental
   androidExperimentalSynchronousEvents: boolean;
+  loaderCookies?: Cookie[];
 }
 
 type ComponentType = HostComponent<NativeProps>;
@@ -429,7 +436,6 @@ interface NativeCommands {
     text: string,
     type: string,
     src: string,
-    headers: string,
     attributes: string
   ) => void;
 }

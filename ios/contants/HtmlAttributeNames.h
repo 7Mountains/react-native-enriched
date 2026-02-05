@@ -9,6 +9,5 @@ FOUNDATION_EXPORT NSString *const ColorAttributeName;
 FOUNDATION_EXPORT NSString *const ContentTextAttributeName;
 FOUNDATION_EXPORT NSString *const ContentTypeAttributeName;
 FOUNDATION_EXPORT NSString *const ContentSrcAttributeName;
-FOUNDATION_EXPORT NSString *const ContentHeadersAttributeName;
 
 FOUNDATION_EXPORT NSString *const HrefAttributeName;
