@@ -6,19 +6,18 @@ namespace facebook::react {
 
 class EnrichedTextInputState {
 public:
-  EnrichedTextInputState() : forceHeightRecalculationCounter_(0) {}
+  EnrichedTextInputState() : contentHeight_(0) {}
 
   // Used by Kotlin to set current text value
   EnrichedTextInputState(EnrichedTextInputState const &previousState,
                          folly::dynamic data)
-      : forceHeightRecalculationCounter_(
-            (int)data["forceHeightRecalculationCounter"].getInt()){};
+      : contentHeight_((int)data["height"].getInt()){};
   folly::dynamic getDynamic() const { return {}; };
 
-  int getForceHeightRecalculationCounter() const;
+  int getHeight() const;
 
 private:
-  const int forceHeightRecalculationCounter_{};
+  const int contentHeight_{};
 };
 
 } // namespace facebook::react

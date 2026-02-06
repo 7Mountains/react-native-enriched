@@ -6,7 +6,6 @@ class EnrichedTextInputViewLayoutManager(
   private val view: EnrichedTextInputView,
 ) {
   private var lastHeight = -1
-  private var counter = 0
 
   fun invalidateLayoutIfNeeded() {
     val layout = view.layout ?: return
@@ -16,7 +15,7 @@ class EnrichedTextInputViewLayoutManager(
     lastHeight = height
 
     val state = Arguments.createMap()
-    state.putInt("forceHeightRecalculationCounter", counter++)
+    state.putInt("height", height)
     view.stateWrapper?.updateState(state)
   }
 

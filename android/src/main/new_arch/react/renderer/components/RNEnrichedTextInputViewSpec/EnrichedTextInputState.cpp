@@ -2,8 +2,6 @@
 
 namespace facebook::react {
 
-int EnrichedTextInputState::getForceHeightRecalculationCounter() const {
-  return forceHeightRecalculationCounter_;
-}
+int EnrichedTextInputState::getHeight() const { return contentHeight_; }
 
 } // namespace facebook::react

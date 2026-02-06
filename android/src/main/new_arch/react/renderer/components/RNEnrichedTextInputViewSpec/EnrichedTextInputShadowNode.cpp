@@ -16,10 +16,10 @@ void EnrichedTextInputShadowNode::setMeasurementsManager(
 // recalculate layout
 void EnrichedTextInputShadowNode::dirtyLayoutIfNeeded() {
   const auto state = this->getStateData();
-  const auto counter = state.getForceHeightRecalculationCounter();
+  const auto height = state.getHeight();
 
-  if (forceHeightRecalculationCounter_ != counter) {
-    forceHeightRecalculationCounter_ = counter;
+  if (contentHeight_ != height) {
+    contentHeight_ = height;
 
     dirtyLayout();
   }

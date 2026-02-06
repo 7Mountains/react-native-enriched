@@ -496,7 +496,8 @@ class EnrichedTextInputView : AppCompatEditText {
   // next layout() to be called. However, we do not perform a layout() after a requestLayout(), so
   // we need to override isLayoutRequested to force EditText to scroll to the end of the new text
   // immediately.
-  override fun isLayoutRequested(): Boolean = false
+  // Ivan Ihnatsiuk: let android calculate layout to avoid jumping behavior when we insert a new line.
+//  override fun isLayoutRequested(): Boolean = false
 
   fun afterUpdateTransaction() {
     updateTypeface()
