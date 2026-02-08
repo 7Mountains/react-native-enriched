@@ -3,6 +3,7 @@ package com.swmansion.enriched.utils
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.util.Log
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.interfaces.EnrichedBlockSpan
@@ -67,36 +68,62 @@ fun Spannable.mergeSpannables(
   start: Int,
   end: Int,
   string: String,
-): Spannable = this.mergeSpannables(start, end, SpannableString(string))
+): Spannable = mergeSpannables(start, end, SpannableString(string))
 
 fun Spannable.mergeSpannables(
   start: Int,
   end: Int,
-  spannable: Spannable,
+  inserted: Spannable,
 ): Spannable {
-  var finalStart = start
-  var finalEnd = end
-
   val builder = SpannableStringBuilder(this)
-  val startBlockSpans = spannable.getSpans(0, 0, EnrichedBlockSpan::class.java)
-  val startParagraphSpans = spannable.getSpans(0, 0, EnrichedParagraphSpan::class.java)
-  val endBlockSpans = spannable.getSpans(this.length, this.length, EnrichedBlockSpan::class.java)
-  val endParagraphSpans = spannable.getSpans(this.length, this.length, EnrichedParagraphSpan::class.java)
-  val (paragraphStart, paragraphEnd) = this.getParagraphBounds(start, end)
-  val isNewLineStart = startBlockSpans.isNotEmpty() || startParagraphSpans.isNotEmpty()
-  val isNewLineEnd = endBlockSpans.isNotEmpty() || endParagraphSpans.isNotEmpty()
 
-  if (isNewLineStart && start != paragraphStart) {
-    builder.insert(start, Strings.NEWLINE_STRING)
-    finalStart = start + 1
-    finalEnd = end + 1
+  val safeStart = minOf(start, end)
+  val safeEnd = maxOf(start, end)
+
+  val targetParagraphSpans =
+    getSpans(safeStart, safeStart, EnrichedParagraphSpan::class.java)
+
+  val (paragraphStart, paragraphEnd) =
+    builder.getParagraphBounds(safeStart, safeEnd)
+
+  inserted
+    .getSpans(0, inserted.length, EnrichedParagraphSpan::class.java)
+    .forEach { inserted.removeSpan(it) }
+
+  inserted
+    .getSpans(0, inserted.length, EnrichedBlockSpan::class.java)
+    .forEach { inserted.removeSpan(it) }
+
+  val insertsNewParagraph =
+    inserted.contains(Strings.NEWLINE_STRING) &&
+      safeStart == paragraphEnd
+
+  var finalStart = safeStart
+  var finalEnd = safeEnd
+
+  if (insertsNewParagraph) {
+    builder.insert(safeStart, Strings.NEWLINE_STRING)
+    finalStart++
+    finalEnd++
   }
 
-  if (isNewLineEnd && end != paragraphEnd) {
-    builder.insert(finalEnd, Strings.NEWLINE_STRING)
-  }
+  builder.replace(finalStart, finalEnd, inserted)
 
-  builder.replace(finalStart, finalEnd, spannable)
+  val (pStart, pEnd) =
+    builder.getParagraphBounds(finalStart, finalStart)
+
+  builder
+    .getSpans(pStart, pEnd, EnrichedParagraphSpan::class.java)
+    .forEach { builder.removeSpan(it) }
+
+  targetParagraphSpans?.forEach { span ->
+    builder.setSpan(
+      span.copy(),
+      pStart,
+      pEnd,
+      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+    )
+  }
 
   return builder
 }

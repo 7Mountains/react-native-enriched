@@ -269,26 +269,33 @@ class EnrichedTextInputView : AppCompatEditText {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     if (!clipboard.hasPrimaryClip()) return
 
-    val clip = clipboard.primaryClip
-    val item = clip?.getItemAt(0)
-    val htmlText = item?.htmlText
-    val currentText = text as Spannable
-    val start = selection?.start ?: 0
-    val end = selection?.end ?: 0
+    val clip = clipboard.primaryClip ?: return
+    val item = clip.getItemAt(0)
 
-    if (htmlText != null) {
+    val currentText = text as Spannable
+    val start = minOf(selection?.start ?: 0, selection?.end ?: 0)
+    val end = maxOf(selection?.start ?: 0, selection?.end ?: 0)
+
+    fun moveCursor(insertedLength: Int) {
+      val cursor = start + insertedLength
+      setSelection(cursor, cursor)
+    }
+
+    item.htmlText?.let { htmlText ->
       val parsedText = parseText(htmlText)
       if (parsedText is Spannable) {
         val finalText = currentText.mergeSpannables(start, end, parsedText)
         setValue(finalText)
+        moveCursor(parsedText.length)
         return
       }
     }
 
-    // Currently, we do not support pasting images
-    if (item?.text == null) return
-    val finalText = currentText.mergeSpannables(start, end, item.text.toString())
+    val plainText = item.text?.toString() ?: return
+    val finalText = currentText.mergeSpannables(start, end, plainText)
     setValue(finalText)
+    moveCursor(plainText.length)
+
     parametrizedStyles?.detectAllLinks()
   }
 
