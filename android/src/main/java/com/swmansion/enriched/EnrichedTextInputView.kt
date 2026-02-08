@@ -12,6 +12,7 @@ import android.graphics.text.LineBreaker
 import android.os.Build
 import android.text.InputType
 import android.text.Spannable
+import android.text.SpannableString
 import android.util.AttributeSet
 import android.util.Log
 import android.util.TypedValue
@@ -266,7 +267,8 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   private fun handleCustomPaste() {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clipboard =
+      context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     if (!clipboard.hasPrimaryClip()) return
 
     val clip = clipboard.primaryClip ?: return
@@ -276,25 +278,30 @@ class EnrichedTextInputView : AppCompatEditText {
     val start = minOf(selection?.start ?: 0, selection?.end ?: 0)
     val end = maxOf(selection?.start ?: 0, selection?.end ?: 0)
 
-    fun moveCursor(insertedLength: Int) {
-      val cursor = start + insertedLength
+    fun moveCursor(insertedCharacters: Int) {
+      val cursor = start + insertedCharacters
       setSelection(cursor, cursor)
     }
 
     item.htmlText?.let { htmlText ->
       val parsedText = parseText(htmlText)
       if (parsedText is Spannable) {
-        val finalText = currentText.mergeSpannables(start, end, parsedText)
-        setValue(finalText)
-        moveCursor(parsedText.length)
+        val result =
+          currentText.mergeSpannables(start, end, parsedText)
+
+        setValue(result.text)
+        moveCursor(result.insertedCharactersAmount)
         return
       }
     }
 
     val plainText = item.text?.toString() ?: return
-    val finalText = currentText.mergeSpannables(start, end, plainText)
-    setValue(finalText)
-    moveCursor(plainText.length)
+
+    val result =
+      currentText.mergeSpannables(start, end, SpannableString(plainText))
+
+    setValue(result.text)
+    moveCursor(result.insertedCharactersAmount)
 
     parametrizedStyles?.detectAllLinks()
   }
