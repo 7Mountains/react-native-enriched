@@ -106,6 +106,8 @@ class EnrichedSelection(
     for ((style, config) in EnrichedSpans.parametrizedStyles) {
       state.setStart(style, getParametrizedStyleStart(config.clazz))
     }
+
+    state.emitStateChangeEvent()
   }
 
   fun getInlineSelection(): Pair<Int, Int> {
@@ -179,7 +181,7 @@ class EnrichedSelection(
         val spanStart = spannable.getSpanStart(span)
         val spanEnd = spannable.getSpanEnd(span)
 
-        if (spanStart == paragraphStart && spanEnd == paragraphEnd) {
+        if (spanStart == paragraphStart && spanEnd >= paragraphEnd) {
           styleStart = spanStart
           paragraphStart = paragraphEnd + 1
           continue@pi

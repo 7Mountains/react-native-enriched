@@ -188,7 +188,8 @@ class ListStyles(
 
     updateOrderedListIndexes(spannable, start)
 
-    view.spanState.setStart(name, currentStart)
+    spanState.setStart(name, currentStart)
+    spanState.emitStateChangeEvent()
   }
 
   private fun handleAfterTextChanged(

@@ -71,7 +71,6 @@ class EnrichedSpanState(
 
   fun setContentStart(start: Int?) {
     contentStart = start
-    emitStateChangeEvent()
   }
 
   fun setTypingColor(color: Int?) {
@@ -92,7 +91,6 @@ class EnrichedSpanState(
     color: Int?,
   ) {
     colorStart = start
-    emitStateChangeEvent()
     setTypingColor(color)
   }
 
@@ -119,102 +117,82 @@ class EnrichedSpanState(
 
   fun setBoldStart(start: Int?) {
     this.boldStart = start
-    emitStateChangeEvent()
   }
 
   fun setItalicStart(start: Int?) {
     this.italicStart = start
-    emitStateChangeEvent()
   }
 
   fun setUnderlineStart(start: Int?) {
     this.underlineStart = start
-    emitStateChangeEvent()
   }
 
   fun setStrikethroughStart(start: Int?) {
     this.strikethroughStart = start
-    emitStateChangeEvent()
   }
 
   fun setInlineCodeStart(start: Int?) {
     this.inlineCodeStart = start
-    emitStateChangeEvent()
   }
 
   fun setH1Start(start: Int?) {
     this.h1Start = start
-    emitStateChangeEvent()
   }
 
   fun setH2Start(start: Int?) {
     this.h2Start = start
-    emitStateChangeEvent()
   }
 
   fun setH3Start(start: Int?) {
     this.h3Start = start
-    emitStateChangeEvent()
   }
 
   fun setH4Start(start: Int?) {
     this.h4Start = start
-    emitStateChangeEvent()
   }
 
   fun setH5Start(start: Int?) {
     this.h5Start = start
-    emitStateChangeEvent()
   }
 
   fun setH6Start(start: Int?) {
     this.h6Start = start
-    emitStateChangeEvent()
   }
 
   fun setCodeBlockStart(start: Int?) {
     this.codeBlockStart = start
-    emitStateChangeEvent()
   }
 
   fun setBlockQuoteStart(start: Int?) {
     this.blockQuoteStart = start
-    emitStateChangeEvent()
   }
 
   fun setOrderedListStart(start: Int?) {
     this.orderedListStart = start
-    emitStateChangeEvent()
   }
 
   fun setUnorderedListStart(start: Int?) {
     this.unorderedListStart = start
-    emitStateChangeEvent()
   }
 
   fun setLinkStart(start: Int?) {
     this.linkStart = start
-    emitStateChangeEvent()
   }
 
   fun setImageStart(start: Int?) {
     this.imageStart = start
-    emitStateChangeEvent()
   }
 
   fun setMentionStart(start: Int?) {
     this.mentionStart = start
-    emitStateChangeEvent()
   }
 
   fun setDividerStart(start: Int?) {
     this.dividerStart = start
-    emitStateChangeEvent()
   }
 
   fun setChecklistStart(start: Int?) {
     this.checklistStart = start
-    emitStateChangeEvent()
   }
 
   fun getStart(name: TextStyle): Int? {
@@ -393,7 +371,7 @@ class EnrichedSpanState(
     )
   }
 
-  private fun emitStateChangeEvent() {
+  fun emitStateChangeEvent() {
     val activeStyles =
       listOfNotNull(
         if (alignmentStart != null) TextStyle.ALIGNMENT else null,

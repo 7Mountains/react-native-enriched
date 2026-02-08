@@ -364,13 +364,13 @@ object EnrichedSpans {
 
       TextStyle.DIVIDER -> {
         StylesMergingConfig(
-          blockingStyles = TextStyle.entries.toTypedArray(),
+          conflictingStyles = TextStyle.entries.toTypedArray(),
         )
       }
 
       TextStyle.CONTENT -> {
         StylesMergingConfig(
-          blockingStyles = TextStyle.entries.toTypedArray(),
+          conflictingStyles = TextStyle.entries.toTypedArray(),
         )
       }
 
