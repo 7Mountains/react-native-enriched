@@ -67,13 +67,13 @@ class EnrichedSelection(
     val text = view.text ?: return false
 
     if (start != end) {
-      return text.substring(start, end) == "\u200B"
+      return text.substring(start, end) == Strings.ZERO_WIDTH_SPACE_STRING
     }
 
-    val isNewLine = if (start > 0) text.substring(start - 1, start) == "\n" else true
+    val isNewLine = if (start > 0) text.substring(start - 1, start) == Strings.NEWLINE_STRING else true
     val isNextCharacterZeroWidth =
       if (start < text.length) {
-        text.substring(start, start + 1) == "\u200B"
+        text.substring(start, start + 1) == Strings.ZERO_WIDTH_SPACE_STRING
       } else {
         false
       }

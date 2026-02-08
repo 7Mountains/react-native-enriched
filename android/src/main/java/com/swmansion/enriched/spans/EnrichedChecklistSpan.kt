@@ -7,6 +7,7 @@ import android.text.Spanned
 import android.text.TextPaint
 import android.text.style.LeadingMarginSpan
 import android.text.style.MetricAffectingSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
@@ -15,7 +16,7 @@ class EnrichedChecklistSpan(
   private val htmlStyle: HtmlStyle,
 ) : MetricAffectingSpan(),
   LeadingMarginSpan,
-  EnrichedParagraphSpan {
+  EnrichedListSpan {
   var isChecked = false
   override val dependsOnHtmlStyle: Boolean = true
 

@@ -3,6 +3,7 @@ package com.swmansion.enriched.utils
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import com.swmansion.enriched.constants.Strings
+import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 
 object ZWSNormalizer {
   fun normalizeNonEmptyParagraphs(spannable: Spannable) {
@@ -15,16 +16,22 @@ object ZWSNormalizer {
 
       val isEmptyParagraphWithZWS =
         text.all {
-          (it == Strings.NEWLINE || it == Strings.ZERO_WIDTH_SPACE_CHAR)
+          it == Strings.NEWLINE || it == Strings.ZERO_WIDTH_SPACE_CHAR
         }
 
-      if (!isEmptyParagraphWithZWS) {
+      if (!isEmptyParagraphWithZWS && !hasListSpan(spannable, pStart, pEnd)) {
         (spannable as SpannableStringBuilder).removeZWS(pStart, pEnd)
       }
 
       index = pEnd + 1
     }
   }
+
+  private fun hasListSpan(
+    spannable: Spannable,
+    start: Int,
+    end: Int,
+  ): Boolean = spannable.getSpans(start, end, EnrichedListSpan::class.java).isNotEmpty()
 
   private fun findParagraphStart(
     text: CharSequence,

@@ -71,6 +71,7 @@ class EnrichedSpanState(
 
   fun setContentStart(start: Int?) {
     contentStart = start
+    emitStateChangeEvent()
   }
 
   fun setTypingColor(color: Int?) {
@@ -208,10 +209,12 @@ class EnrichedSpanState(
 
   fun setDividerStart(start: Int?) {
     this.dividerStart = start
+    emitStateChangeEvent()
   }
 
   fun setChecklistStart(start: Int?) {
     this.checklistStart = start
+    emitStateChangeEvent()
   }
 
   fun getStart(name: TextStyle): Int? {

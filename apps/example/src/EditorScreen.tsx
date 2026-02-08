@@ -112,7 +112,19 @@ const generateHugeHtml = (repeat = 1) => {
     const imgH = 100 + (i % 3) * 30;
 
     parts.push(
-      `\n<content type="image" src="https://master.saganews.app/datastore/dailyNote/media/162f789f-08e3-416a-a6f1-218454399072/thumb_162f789f-08e3-416a-a6f1-218454399072.jpg" text="Test text" width="${Math.min(imgW, 300)}" height="${imgH}" />`
+      `<h1>Heading ${i + 1}</h1>`,
+      `<p>This is a paragraph with some <b>bold</b>, <i>italic</i>, <u>underline</u>, and <s>strikethrough</s> text. Here's some inline code:</p>`,
+      `<h2>Subheading ${i + 1}</h2>`,
+      `<h3>Subheading ${i + 1}</h3>`,
+      `<h4>Subheading ${i + 1}</h4>`,
+      `<h5>Subheading ${i + 1}</h5>`,
+      `<h6>Subheading ${i + 1}</h6>`,
+      `<p><font color="#ff0000"> This is a colored paragraph.</font></p>`,
+      `<ul><li>Ordered list item ${i + 1}.1</li><li>Ordered list item ${i + 1}.2</li></ul>`,
+      `<ol><li>Unordered list item ${i + 1}.1</li><li>Unordered list item ${i + 1}.2</li></ol>`,
+      `<checklist checked="${i % 2 === 0}">Check list item ${i + 1}</checklist>`,
+      `<blockquote>This is a block quote for item ${i + 1}.</blockquote>`,
+      `\n<content type="image" src="https://picsum.photos/200/300" text="Test text" width="${Math.min(imgW, 300)}" height="${imgH}" />`
     );
   }
 

@@ -22,6 +22,7 @@ import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.spans.TextStyle
+import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.EnrichedSelection
@@ -302,9 +303,9 @@ class ParagraphStyles(
       return
     }
 
-    val isListItemParagraph = isListParagraph(spannable, paragraphStart, paragraphEnd)
+    val isOrderedOrUnorderedList = isOrderedOrUnorderedListParagraph(spannable, paragraphStart, paragraphEnd)
 
-    if (isListItemParagraph) {
+    if (isOrderedOrUnorderedList) {
       val listSpan =
         spannable
           .getSpans(paragraphStart, paragraphEnd, EnrichedParagraphSpan::class.java)
@@ -357,13 +358,13 @@ class ParagraphStyles(
     }
   }
 
-  private fun isListParagraph(
+  private fun isOrderedOrUnorderedListParagraph(
     spannable: Spannable,
     paragraphStart: Int,
     paragraphEnd: Int,
   ): Boolean =
-    spannable.getSpans(paragraphStart, paragraphEnd, EnrichedParagraphSpan::class.java).any {
-      it is EnrichedChecklistSpan || it is EnrichedOrderedListSpan || it is EnrichedUnorderedListSpan
+    spannable.getSpans(paragraphStart, paragraphEnd, EnrichedListSpan::class.java).any {
+      it is EnrichedOrderedListSpan || it is EnrichedUnorderedListSpan
     }
 
   private fun createSpan(name: TextStyle): EnrichedSpan? =

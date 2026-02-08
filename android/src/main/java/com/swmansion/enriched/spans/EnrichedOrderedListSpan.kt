@@ -7,8 +7,7 @@ import android.text.Layout
 import android.text.TextPaint
 import android.text.style.LeadingMarginSpan
 import android.text.style.MetricAffectingSpan
-import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
-import com.swmansion.enriched.spans.interfaces.EnrichedSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedOrderedListSpan(
@@ -16,7 +15,7 @@ class EnrichedOrderedListSpan(
   private val htmlStyle: HtmlStyle,
 ) : MetricAffectingSpan(),
   LeadingMarginSpan,
-  EnrichedParagraphSpan {
+  EnrichedListSpan {
   override val dependsOnHtmlStyle: Boolean = true
 
   override fun updateMeasureState(p0: TextPaint) {

@@ -7,7 +7,7 @@ import android.text.Spanned
 import android.text.TextPaint
 import android.text.style.LeadingMarginSpan
 import android.text.style.MetricAffectingSpan
-import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 // https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/text/style/BulletSpan.java
@@ -15,7 +15,7 @@ class EnrichedUnorderedListSpan(
   private val htmlStyle: HtmlStyle,
 ) : MetricAffectingSpan(),
   LeadingMarginSpan,
-  EnrichedParagraphSpan {
+  EnrichedListSpan {
   override val dependsOnHtmlStyle: Boolean = true
 
   override fun updateMeasureState(p0: TextPaint) {
