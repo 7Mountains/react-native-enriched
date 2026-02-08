@@ -540,24 +540,26 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   private fun toggleStyle(name: TextStyle) {
-    when (name) {
-      TextStyle.BOLD -> inlineStyles?.toggleStyle(TextStyle.BOLD)
-      TextStyle.ITALIC -> inlineStyles?.toggleStyle(TextStyle.ITALIC)
-      TextStyle.UNDERLINE -> inlineStyles?.toggleStyle(TextStyle.UNDERLINE)
-      TextStyle.STRIKETHROUGH -> inlineStyles?.toggleStyle(TextStyle.STRIKETHROUGH)
-      TextStyle.INLINE_CODE -> inlineStyles?.toggleStyle(TextStyle.INLINE_CODE)
-      TextStyle.H1 -> paragraphStyles?.toggleStyle(TextStyle.H1)
-      TextStyle.H2 -> paragraphStyles?.toggleStyle(TextStyle.H2)
-      TextStyle.H3 -> paragraphStyles?.toggleStyle(TextStyle.H3)
-      TextStyle.H4 -> paragraphStyles?.toggleStyle(TextStyle.H4)
-      TextStyle.H5 -> paragraphStyles?.toggleStyle(TextStyle.H5)
-      TextStyle.H6 -> paragraphStyles?.toggleStyle(TextStyle.H6)
-      TextStyle.CODE_BLOCK -> paragraphStyles?.toggleStyle(TextStyle.CODE_BLOCK)
-      TextStyle.BLOCK_QUOTE -> paragraphStyles?.toggleStyle(TextStyle.BLOCK_QUOTE)
-      TextStyle.ORDERED_LIST -> listStyles?.toggleStyle(TextStyle.ORDERED_LIST)
-      TextStyle.UNORDERED_LIST -> listStyles?.toggleStyle(TextStyle.UNORDERED_LIST)
-      TextStyle.CHECK_LIST -> listStyles?.toggleStyle(TextStyle.CHECK_LIST)
-      else -> Log.w("EnrichedTextInputView", "Unknown style: $name")
+    runAsATransaction {
+      when (name) {
+        TextStyle.BOLD -> inlineStyles?.toggleStyle(TextStyle.BOLD)
+        TextStyle.ITALIC -> inlineStyles?.toggleStyle(TextStyle.ITALIC)
+        TextStyle.UNDERLINE -> inlineStyles?.toggleStyle(TextStyle.UNDERLINE)
+        TextStyle.STRIKETHROUGH -> inlineStyles?.toggleStyle(TextStyle.STRIKETHROUGH)
+        TextStyle.INLINE_CODE -> inlineStyles?.toggleStyle(TextStyle.INLINE_CODE)
+        TextStyle.H1 -> paragraphStyles?.toggleStyle(TextStyle.H1)
+        TextStyle.H2 -> paragraphStyles?.toggleStyle(TextStyle.H2)
+        TextStyle.H3 -> paragraphStyles?.toggleStyle(TextStyle.H3)
+        TextStyle.H4 -> paragraphStyles?.toggleStyle(TextStyle.H4)
+        TextStyle.H5 -> paragraphStyles?.toggleStyle(TextStyle.H5)
+        TextStyle.H6 -> paragraphStyles?.toggleStyle(TextStyle.H6)
+        TextStyle.CODE_BLOCK -> paragraphStyles?.toggleStyle(TextStyle.CODE_BLOCK)
+        TextStyle.BLOCK_QUOTE -> paragraphStyles?.toggleStyle(TextStyle.BLOCK_QUOTE)
+        TextStyle.ORDERED_LIST -> listStyles?.toggleStyle(TextStyle.ORDERED_LIST)
+        TextStyle.UNORDERED_LIST -> listStyles?.toggleStyle(TextStyle.UNORDERED_LIST)
+        TextStyle.CHECK_LIST -> listStyles?.toggleStyle(TextStyle.CHECK_LIST)
+        else -> Log.w("EnrichedTextInputView", "Unknown style: $name")
+      }
     }
   }
 

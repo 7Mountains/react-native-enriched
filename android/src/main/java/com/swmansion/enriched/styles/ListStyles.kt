@@ -113,6 +113,7 @@ class ListStyles(
     start: Int,
     end: Int,
     clazz: Class<out EnrichedSpan>,
+    removeZWS: Boolean = true,
   ): Boolean {
     val ssb = spannable as SpannableStringBuilder
     val spans = ssb.getSpans(start, end, clazz)
@@ -145,7 +146,9 @@ class ListStyles(
       }
     }
 
-    ssb.removeZWS(start, end)
+    if (removeZWS) {
+      ssb.removeZWS(start, end)
+    }
 
     return true
   }
@@ -176,11 +179,15 @@ class ListStyles(
 
     var currentStart = start
     val paragraphs = spannable.substring(start, end).split(Strings.NEWLINE_STRING)
-    removeSpansForRange(spannable, start, end, config.clazz)
+    removeSpansForRange(spannable, start, end, config.clazz, false)
 
     for (paragraph in paragraphs) {
-      spannable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
-      val currentEnd = currentStart + paragraph.length + 1
+      var currentEnd = currentStart + paragraph.length
+
+      if (!paragraph.contains(Strings.ZERO_WIDTH_SPACE_CHAR)) {
+        spannable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
+        currentEnd += 1
+      }
       setSpan(spannable, name, currentStart, currentEnd)
 
       currentStart = currentEnd + 1
