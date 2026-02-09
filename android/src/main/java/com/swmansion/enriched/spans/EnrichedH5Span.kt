@@ -1,26 +1,11 @@
 package com.swmansion.enriched.spans
 
-import android.graphics.Typeface
-import android.text.TextPaint
-import android.text.style.AbsoluteSizeSpan
-import com.swmansion.enriched.spans.interfaces.EnrichedHeadingSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedH5Span(
   private val htmlStyle: HtmlStyle,
-) : AbsoluteSizeSpan(htmlStyle.h5FontSize),
-  EnrichedHeadingSpan {
-  override val dependsOnHtmlStyle: Boolean = true
+) : EnrichedHeadingSpan(htmlStyle.h5FontSize.toFloat(), htmlStyle.h5Bold) {
+  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedHeadingSpan = EnrichedH5Span(htmlStyle)
 
-  override fun updateDrawState(tp: TextPaint) {
-    super.updateDrawState(tp)
-    val bold = htmlStyle.h5Bold
-    if (bold) {
-      tp.typeface = Typeface.create(tp.typeface, Typeface.BOLD)
-    }
-  }
-
-  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedH5Span = EnrichedH5Span(htmlStyle)
-
-  override fun copy(): EnrichedH5Span = EnrichedH5Span(htmlStyle)
+  override fun copy() = EnrichedH5Span(htmlStyle)
 }

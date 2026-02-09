@@ -8,8 +8,8 @@ import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.parser.EnrichedParser
+import com.swmansion.enriched.spans.EnrichedHeadingSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
-import com.swmansion.enriched.spans.interfaces.EnrichedHeadingSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 
@@ -72,7 +72,8 @@ class EnrichedSpanWatcher(
       val finalStart = (end + 1)
       val finalEnd = text.length
       val (safeStart, safeEnd) = text.getSafeSpanBoundaries(finalStart, finalEnd)
-      text.setSpan(EmptySpan(), safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+      text.setSpan(emptyParagraph, safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+      text.removeSpan(emptyParagraph)
     }
   }
 
@@ -105,5 +106,7 @@ class EnrichedSpanWatcher(
 
   companion object {
     private class EmptySpan : ParagraphStyle
+
+    private val emptyParagraph = EmptySpan()
   }
 }
