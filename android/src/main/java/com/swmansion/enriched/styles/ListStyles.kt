@@ -171,7 +171,7 @@ class ListStyles(
 
     if (start == end) {
       spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
-      spanState.setStart(name, start + 1)
+      spanState.setStartWithStateChangeEmitting(name, start + 1)
       removeSpansForRange(spannable, start, end, config.clazz)
       setSpan(spannable, name, start, end + 1)
       return
@@ -195,8 +195,7 @@ class ListStyles(
 
     updateOrderedListIndexes(spannable, start)
 
-    spanState.setStart(name, currentStart)
-    spanState.emitStateChangeEvent()
+    spanState.setStartWithStateChangeEmitting(name, currentStart)
   }
 
   private fun handleAfterTextChanged(

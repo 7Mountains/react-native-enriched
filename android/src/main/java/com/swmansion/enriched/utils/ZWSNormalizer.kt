@@ -8,7 +8,7 @@ import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 object ZWSNormalizer {
   fun normalizeNonEmptyParagraphs(spannable: Spannable) {
     val builder = spannable as? SpannableStringBuilder ?: return
-    val len = builder.length
+    var len = builder.length
 
     var pStart = 0
     while (pStart < len) {
@@ -27,8 +27,11 @@ object ZWSNormalizer {
       }
 
       if (hasZWS && !isEmpty) {
-        if (builder.getSpans(pStart, pEnd, EnrichedListSpan::class.java).isEmpty()) {
+        if (!hasListSpan(builder, pStart, pEnd)) {
           builder.removeZWS(pStart, pEnd)
+
+          // update length after ZWS removal
+          len = builder.length
         }
       }
 
@@ -41,22 +44,4 @@ object ZWSNormalizer {
     start: Int,
     end: Int,
   ): Boolean = spannable.getSpans(start, end, EnrichedListSpan::class.java).isNotEmpty()
-
-  private fun findParagraphStart(
-    text: CharSequence,
-    index: Int,
-  ): Int {
-    var i = index
-    while (i > 0 && text[i - 1] != Strings.NEWLINE) i--
-    return i
-  }
-
-  private fun findParagraphEnd(
-    text: CharSequence,
-    index: Int,
-  ): Int {
-    var i = index
-    while (i < text.length && text[i] != Strings.NEWLINE) i++
-    return i
-  }
 }

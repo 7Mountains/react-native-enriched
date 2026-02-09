@@ -321,9 +321,9 @@ class InlineStyles(
       val styleStart = view.spanState?.getStart(name)
 
       if (styleStart != null) {
-        view.spanState.setStart(name, null)
+        view.spanState.setStartWithStateChangeEmitting(name, null)
       } else {
-        view.spanState?.setStart(name, start)
+        view.spanState?.setStartWithStateChangeEmitting(name, start)
       }
 
       return

@@ -325,6 +325,14 @@ class EnrichedSpanState(
     }
   }
 
+  fun setStartWithStateChangeEmitting(
+    name: TextStyle,
+    start: Int?,
+  ) {
+    setStart(name, start)
+    emitStateChangeEvent()
+  }
+
   private fun emitAlignmentChangeEvent(alignment: String?) {
     val resolvedAlignment = alignment ?: "default"
 
