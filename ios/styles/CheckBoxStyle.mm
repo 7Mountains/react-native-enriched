@@ -9,8 +9,8 @@
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
 
-static NSString *const CheckedValueString = @"1";
-static NSString *const UnckedValueString = @"0";
+static NSString *const CheckedValueString = @"true";
+static NSString *const UnckedValueString = @"false";
 
 static NSArray<NSTextList *> *const CheckedLists =
     @[ [[NSTextList alloc] initWithMarkerFormat:NSTextListMarkerCheck
