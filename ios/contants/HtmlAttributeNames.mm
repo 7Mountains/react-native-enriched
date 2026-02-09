@@ -9,3 +9,7 @@ NSString *const ContentTypeAttributeName = @"type";
 NSString *const ContentSrcAttributeName = @"src";
 
 NSString *const HrefAttributeName = @"href";
+
+NSString *const MentionTypeAttributeName = @"type";
+NSString *const MentionTextAttributeName = @"text";
+NSString *const MentionIndicatorAttributeName = @"indicator";

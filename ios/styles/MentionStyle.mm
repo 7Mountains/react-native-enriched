@@ -1,5 +1,6 @@
 #import "ColorExtension.h"
 #import "EnrichedTextInputView.h"
+#import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
@@ -46,15 +47,15 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   NSMutableDictionary *params = [NSMutableDictionary dictionary];
 
   if (mentionParams.text.length > 0) {
-    params[@"text"] = mentionParams.text;
+    params[MentionTextAttributeName] = mentionParams.text;
   }
 
   if (mentionParams.indicator.length > 0) {
-    params[@"indicator"] = mentionParams.indicator;
+    params[MentionIndicatorAttributeName] = mentionParams.indicator;
   }
 
   if (mentionParams.type.length > 0) {
-    params[@"type"] = mentionParams.type;
+    params[MentionTypeAttributeName] = mentionParams.type;
   }
 
   if (mentionParams.extraAttributes.count > 0) {

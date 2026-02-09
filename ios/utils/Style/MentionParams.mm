@@ -1,4 +1,5 @@
 #import "MentionParams.h"
+#import "HtmlAttributeNames.h"
 
 @implementation MentionParams
 
@@ -7,8 +8,9 @@
     return nil;
   }
 
-  NSString *text = attributes[@"text"];
-  NSString *indicator = attributes[@"indicator"];
+  NSString *text = attributes[MentionTextAttributeName];
+  NSString *indicator = attributes[MentionIndicatorAttributeName];
+  NSString *type = attributes[MentionTypeAttributeName];
 
   if (text.length == 0 || indicator.length == 0) {
     return nil;
@@ -17,10 +19,12 @@
   MentionParams *params = [MentionParams new];
   params.text = text;
   params.indicator = indicator;
+  params.type = type;
 
   NSMutableDictionary *extra = [attributes mutableCopy];
-  [extra removeObjectForKey:@"text"];
-  [extra removeObjectForKey:@"indicator"];
+  [extra removeObjectForKey:MentionTextAttributeName];
+  [extra removeObjectForKey:MentionIndicatorAttributeName];
+  [extra removeObjectForKey:MentionTypeAttributeName];
 
   params.extraAttributes = extra;
 
