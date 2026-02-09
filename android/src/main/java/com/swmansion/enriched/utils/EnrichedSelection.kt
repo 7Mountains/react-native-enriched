@@ -14,6 +14,8 @@ import com.swmansion.enriched.spans.EnrichedColoredSpan
 import com.swmansion.enriched.spans.EnrichedLinkSpan
 import com.swmansion.enriched.spans.EnrichedMentionSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import org.json.JSONObject
 
 class EnrichedSelection(
@@ -21,6 +23,10 @@ class EnrichedSelection(
 ) {
   var start: Int = 0
   var end: Int = 0
+
+  val inlineStylesList =
+    EnrichedSpans.inlineSpans.map { (type, config) -> type to config } +
+      EnrichedSpans.parametrizedStyles.map { (type, config) -> type to config }
 
   private var previousLinkDetectedEvent: MutableMap<String, String> = mutableMapOf("text" to "", "url" to "")
   private var previousMentionDetectedEvent: MutableMap<String, String> = mutableMapOf("text" to "", "payload" to "")
@@ -88,23 +94,15 @@ class EnrichedSelection(
     // We don't want to remove styles on auto-correction
     // If user removes many characters at once, we want to keep the styles config
     if (!view.isRemovingMany) {
-      for ((style, config) in EnrichedSpans.inlineSpans) {
-        state.setStart(style, getInlineStyleStart(config.clazz))
-      }
+      handleInlineStyleState()
     } else {
       view.isRemovingMany = false
     }
 
-    for ((style, config) in EnrichedSpans.paragraphSpans) {
-      state.setStart(style, getParagraphStyleStart(config.clazz))
-    }
+    handleParagraphStyleState()
 
     for ((style, config) in EnrichedSpans.listSpans) {
       state.setStart(style, getListStyleStart(config.clazz))
-    }
-
-    for ((style, config) in EnrichedSpans.parametrizedStyles) {
-      state.setStart(style, getParametrizedStyleStart(config.clazz))
     }
 
     state.emitStateChangeEvent()
@@ -117,26 +115,52 @@ class EnrichedSelection(
     return Pair(finalStart, finalEnd)
   }
 
-  private fun <T> getInlineStyleStart(type: Class<T>): Int? {
+  private fun handleInlineStyleState() {
+    val spanState = view.spanState ?: return
     val (start, end) = getInlineSelection()
-    val spannable = view.text as Spannable
-    val spans = spannable.getSpans(start, end, type)
-    var styleStart: Int? = null
+    val spannable = view.text as? Spannable ?: return
 
-    for (span in spans) {
-      val spanStart = spannable.getSpanStart(span)
-      val spanEnd = spannable.getSpanEnd(span)
+    val spans = spannable.getSpans(start, end, EnrichedInlineSpan::class.java)
 
-      if (start == end && start == spanStart) {
-        styleStart = null
-      } else if (start >= spanStart && end <= spanEnd) {
-        if (span is EnrichedColoredSpan) {
-          view.spanState?.setTypingColor(span.color)
-        }
-        styleStart = spanStart
+    if (spans.isEmpty()) {
+      inlineStylesList.forEach { (type, _) ->
+        spanState.setStart(type, null)
       }
+      emitLinkDetectedEvent(spannable, null, start, end)
+      emitMentionDetectedEvent(spannable, null, start, end)
+      return
     }
-    return styleStart
+
+    for ((type, config) in inlineStylesList) {
+      val span = spans.firstOrNull { it.javaClass == config.clazz }
+
+      span?.let {
+        val spanStart = spannable.getSpanStart(it)
+        val spanEnd = spannable.getSpanEnd(it)
+
+        if (start < spanStart || end > spanEnd) {
+          spanState.setStart(type, null)
+          return@let
+        }
+
+        when (it) {
+          is EnrichedLinkSpan -> {
+            emitLinkDetectedEvent(spannable, it, spanStart, spanEnd)
+          }
+
+          is EnrichedMentionSpan -> {
+            emitMentionDetectedEvent(spannable, it, spanStart, spanEnd)
+          }
+
+          is EnrichedColoredSpan -> {
+            spanState.setColorStart(spanStart, it.color)
+            return@let
+          }
+        }
+
+        spanState.setStart(type, spanStart)
+      } ?: spanState.setStart(type, null)
+    }
   }
 
   fun getParagraphSelection(): Pair<Int, Int> {
@@ -145,25 +169,41 @@ class EnrichedSelection(
     return spannable.getParagraphBounds(currentStart, currentEnd)
   }
 
-  private fun <T> getParagraphStyleStart(type: Class<T>): Int? {
+  private fun handleParagraphStyleState() {
+    val spanState = view.spanState ?: return
     val (start, end) = getParagraphSelection()
-    val spannable = view.text as Spannable
-    val spans = spannable.getSpans(start, end, type)
-    var styleStart: Int? = null
+    val spannable = view.text as? Spannable ?: return
 
-    for (span in spans) {
-      val spanStart = spannable.getSpanStart(span)
-      val spanEnd = spannable.getSpanEnd(span)
-      if (span is EnrichedAlignmentSpan) {
-        view.spanState?.setAlignment(span.alignmentString)
+    val spans =
+      spannable
+        .getSpans(start, end, EnrichedParagraphSpan::class.java)
+        .toList()
+
+    if (spans.isEmpty()) {
+      EnrichedSpans.paragraphSpans.keys.forEach {
+        spanState.setStart(it, null)
       }
-      if (start >= spanStart && end <= spanEnd) {
-        styleStart = spanStart
-        break
-      }
+      return
     }
 
-    return styleStart
+    spans
+      .filterIsInstance<EnrichedAlignmentSpan>()
+      .firstOrNull()
+      ?.let { spanState.setAlignment(it.alignmentString) }
+
+    for ((type, config) in EnrichedSpans.paragraphSpans) {
+      val matchedSpan =
+        spans.firstOrNull { span ->
+          span.javaClass == config.clazz &&
+            start >= spannable.getSpanStart(span) &&
+            end <= spannable.getSpanEnd(span)
+        }
+
+      spanState.setStart(
+        type,
+        matchedSpan?.let { spannable.getSpanStart(it) },
+      )
+    }
   }
 
   private fun <T> getListStyleStart(type: Class<T>): Int? {
@@ -193,41 +233,6 @@ class EnrichedSelection(
     }
 
     return styleStart
-  }
-
-  private fun <T> getParametrizedStyleStart(type: Class<T>): Int? {
-    val (start, end) = getInlineSelection()
-    val spannable = view.text as Spannable
-    val spans = spannable.getSpans(start, end, type)
-    val isLinkType = type == EnrichedLinkSpan::class.java
-    val isMentionType = type == EnrichedMentionSpan::class.java
-
-    if (isLinkType && spans.isEmpty()) {
-      emitLinkDetectedEvent(spannable, null, start, end)
-      return null
-    }
-
-    if (isMentionType && spans.isEmpty()) {
-      emitMentionDetectedEvent(spannable, null, start, end)
-      return null
-    }
-
-    for (span in spans) {
-      val spanStart = spannable.getSpanStart(span)
-      val spanEnd = spannable.getSpanEnd(span)
-
-      if (start >= spanStart && end <= spanEnd) {
-        if (isLinkType && span is EnrichedLinkSpan) {
-          emitLinkDetectedEvent(spannable, span, spanStart, spanEnd)
-        } else if (isMentionType && span is EnrichedMentionSpan) {
-          emitMentionDetectedEvent(spannable, span, spanStart, spanEnd)
-        }
-
-        return spanStart
-      }
-    }
-
-    return null
   }
 
   private fun emitSelectionChangeEvent(

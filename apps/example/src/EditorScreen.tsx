@@ -113,7 +113,7 @@ const generateHugeHtml = (repeat = 1) => {
 
     parts.push(
       `<h1>Heading ${i + 1}</h1>`,
-      `<p>This is a paragraph with some <b>bold</b>, <i>italic</i>, <u>underline</u>, and <s>strikethrough</s> text. Here's some inline code:</p>`,
+      `<p><a href="test.com">test link</a> This is a paragraph with some <b>bold</b>, <i>italic</i>, <u>underline</u>, and <s>strikethrough</s> text. Here's some inline code:</p>`,
       `<h2>Subheading ${i + 1}</h2>`,
       `<h3>Subheading ${i + 1}</h3>`,
       `<h4>Subheading ${i + 1}</h4>`,
