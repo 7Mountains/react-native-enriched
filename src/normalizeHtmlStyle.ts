@@ -111,43 +111,7 @@ const defaultStyle: Required<HtmlStyle> = {
   },
 };
 
-const isMentionStyleRecord = (
-  mentionStyle: HtmlStyle['mention']
-): mentionStyle is Record<string, MentionStyleProperties> => {
-  if (
-    mentionStyle &&
-    typeof mentionStyle === 'object' &&
-    !Array.isArray(mentionStyle)
-  ) {
-    const keys = Object.keys(mentionStyle);
-
-    return (
-      keys.length > 0 &&
-      keys.every(
-        (key) =>
-          typeof (mentionStyle as Record<string, unknown>)[key] === 'object' &&
-          (mentionStyle as Record<string, unknown>)[key] !== null
-      )
-    );
-  }
-  return false;
-};
-
-const convertToHtmlStyleInternal = (
-  style: HtmlStyle,
-  mentionIndicators: string[]
-): HtmlStyleInternal => {
-  const mentionStyles: Record<string, MentionStyleProperties> = {};
-
-  mentionIndicators.forEach((indicator) => {
-    mentionStyles[indicator] = {
-      ...defaultStyle.mention,
-      ...(isMentionStyleRecord(style.mention)
-        ? (style.mention[indicator] ?? style.mention.default ?? {})
-        : style.mention),
-    };
-  });
-
+const convertToHtmlStyleInternal = (style: HtmlStyle): HtmlStyleInternal => {
   let markerFontWeight: string | undefined;
   if (style.ol?.markerFontWeight) {
     if (typeof style.ol?.markerFontWeight === 'number') {
@@ -174,7 +138,6 @@ const convertToHtmlStyleInternal = (
 
   return {
     ...style,
-    mention: mentionStyles,
     ol: olStyles,
     checkbox: checkboxStyles,
   };
@@ -216,13 +179,13 @@ const parseColors = (style: HtmlStyleInternal): HtmlStyleInternal => {
     const tagStyles: Record<string, any> = {};
 
     if (tagName === 'mention') {
-      for (const [indicator, mentionStyle] of Object.entries(tagStyle)) {
-        tagStyles[indicator] = {};
+      for (const [type, mentionStyle] of Object.entries(tagStyle)) {
+        tagStyles[type] = {};
 
         for (const [styleName, styleValue] of Object.entries(
           mentionStyle as MentionStyleProperties
         )) {
-          tagStyles[indicator][styleName] = parseStyle(styleName, styleValue);
+          tagStyles[type][styleName] = parseStyle(styleName, styleValue);
         }
       }
 
@@ -231,11 +194,11 @@ const parseColors = (style: HtmlStyleInternal): HtmlStyleInternal => {
     }
 
     if (tagName === 'content') {
-      for (const [type, mentionStyle] of Object.entries(tagStyle)) {
+      for (const [type, contentStyle] of Object.entries(tagStyle)) {
         tagStyles[type] = {};
 
         for (const [styleName, styleValue] of Object.entries(
-          mentionStyle as ContentStyleProperties
+          contentStyle as ContentStyleProperties
         )) {
           tagStyles[type][styleName] = parseStyle(styleName, styleValue);
         }
@@ -255,11 +218,8 @@ const parseColors = (style: HtmlStyleInternal): HtmlStyleInternal => {
   return finalStyle;
 };
 
-export const normalizeHtmlStyle = (
-  style: HtmlStyle,
-  mentionIndicators: string[]
-): HtmlStyleInternal => {
-  const converted = convertToHtmlStyleInternal(style, mentionIndicators);
+export const normalizeHtmlStyle = (style: HtmlStyle): HtmlStyleInternal => {
+  const converted = convertToHtmlStyleInternal(style);
   const withDefaults = assignDefaultValues(converted);
   return parseColors(withDefaults);
 };

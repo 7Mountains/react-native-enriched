@@ -5,6 +5,7 @@
 
 @property(nonatomic, copy) NSString *_Nonnull text;
 @property(nonatomic, copy) NSString *_Nonnull indicator;
+@property(nonatomic, copy) NSString *_Nonnull type;
 @property(nonatomic, copy)
     NSDictionary<NSString *, id> *_Nullable extraAttributes;
 

@@ -389,10 +389,11 @@ class EnrichedTextInputViewManager :
     view: EnrichedTextInputView?,
     indicator: String,
     text: String,
+    type: String,
     payload: String,
   ) {
     val attributes = jsonStringToStringMap(payload)
-    view?.addMention(text, indicator, attributes)
+    view?.addMention(text, indicator, type, attributes)
   }
 
   override fun requestHTML(

@@ -67,7 +67,7 @@ static inline void RunOnMainThread(void (^block)(void)) {
     [_input addLinkAt:start end:end text:text url:url];
 
   } else if ([commandName isEqualToString:@"addMention"]) {
-    [_input addMention:args[0] text:args[1] attributes:args[2]];
+    [_input addMention:args[0] text:args[1] type:args[2] attributes:args[3]];
 
   } else if ([commandName isEqualToString:@"startMention"]) {
     [_input startMentionWithIndicator:args[0]];

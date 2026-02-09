@@ -98,16 +98,15 @@
   if (range.length == 0) {
     if ([mentionStyle detectStyle:range]) {
       MentionParams *params = [mentionStyle getMentionParamsAt:range.location];
-      conflicted =
-          [_input->config mentionStylePropsForIndicator:params.indicator]
-              .decorationLine == DecorationUnderline;
+      conflicted = [_input->config mentionStylePropsForType:params.type]
+                       .decorationLine == DecorationUnderline;
     }
   } else {
     NSArray *occurences = [mentionStyle findAllOccurences:range];
     for (StylePair *pair in occurences) {
       MentionParams *params = [mentionStyle
           getMentionParamsAt:[pair.rangeValue rangeValue].location];
-      if ([_input->config mentionStylePropsForIndicator:params.indicator]
+      if ([_input->config mentionStylePropsForType:params.type]
               .decorationLine == DecorationUnderline) {
         conflicted = YES;
         break;

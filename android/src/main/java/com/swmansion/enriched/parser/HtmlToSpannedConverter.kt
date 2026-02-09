@@ -349,19 +349,20 @@ class HtmlToSpannedConverter(
         val ctx = popTag(tag) ?: return
         val text = ctx.attributes?.getValue("", "text") ?: return
         val indicator = ctx.attributes.getValue("", "indicator") ?: ""
+        val type = ctx.attributes.getValue("", "type") ?: ""
 
         val attrs = mutableMapOf<String, String>()
         ctx.attributes.let { a ->
           for (i in 0 until a.length) {
             val name = a.getLocalName(i)
-            if (name != "text" && name != "indicator") {
+            if (name != "text" && name != "indicator" && name != "type") {
               attrs[name] = a.getValue(i)
             }
           }
         }
 
         applyInline(ctx) {
-          EnrichedMentionSpan(text, indicator, attrs, mStyle)
+          EnrichedMentionSpan(text, indicator, type, attrs, mStyle)
         }
         return
       }

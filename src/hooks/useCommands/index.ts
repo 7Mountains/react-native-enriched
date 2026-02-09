@@ -126,6 +126,7 @@ const useCommands = (
       setMention: (
         indicator: string,
         text: string,
+        type: string,
         attributes?: Record<string, string>
       ) => {
         // Codegen does not support objects as Commands parameters, so we stringify attributes
@@ -135,6 +136,7 @@ const useCommands = (
           nullthrows(typedRef),
           indicator,
           text,
+          type,
           parsedAttributes
         );
       },

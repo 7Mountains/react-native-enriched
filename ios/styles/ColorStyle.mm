@@ -397,8 +397,7 @@
     if (!params)
       return nil;
 
-    MentionStyleProps *props =
-        [config mentionStylePropsForIndicator:params.indicator];
+    MentionStyleProps *props = [config mentionStylePropsForType:params.type];
     return props.color;
   }
 

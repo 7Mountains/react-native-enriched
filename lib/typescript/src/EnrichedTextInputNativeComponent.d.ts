@@ -351,7 +351,7 @@ interface NativeCommands {
     addLink: (viewRef: React.ElementRef<ComponentType>, start: Int32, end: Int32, text: string, url: string) => void;
     addImage: (viewRef: React.ElementRef<ComponentType>, uri: string, width: Float, height: Float) => void;
     startMention: (viewRef: React.ElementRef<ComponentType>, indicator: string) => void;
-    addMention: (viewRef: React.ElementRef<ComponentType>, indicator: string, text: string, payload: string) => void;
+    addMention: (viewRef: React.ElementRef<ComponentType>, indicator: string, text: string, type: string, payload: string) => void;
     requestHTML: (viewRef: React.ElementRef<ComponentType>, requestId: Int32, prettify: boolean) => void;
     toggleCheckList: (viewRef: React.ElementRef<ComponentType>) => void;
     setColor: (viewRef: React.ElementRef<ComponentType>, color: string) => void;

@@ -21,6 +21,7 @@
 
 - (void)addMention:(NSString *)indicator
               text:(NSString *)text
+              type:(NSString *)type
         attributes:(NSString *)attributes;
 
 - (void)startMentionWithIndicator:(NSString *)indicator;

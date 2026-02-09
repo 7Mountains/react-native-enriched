@@ -25,7 +25,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     setLink: (start: number, end: number, text: string, url: string) => void;
     setImage: (src: string, width: number, height: number) => void;
     startMention: (indicator: string) => void;
-    setMention: (indicator: string, text: string, attributes?: Record<string, string>) => void;
+    setMention: (indicator: string, text: string, type: string, attributes?: Record<string, string>) => void;
     toggleCheckList: () => void;
     setColor: (color: string) => void;
     removeColor: () => void;

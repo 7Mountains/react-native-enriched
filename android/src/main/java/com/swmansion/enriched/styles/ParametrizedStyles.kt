@@ -334,6 +334,7 @@ class ParametrizedStyles(
   fun setMentionSpan(
     indicator: String,
     text: String,
+    type: String,
     attributes: Map<String, String>,
   ) {
     val selection = view.selection ?: return
@@ -351,7 +352,7 @@ class ParametrizedStyles(
     view.runAsATransaction {
       spannable.replace(start, selectionEnd, text)
 
-      val span = EnrichedMentionSpan(text, indicator, attributes, view.htmlStyle)
+      val span = EnrichedMentionSpan(text, indicator, type, attributes, view.htmlStyle)
       val spanEnd = start + text.length
       val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, spanEnd)
       spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)

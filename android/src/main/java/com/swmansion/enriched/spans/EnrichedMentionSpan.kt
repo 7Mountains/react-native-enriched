@@ -9,6 +9,7 @@ import com.swmansion.enriched.styles.HtmlStyle
 class EnrichedMentionSpan(
   private val text: String,
   private val indicator: String,
+  private val type: String,
   private val attributes: Map<String, String>,
   private val htmlStyle: HtmlStyle,
 ) : ClickableSpan(),
@@ -23,7 +24,7 @@ class EnrichedMentionSpan(
   override fun updateDrawState(textPaint: TextPaint) {
     super.updateDrawState(textPaint)
 
-    val mentionsStyle = htmlStyle.mentionsStyle[indicator] ?: return
+    val mentionsStyle = htmlStyle.mentionsStyle[type] ?: return
     textPaint.color = mentionsStyle.color
     textPaint.bgColor = mentionsStyle.backgroundColor
     textPaint.isUnderlineText = mentionsStyle.underline
@@ -35,7 +36,10 @@ class EnrichedMentionSpan(
 
   fun getIndicator(): String = indicator
 
-  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedMentionSpan = EnrichedMentionSpan(text, indicator, attributes, htmlStyle)
+  fun getType(): String = type
 
-  override fun copy() = EnrichedMentionSpan(text = text, indicator = indicator, attributes = attributes, htmlStyle)
+  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedMentionSpan =
+    EnrichedMentionSpan(text, indicator, type, attributes, htmlStyle)
+
+  override fun copy() = EnrichedMentionSpan(text = text, type = type, indicator = indicator, attributes = attributes, htmlStyle = htmlStyle)
 }

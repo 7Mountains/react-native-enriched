@@ -332,16 +332,14 @@ export default function EditorScreen() {
   };
 
   const handleUserMentionSelected = (item: MentionItem) => {
-    ref.current?.setMention('@', `@${item.name}`, {
+    ref.current?.setMention('@', `@${item.name}`, 'user', {
       id: item.id,
-      type: 'user',
     });
   };
 
   const handleChannelMentionSelected = (item: MentionItem) => {
-    ref.current?.setMention('#', `#${item.name}`, {
+    ref.current?.setMention('', `${item.name}`, 'channel', {
       id: item.id,
-      type: 'channel',
     });
   };
 
@@ -582,12 +580,12 @@ const htmlStyle: HtmlStyle = {
     textDecorationLine: 'underline',
   },
   mention: {
-    '#': {
+    channel: {
       color: 'blue',
       backgroundColor: 'lightblue',
       textDecorationLine: 'none',
     },
-    '@': {
+    user: {
       color: 'green',
       backgroundColor: 'lightgreen',
       textDecorationLine: 'none',

@@ -716,12 +716,13 @@ class EnrichedTextInputView : AppCompatEditText {
   fun addMention(
     indicator: String,
     text: String,
+    type: String,
     attributes: Map<String, String>,
   ) {
     val isValid = verifyStyle(TextStyle.MENTION)
     if (!isValid) return
 
-    parametrizedStyles?.setMentionSpan(text, indicator, attributes)
+    parametrizedStyles?.setMentionSpan(text, indicator, type, attributes)
   }
 
   fun setColor(color: Int) {

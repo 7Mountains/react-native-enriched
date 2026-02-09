@@ -54,6 +54,7 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
     : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (void)addMention:(NSString *)indicator
               text:(NSString *)text
+              type:(NSString *)type
         attributes:(NSDictionary<NSString *, id> *)attributes;
 - (void)addMentionAtRange:(NSRange)range params:(MentionParams *)params;
 - (void)startMentionWithIndicator:(NSString *)indicator;

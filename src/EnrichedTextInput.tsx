@@ -67,8 +67,8 @@ export const EnrichedTextInput = ({
   }, []);
 
   const normalizedHtmlStyle = useMemo(
-    () => normalizeHtmlStyle(htmlStyle, mentionIndicators),
-    [htmlStyle, mentionIndicators]
+    () => normalizeHtmlStyle(htmlStyle),
+    [htmlStyle]
   );
 
   useCommands(

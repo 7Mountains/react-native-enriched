@@ -463,12 +463,12 @@
   _mentionProperties = [newValue mutableCopy];
 }
 
-- (MentionStyleProps *)mentionStylePropsForIndicator:(NSString *)indicator {
+- (MentionStyleProps *)mentionStylePropsForType:(NSString *)type {
   if (_mentionProperties.count == 1 && _mentionProperties[@"all"] != nullptr) {
     // single props for all the indicators
     return _mentionProperties[@"all"];
-  } else if (_mentionProperties[indicator] != nullptr) {
-    return _mentionProperties[indicator];
+  } else if (_mentionProperties[type] != nullptr) {
+    return _mentionProperties[type];
   }
   MentionStyleProps *fallbackProps = [[MentionStyleProps alloc] init];
   fallbackProps.color = [UIColor blueColor];

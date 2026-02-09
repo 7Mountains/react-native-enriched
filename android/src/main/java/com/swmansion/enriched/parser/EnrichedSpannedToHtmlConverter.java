@@ -256,6 +256,8 @@ public class EnrichedSpannedToHtmlConverter {
               .append(mention.getText())
               .append("\" indicator=\"")
               .append(mention.getIndicator())
+              .append("\" type=\"")
+              .append(mention.getType())
               .append("\"");
 
           Map<String, String> attrs = mention.getAttributes();

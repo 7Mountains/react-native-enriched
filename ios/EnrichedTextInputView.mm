@@ -945,6 +945,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)addMention:(NSString *)indicator
               text:(NSString *)text
+              type:(NSString *)type
         attributes:(NSString *)attributes {
   MentionStyle *mentionStyleClass =
       (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
@@ -978,6 +979,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
     [mentionStyleClass addMention:indicator
                              text:text
+                             type:type
                        attributes:parsedAttributes ?: @{}];
     [self anyTextMayHaveBeenModified];
   }

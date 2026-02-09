@@ -55,6 +55,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   setMention: (
     indicator: string,
     text: string,
+    type: string,
     attributes?: Record<string, string>
   ) => void;
   toggleCheckList: () => void;

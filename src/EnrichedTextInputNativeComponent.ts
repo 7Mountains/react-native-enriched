@@ -410,6 +410,7 @@ interface NativeCommands {
     viewRef: React.ElementRef<ComponentType>,
     indicator: string,
     text: string,
+    type: string,
     payload: string
   ) => void;
   requestHTML: (

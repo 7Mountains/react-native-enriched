@@ -53,6 +53,10 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
     params[@"indicator"] = mentionParams.indicator;
   }
 
+  if (mentionParams.type.length > 0) {
+    params[@"type"] = mentionParams.type;
+  }
+
   if (mentionParams.extraAttributes.count > 0) {
     [params addEntriesFromDictionary:mentionParams.extraAttributes];
   }
@@ -96,7 +100,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   }
 
   MentionStyleProps *props =
-      [_input->config mentionStylePropsForIndicator:params.indicator];
+      [_input->config mentionStylePropsForType:params.type];
 
   NSUnderlineStyle underlineStyle = props.decorationLine == DecorationUnderline
                                         ? NSUnderlineStyleSingle
@@ -250,6 +254,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 
 - (void)addMention:(NSString *)indicator
               text:(NSString *)text
+              type:(NSString *)type
         attributes:(NSDictionary<NSString *, id> *)attributes {
   if (_activeMentionRange == nullptr) {
     return;
@@ -263,9 +268,10 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   params.text = text;
   params.indicator = indicator;
   params.extraAttributes = attributes;
+  params.type = type;
 
   MentionStyleProps *styleProps =
-      [_input->config mentionStylePropsForIndicator:indicator];
+      [_input->config mentionStylePropsForType:type];
 
   NSMutableDictionary *newAttrs = [@{
     MentionAttributeName : params,
@@ -305,7 +311,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   _blockMentionEditing = YES;
 
   MentionStyleProps *styleProps =
-      [_input->config mentionStylePropsForIndicator:params.indicator];
+      [_input->config mentionStylePropsForType:params.type];
 
   NSMutableDictionary *newAttrs = [@{
     MentionAttributeName : params,
@@ -604,7 +610,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 // MARK: - Private non-standard methods
 
 - (MentionStyleProps *)stylePropsWithParams:(MentionParams *)params {
-  return [_input->config mentionStylePropsForIndicator:params.indicator];
+  return [_input->config mentionStylePropsForType:params.type];
 }
 
 // finds if any word/words around current selection are eligible to be edited as
