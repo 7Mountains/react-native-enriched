@@ -952,9 +952,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   if (mentionStyleClass == nullptr) {
     return;
   }
-  if ([mentionStyleClass getActiveMentionRange] == nullptr) {
-    return;
-  }
 
   if ([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType]
                                     range:[[mentionStyleClass

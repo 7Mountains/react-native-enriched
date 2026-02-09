@@ -114,6 +114,7 @@ export interface ToolbarProps {
   onSelectImage: () => void;
   onContentButtonPress?: () => void;
   selectionColor: string | null;
+  onMentionPress: () => void;
 }
 
 export const Toolbar: FC<ToolbarProps> = ({
@@ -122,6 +123,7 @@ export const Toolbar: FC<ToolbarProps> = ({
   onOpenLinkModal,
   onSelectImage,
   onContentButtonPress,
+  onMentionPress,
   selectionColor,
 }) => {
   const handlePress = (item: Item) => {
@@ -181,7 +183,7 @@ export const Toolbar: FC<ToolbarProps> = ({
         onSelectImage();
         break;
       case 'mention':
-        editorRef.current?.startMention('@');
+        onMentionPress();
         break;
       case 'checkbox-list':
         editorRef.current?.toggleCheckList();

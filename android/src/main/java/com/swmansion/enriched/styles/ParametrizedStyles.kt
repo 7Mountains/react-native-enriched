@@ -338,33 +338,49 @@ class ParametrizedStyles(
     attributes: Map<String, String>,
   ) {
     val selection = view.selection ?: return
-
     val spannable = view.text as SpannableStringBuilder
-    val (selectionStart, selectionEnd) = selection.getInlineSelection()
-    val spans = spannable.getSpans(selectionStart, selectionEnd, EnrichedMentionSpan::class.java)
 
+    val (start, end) = selection.getInlineSelection()
+
+    val spans = spannable.getSpans(start, end, EnrichedMentionSpan::class.java)
     for (span in spans) {
       spannable.removeSpan(span)
     }
 
-    val start = mentionStart ?: return
+    val insertText = "$text "
 
-    view.runAsATransaction {
-      spannable.replace(start, selectionEnd, text)
-
-      val span = EnrichedMentionSpan(text, indicator, type, attributes, view.htmlStyle)
-      val spanEnd = start + text.length
-      val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, spanEnd)
-      spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-      val hasSpaceAtTheEnd = spannable.length > safeEnd && spannable[safeEnd] == ' '
-      if (!hasSpaceAtTheEnd) {
-        spannable.insert(safeEnd, " ")
-      }
+    if (start == end) {
+      spannable.insert(start, insertText)
+    } else {
+      spannable.replace(start, end, insertText)
     }
 
-    view.mentionHandler?.reset()
+    val spanStart = start
+    val spanEnd = start + text.length
+
+    val span =
+      EnrichedMentionSpan(
+        text,
+        indicator,
+        type,
+        attributes,
+        view.htmlStyle,
+      )
+
+    val (safeStart, safeEnd) =
+      spannable.getSafeSpanBoundaries(spanStart, spanEnd)
+
+    spannable.setSpan(
+      span,
+      safeStart,
+      safeEnd,
+      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+    )
+
+    view.setSelection(spanEnd + 1)
     view.selection.validateStyles()
+
+    view.mentionHandler?.reset()
   }
 
   fun getStyleRange(): Pair<Int, Int> = view.selection?.getInlineSelection() ?: Pair(0, 0)

@@ -256,10 +256,6 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
               text:(NSString *)text
               type:(NSString *)type
         attributes:(NSDictionary<NSString *, id> *)attributes {
-  if (_activeMentionRange == nullptr) {
-    return;
-  }
-
   // we block callbacks resulting from manageMentionEditing while we tamper with
   // them here
   _blockMentionEditing = YES;
@@ -273,7 +269,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   MentionStyleProps *styleProps =
       [_input->config mentionStylePropsForType:type];
 
-  NSMutableDictionary *newAttrs = [@{
+  NSMutableDictionary *additionalAttributes = [@{
     MentionAttributeName : params,
     NSForegroundColorAttributeName : styleProps.color,
     NSUnderlineColorAttributeName : styleProps.color,
@@ -283,22 +279,24 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   } mutableCopy];
 
   if (styleProps.decorationLine == DecorationUnderline) {
-    newAttrs[NSUnderlineStyleAttributeName] = @(NSUnderlineStyleSingle);
+    additionalAttributes[NSUnderlineStyleAttributeName] =
+        @(NSUnderlineStyleSingle);
   }
 
   // add a single space after the mention
-  NSString *newText = [NSString stringWithFormat:@"%@ ", text];
-  NSRange rangeToBeReplaced = [_activeMentionRange rangeValue];
-  [TextInsertionUtils replaceText:newText
-                               at:rangeToBeReplaced
-             additionalAttributes:nullptr
-                            input:_input
-                    withSelection:YES];
+  [TextInsertionUtils insertText:text
+                              at:_input->textView.selectedRange.location
+            additionalAttributes:additionalAttributes
+                           input:_input
+                   withSelection:NO];
 
   // THEN, add the attributes to not apply them on the space
-  [_input->textView.textStorage
-      addAttributes:newAttrs
-              range:NSMakeRange(rangeToBeReplaced.location, text.length)];
+  [TextInsertionUtils
+                insertText:@" "
+                        at:_input->textView.selectedRange.location + text.length
+      additionalAttributes:nil
+                     input:_input
+             withSelection:YES];
 
   // mention editing should finish
   [self removeActiveMentionRange];

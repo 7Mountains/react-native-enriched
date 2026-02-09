@@ -450,6 +450,10 @@ export default function EditorScreen() {
             onOpenLinkModal={openLinkModal}
             onSelectImage={openImageModal}
             onContentButtonPress={handleContentButtonPress}
+            onMentionPress={() => {
+              userMention.onMentionChange('');
+              openUserMentionPopup();
+            }}
           />
         </View>
         <View style={styles.buttonStack}>
