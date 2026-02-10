@@ -126,7 +126,7 @@
     NSDictionary *newAttributes = @{
       NSForegroundColorAttributeName : restoreColor,
       NSUnderlineColorAttributeName : restoreColor,
-      NSForegroundColorAttributeName : restoreColor,
+      NSStrikethroughColorAttributeName : restoreColor,
     };
     [textStorage addAttributes:newAttributes range:NSMakeRange(i, 1)];
   }
@@ -315,8 +315,9 @@
     UIColor *color = [self colorForStyle:(StyleType)num.integerValue
                               attributes:attrs
                                    index:index];
-    if (color)
+    if (color) {
       return color;
+    }
   }
 
   return _input->config.primaryColor;
@@ -353,7 +354,8 @@
   NSUInteger index = range.location;
 
   for (NSNumber *num in self.coloredStyleTypes) {
-    UIColor *styleColor = [self colorForStyle:(StyleType)num.integerValue
+    StyleType type = (StyleType)num.integerValue;
+    UIColor *styleColor = [self colorForStyle:type
                                    attributes:attrs
                                         index:index];
 
@@ -372,9 +374,9 @@
   if (!style)
     return nil;
 
-  NSAttributedStringKey key = [[style class] attributeKey];
+  NSAttributedStringKey key = [style.class attributeKey];
   id attr = attrs[key];
-  if (!attr)
+  if (!attr || ![style styleCondition:attr range:NSRange(index, 0)])
     return nil;
 
   InputConfig *config = _input->config;
