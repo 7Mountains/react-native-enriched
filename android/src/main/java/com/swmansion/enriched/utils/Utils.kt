@@ -146,6 +146,8 @@ private fun SpannableStringBuilder.tryInsertAfterNonEditableTarget(
   end: Int,
   inserted: Spannable,
 ): Boolean {
+  if (start != end) return false
+
   val (pStart, pEnd) = getParagraphBounds(start, end)
 
   val hasNonEditable =
