@@ -253,6 +253,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     // slight tail indent to avoid weird layout calculations with zero width
     // spaces in lists
     paragraphStyle.tailIndent = -0.01;
+    paragraphStyle.paragraphSpacing = newViewProps.iOSparagraphSpacing;
+    paragraphStyle.paragraphSpacingBefore =
+        newViewProps.iOSparagraphSpacingBefore;
     paragraphStyle.alignment = NSTextAlignmentNatural;
     defaultTypingAttributes[NSParagraphStyleAttributeName] = paragraphStyle;
     textView.typingAttributes = defaultTypingAttributes;

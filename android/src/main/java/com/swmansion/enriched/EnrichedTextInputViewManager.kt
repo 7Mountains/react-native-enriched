@@ -450,6 +450,20 @@ class EnrichedTextInputViewManager :
     // iOS only prop
   }
 
+  override fun setIOSparagraphSpacing(
+    view: EnrichedTextInputView?,
+    value: Float,
+  ) {
+    // iOS only prop
+  }
+
+  override fun setIOSparagraphSpacingBefore(
+    view: EnrichedTextInputView?,
+    value: Float,
+  ) {
+    // iOS only prop
+  }
+
   override fun setLoaderCookies(
     view: EnrichedTextInputView?,
     value: ReadableArray?,

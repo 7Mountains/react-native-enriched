@@ -415,6 +415,8 @@ export default function EditorScreen() {
             style={styles.editorInput}
             htmlStyle={htmlStyle}
             placeholder="Type something here..."
+            iOSparagraphSpacing={3}
+            iOSparagraphSpacingBefore={3}
             placeholderTextColor="rgb(0, 26, 114)"
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
@@ -722,7 +724,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxHeight: 300,
     backgroundColor: 'gainsboro',
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Nunito-Regular',
     paddingVertical: 12,
     paddingHorizontal: 14,
