@@ -131,21 +131,16 @@
   }
   _cachedConfig = config;
 
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  NSMutableDictionary *attributes =
+      [_input->defaultTypingAttributes mutableCopy];
 
   DividerAttachment *attachment =
       [[DividerAttachment alloc] initWithStyles:config.dividerColor
                                          height:config.dividerHeight
                                       thickness:config.dividerThickness];
-
-  _cachedAttributes = @{
-    NSParagraphStyleAttributeName : pStyle,
-    NSAttachmentAttributeName : attachment,
-    NSFontAttributeName : config.primaryFont,
-    NSForegroundColorAttributeName : config.primaryColor,
-    NSFontAttributeName : config.primaryFont,
-    ReadOnlyParagraphKey : @(YES),
-  };
+  attributes[NSAttachmentAttributeName] = attachment;
+  attributes[ReadOnlyParagraphKey] = @(YES);
+  _cachedAttributes = attributes;
 
   return _cachedAttributes;
 }

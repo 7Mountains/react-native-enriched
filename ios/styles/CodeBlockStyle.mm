@@ -65,7 +65,9 @@ static NSString *const CodeBlockMarker = @"codeblock";
   NSTextList *codeBlockList =
       [[NSTextList alloc] initWithMarkerFormat:CodeBlockMarker options:0];
 
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  NSMutableParagraphStyle *pStyle =
+      [self->_input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+          mutableCopy];
   pStyle.textLists = @[ codeBlockList ];
 
   NSDictionary *finalAttributes = @{
@@ -117,8 +119,10 @@ static NSString *const CodeBlockMarker = @"codeblock";
                 usingBlock:^(id _Nullable value, NSRange range,
                              BOOL *_Nonnull stop) {
                   NSMutableParagraphStyle *pStyle =
-                      value == nil ? [NSMutableParagraphStyle new]
-                                   : [(NSParagraphStyle *)value mutableCopy];
+                      value == nil
+                          ? [self->_input->defaultTypingAttributes
+                                    [NSParagraphStyleAttributeName] mutableCopy]
+                          : [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[ codeBlockList ];
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
