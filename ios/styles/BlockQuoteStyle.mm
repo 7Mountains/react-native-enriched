@@ -65,7 +65,9 @@
   _cachedHeadIntent = headIntent;
   _blockQuoteForegroundColor = configBlockQuoteColor;
 
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  NSMutableParagraphStyle *pStyle =
+      [self->_input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+          mutableCopy];
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
   pStyle.tailIndent = DefaultListTailIndent;

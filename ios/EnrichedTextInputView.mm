@@ -6,9 +6,9 @@
 #import "EnrichedCommandHandler.h"
 #import "EnrichedCookieManager.h"
 #import "EnrichedCookiesOperators.h"
+#import "EnrichedParagraphStyle.h"
 #import "EnrichedTextConfigBuilder.h"
 #import "EnrichedTextStyleFactory.h"
-#import "HeadingsParagraphInvariantUtils.h"
 #import "InsetsOperators.h"
 #import "LayoutManagerExtension.h"
 #import "NSString+Autocapitalization.h"
@@ -249,7 +249,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
         [config primaryColor];
     defaultTypingAttributes[NSStrikethroughColorAttributeName] =
         [config primaryColor];
-    NSMutableParagraphStyle *paragraphStyle = [NSMutableParagraphStyle new];
+    EnrichedParagraphStyle *paragraphStyle = [EnrichedParagraphStyle new];
     // slight tail indent to avoid weird layout calculations with zero width
     // spaces in lists
     paragraphStyle.tailIndent = -0.01;
@@ -1173,25 +1173,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [codeBlockStyle manageCodeBlockFontAndColor];
   }
 
-  // improper headings fix
-  H1Style *h1Style = stylesDict[@([H1Style getStyleType])];
-  H2Style *h2Style = stylesDict[@([H2Style getStyleType])];
-  H3Style *h3Style = stylesDict[@([H3Style getStyleType])];
-  H4Style *h4Style = stylesDict[@([H4Style getStyleType])];
-  H5Style *h5Style = stylesDict[@([H5Style getStyleType])];
-  H6Style *h6Style = stylesDict[@([H6Style getStyleType])];
-
-  bool canHandleImproperHeadings = h1Style != nullptr && h2Style != nullptr &&
-                                   h3Style != nullptr && h4Style != nullptr &&
-                                   h5Style != nullptr && h6Style != nullptr;
-
-  if (canHandleImproperHeadings) {
-    [HeadingsParagraphInvariantUtils handleImproperHeadingStyles:@[
-      h1Style, h2Style, h3Style, h4Style, h5Style, h6Style
-    ]
-                                                           input:self];
-  }
-
   // mentions management: removal and editing
   MentionStyle *mentionStyleClass =
       (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
@@ -1348,6 +1329,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       [h4Style handleNewlinesInRange:range replacementText:text] ||
       [h5Style handleNewlinesInRange:range replacementText:text] ||
       [h6Style handleNewlinesInRange:range replacementText:text] ||
+      [h1Style handleBackspaceInRange:range replacementText:text] ||
+      [h2Style handleBackspaceInRange:range replacementText:text] ||
+      [h3Style handleBackspaceInRange:range replacementText:text] ||
+      [h4Style handleBackspaceInRange:range replacementText:text] ||
+      [h5Style handleBackspaceInRange:range replacementText:text] ||
+      [h6Style handleBackspaceInRange:range replacementText:text] ||
       [ZeroWidthSpaceUtils handleBackspaceInRange:range
                                   replacementText:text
                                             input:self] ||

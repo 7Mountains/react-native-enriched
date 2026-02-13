@@ -66,6 +66,66 @@ static NSArray<NSTextList *> *const UncheckedLists =
   return self;
 }
 
+#pragma mark - Checkbox Paragraph Helpers
+
+- (void)configureParagraphStyle:(NSMutableParagraphStyle *)pStyle
+                       withList:(NSArray<NSTextList *> *)list {
+
+  CGFloat checkBoxHeight = _input->config.checkBoxHeight;
+
+  pStyle.textLists = list;
+  pStyle.minimumLineHeight = checkBoxHeight;
+  pStyle.maximumLineHeight = checkBoxHeight;
+  pStyle.lineHeightMultiple = 1.0;
+  pStyle.paragraphSpacing = 0;
+  pStyle.paragraphSpacingBefore = 0;
+  pStyle.tailIndent = DefaultListTailIndent;
+  pStyle.headIndent = [self getHeadIndent];
+  pStyle.firstLineHeadIndent = [self getHeadIndent];
+}
+
+- (CGFloat)checkboxBaselineShift {
+  UIFont *font = _input->config.primaryFont;
+  CGFloat checkBoxHeight = _input->config.checkBoxHeight;
+  return (checkBoxHeight - font.lineHeight) / 2.0;
+}
+
+- (void)applyCheckboxStyleToStorage:(NSArray<NSValue *> *)paragraphs
+                           withList:(NSArray<NSTextList *> *)list {
+
+  CGFloat baselineShift = [self checkboxBaselineShift];
+
+  [_input->textView.textStorage beginEditing];
+
+  for (NSValue *val in paragraphs) {
+    NSRange range = val.rangeValue;
+
+    [_input->textView.textStorage
+        enumerateAttribute:NSParagraphStyleAttributeName
+                   inRange:range
+                   options:0
+                usingBlock:^(id value, NSRange sub, BOOL *stop) {
+                  NSMutableParagraphStyle *pStyle =
+                      value ? [(NSParagraphStyle *)value mutableCopy]
+                            : [NSMutableParagraphStyle new];
+
+                  [self configureParagraphStyle:pStyle withList:list];
+
+                  [_input->textView.textStorage
+                      addAttribute:NSParagraphStyleAttributeName
+                             value:pStyle
+                             range:sub];
+
+                  [_input->textView.textStorage
+                      addAttribute:NSBaselineOffsetAttributeName
+                             value:@(baselineShift)
+                             range:sub];
+                }];
+  }
+
+  [_input->textView.textStorage endEditing];
+}
+
 #pragma mark - Internal Helpers
 
 - (CGFloat)getHeadIndent {
@@ -80,9 +140,14 @@ static NSArray<NSTextList *> *const UncheckedLists =
 }
 
 - (void)resetParagraphStyle:(NSMutableParagraphStyle *)pStyle {
+  NSParagraphStyle *defaultParagraphStyle =
+      _input->defaultTypingAttributes[NSParagraphStyleAttributeName];
   pStyle.textLists = @[];
-  pStyle.headIndent = 0;
-  pStyle.firstLineHeadIndent = 0;
+  pStyle.headIndent = defaultParagraphStyle.headIndent;
+  pStyle.firstLineHeadIndent = defaultParagraphStyle.firstLineHeadIndent;
+  pStyle.tailIndent = defaultParagraphStyle.tailIndent;
+  pStyle.paragraphSpacing = defaultParagraphStyle.paragraphSpacing;
+  pStyle.paragraphSpacingBefore = defaultParagraphStyle.paragraphSpacingBefore;
   pStyle.minimumLineHeight = 0;
   pStyle.maximumLineHeight = 0;
   pStyle.lineHeightMultiple = 1;
@@ -127,6 +192,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
+
   if (range.length == 0)
     return;
 
@@ -136,24 +202,16 @@ static NSArray<NSTextList *> *const UncheckedLists =
     isChecked = [checked.lowercaseString isEqualToString:CheckedValueString];
   }
 
-  auto *lists = [self listForChecked:isChecked];
-  CGFloat checkBoxHeight = _input->config.checkBoxHeight;
-  UIFont *font = _input->config.primaryFont;
+  NSArray *list = [self listForChecked:isChecked];
+  NSMutableParagraphStyle *pStyle =
+      [_input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+          mutableCopy];
 
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
-  pStyle.textLists = lists;
-  pStyle.minimumLineHeight = checkBoxHeight;
-  pStyle.maximumLineHeight = checkBoxHeight;
-  pStyle.lineHeightMultiple = 1.0;
-  pStyle.headIndent = [self getHeadIndent];
-  pStyle.firstLineHeadIndent = [self getHeadIndent];
-  pStyle.tailIndent = DefaultListTailIndent;
-
-  CGFloat baselineShift = (checkBoxHeight - font.lineHeight) / 2.0;
+  [self configureParagraphStyle:pStyle withList:list];
 
   NSDictionary *attrs = @{
     NSParagraphStyleAttributeName : pStyle,
-    NSBaselineOffsetAttributeName : @(baselineShift)
+    NSBaselineOffsetAttributeName : @([self checkboxBaselineShift])
   };
 
   [attributedString addAttributes:attrs range:range];
@@ -366,8 +424,6 @@ static NSArray<NSTextList *> *const UncheckedLists =
 #pragma mark - Adding Checkboxes
 
 - (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked {
-  auto *list = [self listForChecked:isChecked];
-  CGFloat checBoxHeight = [_input->config checkBoxHeight];
 
   NSArray *paragraphs =
       [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
@@ -375,6 +431,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
 
   NSInteger offset = 0;
   NSRange preRange = _input->textView.selectedRange;
+  NSArray *list = [self listForChecked:isChecked];
 
   _input->blockEmitting = YES;
 
@@ -400,59 +457,28 @@ static NSArray<NSTextList *> *const UncheckedLists =
       offset += 1;
     }
 
-    [_input->textView.textStorage
-        enumerateAttribute:NSParagraphStyleAttributeName
-                   inRange:fixed
-                   options:0
-                usingBlock:^(id value, NSRange sub, BOOL *stop) {
-                  NSMutableParagraphStyle *paragraphStyle =
-                      value == nil ? [NSMutableParagraphStyle new]
-                                   : [(NSParagraphStyle *)value mutableCopy];
-                  paragraphStyle.textLists = list;
-                  paragraphStyle.minimumLineHeight = checBoxHeight;
-                  paragraphStyle.maximumLineHeight = checBoxHeight;
-                  paragraphStyle.lineHeightMultiple = 1.0;
-                  paragraphStyle.tailIndent = DefaultListTailIndent;
-                  paragraphStyle.headIndent = [self getHeadIndent];
-                  paragraphStyle.firstLineHeadIndent = [self getHeadIndent];
-                  UIFont *font = [_input->config primaryFont];
-                  CGFloat baselineShift =
-                      (checBoxHeight - font.lineHeight) / 2.0;
-
-                  [_input->textView.textStorage
-                      addAttribute:NSParagraphStyleAttributeName
-                             value:paragraphStyle
-                             range:sub];
-                  [_input->textView.textStorage
-                      addAttribute:NSBaselineOffsetAttributeName
-                             value:@(baselineShift)
-                             range:sub];
-                }];
+    [self applyCheckboxStyleToStorage:@[ [NSValue valueWithRange:fixed] ]
+                             withList:list];
   }
 
   _input->blockEmitting = NO;
 
-  // adjust selection
+  // selection
   if (preRange.length == 0) {
     _input->textView.selectedRange = preRange;
   } else {
     _input->textView.selectedRange =
         NSMakeRange(preRange.location, preRange.length + offset);
   }
-  NSMutableParagraphStyle *paragraphStyle = [self currentTypingParagraphStyle];
-  paragraphStyle.textLists = list;
-  paragraphStyle.minimumLineHeight = checBoxHeight;
-  paragraphStyle.maximumLineHeight = checBoxHeight;
-  paragraphStyle.lineHeightMultiple = 1.0;
-  paragraphStyle.headIndent = [self getHeadIndent];
-  paragraphStyle.firstLineHeadIndent = [self getHeadIndent];
 
-  UIFont *font = [_input->config primaryFont];
-  CGFloat baselineShift = (checBoxHeight - font.lineHeight) / 2.0;
+  // typing attributes
+  NSMutableParagraphStyle *pStyle = [self currentTypingParagraphStyle];
+  [self configureParagraphStyle:pStyle withList:list];
+
   NSMutableDictionary *typingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  typingAttrs[NSParagraphStyleAttributeName] = paragraphStyle;
-  typingAttrs[NSBaselineOffsetAttributeName] = @(baselineShift);
+  typingAttrs[NSParagraphStyleAttributeName] = pStyle;
+  typingAttrs[NSBaselineOffsetAttributeName] = @([self checkboxBaselineShift]);
   _input->textView.typingAttributes = typingAttrs;
 }
 

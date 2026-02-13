@@ -174,12 +174,10 @@
 }
 
 - (void)updateTypingAlignment:(NSTextAlignment)alignment {
-  NSMutableDictionary *typing = [_input->textView.typingAttributes mutableCopy]
-                                    ?: [NSMutableDictionary new];
+  NSMutableDictionary *typing = [_input->textView.typingAttributes mutableCopy];
 
   NSMutableParagraphStyle *style =
-      [typing[NSParagraphStyleAttributeName] mutableCopy]
-          ?: [NSMutableParagraphStyle new];
+      [typing[NSParagraphStyleAttributeName] mutableCopy];
 
   style.alignment = alignment;
   typing[NSParagraphStyleAttributeName] = style;

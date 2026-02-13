@@ -57,11 +57,15 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
 
   _cachedHeadIntent = headIntent;
 
-  NSMutableParagraphStyle *pStyle = [NSMutableParagraphStyle new];
+  NSMutableParagraphStyle *pStyle =
+      [self->_input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+          mutableCopy];
   pStyle.textLists = TextLists;
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
   pStyle.tailIndent = DefaultListTailIndent;
+  pStyle.paragraphSpacing = 0;
+  pStyle.paragraphSpacingBefore = 0;
   _cachedAttributes = pStyle;
   return _cachedAttributes;
 }
@@ -167,6 +171,8 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
   CGFloat headIntent = [self getHeadIndent];
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
+  pStyle.paragraphSpacing = 0;
+  pStyle.paragraphSpacingBefore = 0;
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
   _input->textView.typingAttributes = typingAttrs;
 }
@@ -181,6 +187,9 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
       [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
                                                range:range];
 
+  NSParagraphStyle *defaultParagraphStyle =
+      _input->defaultTypingAttributes[NSParagraphStyleAttributeName];
+
   [_input->textView.textStorage beginEditing];
 
   for (NSValue *value in paragraphs) {
@@ -194,8 +203,14 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
                   NSMutableParagraphStyle *pStyle =
                       [(NSParagraphStyle *)value mutableCopy];
                   pStyle.textLists = @[];
-                  pStyle.headIndent = 0;
-                  pStyle.firstLineHeadIndent = 0;
+                  pStyle.headIndent = defaultParagraphStyle.headIndent;
+                  pStyle.firstLineHeadIndent =
+                      defaultParagraphStyle.firstLineHeadIndent;
+                  pStyle.tailIndent = defaultParagraphStyle.tailIndent;
+                  pStyle.paragraphSpacing =
+                      defaultParagraphStyle.paragraphSpacing;
+                  pStyle.paragraphSpacingBefore =
+                      defaultParagraphStyle.paragraphSpacingBefore;
                   [_input->textView.textStorage
                       addAttribute:NSParagraphStyleAttributeName
                              value:pStyle
@@ -211,8 +226,11 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
   NSMutableParagraphStyle *pStyle =
       [typingAttrs[NSParagraphStyleAttributeName] mutableCopy];
   pStyle.textLists = @[];
-  pStyle.headIndent = 0;
-  pStyle.firstLineHeadIndent = 0;
+  pStyle.headIndent = defaultParagraphStyle.headIndent;
+  pStyle.firstLineHeadIndent = defaultParagraphStyle.firstLineHeadIndent;
+  pStyle.tailIndent = defaultParagraphStyle.tailIndent;
+  pStyle.paragraphSpacing = defaultParagraphStyle.paragraphSpacing;
+  pStyle.paragraphSpacingBefore = defaultParagraphStyle.paragraphSpacingBefore;
   typingAttrs[NSParagraphStyleAttributeName] = pStyle;
   _input->textView.typingAttributes = typingAttrs;
 }

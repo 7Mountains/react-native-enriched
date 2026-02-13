@@ -2,6 +2,7 @@
 #import "BaseStyleProtocol.h"
 #import "ContentParams.h"
 #import "DividerAttachment.h"
+#import "EnrichedHeadingLevel.h"
 #import "ImageData.h"
 #import "LinkData.h"
 #import "MentionParams.h"
@@ -76,6 +77,8 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (void)addAttributes:(NSRange)range
     withTypingAttributes:(BOOL)withTypingAttributes;
++ (EnrichedHeadingLevel)headingLevel;
+- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 @end
 
 @interface H1Style : HeadingStyleBase

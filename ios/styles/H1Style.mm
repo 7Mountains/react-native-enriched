@@ -11,6 +11,9 @@
 + (const char *)tagName {
   return "h1";
 }
++ (EnrichedHeadingLevel)headingLevel {
+  return EnrichedHeadingH1;
+}
 - (CGFloat)getHeadingFontSize {
   return [((EnrichedTextInputView *)input)->config h1FontSize];
 }
