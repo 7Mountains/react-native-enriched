@@ -184,7 +184,7 @@
   if (!color)
     return NO;
 
-  if (color == _input->config.primaryColor)
+  if ([color isEqualToColor:_input->config.primaryColor])
     return NO;
 
   return ![self isColorOwnedByOtherStyle:color attributes:attrs range:range];
