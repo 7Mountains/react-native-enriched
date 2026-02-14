@@ -164,7 +164,8 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                         NSDictionary *attrs = [input->textView.textStorage
                             attributesAtIndex:safeRange.location
                                effectiveRange:nil];
-
+                        NSParagraphStyle *paragraphStyle =
+                            attrs[NSParagraphStyleAttributeName];
                         id value = attrs[[BlockQuoteStyle attributeKey]];
                         if (![style styleCondition:value
                                              range:NSMakeRange(
@@ -193,7 +194,9 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                                          BOOL *stop) {
                                                        CGFloat y =
                                                            origin.y +
-                                                           rect.origin.y;
+                                                           rect.origin.y +
+                                                           paragraphStyle
+                                                               .paragraphSpacingBefore;
                                                        CGFloat textLeft =
                                                            origin.x +
                                                            rect.origin.x +
