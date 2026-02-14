@@ -429,6 +429,9 @@ export default function EditorScreen() {
               setParagraphAlignment(e.nativeEvent.alignment);
               console.log(e.nativeEvent.alignment);
             }}
+            onCheckboxPress={(e) => {
+              console.log(e.nativeEvent.isChecked);
+            }}
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}

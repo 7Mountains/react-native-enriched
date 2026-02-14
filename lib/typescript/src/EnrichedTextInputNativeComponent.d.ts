@@ -7,6 +7,9 @@ export interface OnChangeTextEvent {
 export interface OnChangeHtmlEvent {
     value: string;
 }
+export interface CheckboxPressEvent {
+    isChecked: boolean;
+}
 export interface OnChangeStateEvent {
     alignment: {
         isActive: boolean;
@@ -314,6 +317,7 @@ export interface NativeProps extends ViewProps {
     onColorChangeInSelection?: DirectEventHandler<OnChangeColorEvent>;
     onParagraphAlignmentChange?: DirectEventHandler<OnParagraphAlignmentChangeEvent>;
     onInputScroll?: DirectEventHandler<OnScrollEvent>;
+    onCheckboxPress?: DirectEventHandler<CheckboxPressEvent>;
     color?: ColorValue;
     fontSize?: Float;
     fontFamily?: string;

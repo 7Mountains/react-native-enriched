@@ -18,6 +18,7 @@ export type {
   OnChangeColorEvent,
   OnParagraphAlignmentChangeEvent,
   Cookie,
+  CheckboxPressEvent,
 } from './EnrichedTextInputNativeComponent';
 
 export { default as useReanimatedScrollOffset } from './hooks/useReanimatedScrollOffset';

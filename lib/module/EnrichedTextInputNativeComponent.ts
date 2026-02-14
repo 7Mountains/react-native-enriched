@@ -21,6 +21,10 @@ export interface OnChangeHtmlEvent {
   value: string;
 }
 
+export interface CheckboxPressEvent {
+  isChecked: boolean;
+}
+
 export interface OnChangeStateEvent {
   alignment: {
     isActive: boolean;
@@ -336,6 +340,7 @@ export interface NativeProps extends ViewProps {
   onColorChangeInSelection?: DirectEventHandler<OnChangeColorEvent>;
   onParagraphAlignmentChange?: DirectEventHandler<OnParagraphAlignmentChangeEvent>;
   onInputScroll?: DirectEventHandler<OnScrollEvent>;
+  onCheckboxPress?: DirectEventHandler<CheckboxPressEvent>;
 
   // Style related props - used for generating proper setters in component's manager
   // These should not be passed as regular props

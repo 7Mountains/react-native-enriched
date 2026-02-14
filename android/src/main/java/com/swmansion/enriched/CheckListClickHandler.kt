@@ -2,12 +2,31 @@ package com.swmansion.enriched
 
 import android.text.Spannable
 import android.view.MotionEvent
+import com.facebook.react.bridge.ReactContext
+import com.facebook.react.uimanager.UIManagerHelper
+import com.swmansion.enriched.events.OnCheckboxPressEvent
+import com.swmansion.enriched.events.OnScrollEvent
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 
 class CheckListClickHandler(
   private val view: EnrichedTextInputView,
 ) {
+  private fun dispatchOnCheckboxPressEvent(isChecked: Boolean) {
+    val context = view.context as ReactContext
+    val surfaceId = UIManagerHelper.getSurfaceId(context)
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
+    val event =
+      OnCheckboxPressEvent(
+        surfaceId,
+        view.id,
+        isChecked,
+        view.experimentalSynchronousEvents,
+      )
+
+    dispatcher?.dispatchEvent(event)
+  }
+
   fun handleTouch(event: MotionEvent): Boolean {
     val text = view.text as? Spannable ?: return false
     val layout = view.layout ?: return false
@@ -52,6 +71,7 @@ class CheckListClickHandler(
 
     // toggle state
     span.toggleChecked()
+    dispatchOnCheckboxPressEvent(span.isChecked)
     view.redrawSpan(span)
 
     val (_, paragraphEnd) = text.getParagraphBounds(offset, offset)

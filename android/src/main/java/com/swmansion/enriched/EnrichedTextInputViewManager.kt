@@ -23,6 +23,7 @@ import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.events.OnChangeSelectionEvent
 import com.swmansion.enriched.events.OnChangeStateEvent
 import com.swmansion.enriched.events.OnChangeTextEvent
+import com.swmansion.enriched.events.OnCheckboxPressEvent
 import com.swmansion.enriched.events.OnColorChangeEvent
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
@@ -83,6 +84,7 @@ class EnrichedTextInputViewManager :
     map.put(OnColorChangeEvent.EVENT_NAME, mapOf("registrationName" to OnColorChangeEvent.EVENT_NAME))
     map.put(OnAlignmentChangeEvent.EVENT_NAME, mapOf("registrationName" to OnAlignmentChangeEvent.EVENT_NAME))
     map.put(OnScrollEvent.TOP_EVENT_NAME, mapOf("registrationName" to OnScrollEvent.EVENT_NAME))
+    map.put(OnCheckboxPressEvent.EVENT_NAME, mapOf("registrationName" to OnCheckboxPressEvent.EVENT_NAME))
 
     return map
   }

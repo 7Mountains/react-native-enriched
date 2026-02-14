@@ -873,6 +873,15 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
             }];
 }
 
+- (void)emitOnCheckboxPress:(BOOL)isChecked {
+  auto emitter = [self getEventEmitter];
+  if (emitter == nullptr) {
+    return;
+  }
+
+  emitter->onCheckboxPress({isChecked = isChecked});
+}
+
 // MARK: - Styles manipulation
 
 - (void)setColor:(NSString *)colorText {
@@ -1445,28 +1454,32 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [_attachmentBatcher enqueueAttachment:attachment];
 }
 
-- (void)onTextBlockTap:(TextBlockTapGestureRecognizer *)gr {
-  if (gr.state != UIGestureRecognizerStateEnded)
+- (void)onTextBlockTap:(TextBlockTapGestureRecognizer *)gestrueRecognizer {
+  if (gestrueRecognizer.state != UIGestureRecognizerStateEnded)
     return;
   if (![self->textView isFirstResponder]) {
     [self->textView becomeFirstResponder];
   }
 
-  switch (gr.tapKind) {
+  switch (gestrueRecognizer.tapKind) {
 
   case TextBlockTapKindCheckbox: {
     CheckBoxStyle *checkboxStyle =
         (CheckBoxStyle *)stylesDict[@([CheckBoxStyle getStyleType])];
 
     if (checkboxStyle) {
-      [checkboxStyle toggleCheckedAt:(NSUInteger)gr.characterIndex];
+      [checkboxStyle
+          toggleCheckedAt:(NSUInteger)gestrueRecognizer.characterIndex];
+      BOOL isChecked =
+          [checkboxStyle isCheckedAt:gestrueRecognizer.characterIndex];
+      [self emitOnCheckboxPress:isChecked];
       [self anyTextMayHaveBeenModified];
     }
     break;
   }
 
   case TextBlockTapKindAttachment: {
-    NSInteger newLocation = gr.characterIndex + 1;
+    NSInteger newLocation = gestrueRecognizer.characterIndex + 1;
     newLocation = MIN(newLocation, self->textView.textStorage.length);
     self->textView.selectedRange = NSMakeRange(newLocation, 0);
     break;
