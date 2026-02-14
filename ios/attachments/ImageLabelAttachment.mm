@@ -82,7 +82,11 @@
   _needsRedraw = YES;
 
   _textSize = [_labelText size];
-  self.height = [self calculateHeight];
+  if (styles.height > 0) {
+    self.height = styles.height + _margin.top + _margin.bottom;
+  } else {
+    self.height = [self calculateHeight];
+  }
   self.image = MakeLoaderImage();
 
   [self loadAsync];
@@ -100,7 +104,20 @@
 #pragma mark - Drawing helpers
 
 - (CGRect)imageRectForContentRect:(CGRect)contentRect {
-  return ImageRect(contentRect, _imageWidth, _imageHeight);
+  CGFloat availableHeight = self.height - _margin.top - _margin.bottom;
+
+  CGFloat imageH;
+
+  if (_imageHeight == 0 || availableHeight < _imageHeight) {
+    imageH = availableHeight;
+  } else {
+    imageH = _imageHeight;
+  }
+
+  CGFloat x = contentRect.origin.x + _inset.left;
+  CGFloat y = contentRect.origin.y + _inset.top;
+
+  return CGRectMake(x, y, _imageWidth, imageH);
 }
 
 - (void)drawBackgroundInRect:(CGRect)contentRect {
@@ -156,8 +173,11 @@
   CGRect imageRect = [self imageRectForContentRect:contentRect];
 
   CGFloat textX = CGRectGetMaxX(imageRect) + _imageSpacing + _inset.left;
-  CGFloat textY =
-      contentRect.origin.y + (contentRect.size.height - _textSize.height) * 0.5;
+  CGFloat availableHeight =
+      contentRect.size.height - _inset.top - _inset.bottom;
+
+  CGFloat textY = contentRect.origin.y + _inset.top +
+                  (availableHeight - _textSize.height) * 0.5;
 
   [_labelText drawAtPoint:CGPointMake(textX, textY)];
 }
@@ -175,8 +195,7 @@
   return CGRectMake(0, 0, width, self.height);
 }
 
-#pragma mark - Rendering entry (with cache)
-
+#pragma mark - Rendering entry
 - (UIImage *)imageForBounds:(CGRect)bounds
               textContainer:(NSTextContainer *)textContainer
              characterIndex:(NSUInteger)charIndex {

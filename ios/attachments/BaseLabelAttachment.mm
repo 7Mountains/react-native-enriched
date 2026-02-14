@@ -20,6 +20,7 @@
   CGSize _textSize;
   UIImage *_cachedImage;
   CGSize _cachedImageSize;
+  CGFloat _height;
 }
 
 - (instancetype)initWithParams:(ContentParams *)params
@@ -46,6 +47,7 @@
   _borderWidth = styles.borderWidth;
   _borderStyleEnum = ParseBorderStyle(styles.borderStyle);
   _cornerRadius = styles.borderRadius;
+  _height = styles.height;
 
   _margin = UIEdgeInsetsMake(styles.marginTop, styles.marginLeft,
                              styles.marginBottom, styles.marginRight);
@@ -160,8 +162,9 @@
                       proposedLineFragment:(CGRect)lineFrag
                              glyphPosition:(CGPoint)position
                             characterIndex:(NSUInteger)charIndex {
-  CGFloat height = _textSize.height + _inset.top + _inset.bottom +
-                   _borderWidth * 2 + _margin.top + _margin.bottom;
+  CGFloat height = _height
+                       ?: _textSize.height + _inset.top + _inset.bottom +
+                              _borderWidth * 2 + _margin.top + _margin.bottom;
 
   return (CGRect){.origin = CGPointZero,
                   .size = CGSizeMake(lineFrag.size.width, ceil(height))};

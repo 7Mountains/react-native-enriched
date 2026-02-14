@@ -93,7 +93,7 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 1) => {
+const generateHugeHtml = (repeat = 10) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -107,10 +107,6 @@ const generateHugeHtml = (repeat = 1) => {
   // };
 
   for (let i = 0; i < repeat; i++) {
-    // const col = colorAt(i);
-    const imgW = 200 + (i % 5) * 40;
-    const imgH = 100 + (i % 3) * 30;
-
     parts.push(
       `<h1 alignment="center">Heading ${i + 1}</h1>`,
       `<p><a href="test.com">test link</a> <mention type="channel" indicator="@" text="@test">@test</mention> This is a paragraph with some <b>bold</b>, <i>italic</i>, <u>underline</u>, and <s>strikethrough</s> text. Here's some inline code:</p>`,
@@ -124,7 +120,8 @@ const generateHugeHtml = (repeat = 1) => {
       `<ol><li>Unordered list item ${i + 1}.1</li><li>Unordered list item ${i + 1}.2</li></ol>`,
       `<checklist checked="${i % 2 === 0}">Check list item ${i + 1}</checklist>`,
       `<blockquote>This is a block quote for item ${i + 1}.</blockquote>`,
-      `\n<content type="image" src="https://picsum.photos/200/300" text="Test text" width="${Math.min(imgW, 300)}" height="${imgH}" />`
+      `\n<content type="image" src="https://picsum.photos/200/300" text="Test text" />`,
+      `\n<content type="placeholder" src="${Image.resolveAssetSource(require('../assets/placeholder.png')).uri}" text="Test text" />`
     );
   }
 
@@ -602,8 +599,6 @@ const htmlStyle: HtmlStyle = {
       textColor: 'black',
       backgroundColor: 'lightgray',
       borderRadius: 4,
-      paddingTop: 20,
-      paddingBottom: 20,
       marginTop: 4,
       marginBottom: 4,
       paddingLeft: 0,
@@ -612,7 +607,8 @@ const htmlStyle: HtmlStyle = {
       imageBorderRadiusBottomLeft: 4,
       imageResizeMode: 'stretch',
       imageWidth: 50,
-      imageHeight: 56,
+      height: 50,
+      imageHeight: 50,
       fontSize: 14,
       fontWeight: '900',
       fallbackImageURI: Image.resolveAssetSource(
@@ -636,23 +632,15 @@ const htmlStyle: HtmlStyle = {
       textColor: 'blue',
       borderStyle: 'dotted',
       borderRadius: 4,
-      paddingTop: 14,
-      paddingBottom: 14,
-      marginTop: 8,
-      marginBottom: 8,
-      imageWidth: 50,
+      height: 50,
       imageBorderRadiusTopLeft: 4,
       imageBorderRadiusBottomLeft: 4,
-      imageResizeMode: 'cover',
-    },
-    test: {
-      borderColor: 'red',
-      borderWidth: 1,
-      paddingTop: 10,
-      paddingBottom: 10,
-      borderRadius: 8,
-      borderStyle: 'dashed',
-      textColor: 'blue',
+      imageResizeMode: 'stretch',
+      imageWidth: 50,
+      imageHeight: 50,
+      fallbackImageURI: Image.resolveAssetSource(
+        require('../assets/placeholder.png')
+      ).uri,
     },
   },
   img: {

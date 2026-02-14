@@ -5,8 +5,19 @@
 @interface ContentStyleProps : NSObject
 
 @property UIColor *borderColor;
+@property UIColor *borderTopColor;
+@property UIColor *borderBottomColor;
+@property UIColor *borderRightColor;
+@property UIColor *borderLeftColor;
+
 @property CGFloat borderWidth;
+@property CGFloat borderLeftWidth;
+@property CGFloat borderRightWidth;
+@property CGFloat borderTopWidth;
+@property CGFloat borderBottomWidth;
+
 @property NSString *borderStyle;
+
 @property CGFloat borderRadius;
 
 @property UIColor *textColor;
