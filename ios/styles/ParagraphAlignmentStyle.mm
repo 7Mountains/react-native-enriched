@@ -279,6 +279,11 @@
 
 - (void)addAttributes:(NSRange)range {
 }
+
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+}
+
 - (void)removeAttributes:(NSRange)range {
 }
 

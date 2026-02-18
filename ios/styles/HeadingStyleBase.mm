@@ -175,6 +175,43 @@
   }
 }
 
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+  NSArray *paragraphs =
+      [ParagraphsUtils getSeparateParagraphsRangesInAttributedString:string
+                                                               range:range];
+  CGFloat fontSize = [[[self typedInput]->config primaryFontSize] floatValue];
+  for (NSValue *value in paragraphs) {
+    NSRange paragraphRange = [value rangeValue];
+    [string enumerateAttribute:NSParagraphStyleAttributeName
+                       inRange:paragraphRange
+                       options:0
+                    usingBlock:^(id _Nullable value, NSRange range,
+                                 BOOL *_Nonnull stop) {
+                      EnrichedParagraphStyle *paragraphStyle =
+                          [(EnrichedParagraphStyle *)value mutableCopy];
+                      paragraphStyle.headingLevel = EnrichedHeadingNone;
+                      [string addAttribute:NSParagraphStyleAttributeName
+                                     value:paragraphStyle
+                                     range:range];
+                    }];
+    [string enumerateAttribute:NSFontAttributeName
+                       inRange:paragraphRange
+                       options:0
+                    usingBlock:^(id _Nullable value, NSRange range,
+                                 BOOL *_Nonnull stop) {
+                      UIFont *newFont =
+                          [(UIFont *)value copyWithFontSize:fontSize];
+                      if ([self isHeadingBold]) {
+                        newFont = [newFont removeBold];
+                      }
+                      [string addAttribute:NSFontAttributeName
+                                     value:newFont
+                                     range:range];
+                    }];
+  }
+}
+
 // we need to remove the style from the whole paragraph
 - (void)removeAttributes:(NSRange)range {
   NSArray *paragraphs =
@@ -182,50 +219,18 @@
                                                range:range];
 
   EnrichedTextInputView *input = [self typedInput];
+  NSTextStorage *textStorage = input->textView.textStorage;
 
-  [input->textView.textStorage beginEditing];
-  for (NSValue *value in paragraphs) {
-    NSRange paragraphRange = [value rangeValue];
-    [input->textView.textStorage
-        enumerateAttribute:NSParagraphStyleAttributeName
-                   inRange:paragraphRange
-                   options:0
-                usingBlock:^(id _Nullable value, NSRange range,
-                             BOOL *_Nonnull stop) {
-                  EnrichedParagraphStyle *paragraphStyle =
-                      [(EnrichedParagraphStyle *)value mutableCopy];
-                  paragraphStyle.headingLevel = EnrichedHeadingNone;
-                  [input->textView.textStorage
-                      addAttribute:NSParagraphStyleAttributeName
-                             value:paragraphStyle
-                             range:range];
-                }];
-    [input->textView.textStorage
-        enumerateAttribute:NSFontAttributeName
-                   inRange:paragraphRange
-                   options:0
-                usingBlock:^(id _Nullable value, NSRange range,
-                             BOOL *_Nonnull stop) {
-                  UIFont *newFont = [(UIFont *)value
-                      copyWithFontSize:[[[self typedInput]->config
-                                               primaryFontSize] floatValue]];
-                  if ([self isHeadingBold]) {
-                    newFont = [newFont removeBold];
-                  }
-                  [input->textView.textStorage addAttribute:NSFontAttributeName
-                                                      value:newFont
-                                                      range:range];
-                }];
-  }
-  [[self typedInput]->textView.textStorage endEditing];
+  [textStorage beginEditing];
+  [self removeAttributesFromAttributedString:textStorage range:range];
+  [textStorage endEditing];
 
   // typing attributes still need to be removed
   UIFont *currentFontAttr =
-      (UIFont *)[self typedInput]
-          ->textView.typingAttributes[NSFontAttributeName];
+      (UIFont *)input->textView.typingAttributes[NSFontAttributeName];
   if (currentFontAttr != nullptr) {
     NSMutableDictionary *newTypingAttrs =
-        [[self typedInput]->textView.typingAttributes mutableCopy];
+        [input->textView.typingAttributes mutableCopy];
     UIFont *newFont = [currentFontAttr
         copyWithFontSize:[[[self typedInput]->config primaryFontSize]
                              floatValue]];

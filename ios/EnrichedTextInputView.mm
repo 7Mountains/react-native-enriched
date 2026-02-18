@@ -7,12 +7,16 @@
 #import "EnrichedCookieManager.h"
 #import "EnrichedCookiesOperators.h"
 #import "EnrichedParagraphStyle.h"
+#import "EnrichedTextClipboardHandler.h"
 #import "EnrichedTextConfigBuilder.h"
 #import "EnrichedTextStyleFactory.h"
+#import "EnrichedTextViewClipboardDelegate.h"
+#import "EnrichedTextViewLayoutDelegate.h"
 #import "InsetsOperators.h"
 #import "LayoutManagerExtension.h"
 #import "NSString+Autocapitalization.h"
 #import "ParagraphAttributesUtils.h"
+#import "ParagraphsUtils.h"
 #import "StringExtension.h"
 #import "Strings.h"
 #import "StyleHeaders.h"
@@ -31,8 +35,9 @@
 
 using namespace facebook::react;
 
-@interface EnrichedTextInputView () <RCTEnrichedTextInputViewViewProtocol,
-                                     UITextViewDelegate, NSObject>
+@interface EnrichedTextInputView () <
+    RCTEnrichedTextInputViewViewProtocol, UITextViewDelegate,
+    EnrichedTextViewClipboardDelegate, EnrichedTextViewLayoutDelegate, NSObject>
 @end
 
 #define GET_STYLE_STATE(TYPE_ENUM)                                             \
@@ -44,7 +49,6 @@ using namespace facebook::react;
 
 @implementation EnrichedTextInputView {
   EnrichedTextInputViewShadowNode::ConcreteState::Shared _state;
-  int _componentViewHeightUpdateCounter;
   NSMutableSet<NSNumber *> *_activeStyles;
   NSMutableSet<NSNumber *> *_blockedStyles;
   LinkData *_recentlyActiveLinkData;
@@ -64,6 +68,7 @@ using namespace facebook::react;
   BOOL _emitChangeText;
   BOOL _emitOnScroll;
   EnrichedCommandHandler *_commandHandler;
+  EnrichedTextClipboardHandler *_clipboardHandler;
   UIEdgeInsets _customContentInsets;
   UIEdgeInsets _layoutInsets;
 }
@@ -100,7 +105,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)setDefaults {
-  _componentViewHeightUpdateCounter = 0;
   _activeStyles = [[NSMutableSet alloc] initWithCapacity:stylesDict.count];
   _blockedStyles = [[NSMutableSet alloc] initWithCapacity:stylesDict.count];
   _recentlyActiveLinkRange = NSMakeRange(0, 0);
@@ -127,6 +131,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _commandHandler = [[EnrichedCommandHandler alloc] initWithInput:self];
   _customContentInsets = UIEdgeInsetsZero;
   _layoutInsets = UIEdgeInsetsZero;
+  _clipboardHandler = [[EnrichedTextClipboardHandler alloc] initWithInput:self];
 }
 
 - (void)setupTextView {
@@ -135,8 +140,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   textView.textContainerInset = UIEdgeInsetsZero;
   textView.textContainer.lineFragmentPadding = 0;
   textView.delegate = self;
-  textView.input = self;
+  textView.clipboardDelegate = self;
   textView.layoutManager.input = self;
+  textView.layoutDelegate = self;
   textView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
@@ -152,6 +158,21 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   [textView addGestureRecognizer:blockTapGesture];
+}
+
+- (void)replaceWholeWithString:(NSString *)string {
+  if ([parser isHtmlString:string]) {
+    NSMutableAttributedString *inserted = [parser attributedFromHtml:string];
+
+    NSTextStorage *storage = self->textView.textStorage;
+
+    [storage beginEditing];
+    [storage setAttributedString:inserted];
+    [storage endEditing];
+  } else {
+    textView.text = string;
+  }
+  textView.selectedRange = NSRange(textView.textStorage.string.length, 0);
 }
 
 // MARK: - Props
@@ -233,10 +254,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       // no emitting during styles reload
       blockEmitting = YES;
 
-      if (currentHtml != nullptr) {
-        [parser replaceWholeFromHtml:currentHtml
-            notifyAnyTextMayHaveBeenModified:!isFirstMount];
-      }
+      [self replaceWholeWithString:currentHtml];
 
       blockEmitting = NO;
     }
@@ -297,18 +315,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // default value - must be set before placeholder to make sure it correctly
   // shows on first mount
   if (defaultValueChanged) {
-    NSString *newDefaultValue =
-        [NSString fromCppString:newViewProps.defaultValue];
-
-    if (newDefaultValue == nullptr) {
-      // just plain text
-      textView.text = newDefaultValue;
-    } else {
-      // we've got some seemingly proper html
-      [parser replaceWholeFromHtml:newDefaultValue
-          notifyAnyTextMayHaveBeenModified:!isFirstMount];
-    }
-    textView.selectedRange = NSRange(textView.textStorage.string.length, 0);
+    [self replaceWholeWithString:[NSString
+                                     fromCppString:newViewProps.defaultValue]];
   }
 
   // placeholderTextColor
@@ -651,12 +659,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     textView.text = value;
   } else {
     // we've got some seemingly proper html
-    [parser replaceWholeFromHtml:value notifyAnyTextMayHaveBeenModified:YES];
+    [self replaceWholeWithString:value];
   }
 
   // set recentlyChangedRange and check for changes
   recentlyChangedRange = NSMakeRange(0, textView.textStorage.string.length);
-  textView.selectedRange = NSRange(textView.textStorage.string.length, 0);
   [self anyTextMayHaveBeenModified];
 }
 
@@ -1263,38 +1270,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
-- (BOOL)isReadOnlyParagraphAtLocation:(NSUInteger)location {
-  NSTextStorage *storage = textView.textStorage;
-  NSUInteger length = storage.length;
-
-  if (length == 0)
-    return NO;
-
-  if (location > 0) {
-    id left = [storage attribute:ReadOnlyParagraphKey
-                         atIndex:location - 1
-                  effectiveRange:nil];
-    if (left)
-      return YES;
-  }
-
-  if (location < length) {
-    id right = [storage attribute:ReadOnlyParagraphKey
-                          atIndex:location
-                   effectiveRange:nil];
-    if (right)
-      return YES;
-  }
-
-  return NO;
-}
-
 - (bool)textView:(UITextView *)textView
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text {
 
   if (![text isEqualToString:NewLine] &&
-      [self isReadOnlyParagraphAtLocation:range.location]) {
+      [ParagraphsUtils isReadOnlyParagraphAtLocation:textView.textStorage
+                                            location:range.location]) {
     if (text.length == 0)
       return YES;
     return NO;
@@ -1397,6 +1379,35 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [self anyTextMayHaveBeenModified];
 }
 
+// MARK: - Clipboard delegate methods
+
+- (void)handleCopyFromTextView:(UITextView *)textView sender:(id)sender {
+  [_clipboardHandler copy];
+}
+
+- (void)handlePasteIntoTextView:(UITextView *)textView sender:(id)sender {
+  blockEmitting = YES;
+  [_clipboardHandler paste];
+  blockEmitting = NO;
+  [self anyTextMayHaveBeenModified];
+}
+
+- (void)handleCutFromTextView:(UITextView *)textView sender:(id)sender {
+  if (textView.selectedRange.length == 0) {
+    return;
+  }
+  blockEmitting = YES;
+  [_clipboardHandler cut];
+  blockEmitting = NO;
+  [self anyTextMayHaveBeenModified];
+}
+
+// MARK: - Layout delegate methods
+
+- (void)sizeDidChange:(CGSize)newSize {
+  [self commitSize:newSize];
+}
+
 // MARK: - Scroll delegate methods
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -1453,6 +1464,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)mediaAttachmentDidUpdate:(NSTextAttachment *)attachment {
   [_attachmentBatcher enqueueAttachment:attachment];
 }
+
+// MARK: - Text gestures
 
 - (void)onTextBlockTap:(TextBlockTapGestureRecognizer *)gestrueRecognizer {
   if (gestrueRecognizer.state != UIGestureRecognizerStateEnded)

@@ -135,10 +135,15 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
   CONTENTSTYLE_NOOP();
 }
 
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+  [string removeAttribute:NSAttachmentAttributeName range:range];
+}
+
 - (void)removeAttributes:(NSRange)range {
   NSTextStorage *textStorage = _input->textView.textStorage;
   [textStorage beginEditing];
-  [textStorage removeAttribute:NSAttachmentAttributeName range:range];
+  [self removeAttributesFromAttributedString:textStorage range:range];
   [textStorage endEditing];
 }
 

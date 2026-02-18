@@ -9,8 +9,7 @@
 - (void)parseToHTMLAsync:(BOOL)prettify
               completion:(void (^_Nonnull)(NSString *_Nullable html,
                                            NSError *_Nullable error))completion;
-- (void)replaceWholeFromHtml:(NSString *_Nonnull)html
-    notifyAnyTextMayHaveBeenModified:(BOOL)notifyAnyTextMayHaveBeenModified;
-- (void)replaceFromHtml:(NSString *_Nonnull)html range:(NSRange)range;
-- (void)insertFromHtml:(NSString *_Nonnull)html location:(NSInteger)location;
+- (NSMutableAttributedString *_Nonnull)attributedFromHtml:
+    (NSString *_Nonnull)html;
+- (BOOL)isHtmlString:(NSString *_Nullable)string;
 @end

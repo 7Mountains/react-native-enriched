@@ -180,43 +180,49 @@ static NSArray<NSTextList *> *const TextLists = @[ bullet ];
   [self addAttributes:_input->textView.selectedRange];
 }
 
-- (void)removeAttributes:(NSRange)range {
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
   NSArray *paragraphs =
-      [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
-                                               range:range];
+      [ParagraphsUtils getSeparateParagraphsRangesInAttributedString:string
+                                                               range:range];
+  NSParagraphStyle *defaultParagraphStyle =
+      _input->defaultTypingAttributes[NSParagraphStyleAttributeName];
+  for (NSValue *val in paragraphs) {
+    NSRange pRange = val.rangeValue;
+    [string enumerateAttribute:NSParagraphStyleAttributeName
+                       inRange:pRange
+                       options:0
+                    usingBlock:^(id _Nullable value, NSRange range,
+                                 BOOL *_Nonnull stop) {
+                      NSMutableParagraphStyle *pStyle =
+                          [(NSParagraphStyle *)value mutableCopy];
+                      pStyle.textLists = @[];
+                      pStyle.headIndent = defaultParagraphStyle.headIndent;
+                      pStyle.firstLineHeadIndent =
+                          defaultParagraphStyle.firstLineHeadIndent;
+                      pStyle.tailIndent = defaultParagraphStyle.tailIndent;
+                      pStyle.paragraphSpacing =
+                          defaultParagraphStyle.paragraphSpacing;
+                      pStyle.paragraphSpacingBefore =
+                          defaultParagraphStyle.paragraphSpacingBefore;
+                      [string addAttribute:NSParagraphStyleAttributeName
+                                     value:pStyle
+                                     range:range];
+                    }];
+  }
+}
 
-  [_input->textView.textStorage beginEditing];
+- (void)removeAttributes:(NSRange)range {
+  NSTextStorage *storage = _input->textView.textStorage;
+
+  [storage beginEditing];
+
+  [self removeAttributesFromAttributedString:storage range:range];
+
+  [storage endEditing];
 
   NSParagraphStyle *defaultParagraphStyle =
       _input->defaultTypingAttributes[NSParagraphStyleAttributeName];
-
-  for (NSValue *value in paragraphs) {
-    NSRange range = [value rangeValue];
-    [_input->textView.textStorage
-        enumerateAttribute:NSParagraphStyleAttributeName
-                   inRange:range
-                   options:0
-                usingBlock:^(id _Nullable value, NSRange range,
-                             BOOL *_Nonnull stop) {
-                  NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
-                  pStyle.textLists = @[];
-                  pStyle.headIndent = defaultParagraphStyle.headIndent;
-                  pStyle.firstLineHeadIndent =
-                      defaultParagraphStyle.firstLineHeadIndent;
-                  pStyle.tailIndent = defaultParagraphStyle.tailIndent;
-                  pStyle.paragraphSpacing =
-                      defaultParagraphStyle.paragraphSpacing;
-                  pStyle.paragraphSpacingBefore =
-                      defaultParagraphStyle.paragraphSpacingBefore;
-                  [_input->textView.textStorage
-                      addAttribute:NSParagraphStyleAttributeName
-                             value:pStyle
-                             range:range];
-                }];
-  }
-
-  [_input->textView.textStorage endEditing];
 
   // also remove typing attributes
   NSMutableDictionary *typingAttrs =

@@ -93,7 +93,7 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 10) => {
+const generateHugeHtml = (repeat = 1) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -115,13 +115,13 @@ const generateHugeHtml = (repeat = 10) => {
       `<h4>Subheading ${i + 1}</h4>`,
       `<h5>Subheading ${i + 1}</h5>`,
       `<h6>Subheading ${i + 1}</h6>`,
+      `<hr>`,
       `<p><font color="#ff0000"> This is a colored paragraph.</font></p>`,
       `<ul><li>Ordered list item ${i + 1}.1</li><li>Ordered list item ${i + 1}.2</li></ul>`,
       `<ol><li>Unordered list item ${i + 1}.1</li><li>Unordered list item ${i + 1}.2</li></ol>`,
       `<checklist checked="${i % 2 === 0}">Check list item ${i + 1}</checklist>`,
       `<blockquote>This is a block quote for item ${i + 1}.</blockquote>`,
-      `\n<content type="image" src="https://picsum.photos/200/300" text="Test text" />`,
-      `\n<content type="placeholder" src="${Image.resolveAssetSource(require('../assets/placeholder.png')).uri}" text="Test text" />`
+      `\n<content type="image" src="https://picsum.photos/200/300" text="Test text" />`
     );
   }
 

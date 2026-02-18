@@ -68,10 +68,14 @@
   _input->textView.typingAttributes = newTypingAttrs;
 }
 
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+  [string removeAttribute:NSStrikethroughStyleAttributeName range:range];
+}
+
 - (void)removeAttributes:(NSRange)range {
-  [_input->textView.textStorage
-      removeAttribute:NSStrikethroughStyleAttributeName
-                range:range];
+  [self removeAttributesFromAttributedString:_input->textView.textStorage
+                                       range:range];
 }
 
 - (void)removeTypingAttributes {

@@ -223,36 +223,37 @@ static NSArray<NSTextList *> *const UncheckedLists =
 
 #pragma mark - Remove Attributes
 
-- (void)removeAttributes:(NSRange)range {
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
   NSArray *paragraphs =
-      [ParagraphsUtils getSeparateParagraphsRangesIn:_input->textView
-                                               range:range];
-
-  [_input->textView.textStorage beginEditing];
-
+      [ParagraphsUtils getSeparateParagraphsRangesInAttributedString:string
+                                                               range:range];
   for (NSValue *val in paragraphs) {
     NSRange pRange = val.rangeValue;
-    [_input->textView.textStorage
-        enumerateAttribute:NSParagraphStyleAttributeName
-                   inRange:pRange
-                   options:0
-                usingBlock:^(id value, NSRange sub, BOOL *stop) {
-                  // reset paragraph style
-                  NSMutableParagraphStyle *pStyle =
-                      [(NSParagraphStyle *)value mutableCopy];
-                  [self resetParagraphStyle:pStyle];
+    [string enumerateAttribute:NSParagraphStyleAttributeName
+                       inRange:pRange
+                       options:0
+                    usingBlock:^(id value, NSRange sub, BOOL *stop) {
+                      NSMutableParagraphStyle *pStyle =
+                          [(NSParagraphStyle *)value mutableCopy];
+                      [self resetParagraphStyle:pStyle];
 
-                  [_input->textView.textStorage
-                      addAttribute:NSParagraphStyleAttributeName
-                             value:pStyle
-                             range:sub];
-                  [_input->textView.textStorage
-                      removeAttribute:NSBaselineOffsetAttributeName
-                                range:sub];
-                }];
+                      [string addAttribute:NSParagraphStyleAttributeName
+                                     value:pStyle
+                                     range:sub];
+                      [string removeAttribute:NSBaselineOffsetAttributeName
+                                        range:sub];
+                    }];
   }
+}
 
-  [_input->textView.textStorage endEditing];
+- (void)removeAttributes:(NSRange)range {
+  NSTextStorage *storage = _input->textView.textStorage;
+  [storage beginEditing];
+
+  [self removeAttributesFromAttributedString:storage range:range];
+
+  [storage endEditing];
 
   NSMutableParagraphStyle *pStyle = [self currentTypingParagraphStyle];
   [self resetParagraphStyle:pStyle];
