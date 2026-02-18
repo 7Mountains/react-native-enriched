@@ -94,6 +94,14 @@ class EnrichedSpanState(
     setTypingColor(color)
   }
 
+  fun setColorStartWithEventEmitting(
+    start: Int?,
+    color: Int?,
+  ) {
+    setColorStart(start, color)
+    emitStateChangeEvent()
+  }
+
   fun setAlignment(alignment: String?) {
     paragraphAlignment = alignment
     emitAlignmentChangeEvent(alignment)

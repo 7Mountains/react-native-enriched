@@ -1,7 +1,6 @@
 package com.swmansion.enriched.utils
 
 import android.text.Spannable
-import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.util.Log
