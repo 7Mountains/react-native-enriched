@@ -3,7 +3,6 @@ package com.swmansion.enriched.utils
 import android.text.Spannable
 import android.text.Spanned
 import com.swmansion.enriched.spans.EnrichedAlignmentSpan
-import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 
 object ParagraphSpanNormalizer {
@@ -76,7 +75,7 @@ object ParagraphSpanNormalizer {
 
       spannable.removeSpan(span)
 
-      val isWinner = (span === winner)
+      val isWinner = span === winner
 
       if (start < pStart) {
         val left = span.copy()

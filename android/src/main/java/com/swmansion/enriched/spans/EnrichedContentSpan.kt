@@ -14,13 +14,6 @@ import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
 import java.lang.ref.WeakReference
 
-data class ContentParams(
-  val text: String,
-  val type: String,
-  val src: String?,
-  val attributes: Map<String, String>?,
-)
-
 class EnrichedContentSpan(
   private val contentParams: ContentParams,
   private val htmlStyle: HtmlStyle,
@@ -128,5 +121,12 @@ class EnrichedContentSpan(
 
       return EnrichedContentSpan(params, htmlStyle)
     }
+
+    data class ContentParams(
+      val text: String,
+      val type: String,
+      val src: String?,
+      val attributes: Map<String, String>?,
+    )
   }
 }

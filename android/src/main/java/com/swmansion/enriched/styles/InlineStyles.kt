@@ -207,9 +207,9 @@ class InlineStyles(
     if (start == end) {
       val spanState = view.spanState
       if (spanState?.colorStart != null && spanState.typingColor == color) {
-        view.spanState.setColorStart(null, null)
+        view.spanState.setColorStartWithEventEmitting(null, null)
       } else {
-        view.spanState?.setColorStart(start, color)
+        view.spanState?.setColorStartWithEventEmitting(start, color)
       }
       return
     }
