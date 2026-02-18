@@ -105,37 +105,41 @@
   _input->textView.typingAttributes = newTypingAttrs;
 }
 
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+  InputConfig *config = _input->config;
+  UIColor *primaryColor = [config primaryColor];
+  [string removeAttribute:NSBackgroundColorAttributeName range:range];
+  [string addAttribute:NSForegroundColorAttributeName
+                 value:primaryColor
+                 range:range];
+  [string addAttribute:NSUnderlineColorAttributeName
+                 value:primaryColor
+                 range:range];
+  [string addAttribute:NSStrikethroughColorAttributeName
+                 value:primaryColor
+                 range:range];
+  [string enumerateAttribute:NSFontAttributeName
+                     inRange:range
+                     options:0
+                  usingBlock:^(id _Nullable value, NSRange range,
+                               BOOL *_Nonnull stop) {
+                    UIFont *font = (UIFont *)value;
+                    if (font != nullptr) {
+                      UIFont *newFont = [[[config primaryFont]
+                          withFontTraits:font] setSize:font.pointSize];
+                      [string addAttribute:NSFontAttributeName
+                                     value:newFont
+                                     range:range];
+                    }
+                  }];
+}
+
 - (void)removeAttributes:(NSRange)range {
-  [_input->textView.textStorage beginEditing];
-
-  [_input->textView.textStorage removeAttribute:NSBackgroundColorAttributeName
-                                          range:range];
-  [_input->textView.textStorage addAttribute:NSForegroundColorAttributeName
-                                       value:[_input->config primaryColor]
-                                       range:range];
-  [_input->textView.textStorage addAttribute:NSUnderlineColorAttributeName
-                                       value:[_input->config primaryColor]
-                                       range:range];
-  [_input->textView.textStorage addAttribute:NSStrikethroughColorAttributeName
-                                       value:[_input->config primaryColor]
-                                       range:range];
-  [_input->textView.textStorage
-      enumerateAttribute:NSFontAttributeName
-                 inRange:range
-                 options:0
-              usingBlock:^(id _Nullable value, NSRange range,
-                           BOOL *_Nonnull stop) {
-                UIFont *font = (UIFont *)value;
-                if (font != nullptr) {
-                  UIFont *newFont = [[[_input->config primaryFont]
-                      withFontTraits:font] setSize:font.pointSize];
-                  [_input->textView.textStorage addAttribute:NSFontAttributeName
-                                                       value:newFont
-                                                       range:range];
-                }
-              }];
-
-  [_input->textView.textStorage endEditing];
+  NSTextStorage *storage = _input->textView.textStorage;
+  [storage beginEditing];
+  [self removeAttributesFromAttributedString:storage range:range];
+  [storage endEditing];
 }
 
 - (void)removeTypingAttributes {

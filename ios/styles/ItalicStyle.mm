@@ -86,23 +86,28 @@
   }
 }
 
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+  [string enumerateAttribute:NSFontAttributeName
+                     inRange:range
+                     options:0
+                  usingBlock:^(id _Nullable value, NSRange range,
+                               BOOL *_Nonnull stop) {
+                    UIFont *font = (UIFont *)value;
+                    if (font != nullptr) {
+                      UIFont *newFont = [font removeItalic];
+                      [string addAttribute:NSFontAttributeName
+                                     value:newFont
+                                     range:range];
+                    }
+                  }];
+}
+
 - (void)removeAttributes:(NSRange)range {
-  [_input->textView.textStorage beginEditing];
-  [_input->textView.textStorage
-      enumerateAttribute:NSFontAttributeName
-                 inRange:range
-                 options:0
-              usingBlock:^(id _Nullable value, NSRange range,
-                           BOOL *_Nonnull stop) {
-                UIFont *font = (UIFont *)value;
-                if (font != nullptr) {
-                  UIFont *newFont = [font removeItalic];
-                  [_input->textView.textStorage addAttribute:NSFontAttributeName
-                                                       value:newFont
-                                                       range:range];
-                }
-              }];
-  [_input->textView.textStorage endEditing];
+  NSTextStorage *storage = _input->textView.textStorage;
+  [storage beginEditing];
+  [self removeAttributesFromAttributedString:storage range:range];
+  [storage endEditing];
 }
 
 - (void)removeTypingAttributes {

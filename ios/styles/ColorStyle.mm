@@ -108,6 +108,20 @@
 
 #pragma mark - Remove attributes
 
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+  NSUInteger max = MIN(NSMaxRange(range), string.length);
+  for (NSUInteger i = range.location; i < max; i++) {
+    UIColor *restoreColor = [self originalColorAtIndex:i];
+    NSDictionary *newAttributes = @{
+      NSForegroundColorAttributeName : restoreColor,
+      NSUnderlineColorAttributeName : restoreColor,
+      NSStrikethroughColorAttributeName : restoreColor,
+    };
+    [string addAttributes:newAttributes range:NSMakeRange(i, 1)];
+  }
+}
+
 - (void)removeAttributes:(NSRange)range {
   NSTextStorage *textStorage = _input->textView.textStorage;
   if (range.length == 0)
@@ -121,15 +135,7 @@
 
   [textStorage beginEditing];
 
-  for (NSUInteger i = range.location; i < max; i++) {
-    UIColor *restoreColor = [self originalColorAtIndex:i];
-    NSDictionary *newAttributes = @{
-      NSForegroundColorAttributeName : restoreColor,
-      NSUnderlineColorAttributeName : restoreColor,
-      NSStrikethroughColorAttributeName : restoreColor,
-    };
-    [textStorage addAttributes:newAttributes range:NSMakeRange(i, 1)];
-  }
+  [self removeAttributesFromAttributedString:textStorage range:range];
 
   [textStorage endEditing];
 }

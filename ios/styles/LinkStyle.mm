@@ -104,32 +104,35 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   // no-op for links
 }
 
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+  UIColor *primaryColor = [_input->config primaryColor];
+  [string removeAttribute:ManualLinkAttributeName range:range];
+  [string removeAttribute:AutomaticLinkAttributeName range:range];
+  [string addAttribute:NSForegroundColorAttributeName
+                 value:primaryColor
+                 range:range];
+  [string addAttribute:NSUnderlineColorAttributeName
+                 value:primaryColor
+                 range:range];
+  [string addAttribute:NSStrikethroughColorAttributeName
+                 value:primaryColor
+                 range:range];
+  if ([_input->config linkDecorationLine] == DecorationUnderline) {
+    [string removeAttribute:NSUnderlineStyleAttributeName range:range];
+  }
+}
+
 - (void)removeAttributes:(NSRange)range {
   NSArray<StylePair *> *links = [self findAllOccurences:range];
-  [_input->textView.textStorage beginEditing];
+  NSTextStorage *storage = _input->textView.textStorage;
+  [storage beginEditing];
   for (StylePair *pair in links) {
     NSRange linkRange =
         [self getFullLinkRangeAt:[pair.rangeValue rangeValue].location];
-    [_input->textView.textStorage removeAttribute:ManualLinkAttributeName
-                                            range:linkRange];
-    [_input->textView.textStorage removeAttribute:AutomaticLinkAttributeName
-                                            range:linkRange];
-    [_input->textView.textStorage addAttribute:NSForegroundColorAttributeName
-                                         value:[_input->config primaryColor]
-                                         range:linkRange];
-    [_input->textView.textStorage addAttribute:NSUnderlineColorAttributeName
-                                         value:[_input->config primaryColor]
-                                         range:linkRange];
-    [_input->textView.textStorage addAttribute:NSStrikethroughColorAttributeName
-                                         value:[_input->config primaryColor]
-                                         range:linkRange];
-    if ([_input->config linkDecorationLine] == DecorationUnderline) {
-      [_input->textView.textStorage
-          removeAttribute:NSUnderlineStyleAttributeName
-                    range:linkRange];
-    }
+    [self removeAttributesFromAttributedString:storage range:linkRange];
   }
-  [_input->textView.textStorage endEditing];
+  [storage endEditing];
 
   // adjust typing attributes as well
   NSMutableDictionary *newTypingAttrs =

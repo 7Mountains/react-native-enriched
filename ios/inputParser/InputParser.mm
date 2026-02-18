@@ -63,57 +63,8 @@
                  });
 }
 
-- (void)replaceWholeFromHtml:(NSString *)html
-    notifyAnyTextMayHaveBeenModified:(BOOL)notify {
-  NSMutableAttributedString *inserted = [self attributedFromHtml:html];
-
-  NSTextStorage *storage = _input->textView.textStorage;
-
-  [storage beginEditing];
-  [storage setAttributedString:inserted];
-  [storage endEditing];
-
-  if (notify) {
-    [_input anyTextMayHaveBeenModified];
-  }
-}
-
-- (void)replaceFromHtml:(NSString *)html range:(NSRange)range {
-  NSMutableAttributedString *inserted = [self attributedFromHtml:html];
-
-  NSTextStorage *storage = _input->textView.textStorage;
-
-  if (range.location > storage.length)
-    range.location = storage.length;
-  if (NSMaxRange(range) > storage.length)
-    range.length = storage.length - range.location;
-
-  [storage beginEditing];
-  [storage replaceCharactersInRange:range withAttributedString:inserted];
-  [storage endEditing];
-
-  _input->textView.typingAttributes = _input->defaultTypingAttributes;
-
-  [_input anyTextMayHaveBeenModified];
-}
-
-- (void)insertFromHtml:(NSString *)html location:(NSInteger)location {
-  NSMutableAttributedString *attributedString = [self attributedFromHtml:html];
-
-  NSTextStorage *storage = _input->textView.textStorage;
-
-  if (location > storage.length)
-    location = storage.length;
-
-  [storage beginEditing];
-  [storage insertAttributedString:attributedString atIndex:location];
-  [storage endEditing];
-
-  _input->textView.selectedRange =
-      NSMakeRange(location + attributedString.length, 0);
-  _input->textView.typingAttributes = _input->defaultTypingAttributes;
-
-  [_input anyTextMayHaveBeenModified];
+- (BOOL)isHtmlString:(NSString *)string {
+  return string != nil && [string hasPrefix:@"<html>"];
 }
 
 @end

@@ -19,6 +19,9 @@
                          attributes:
                              (NSDictionary<NSString *, NSString *> *_Nullable)
                                  attributes;
+- (void)removeAttributesFromAttributedString:
+            (NSMutableAttributedString *_Nonnull)string
+                                       range:(NSRange)range;
 - (void)removeAttributes:(NSRange)range;
 - (void)addTypingAttributes;
 - (void)removeTypingAttributes;

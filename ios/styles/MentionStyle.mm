@@ -124,38 +124,45 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   // no-op for mentions
 }
 
+- (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
+                                       range:(NSRange)range {
+  UIColor *primaryColor = [_input->config primaryColor];
+  [string removeAttribute:MentionAttributeName range:range];
+  [string addAttribute:NSForegroundColorAttributeName
+                 value:primaryColor
+                 range:range];
+  [string addAttribute:NSUnderlineColorAttributeName
+                 value:primaryColor
+                 range:range];
+  [string addAttribute:NSStrikethroughColorAttributeName
+                 value:primaryColor
+                 range:range];
+  [string removeAttribute:NSBackgroundColorAttributeName range:range];
+  if ([_input->config linkDecorationLine] == DecorationUnderline) {
+    [string removeAttribute:NSUnderlineStyleAttributeName range:range];
+  }
+}
+
 // we have to make sure all mentions get removed properly
 - (void)removeAttributes:(NSRange)range {
   BOOL someMentionHadUnderline = NO;
+  NSTextStorage *storage = _input->textView.textStorage;
 
   NSArray<StylePair *> *mentions = [self findAllOccurences:range];
-  [_input->textView.textStorage beginEditing];
+  [storage beginEditing];
   for (StylePair *pair in mentions) {
     NSRange mentionRange =
         [self getFullMentionRangeAt:[pair.rangeValue rangeValue].location];
-    [_input->textView.textStorage removeAttribute:MentionAttributeName
-                                            range:mentionRange];
-    [_input->textView.textStorage addAttribute:NSForegroundColorAttributeName
-                                         value:[_input->config primaryColor]
-                                         range:mentionRange];
-    [_input->textView.textStorage addAttribute:NSUnderlineColorAttributeName
-                                         value:[_input->config primaryColor]
-                                         range:mentionRange];
-    [_input->textView.textStorage addAttribute:NSStrikethroughColorAttributeName
-                                         value:[_input->config primaryColor]
-                                         range:mentionRange];
-    [_input->textView.textStorage removeAttribute:NSBackgroundColorAttributeName
-                                            range:mentionRange];
 
+    [self removeAttributesFromAttributedString:storage range:mentionRange];
     if ([self stylePropsWithParams:pair.styleValue].decorationLine ==
         DecorationUnderline) {
-      [_input->textView.textStorage
-          removeAttribute:NSUnderlineStyleAttributeName
-                    range:mentionRange];
+      [storage removeAttribute:NSUnderlineStyleAttributeName
+                         range:mentionRange];
       someMentionHadUnderline = YES;
     }
   }
-  [_input->textView.textStorage endEditing];
+  [storage endEditing];
 
   // remove typing attributes as well
   NSMutableDictionary *newTypingAttrs =
