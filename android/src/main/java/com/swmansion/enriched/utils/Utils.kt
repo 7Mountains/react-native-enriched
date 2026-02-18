@@ -79,7 +79,21 @@ fun Spannable.mergeSpannables(
   val safeStart = minOf(start, end)
   val safeEnd = maxOf(start, end)
 
-  if (builder.tryInsertAfterNonEditableTarget(safeStart, safeEnd, inserted)) {
+  val paragraphBounds = builder.getParagraphBounds(safeStart, safeEnd)
+
+  val (pStart, pEnd) = paragraphBounds
+
+  if (pStart == pEnd) {
+    builder.insert(pEnd, inserted)
+    return MergeResult(
+      text = builder,
+      insertedCharactersAmount = inserted.length,
+    )
+  }
+
+  if (builder.tryInsertNonEditableParagraph(safeStart, safeEnd, inserted) ||
+    builder.tryInsertAfterNonEditableTarget(safeStart, safeEnd, inserted)
+  ) {
     return MergeResult(
       text = builder,
       insertedCharactersAmount = 1 + inserted.length, // newline + text
@@ -93,8 +107,6 @@ fun Spannable.mergeSpannables(
       insertedCharactersAmount = 1 + inserted.length,
     )
   }
-
-  val paragraphBounds = builder.getParagraphBounds(safeStart, safeEnd)
 
   val targetParagraphSpans =
     getSpans(safeStart, safeStart, EnrichedParagraphSpan::class.java)
@@ -159,6 +171,24 @@ private fun SpannableStringBuilder.tryInsertAfterNonEditableTarget(
   if (!hasNonEditable) return false
 
   insertAfter(end, inserted)
+  return true
+}
+
+private fun SpannableStringBuilder.tryInsertNonEditableParagraph(
+  start: Int,
+  end: Int,
+  inserted: Spannable,
+): Boolean {
+  if (start != end) return false
+
+  val hasNonEditable = inserted.getSpans(0, 0, EnrichedNonEditableParagraphSpan::class.java).isNotEmpty()
+
+  if (!hasNonEditable) return false
+
+  val (_, pEnd) = getParagraphBounds(start, end)
+
+  insertAfter(pEnd, inserted)
+
   return true
 }
 
