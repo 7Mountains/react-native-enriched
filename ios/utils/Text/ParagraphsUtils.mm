@@ -21,33 +21,37 @@
 
 + (NSArray<NSValue *> *)getNonNewlineRangesIn:(UITextView *)textView
                                         range:(NSRange)range {
-  NSMutableArray<NSValue *> *nonNewlineRanges = [[NSMutableArray alloc] init];
   NSString *string = textView.textStorage.string;
+  NSMutableArray<NSValue *> *result = [NSMutableArray array];
 
-  NSUInteger lastRangeLocation = range.location;
+  NSCharacterSet *newlineSet = [NSCharacterSet newlineCharacterSet];
+
+  NSUInteger searchLocation = range.location;
   NSUInteger end = NSMaxRange(range);
 
-  for (NSUInteger i = range.location; i < end; i++) {
-    unichar currentChar = [string characterAtIndex:i];
-    if ([[NSCharacterSet newlineCharacterSet] characterIsMember:currentChar]) {
-      if (i > lastRangeLocation) {
-        [nonNewlineRanges
-            addObject:[NSValue
-                          valueWithRange:NSMakeRange(lastRangeLocation,
-                                                     i - lastRangeLocation)]];
-      }
-      lastRangeLocation = i + 1;
+  while (searchLocation < end) {
+    NSRange searchRange = NSMakeRange(searchLocation, end - searchLocation);
+
+    NSRange newlineRange = [string rangeOfCharacterFromSet:newlineSet
+                                                   options:0
+                                                     range:searchRange];
+
+    if (newlineRange.location == NSNotFound) {
+      [result addObject:[NSValue valueWithRange:searchRange]];
+      break;
     }
+
+    if (newlineRange.location > searchLocation) {
+      [result
+          addObject:[NSValue valueWithRange:NSMakeRange(searchLocation,
+                                                        newlineRange.location -
+                                                            searchLocation)]];
+    }
+
+    searchLocation = NSMaxRange(newlineRange);
   }
 
-  if (lastRangeLocation < end) {
-    [nonNewlineRanges
-        addObject:[NSValue
-                      valueWithRange:NSMakeRange(lastRangeLocation,
-                                                 end - lastRangeLocation)]];
-  }
-
-  return nonNewlineRanges;
+  return result;
 }
 
 + (BOOL)isReadOnlyParagraphAtLocation:(NSAttributedString *)attributedString
@@ -77,44 +81,25 @@
 
 + (NSArray<NSValue *> *)separateParagraphRangesInString:(NSString *)string
                                                   range:(NSRange)range {
-  if (string.length == 0) {
-    return @[];
-  }
-
   NSRange fullRange = [string paragraphRangeForRange:range];
-
   if (fullRange.length == 0) {
     return @[ [NSValue valueWithRange:fullRange] ];
   }
 
-  NSMutableArray<NSValue *> *results = [[NSMutableArray alloc] init];
+  NSMutableArray<NSValue *> *results = [NSMutableArray array];
 
-  NSUInteger lastStart = fullRange.location;
-  NSUInteger end = NSMaxRange(fullRange);
-
-  for (NSUInteger i = fullRange.location; i < end; i++) {
-    unichar currentChar = [string characterAtIndex:i];
-    if ([[NSCharacterSet newlineCharacterSet] characterIsMember:currentChar]) {
-      NSRange paragraphRange =
-          [string paragraphRangeForRange:NSMakeRange(lastStart, i - lastStart)];
-      [results addObject:[NSValue valueWithRange:paragraphRange]];
-      lastStart = i + 1;
-    }
-  }
-
-  if (lastStart < end) {
-    NSRange paragraphRange =
-        [string paragraphRangeForRange:NSMakeRange(lastStart, end - lastStart)];
-    [results addObject:[NSValue valueWithRange:paragraphRange]];
-  }
+  [string
+      enumerateSubstringsInRange:fullRange
+                         options:NSStringEnumerationByParagraphs |
+                                 NSStringEnumerationSubstringNotRequired
+                      usingBlock:^(
+                          NSString *_Nullable substring, NSRange substringRange,
+                          NSRange enclosingRange, BOOL *_Nonnull stop) {
+                        [results
+                            addObject:[NSValue valueWithRange:substringRange]];
+                      }];
 
   return results;
-}
-
-+ (NSAttributedString *)firstParagraph:(NSAttributedString *)attributedString {
-  NSString *string = attributedString.string;
-  NSRange range = [string paragraphRangeForRange:NSRange(0, 0)];
-  return [attributedString attributedSubstringFromRange:range];
 }
 
 @end
