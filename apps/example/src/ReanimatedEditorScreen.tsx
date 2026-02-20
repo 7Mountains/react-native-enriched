@@ -44,41 +44,41 @@ const generateHugeHtml = (repeat = 2) => {
       `\n<content type="image" text="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`
     );
 
-    // parts.push(
-    //   // Headings
-    //   `\n<h1>Section ${i + 1}</h1>`,
-    //   `\n<h2 alignment="center">Subsection ${i + 1}.1</h2>`,
-    //   `\n<h3>Topic ${i + 1}.1.a</h3>`, // Paragraph with mixed inline styles
-    //   `\n<p>This is a <b>bold</b> and <i>italic</i> paragraph with <u>underline</u>, ` +
-    //     `<s>strike</s>,` +
-    //     ` <font color="#ff0000">colored text</font>, ` +
-    //     `<a href="https://example.com/${i}">a link ${i}</a>, ` +
-    //     `<mention text="@alex_${i}" type="user" indicator="@">@alex_${i}</mention>, ` +
-    //     `<mention text="#general" type="channel" indicator="#" text="#general">#general</mention>, ` +
-    //     `and some plain text to bulk it up.</p>`,
+    parts.push(
+      // Headings
+      `\n<h1>Section ${i + 1}</h1>`,
+      `\n<h2 alignment="center">Subsection ${i + 1}.1</h2>`,
+      `\n<h3>Topic ${i + 1}.1.a</h3>`, // Paragraph with mixed inline styles
+      `\n<p>This is a <b>bold</b> and <i>italic</i> paragraph with <u>underline</u>, ` +
+        `<s>strike</s>,` +
+        ` <font color="#ff0000">colored text</font>, ` +
+        `<a href="https://example.com/${i}">a link ${i}</a>, ` +
+        `<mention text="@alex_${i}" type="user" indicator="@">@alex_${i}</mention>, ` +
+        `<mention text="#general" type="channel" indicator="#" text="#general">#general</mention>, ` +
+        `and some plain text to bulk it up.</p>`,
 
-    //   // Line break
-    //   `\n<hr>`,
+      // Line break
+      `\n<hr>`,
 
-    //   // Unordered list
-    //   `<ul>`,
-    //   `<li>bullet A ${i}</li>`,
-    //   `<li>bullet B ${i}</li>`,
-    //   `<li>bullet C ${i}</li>`,
-    //   `</ul>`,
+      // Unordered list
+      `<ul>`,
+      `<li>bullet A ${i}</li>`,
+      `<li>bullet B ${i}</li>`,
+      `<li>bullet C ${i}</li>`,
+      `</ul>`,
 
-    //   // Ordered list
-    //   `\n<ol>`,
-    //   `\n<li>step 1.${i}</li>`,
-    //   `\n<li>step 2.${i}</li>`,
-    //   `\n<li>step 3.${i}</li>`,
-    //   `\n</ol>`,
+      // Ordered list
+      `\n<ol>`,
+      `\n<li>step 1.${i}</li>`,
+      `\n<li>step 2.${i}</li>`,
+      `\n<li>step 3.${i}</li>`,
+      `\n</ol>`,
 
-    //   // Blockquote
-    //   `\n<blockquote>Blockquote line 1 for ${i}.</blockquote>`,
-    //   `\n<blockquote>Blockquote line 2 for ${i}.</blockquote>`,
-    //   `\n<content type="image" text="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`
-    // );
+      // Blockquote
+      `\n<blockquote>Blockquote line 1 for ${i}.</blockquote>`,
+      `\n<blockquote>Blockquote line 2 for ${i}.</blockquote>`,
+      `\n<content type="image" text="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`
+    );
   }
 
   parts.push('\n</html>');
@@ -340,6 +340,7 @@ export default function EditorScreen() {
         selectionColor="deepskyblue"
         cursorColor="dodgerblue"
         autoCapitalize="sentences"
+        onAnyContentChange={() => console.log('any content changed')}
       />
       <Reanimated.View style={toolbarAnimatedStyle}>
         <Toolbar

@@ -367,13 +367,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   [super updateProps:props oldProps:oldProps];
 
-  // if default value changed it will be fired in default value update
-  // if this is initial mount it will be called in didMoveToWindow
-  if (!defaultValueChanged && !isFirstMount) {
-    // run the changes callback
-    [self anyTextMayHaveBeenModified];
-  }
-
   // autofocus - needs to be done at the very end
   if (isFirstMount && newViewProps.autoFocus) {
     [textView reactFocus];
