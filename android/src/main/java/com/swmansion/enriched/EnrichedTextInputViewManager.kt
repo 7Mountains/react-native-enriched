@@ -19,6 +19,7 @@ import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerInterface
 import com.facebook.yoga.YogaMeasureMode
 import com.facebook.yoga.YogaMeasureOutput
 import com.swmansion.enriched.events.OnAlignmentChangeEvent
+import com.swmansion.enriched.events.OnAnyContentChangeEvent
 import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.events.OnChangeSelectionEvent
 import com.swmansion.enriched.events.OnChangeStateEvent
@@ -71,20 +72,21 @@ class EnrichedTextInputViewManager :
 
   override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any> {
     val map = mutableMapOf<String, Any>()
-    map.put(OnInputFocusEvent.EVENT_NAME, mapOf("registrationName" to OnInputFocusEvent.EVENT_NAME))
-    map.put(OnInputBlurEvent.EVENT_NAME, mapOf("registrationName" to OnInputBlurEvent.EVENT_NAME))
-    map.put(OnChangeTextEvent.EVENT_NAME, mapOf("registrationName" to OnChangeTextEvent.EVENT_NAME))
-    map.put(OnChangeHtmlEvent.EVENT_NAME, mapOf("registrationName" to OnChangeHtmlEvent.EVENT_NAME))
-    map.put(OnChangeStateEvent.EVENT_NAME, mapOf("registrationName" to OnChangeStateEvent.EVENT_NAME))
-    map.put(OnLinkDetectedEvent.EVENT_NAME, mapOf("registrationName" to OnLinkDetectedEvent.EVENT_NAME))
-    map.put(OnMentionDetectedEvent.EVENT_NAME, mapOf("registrationName" to OnMentionDetectedEvent.EVENT_NAME))
-    map.put(OnMentionEvent.EVENT_NAME, mapOf("registrationName" to OnMentionEvent.EVENT_NAME))
-    map.put(OnChangeSelectionEvent.EVENT_NAME, mapOf("registrationName" to OnChangeSelectionEvent.EVENT_NAME))
-    map.put(OnRequestHtmlResultEvent.EVENT_NAME, mapOf("registrationName" to OnRequestHtmlResultEvent.EVENT_NAME))
-    map.put(OnColorChangeEvent.EVENT_NAME, mapOf("registrationName" to OnColorChangeEvent.EVENT_NAME))
-    map.put(OnAlignmentChangeEvent.EVENT_NAME, mapOf("registrationName" to OnAlignmentChangeEvent.EVENT_NAME))
-    map.put(OnScrollEvent.TOP_EVENT_NAME, mapOf("registrationName" to OnScrollEvent.EVENT_NAME))
-    map.put(OnCheckboxPressEvent.EVENT_NAME, mapOf("registrationName" to OnCheckboxPressEvent.EVENT_NAME))
+    map.put(OnInputFocusEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnInputFocusEvent.EVENT_NAME))
+    map.put(OnInputBlurEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnInputBlurEvent.EVENT_NAME))
+    map.put(OnChangeTextEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnChangeTextEvent.EVENT_NAME))
+    map.put(OnChangeHtmlEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnChangeHtmlEvent.EVENT_NAME))
+    map.put(OnChangeStateEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnChangeStateEvent.EVENT_NAME))
+    map.put(OnLinkDetectedEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnLinkDetectedEvent.EVENT_NAME))
+    map.put(OnMentionDetectedEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnMentionDetectedEvent.EVENT_NAME))
+    map.put(OnMentionEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnMentionEvent.EVENT_NAME))
+    map.put(OnChangeSelectionEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnChangeSelectionEvent.EVENT_NAME))
+    map.put(OnRequestHtmlResultEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnRequestHtmlResultEvent.EVENT_NAME))
+    map.put(OnColorChangeEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnColorChangeEvent.EVENT_NAME))
+    map.put(OnAlignmentChangeEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnAlignmentChangeEvent.EVENT_NAME))
+    map.put(OnScrollEvent.TOP_EVENT_NAME, mapOf(REGISTRATION_NAME to OnScrollEvent.EVENT_NAME))
+    map.put(OnCheckboxPressEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnCheckboxPressEvent.EVENT_NAME))
+    map.put(OnAnyContentChangeEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnAnyContentChangeEvent.EVENT_NAME))
 
     return map
   }
@@ -615,5 +617,6 @@ class EnrichedTextInputViewManager :
 
   companion object {
     const val NAME = "EnrichedTextInputView"
+    const val REGISTRATION_NAME = "registrationName"
   }
 }

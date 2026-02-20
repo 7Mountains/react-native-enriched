@@ -3,9 +3,11 @@ package com.swmansion.enriched.watchers
 import android.text.SpanWatcher
 import android.text.Spannable
 import android.text.style.ParagraphStyle
+import android.util.Log
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.events.OnAnyContentChangeEvent
 import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.EnrichedHeadingSpan
@@ -26,7 +28,7 @@ class EnrichedSpanWatcher(
   ) {
     updateNextLineLayout(what, text, end)
     updateOrderedListItems(what, text, end)
-    emitEvent(text, what)
+    emitEvents(text, what)
   }
 
   override fun onSpanRemoved(
@@ -37,7 +39,7 @@ class EnrichedSpanWatcher(
   ) {
     updateNextLineLayout(what, text, end)
     updateOrderedListItems(what, text, end)
-    emitEvent(text, what)
+    emitEvents(text, what)
   }
 
   override fun onSpanChanged(
@@ -77,7 +79,7 @@ class EnrichedSpanWatcher(
     }
   }
 
-  fun emitEvent(
+  private fun emitOnChangeHtmlEvent(
     s: Spannable,
     what: Any?,
   ) {
@@ -92,9 +94,9 @@ class EnrichedSpanWatcher(
 
     previousHtml = html
     val context = view.context as ReactContext
+
     val surfaceId = UIManagerHelper.getSurfaceId(context)
-    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
-    dispatcher?.dispatchEvent(
+    view.dispatchTextRelatedEvent(
       OnChangeHtmlEvent(
         surfaceId,
         view.id,
@@ -102,6 +104,32 @@ class EnrichedSpanWatcher(
         view.experimentalSynchronousEvents,
       ),
     )
+  }
+
+  private fun emitOnAnyContentChangeEvent(
+    spannable: Spannable,
+    what: Any?,
+  ) {
+    // Emit event only if we change one of ours spans
+    if (what != null && what !is EnrichedSpan) return
+
+    val context = view.context as ReactContext
+    val surfaceId = UIManagerHelper.getSurfaceId(context)
+    view.dispatchTextRelatedEvent(
+      OnAnyContentChangeEvent(
+        surfaceId,
+        view.id,
+        view.experimentalSynchronousEvents,
+      ),
+    )
+  }
+
+  fun emitEvents(
+    spannable: Spannable,
+    what: Any?,
+  ) {
+    emitOnChangeHtmlEvent(spannable, what)
+    emitOnAnyContentChangeEvent(spannable, what)
   }
 
   companion object {

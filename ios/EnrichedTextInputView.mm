@@ -1200,6 +1200,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // placholder management
   [textView updatePlaceholderVisibility];
 
+  auto emitter = [self getEventEmitter];
+
+  emitter->onAnyContentChange({});
+
   if (![textView.textStorage.string isEqualToString:_recentInputString]) {
     // modified words handling
     NSArray *modifiedWords =
@@ -1220,7 +1224,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
 
     // emit onChangeText event
-    auto emitter = [self getEventEmitter];
     if (emitter != nullptr && _emitChangeText) {
       // set the recent input string only if the emitter is defined
       _recentInputString = [textView.textStorage.string copy];

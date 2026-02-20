@@ -25,6 +25,7 @@ import com.facebook.react.common.ReactConstants
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.events.Event
 import com.facebook.react.views.text.ReactTypefaceUtils.applyStyles
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontStyle
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
@@ -73,6 +74,7 @@ class EnrichedTextInputView : AppCompatEditText {
   private var detectScrollMovement: Boolean = false
   private var scrollWatcher: EnrichedScrollWatcher? = null
   var spanWatcher: EnrichedSpanWatcher? = null
+  var blockTextEventEmitting: Boolean = false
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
@@ -331,8 +333,9 @@ class EnrichedTextInputView : AppCompatEditText {
     withSelection: Boolean = false,
   ) {
     if (value == null) return
-
+    Log.i("EnrichedTextInputView", "setting value")
     runAsATransaction {
+      blockTextEventEmitting = true
       val newText = parseText(value)
       setText(newText)
 
@@ -341,6 +344,7 @@ class EnrichedTextInputView : AppCompatEditText {
         // Scroll to the last line of text
         setSelection(text?.length ?: 0)
       }
+      blockTextEventEmitting = false
     }
   }
 
@@ -796,6 +800,7 @@ class EnrichedTextInputView : AppCompatEditText {
     val spannable = text as? Spannable ?: return
     if (spannable.isEmpty()) return
     runAsATransaction {
+      blockTextEventEmitting = true
       val spans = spannable.getSpans(0, spannable.length, EnrichedFullWidthSpan::class.java)
       for (span in spans) {
         val start = spannable.getSpanStart(span)
@@ -807,6 +812,7 @@ class EnrichedTextInputView : AppCompatEditText {
         val copiedSpan = span.copyWithStyle(htmlStyle)
         spannable.setSpan(copiedSpan, start, end, flags)
       }
+      blockTextEventEmitting = false
     }
   }
 
@@ -814,6 +820,7 @@ class EnrichedTextInputView : AppCompatEditText {
     previousHtmlStyle: HtmlStyle,
     nextHtmlStyle: HtmlStyle,
   ) {
+    blockTextEventEmitting = true
     val shouldRemoveBoldSpanFromH1Span = !previousHtmlStyle.h1Bold && nextHtmlStyle.h1Bold
     val shouldRemoveBoldSpanFromH2Span = !previousHtmlStyle.h2Bold && nextHtmlStyle.h2Bold
     val shouldRemoveBoldSpanFromH3Span = !previousHtmlStyle.h3Bold && nextHtmlStyle.h3Bold
@@ -851,6 +858,14 @@ class EnrichedTextInputView : AppCompatEditText {
       }
     }
     forceScrollToSelection()
+    blockTextEventEmitting = false
+  }
+
+  fun <T : Event<T>> dispatchTextRelatedEvent(event: T) {
+    if (blockTextEventEmitting) return
+    val reactContext = context as ReactContext
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, id)
+    dispatcher?.dispatchEvent(event)
   }
 
   override fun onScrollChanged(

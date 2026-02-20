@@ -418,7 +418,6 @@ export default function EditorScreen() {
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
             autoCapitalize="sentences"
-            // onChangeText={(e) => handleChangeText(e.nativeEvent)}
             // onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
             defaultValue={initialHugeHtml}
@@ -431,6 +430,9 @@ export default function EditorScreen() {
             }}
             onCheckboxPress={(e) => {
               console.log(e.nativeEvent.isChecked);
+            }}
+            onAnyContentChange={() => {
+              console.log('content changed');
             }}
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}

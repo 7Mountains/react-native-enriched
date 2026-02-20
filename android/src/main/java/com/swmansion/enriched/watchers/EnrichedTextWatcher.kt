@@ -45,12 +45,14 @@ class EnrichedTextWatcher(
   }
 
   private fun applyStyles(s: Editable) {
+    view.blockTextEventEmitting = true
     view.inlineStyles?.afterTextChanged(s, endCursorPosition)
     view.parametrizedStyles?.afterTextChanged(s, startCursorPosition, endCursorPosition)
     ParagraphSpanNormalizer.normalize(s, endCursorPosition)
     view.listStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
     view.paragraphStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
     ZWSNormalizer.normalizeNonEmptyParagraphs(s)
+    view.blockTextEventEmitting = false
   }
 
   private fun emitChangeText(editable: Editable) {
@@ -59,8 +61,7 @@ class EnrichedTextWatcher(
     }
     val context = view.context as ReactContext
     val surfaceId = UIManagerHelper.getSurfaceId(context)
-    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
-    dispatcher?.dispatchEvent(
+    view.dispatchTextRelatedEvent(
       OnChangeTextEvent(
         surfaceId,
         view.id,
@@ -72,6 +73,6 @@ class EnrichedTextWatcher(
 
   private fun emitEvents(s: Editable) {
     emitChangeText(s)
-    view.spanWatcher?.emitEvent(s, null)
+    view.spanWatcher?.emitEvents(s, null)
   }
 }

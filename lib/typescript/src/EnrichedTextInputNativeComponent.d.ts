@@ -318,6 +318,7 @@ export interface NativeProps extends ViewProps {
     onParagraphAlignmentChange?: DirectEventHandler<OnParagraphAlignmentChangeEvent>;
     onInputScroll?: DirectEventHandler<OnScrollEvent>;
     onCheckboxPress?: DirectEventHandler<CheckboxPressEvent>;
+    onAnyContentChange?: DirectEventHandler<null>;
     color?: ColorValue;
     fontSize?: Float;
     fontFamily?: string;

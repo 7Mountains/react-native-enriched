@@ -341,6 +341,8 @@ export interface NativeProps extends ViewProps {
   onParagraphAlignmentChange?: DirectEventHandler<OnParagraphAlignmentChangeEvent>;
   onInputScroll?: DirectEventHandler<OnScrollEvent>;
   onCheckboxPress?: DirectEventHandler<CheckboxPressEvent>;
+  // This is a special event that is emitted on text/style change
+  onAnyContentChange?: DirectEventHandler<null>;
 
   // Style related props - used for generating proper setters in component's manager
   // These should not be passed as regular props

@@ -180,6 +180,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     e: NativeSyntheticEvent<OnParagraphAlignmentChangeEvent>
   ) => void;
   onCheckboxPress?: (e: NativeSyntheticEvent<CheckboxPressEvent>) => void;
+  onAnyContentChange?: () => void;
   /**
    * If true, Android will use experimental synchronous events.
    * This will prevent from input flickering when updating component size.
