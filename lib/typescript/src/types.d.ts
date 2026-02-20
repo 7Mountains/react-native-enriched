@@ -134,6 +134,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     onColorChangeInSelection?: (color: NativeSyntheticEvent<OnChangeColorEvent>) => void;
     onParagraphAlignmentChange?: (e: NativeSyntheticEvent<OnParagraphAlignmentChangeEvent>) => void;
     onCheckboxPress?: (e: NativeSyntheticEvent<CheckboxPressEvent>) => void;
+    onAnyContentChange?: () => void;
     /**
      * If true, Android will use experimental synchronous events.
      * This will prevent from input flickering when updating component size.
