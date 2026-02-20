@@ -37,7 +37,8 @@ using namespace facebook::react;
 
 @interface EnrichedTextInputView () <
     RCTEnrichedTextInputViewViewProtocol, UITextViewDelegate,
-    EnrichedTextViewClipboardDelegate, EnrichedTextViewLayoutDelegate, NSObject>
+    EnrichedTextViewClipboardDelegate, EnrichedTextViewLayoutDelegate,
+    NSTextStorageDelegate, NSObject>
 @end
 
 #define GET_STYLE_STATE(TYPE_ENUM)                                             \
@@ -143,6 +144,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   textView.clipboardDelegate = self;
   textView.layoutManager.input = self;
   textView.layoutDelegate = self;
+  textView.textStorage.delegate = self;
   textView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
@@ -1195,8 +1197,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   auto emitter = [self getEventEmitter];
 
-  emitter->onAnyContentChange({});
-
   if (![textView.textStorage.string isEqualToString:_recentInputString]) {
     // modified words handling
     NSArray *modifiedWords =
@@ -1232,6 +1232,25 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   // update active styles as well
   [self tryUpdatingActiveStyles];
+}
+
+- (void)textStorage:(NSTextStorage *)textStorage
+    didProcessEditing:(NSTextStorageEditActions)editedMask
+                range:(NSRange)editedRange
+       changeInLength:(NSInteger)delta {
+  if (textView.markedTextRange != nil) {
+    return;
+  }
+
+  if (!(editedMask &
+        (NSTextStorageEditedCharacters | NSTextStorageEditedAttributes))) {
+    return;
+  }
+
+  auto emitter = [self getEventEmitter];
+  if (emitter != nullptr) {
+    emitter->onAnyContentChange({});
+  }
 }
 
 // MARK: - UITextView delegate methods
