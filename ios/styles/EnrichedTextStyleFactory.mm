@@ -215,11 +215,11 @@
       ],
       @([LinkStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MentionStyle getStyleType])
       ],
       @([MentionStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([LinkStyle getStyleType])
       ],
       @([H1Style getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),

@@ -156,7 +156,7 @@
 
   BOOL hasContent = _plain.length > lengthBefore;
 
-  if (!hasContent && isBlock) {
+  if (!hasContent && isBlock && !isParagraphTag(tagChar)) {
     [self appendEmptyBlockPlaceholder];
   }
 

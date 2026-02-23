@@ -34,4 +34,6 @@ xmlNodePtr _Nullable nextRenderableSibling(xmlNodePtr node);
 
 bool isBrTag(const char *tagName);
 
+bool isParagraphTag(const char *tagName);
+
 NS_ASSUME_NONNULL_END

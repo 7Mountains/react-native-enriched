@@ -93,6 +93,8 @@
       [ParagraphsUtils getSeparateParagraphsRangesIn:input->textView
                                                range:range];
 
+  NSMutableDictionary *newAttrs = [NSMutableDictionary new];
+
   for (NSValue *value in paragraphs) {
     NSRange paragraphRange = value.rangeValue;
 
@@ -102,8 +104,6 @@
                         usingBlock:^(
                             NSDictionary<NSAttributedStringKey, id> *attrs,
                             NSRange subRange, BOOL *stop) {
-                          NSMutableDictionary *newAttrs = [attrs mutableCopy];
-
                           EnrichedParagraphStyle *baseParagraphStyle =
                               [attrs[NSParagraphStyleAttributeName]
                                   mutableCopy];
@@ -157,8 +157,9 @@
 // will always be called on empty paragraphs so only typing attributes can be
 // changed
 - (void)addTypingAttributes {
+  UITextView *textView = [self typedInput]->textView;
   NSMutableDictionary *newTypingAttributes =
-      [[self typedInput]->textView.typingAttributes mutableCopy];
+      textView.typingAttributes.mutableCopy;
   UIFont *currentFontAttr = (UIFont *)newTypingAttributes[NSFontAttributeName];
   EnrichedParagraphStyle *paragraphStyle =
       [newTypingAttributes[NSParagraphStyleAttributeName] mutableCopy];
@@ -171,7 +172,7 @@
     newTypingAttributes[NSFontAttributeName] = newFont;
     paragraphStyle.headingLevel = [self.class headingLevel];
     newTypingAttributes[NSParagraphStyleAttributeName] = paragraphStyle;
-    [self typedInput]->textView.typingAttributes = newTypingAttributes;
+    textView.typingAttributes = newTypingAttributes;
   }
 }
 
@@ -214,10 +215,6 @@
 
 // we need to remove the style from the whole paragraph
 - (void)removeAttributes:(NSRange)range {
-  NSArray *paragraphs =
-      [ParagraphsUtils getSeparateParagraphsRangesIn:[self typedInput]->textView
-                                               range:range];
-
   EnrichedTextInputView *input = [self typedInput];
   NSTextStorage *textStorage = input->textView.textStorage;
 
@@ -230,10 +227,9 @@
       (UIFont *)input->textView.typingAttributes[NSFontAttributeName];
   if (currentFontAttr != nullptr) {
     NSMutableDictionary *newTypingAttrs =
-        [input->textView.typingAttributes mutableCopy];
+        input->textView.typingAttributes.mutableCopy;
     UIFont *newFont = [currentFontAttr
-        copyWithFontSize:[[[self typedInput]->config primaryFontSize]
-                             floatValue]];
+        copyWithFontSize:[[input->config primaryFontSize] floatValue]];
     if ([self isHeadingBold]) {
       newFont = [newFont removeBold];
     }

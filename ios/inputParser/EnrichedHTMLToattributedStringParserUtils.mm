@@ -73,6 +73,11 @@ const char *const kBlockTags[] = {
     "p",  "ul", "ol", "li",        "blockquote", "h1", "h2",   "h3",
     "h4", "h5", "h6", "checklist", "codeblock",  "hr", nullptr};
 
+bool isParagraphTag(const char *tagName) {
+  return tagName && tagName[1] == '\0' &&
+         (tagName[0] == 'p' || tagName[0] == 'P');
+}
+
 bool isBlockTag(const char *tag) {
   if (!tag)
     return false;

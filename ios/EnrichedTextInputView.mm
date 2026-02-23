@@ -6,6 +6,7 @@
 #import "EnrichedCommandHandler.h"
 #import "EnrichedCookieManager.h"
 #import "EnrichedCookiesOperators.h"
+#import "EnrichedHeadingLevel.h"
 #import "EnrichedParagraphStyle.h"
 #import "EnrichedTextClipboardHandler.h"
 #import "EnrichedTextConfigBuilder.h"
@@ -277,6 +278,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     paragraphStyle.paragraphSpacingBefore =
         newViewProps.iOSparagraphSpacingBefore;
     paragraphStyle.alignment = NSTextAlignmentNatural;
+    paragraphStyle.headingLevel = EnrichedHeadingNone;
     defaultTypingAttributes[NSParagraphStyleAttributeName] = paragraphStyle;
     textView.typingAttributes = defaultTypingAttributes;
     textView.selectedRange = prevSelectedRange;
