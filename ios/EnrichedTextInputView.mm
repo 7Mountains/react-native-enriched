@@ -577,7 +577,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       _blockedStyles = newBlockedStyles;
 
       emitter->onChangeState(
-          {.alignment = GET_STYLE_STATE([BoldStyle getStyleType]),
+          {.alignment = GET_STYLE_STATE([ParagraphAlignmentStyle getStyleType]),
            .bold = GET_STYLE_STATE([BoldStyle getStyleType]),
            .italic = GET_STYLE_STATE([ItalicStyle getStyleType]),
            .underline = GET_STYLE_STATE([UnderlineStyle getStyleType]),
