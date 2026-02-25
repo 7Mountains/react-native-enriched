@@ -1374,14 +1374,14 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   if (!emitter)
     return;
 
+  if (!_emitOnScroll) {
+    return;
+  }
+
   UIEdgeInsets inset = scrollView.contentInset;
   CGPoint offset = scrollView.contentOffset;
   CGSize contentSize = scrollView.contentSize;
   CGSize layoutSize = scrollView.bounds.size;
-
-  if (!_emitOnScroll) {
-    return;
-  }
 
   CGPoint velocity = CGPointZero;
   if (scrollView.panGestureRecognizer) {
