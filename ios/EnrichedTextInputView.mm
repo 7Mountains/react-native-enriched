@@ -18,6 +18,7 @@
 #import "NSString+Autocapitalization.h"
 #import "ParagraphAttributesUtils.h"
 #import "ParagraphsUtils.h"
+#import "SelectionUtils.h"
 #import "StringExtension.h"
 #import "Strings.h"
 #import "StyleHeaders.h"
@@ -718,40 +719,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)emitCurrentSelectionColorIfChanged {
-  NSRange selectedRange = textView.selectedRange;
-  UIColor *uniformColor = nil;
-
-  if (selectedRange.length == 0) {
-    id colorAttr = textView.typingAttributes[NSForegroundColorAttributeName];
-    uniformColor = colorAttr ? (UIColor *)colorAttr : [config primaryColor];
-  } else {
-    // Selection range: check for uniform color
-    __block UIColor *firstColor = nil;
-    __block BOOL hasMultiple = NO;
-
-    [textView.textStorage
-        enumerateAttribute:NSForegroundColorAttributeName
-                   inRange:selectedRange
-                   options:0
-                usingBlock:^(id _Nullable value, NSRange range,
-                             BOOL *_Nonnull stop) {
-                  UIColor *thisColor =
-                      value ? (UIColor *)value : [config primaryColor];
-                  if (firstColor == nil) {
-                    firstColor = thisColor;
-                  } else if (![firstColor isEqual:thisColor]) {
-                    hasMultiple = YES;
-                    *stop = YES;
-                  }
-                }];
-
-    if (!hasMultiple && firstColor != nil) {
-      uniformColor = firstColor;
-    }
-  }
-
-  NSString *hexColor =
-      uniformColor ? [uniformColor hexString] : [config.primaryColor hexString];
+  UIColor *selectionColor = [SelectionUtils
+      effectiveForegroundColorForSelectionInTextView:self->textView];
+  NSString *hexColor = selectionColor ? [selectionColor hexString]
+                                      : [config.primaryColor hexString];
 
   if (![_recentlyEmittedColor isEqual:hexColor]) {
     auto emitter = [self getEventEmitter];
@@ -763,37 +734,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)emitParagraphAlignmentIfChanged {
-  NSRange selectedRange = textView.selectedRange;
-  NSTextAlignment alignment = NSTextAlignmentNatural;
-
-  if (selectedRange.length == 0) {
-    NSParagraphStyle *style =
-        textView.typingAttributes[NSParagraphStyleAttributeName];
-    alignment = style ? style.alignment : NSTextAlignmentNatural;
-  } else {
-    NSTextStorage *storage = textView.textStorage;
-
-    NSUInteger start = selectedRange.location;
-
-    if (storage.length == 0 || start >= storage.length) {
-      alignment = NSTextAlignmentNatural;
-    } else {
-      NSRange effectiveRange = NSMakeRange(0, 0);
-      NSParagraphStyle *style = [storage attribute:NSParagraphStyleAttributeName
-                                           atIndex:start
-                             longestEffectiveRange:&effectiveRange
-                                           inRange:selectedRange];
-
-      BOOL coversWholeSelection =
-          (NSMaxRange(effectiveRange) >= NSMaxRange(selectedRange));
-
-      if (coversWholeSelection) {
-        alignment = style ? style.alignment : NSTextAlignmentNatural;
-      } else {
-        alignment = NSTextAlignmentNatural;
-      }
-    }
-  }
+  NSTextAlignment alignment = [SelectionUtils
+      effectiveParagraphAlignmentForSelectionInTextView:self->textView];
 
   NSString *stringAlignment =
       [AlignmentConverter stringFromAlignment:alignment];
