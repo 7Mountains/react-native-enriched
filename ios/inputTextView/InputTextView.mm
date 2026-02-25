@@ -63,19 +63,14 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   [self updatePlaceholderVisibility];
 }
 
-- (void)setPlaceholderText:(NSString *)newPlaceholderText
-                attributes:(NSDictionary *)attributes {
+- (void)setPlaceholderColor:(UIColor *)placeholderColor {
+  _placeholderColor = placeholderColor;
+  [self refreshPlaceholder];
+}
+
+- (void)setPlaceholderText:(NSString *)newPlaceholderText {
   _placeholderText = newPlaceholderText;
-  BOOL hasPlaceholder = newPlaceholderText && newPlaceholderText.length > 0;
-  NSString *placeholderText = hasPlaceholder ? newPlaceholderText : @"";
-  NSMutableDictionary *attributesCopy = [attributes mutableCopy];
-  attributesCopy[NSForegroundColorAttributeName] = _placeholderColor;
-  attributesCopy[NSUnderlineColorAttributeName] = _placeholderColor;
-  attributesCopy[NSStrikethroughColorAttributeName] = _placeholderColor;
-  _placeholderView.attributedText =
-      [[NSAttributedString alloc] initWithString:placeholderText
-                                      attributes:attributes];
-  [self setNeedsLayout];
+  [self refreshPlaceholder];
 }
 
 - (void)setTypingAttributes:
@@ -87,7 +82,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 }
 
 - (void)refreshPlaceholder {
-  NSMutableDictionary *attributes = [self.typingAttributes mutableCopy];
+  NSMutableDictionary *attributes = self.typingAttributes.mutableCopy;
 
   if (_placeholderColor) {
     attributes[NSForegroundColorAttributeName] = _placeholderColor;
