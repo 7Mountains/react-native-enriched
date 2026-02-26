@@ -47,8 +47,7 @@
 - (void)parseToHTMLAsync:(BOOL)prettify
               completion:(void (^_Nonnull)(NSString *_Nullable,
                                            NSError *_Nullable))completion {
-  NSAttributedString *snapshot = [[NSAttributedString alloc]
-      initWithAttributedString:self->_input->textView.textStorage];
+  NSAttributedString *snapshot = _input->textView.textStorage.copy;
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                  ^{
                    NSString *html = [self->_attributedStringHTMLSerializer

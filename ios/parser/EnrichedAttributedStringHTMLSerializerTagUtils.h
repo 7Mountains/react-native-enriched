@@ -50,50 +50,41 @@ static inline void appendC(NSMutableData *buf, const char *c) {
 
 static inline void appendEscapedRange(NSMutableData *buf, NSString *src,
                                       NSRange r) {
-  NSUInteger len = r.length;
-  unichar *tmp = (unichar *)alloca(len * sizeof(unichar));
-  [src getCharacters:tmp range:r];
 
-  for (NSUInteger i = 0; i < len; i++) {
-    unichar c = tmp[i];
-    if (c == ZeroWidthSpace)
-      continue;
+  NSString *substring = [src substringWithRange:r];
+  const char *utf8 = [substring UTF8String];
+  if (!utf8)
+    return;
 
-    switch (c) {
-    case HtmlLessThanChar:
-      appendC(buf, EscapeLT);
-      break;
-    case HtmlGreaterThanChar:
-      appendC(buf, EscapeGT);
-      break;
-    case HtmlAmpersandChar:
-      appendC(buf, EscapeAmp);
-      break;
+  const char *segmentStart = utf8;
+  const char *p = utf8;
 
-    default: {
-      char out[4];
-      int n = 0;
+  while (*p) {
+    if (*p == HtmlLessThanChar || *p == HtmlGreaterThanChar ||
+        *p == HtmlAmpersandChar) {
 
-      if (c < UTF8_1ByteLimit) {
-        out[0] = (char)c;
-        n = 1;
-
-      } else if (c < UTF8_2ByteLimit) {
-        out[0] = UTF8_2ByteLeadMask | (c >> 6);
-        out[1] = UTF8_ContinuationMask | (c & UTF8_ContinuationPayloadMask);
-        n = 2;
-
-      } else {
-        out[0] = UTF8_3ByteLeadMask | (c >> 12);
-        out[1] =
-            UTF8_ContinuationMask | ((c >> 6) & UTF8_ContinuationPayloadMask);
-        out[2] = UTF8_ContinuationMask | (c & UTF8_ContinuationPayloadMask);
-        n = 3;
+      if (p > segmentStart) {
+        [buf appendBytes:segmentStart length:(p - segmentStart)];
       }
 
-      [buf appendBytes:out length:n];
+      if (*p == HtmlLessThanChar) {
+        appendC(buf, EscapeLT);
+      } else if (*p == HtmlGreaterThanChar) {
+        appendC(buf, EscapeGT);
+      } else {
+        appendC(buf, EscapeAmp);
+      }
+
+      p++;
+      segmentStart = p;
+      continue;
     }
-    }
+
+    p++;
+  }
+
+  if (p > segmentStart) {
+    [buf appendBytes:segmentStart length:(p - segmentStart)];
   }
 }
 
