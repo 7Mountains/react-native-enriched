@@ -329,20 +329,17 @@ public class EnrichedSpannedToHtmlConverter {
         continue;
       }
 
-      // surrogate pairs — emoji etc.
-      if (c >= 0xD800 && c <= 0xDFFF) {
-        if (c < 0xDC00 && i + 1 < end) {
-          char d = text.charAt(i + 1);
-          if (d >= 0xDC00 && d <= 0xDFFF) {
-            i++;
-            int codepoint = 0x010000 | ((c - 0xD800) << 10) | (d - 0xDC00);
-            out.append("&#").append(codepoint).append(";");
-            continue;
-          }
+      // surrogate pair handling (emoji, flags, skin tones etc.)
+      if (Character.isHighSurrogate(c) && i + 1 < end) {
+        char low = text.charAt(i + 1);
+        if (Character.isLowSurrogate(low)) {
+          out.append(c).append(low);
+          i++; // skip low surrogate
+          continue;
         }
       }
 
-      if (c > 0x7E || c < ' ') {
+      if (c < 0x20 && c != Strings.NEWLINE && c != Strings.TAB) {
         out.append("&#").append((int) c).append(";");
         continue;
       }

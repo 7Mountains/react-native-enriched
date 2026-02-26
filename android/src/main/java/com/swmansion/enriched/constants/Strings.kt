@@ -26,6 +26,9 @@ object Strings {
   const val NEWLINE = '\n'
   const val NEWLINE_STRING = "" + NEWLINE
 
+  const val TAB = '\t'
+  const val TAB_STRING = "" + TAB
+
   const val LT_CHAR = '<'
   const val GT_CHAR = '>'
   const val AMP_CHAR = '&'
