@@ -11,8 +11,10 @@ import com.swmansion.enriched.spans.EnrichedLinkSpan
 import com.swmansion.enriched.spans.EnrichedMentionSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.TextStyle
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
+import kotlin.math.max
 
 class ParametrizedStyles(
   private val view: EnrichedTextInputView,
@@ -172,6 +174,9 @@ class ParametrizedStyles(
     if (isSettingLinkSpan || !canLinkBeApplied()) return
 
     val spannable = view.text as? Spannable ?: return
+    // If user inserted a newline right after a link, don't touch spans.
+    if (isNewlineInsertedAtEndOfSpan(spannable, editStart, editEnd, EnrichedLinkSpan::class.java)) return
+
     val affectedRange = getLinksAffectedRange(spannable, editStart, editEnd)
     val contextText =
       spannable
@@ -227,12 +232,15 @@ class ParametrizedStyles(
 
   private fun afterTextChangedMentions(
     s: CharSequence,
+    startCursorPosition: Int,
     endCursorPosition: Int,
   ) {
     val mentionHandler = view.mentionHandler ?: return
-    val currentWord = getWordAtIndex(s, endCursorPosition) ?: return
-    val spannable = view.text as Spannable
 
+    val spannable = view.text as Spannable
+    if (isNewlineInsertedAtEndOfSpan(spannable, startCursorPosition, endCursorPosition, EnrichedMentionSpan::class.java)) return
+
+    val currentWord = getWordAtIndex(s, endCursorPosition) ?: return
     val indicatorsPattern = mentionIndicators.joinToString("|") { Regex.escape(it) }
     val mentionIndicatorRegex = Regex("^($indicatorsPattern)")
     val mentionRegex = Regex("^($indicatorsPattern)\\w*")
@@ -282,13 +290,34 @@ class ParametrizedStyles(
     mentionHandler.onMention(indicator, text)
   }
 
+  private fun <T : EnrichedSpan> isNewlineInsertedAtEndOfSpan(
+    spannable: Spannable,
+    editStart: Int,
+    editEnd: Int,
+    clazz: Class<T>,
+  ): Boolean {
+    // insertion of exactly one char
+    if (editEnd != editStart + 1) return false
+    if (editStart < 0 || editStart >= spannable.length) return false
+
+    val insertedChar = spannable[editStart]
+    if (insertedChar != Strings.NEWLINE) return false
+
+    // If there is any span span whose END is exactly at editStart, then newline was inserted
+    // at the boundary right after the link -> do nothing.
+    val lookupStart = max(0, editStart - 1)
+    val spans = spannable.getSpans(lookupStart, editStart, clazz)
+
+    return spans.any { span -> spannable.getSpanEnd(span) == editStart }
+  }
+
   fun afterTextChanged(
     s: Editable,
     startCursorPosition: Int,
     endCursorPosition: Int,
   ) {
     afterTextChangedLinks(startCursorPosition, endCursorPosition)
-    afterTextChangedMentions(s, startCursorPosition)
+    afterTextChangedMentions(s, startCursorPosition, endCursorPosition)
   }
 
   fun setImageSpan(

@@ -5,7 +5,6 @@ import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
-import android.util.Log
 import androidx.core.graphics.toColorInt
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.HtmlTags
@@ -286,7 +285,7 @@ class HtmlToSpannedConverter(
         val href = ctx.attributes?.getValue("", "href") ?: return
 
         applyInline(ctx) {
-          EnrichedLinkSpan(href, mStyle)
+          EnrichedLinkSpan(href, mStyle, true)
         }
         return
       }
