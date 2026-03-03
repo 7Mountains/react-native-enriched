@@ -1,3 +1,5 @@
+#pragma once
+
 @interface EnrichedCookieManager : NSObject
 
 + (instancetype)shared;

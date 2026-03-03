@@ -1,3 +1,6 @@
+#pragma once
+#import <UIKit/UIKit.h>
+
 typedef NS_ENUM(NSInteger, EnrichedHeadingLevel) {
   EnrichedHeadingNone = 0,
   EnrichedHeadingH1 = 1,

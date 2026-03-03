@@ -1,3 +1,4 @@
+#pragma once
 #import "StringExtension.h"
 
 @implementation NSString (StringExtension)

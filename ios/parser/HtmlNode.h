@@ -1,3 +1,4 @@
+#pragma once
 @interface HTMLNode : NSObject
 @property(nonatomic, strong) NSMutableArray<HTMLNode *> *children;
 @end

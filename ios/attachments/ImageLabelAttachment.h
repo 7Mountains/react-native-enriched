@@ -1,3 +1,4 @@
+#pragma once
 #import "BaseLabelAttachment.h"
 
 @class ContentParams, ContentStyleProps;

@@ -1,3 +1,6 @@
+#pragma once
+#import <UIKit/UIKit.h>
+
 @protocol EnrichedTextViewClipboardDelegate <NSObject>
 
 - (void)handleCopyFromTextView:(UITextView *)textView sender:(id)sender;

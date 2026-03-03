@@ -1,3 +1,4 @@
+#pragma once
 #import <Foundation/Foundation.h>
 #import <libxml/tree.h>
 

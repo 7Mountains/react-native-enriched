@@ -1,3 +1,4 @@
+#pragma once
 #import "MediaAttachment.h"
 #import <UIKit/UIKit.h>
 

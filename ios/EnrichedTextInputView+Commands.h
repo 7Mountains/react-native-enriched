@@ -1,3 +1,4 @@
+#pragma once
 #import "EnrichedTextInputView.h"
 
 @class ContentParams;

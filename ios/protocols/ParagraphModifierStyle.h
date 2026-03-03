@@ -1,3 +1,6 @@
+#pragma once
+#import <Foundation/Foundation.h>
+
 @protocol ParagraphModifierStyle <NSObject>
 
 @required

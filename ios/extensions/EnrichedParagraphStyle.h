@@ -1,3 +1,4 @@
+#pragma once
 #import "EnrichedHeadingLevel.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>

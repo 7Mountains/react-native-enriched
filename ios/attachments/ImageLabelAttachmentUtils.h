@@ -1,3 +1,4 @@
+#pragma once
 #import "ImageLayoutUtils.h"
 #import <UIKit/UIKit.h>
 

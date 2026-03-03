@@ -1,5 +1,5 @@
-#import <UIKit/UIKit.h>
 #pragma once
+#import <UIKit/UIKit.h>
 
 @class EnrichedTextInputView;
 

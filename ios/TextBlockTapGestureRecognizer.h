@@ -1,3 +1,5 @@
+#pragma once
+
 typedef NS_ENUM(NSInteger, TextBlockTapKind) {
   TextBlockTapKindNone = 0,
   TextBlockTapKindCheckbox,

@@ -1,3 +1,5 @@
+#pragma once
+
 @protocol ParameterizedStyleProtocol <NSObject>
 
 + (NSDictionary<NSString *, NSString *> *_Nullable)getParametersFromValue:
