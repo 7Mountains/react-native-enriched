@@ -76,6 +76,7 @@ const DEFAULT_STYLE: OnChangeStateEvent = {
   checkList: DEFAULT_STATE,
   colored: DEFAULT_STATE,
   content: DEFAULT_STATE,
+  mdf: DEFAULT_STATE,
 };
 
 const DEFAULT_LINK_STATE = {

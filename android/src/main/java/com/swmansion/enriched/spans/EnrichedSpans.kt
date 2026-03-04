@@ -27,6 +27,7 @@ enum class TextStyle {
   CODE_BLOCK,
   DIVIDER,
   CONTENT,
+  MDF,
   ALIGNMENT,
 
   // list styles
@@ -81,6 +82,7 @@ object EnrichedSpans {
       TextStyle.H6 to ParagraphSpanConfig(EnrichedH6Span::class.java, false, false),
       TextStyle.DIVIDER to ParagraphSpanConfig(EnrichedHorizontalRuleSpan::class.java, false, true),
       TextStyle.CONTENT to ParagraphSpanConfig(EnrichedContentSpan::class.java, false, true),
+      TextStyle.MDF to ParagraphSpanConfig(EnrichedMDFSpan::class.java, false, true),
       TextStyle.BLOCK_QUOTE to ParagraphSpanConfig(EnrichedBlockQuoteSpan::class.java, false, false),
       TextStyle.CODE_BLOCK to ParagraphSpanConfig(EnrichedCodeBlockSpan::class.java, true, false),
       TextStyle.ALIGNMENT to ParagraphSpanConfig(EnrichedAlignmentSpan::class.java, true, false),
@@ -106,7 +108,13 @@ object EnrichedSpans {
   ): StylesMergingConfig? =
     when (style) {
       TextStyle.BOLD -> {
-        val blocking = mutableListOf(TextStyle.CODE_BLOCK, TextStyle.DIVIDER, TextStyle.CONTENT)
+        val blocking =
+          mutableListOf(
+            TextStyle.CODE_BLOCK,
+            TextStyle.DIVIDER,
+            TextStyle.CONTENT,
+            TextStyle.MDF,
+          )
         if (htmlStyle.h1Bold) blocking.add(TextStyle.H1)
         if (htmlStyle.h2Bold) blocking.add(TextStyle.H2)
         if (htmlStyle.h3Bold) blocking.add(TextStyle.H3)
@@ -120,19 +128,38 @@ object EnrichedSpans {
       TextStyle.UNDERLINE,
       TextStyle.STRIKETHROUGH,
       -> {
-        StylesMergingConfig(blockingStyles = arrayOf(TextStyle.CODE_BLOCK, TextStyle.DIVIDER, TextStyle.CONTENT))
+        StylesMergingConfig(
+          blockingStyles =
+            arrayOf(
+              TextStyle.CODE_BLOCK,
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
+        )
       }
 
       TextStyle.INLINE_CODE -> {
         StylesMergingConfig(
           conflictingStyles = arrayOf(TextStyle.MENTION, TextStyle.LINK),
-          blockingStyles = arrayOf(TextStyle.CODE_BLOCK, TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles =
+            arrayOf(
+              TextStyle.CODE_BLOCK,
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
         )
       }
 
       TextStyle.ALIGNMENT -> {
         StylesMergingConfig(
-          blockingStyles = arrayOf(TextStyle.CONTENT, TextStyle.DIVIDER),
+          blockingStyles =
+            arrayOf(
+              TextStyle.CONTENT,
+              TextStyle.DIVIDER,
+              TextStyle.MDF,
+            ),
         )
       }
 
@@ -151,7 +178,15 @@ object EnrichedSpans {
             TextStyle.CHECK_LIST,
           )
         if (htmlStyle.h1Bold) conflicting.add(TextStyle.BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT))
+        StylesMergingConfig(
+          conflictingStyles = conflicting.toTypedArray(),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
+        )
       }
 
       TextStyle.H2 -> {
@@ -169,7 +204,15 @@ object EnrichedSpans {
             TextStyle.CHECK_LIST,
           )
         if (htmlStyle.h2Bold) conflicting.add(TextStyle.BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT))
+        StylesMergingConfig(
+          conflictingStyles = conflicting.toTypedArray(),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
+        )
       }
 
       TextStyle.H3 -> {
@@ -187,7 +230,15 @@ object EnrichedSpans {
             TextStyle.CHECK_LIST,
           )
         if (htmlStyle.h3Bold) conflicting.add(TextStyle.BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT))
+        StylesMergingConfig(
+          conflictingStyles = conflicting.toTypedArray(),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
+        )
       }
 
       TextStyle.H4 -> {
@@ -205,7 +256,15 @@ object EnrichedSpans {
             TextStyle.CHECK_LIST,
           )
         if (htmlStyle.h4Bold) conflicting.add(TextStyle.BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT))
+        StylesMergingConfig(
+          conflictingStyles = conflicting.toTypedArray(),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
+        )
       }
 
       TextStyle.H5 -> {
@@ -223,7 +282,15 @@ object EnrichedSpans {
             TextStyle.CHECK_LIST,
           )
         if (htmlStyle.h5Bold) conflicting.add(TextStyle.BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT))
+        StylesMergingConfig(
+          conflictingStyles = conflicting.toTypedArray(),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
+        )
       }
 
       TextStyle.H6 -> {
@@ -241,7 +308,15 @@ object EnrichedSpans {
             TextStyle.CHECK_LIST,
           )
         if (htmlStyle.h6Bold) conflicting.add(TextStyle.BOLD)
-        StylesMergingConfig(conflictingStyles = conflicting.toTypedArray(), blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT))
+        StylesMergingConfig(
+          conflictingStyles = conflicting.toTypedArray(),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
+        )
       }
 
       TextStyle.BLOCK_QUOTE -> {
@@ -259,7 +334,12 @@ object EnrichedSpans {
               TextStyle.UNORDERED_LIST,
               TextStyle.CHECK_LIST,
             ),
-          blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
         )
       }
 
@@ -283,7 +363,12 @@ object EnrichedSpans {
               TextStyle.BLOCK_QUOTE,
               TextStyle.INLINE_CODE,
             ),
-          blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
         )
       }
 
@@ -302,7 +387,12 @@ object EnrichedSpans {
               TextStyle.CODE_BLOCK,
               TextStyle.BLOCK_QUOTE,
             ),
-          blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
         )
       }
 
@@ -321,25 +411,51 @@ object EnrichedSpans {
               TextStyle.CODE_BLOCK,
               TextStyle.BLOCK_QUOTE,
             ),
-          blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
         )
       }
 
       TextStyle.LINK -> {
         StylesMergingConfig(
-          blockingStyles = arrayOf(TextStyle.INLINE_CODE, TextStyle.CODE_BLOCK, TextStyle.MENTION, TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles =
+            arrayOf(
+              TextStyle.INLINE_CODE,
+              TextStyle.CODE_BLOCK,
+              TextStyle.MENTION,
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
         )
       }
 
       TextStyle.IMAGE -> {
         StylesMergingConfig(
-          blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles =
+            arrayOf(
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
         )
       }
 
       TextStyle.MENTION -> {
         StylesMergingConfig(
-          blockingStyles = arrayOf(TextStyle.INLINE_CODE, TextStyle.CODE_BLOCK, TextStyle.LINK, TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles =
+            arrayOf(
+              TextStyle.INLINE_CODE,
+              TextStyle.CODE_BLOCK,
+              TextStyle.LINK,
+              TextStyle.DIVIDER,
+              TextStyle.CONTENT,
+              TextStyle.MDF,
+            ),
         )
       }
 
@@ -358,7 +474,7 @@ object EnrichedSpans {
               TextStyle.UNORDERED_LIST,
               TextStyle.BLOCK_QUOTE,
             ),
-          blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT),
+          blockingStyles = arrayOf(TextStyle.DIVIDER, TextStyle.CONTENT, TextStyle.MDF),
         )
       }
 
@@ -374,10 +490,21 @@ object EnrichedSpans {
         )
       }
 
+      TextStyle.MDF -> {
+        StylesMergingConfig(
+          conflictingStyles = TextStyle.entries.toTypedArray(),
+        )
+      }
+
       TextStyle.COLOR -> {
         StylesMergingConfig(
           conflictingStyles = arrayOf(TextStyle.MENTION),
-          blockingStyles = arrayOf(TextStyle.CONTENT, TextStyle.DIVIDER),
+          blockingStyles =
+            arrayOf(
+              TextStyle.CONTENT,
+              TextStyle.DIVIDER,
+              TextStyle.MDF,
+            ),
         )
       }
     }
