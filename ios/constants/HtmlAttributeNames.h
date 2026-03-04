@@ -16,3 +16,7 @@ FOUNDATION_EXPORT NSString *const HrefAttributeName;
 FOUNDATION_EXPORT NSString *const MentionTypeAttributeName;
 FOUNDATION_EXPORT NSString *const MentionTextAttributeName;
 FOUNDATION_EXPORT NSString *const MentionIndicatorAttributeName;
+
+FOUNDATION_EXPORT NSString *const MDFLabelAttributeName;
+FOUNDATION_EXPORT NSString *const MDFTintColorAttributeName;
+FOUNDATION_EXPORT NSString *const MDFIdAttributeName;

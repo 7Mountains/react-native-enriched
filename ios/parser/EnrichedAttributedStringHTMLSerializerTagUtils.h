@@ -39,6 +39,7 @@ static const char *HtmlHRTag = "hr";
 static const char *HtmlChecklistTag = "checklist";
 static const char *HtmlContentTag = "content";
 static const char *HtmlParagraphTag = "p";
+static const char *HtmlMdfTag = "mdf";
 
 static NSString *const DefaultHtmlValue = @"<html>\n<p></p>\n</html>";
 

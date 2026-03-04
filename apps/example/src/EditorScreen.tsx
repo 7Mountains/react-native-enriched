@@ -108,19 +108,7 @@ const generateHugeHtml = (repeat = 1) => {
 
   for (let i = 0; i < repeat; i++) {
     parts.push(
-      `<h1 alignment="center">Heading ${i + 1}</h1>`,
-      `<p><a href="test.com">test link</a> <mention type="channel" indicator="@" text="@test">@test</mention> This is a paragraph with some <b>bold</b>, <i>italic</i>, <u>underline</u>, and <s>strikethrough</s> text. Here's some inline code:</p>`,
-      `<h2>Subheading ${i + 1}</h2>`,
-      `<h3>Subheading ${i + 1}</h3>`,
-      `<h4>Subheading ${i + 1}</h4>`,
-      `<h5>Subheading ${i + 1}</h5>`,
-      `<h6>Subheading ${i + 1}</h6>`,
-      `<hr>`,
-      `<p><font color="#ff0000"> This is a colored paragraph.</font></p>`,
-      `<ul><li>Ordered list item ${i + 1}.1</li><li>Ordered list item ${i + 1}.2</li></ul>`,
-      `<ol><li>Unordered list item ${i + 1}.1</li><li>Unordered list item ${i + 1}.2</li></ol>`,
-      `<checklist checked="${i % 2 === 0}">Check list item ${i + 1}</checklist>`,
-      `<blockquote>This is a block quote for item ${i + 1}.</blockquote>`,
+      `<mdf label="test" id="123" tint-color="#0000ff" />`,
       `\n<content type="image" src="https://picsum.photos/200/300" text="Test text" />`
     );
   }
@@ -677,6 +665,29 @@ const htmlStyle: HtmlStyle = {
     height: 24,
     color: 'gray',
     thickness: 2,
+  },
+  mdf: {
+    height: 48,
+    imageUri: Image.resolveAssetSource(
+      require('../assets/images/block_icon.png')
+    ).uri,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'lightblue',
+    stripeWidth: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 4,
+    marginBottom: 4,
+    textColor: 'black',
+    backgroundColor: 'lightgray',
+    imageHeight: 18,
+    imageWidth: 16,
+    imageBorderRadius: 4,
+    paddingLeft: 8,
+    paddingRight: 8,
+    imageContainerHeight: 24,
+    imageContainerWidth: 24,
   },
 };
 

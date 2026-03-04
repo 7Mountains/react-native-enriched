@@ -1,8 +1,8 @@
 #import "ImageLabelAttachment.h"
+#import "AttachmentUtils.h"
 #import "ContentParams.h"
 #import "ContentStyleProps.h"
 #import "EnrichedImageLoader.h"
-#import "ImageLabelAttachmentUtils.h"
 #import "ImageLayoutUtils.h"
 
 @implementation ImageLabelAttachment {
@@ -30,10 +30,6 @@
   CGFloat _imageCornerRadiusBottomRight;
   BorderStyle _borderStyleEnum;
   CGSize _textSize;
-
-  UIImage *_cachedImage;
-  CGSize _cachedImageSize;
-  BOOL _needsRedraw;
 }
 
 #pragma mark - Init
@@ -79,8 +75,6 @@
 
   _imageSpacing = 8.0;
 
-  _needsRedraw = YES;
-
   _textSize = [_labelText size];
   if (styles.height > 0) {
     self.height = styles.height + _margin.top + _margin.bottom;
@@ -88,8 +82,7 @@
     self.height = [self calculateHeight];
   }
   self.image = MakeLoaderImage();
-
-  [self loadAsync];
+  [self loadImageAsyncWithURI:self.uri];
 
   return self;
 }
@@ -118,16 +111,6 @@
   CGFloat y = contentRect.origin.y + _inset.top;
 
   return CGRectMake(x, y, _imageWidth, imageH);
-}
-
-- (void)drawBackgroundInRect:(CGRect)contentRect {
-  if (!_bgColor)
-    return;
-
-  UIBezierPath *bg = [UIBezierPath bezierPathWithRoundedRect:contentRect
-                                                cornerRadius:_cornerRadius];
-  [_bgColor setFill];
-  [bg fill];
 }
 
 - (void)drawBorderInRect:(CGRect)contentRect {
@@ -182,8 +165,6 @@
   [_labelText drawAtPoint:CGPointMake(textX, textY)];
 }
 
-#pragma mark - NSTextAttachment sizing
-
 - (CGRect)attachmentBoundsForTextContainer:(NSTextContainer *)textContainer
                       proposedLineFragment:(CGRect)lineFrag
                              glyphPosition:(CGPoint)position
@@ -195,91 +176,14 @@
   return CGRectMake(0, 0, width, self.height);
 }
 
-#pragma mark - Rendering entry
-- (UIImage *)imageForBounds:(CGRect)bounds
-              textContainer:(NSTextContainer *)textContainer
-             characterIndex:(NSUInteger)charIndex {
+- (void)drawContentInBounds:(CGRect)bounds context:(CGContextRef)ctx {
 
-  if (bounds.size.width <= 0 || bounds.size.height <= 0)
-    return nil;
+  CGRect contentRect = ContentRect(bounds, _margin);
 
-  if (!_needsRedraw && _cachedImage &&
-      CGSizeEqualToSize(bounds.size, _cachedImageSize)) {
-    return _cachedImage;
-  }
-
-  UIGraphicsImageRendererFormat *format =
-      [UIGraphicsImageRendererFormat defaultFormat];
-  format.opaque = NO;
-
-  UIGraphicsImageRenderer *renderer =
-      [[UIGraphicsImageRenderer alloc] initWithSize:bounds.size format:format];
-
-  UIImage *image =
-      [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
-        CGRect contentRect = ContentRect(bounds, _margin);
-
-        [self drawBackgroundInRect:contentRect];
-        [self drawBorderInRect:contentRect];
-        [self drawImageInRect:contentRect context:ctx.CGContext];
-        [self drawTextInRect:contentRect];
-      }];
-
-  _cachedImage = image;
-  _cachedImageSize = bounds.size;
-  _needsRedraw = NO;
-
-  return image;
-}
-
-#pragma mark - Image loading
-
-- (void)invalidateCache {
-  _cachedImage = nil;
-  _needsRedraw = YES;
-}
-
-- (void)updateImage:(UIImage *)image {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    self.image = image;
-    [self invalidateCache];
-    [self notifyUpdate];
-  });
-}
-
-- (void)loadAsync {
-  __weak __typeof__(self) weakSelf = self;
-
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
-    __strong __typeof__(weakSelf) strongSelf = weakSelf;
-    if (!strongSelf)
-      return;
-
-    NSURL *url = [NSURL URLWithString:strongSelf.uri];
-
-    void (^completion)(UIImage *) = ^(UIImage *img) {
-      if (!strongSelf)
-        return;
-
-      img ? [strongSelf updateImage:img] : [strongSelf loadFallbackAsync];
-    };
-
-    [EnrichedImageLoader.shared loadImage:url completion:completion];
-  });
-}
-
-- (void)loadFallbackAsync {
-  if (!_fallbackUri)
-    return;
-
-  NSURL *url = [NSURL URLWithString:_fallbackUri];
-
-  [[EnrichedImageLoader shared] loadImage:url
-                               completion:^(UIImage *img) {
-                                 if (!img)
-                                   return;
-                                 [self updateImage:img];
-                               }];
+  DrawRoundedBackground(contentRect, _cornerRadius, _bgColor);
+  [self drawBorderInRect:contentRect];
+  [self drawImageInRect:contentRect context:ctx];
+  [self drawTextInRect:contentRect];
 }
 
 @end

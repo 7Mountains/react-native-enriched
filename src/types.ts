@@ -141,6 +141,31 @@ export interface HtmlStyle {
     color?: ColorValue;
     thickness?: number;
   };
+  mdf?: {
+    height?: number;
+    imageUri: string;
+    borderRadius?: number;
+    borderWidth?: number;
+    borderColor?: ColorValue;
+    stripeWidth?: number;
+    fontSize?: number;
+    fontWeight?: string;
+    marginLeft?: number;
+    marginRight?: number;
+    marginTop?: number;
+    marginBottom?: number;
+    textColor?: ColorValue;
+    backgroundColor?: ColorValue;
+    imageHeight?: number;
+    imageWidth?: number;
+    imageBorderRadius?: number;
+    paddingTop?: number;
+    paddingBottom?: number;
+    paddingRight?: number;
+    paddingLeft?: number;
+    imageContainerHeight?: number;
+    imageContainerWidth?: number;
+  };
 }
 
 export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {

@@ -1,3 +1,4 @@
+#import "MDFStyleProps.h"
 #import <InputConfig.h>
 #import <React/RCTFont.h>
 
@@ -58,6 +59,7 @@
   CGFloat _dividerThickness;
   UIColor *_dividerColor;
   NSDictionary *_contentProperties;
+  MDFStyleProps *_mdfStyle;
 }
 
 - (instancetype)init {
@@ -123,6 +125,7 @@
   copy->_dividerHeight = _dividerHeight;
   copy->_dividerThickness = _dividerThickness;
   copy->_contentProperties = [_contentProperties copy];
+  copy->_mdfStyle = [_mdfStyle copy];
   return copy;
 }
 
@@ -624,6 +627,14 @@
 
 - (void)dividerThickness:(CGFloat)newValue {
   _dividerThickness = newValue;
+}
+
+- (MDFStyleProps *)mdfStyle {
+  return _mdfStyle;
+}
+
+- (void)setMDFStyle:(MDFStyleProps *)newValue {
+  _mdfStyle = newValue;
 }
 
 @end

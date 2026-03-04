@@ -3,6 +3,8 @@
 #import "ContentStyleProps.h"
 #import "EnrichedImageLoader.h"
 #import "InputConfig.h"
+#import "MDFStyleOperators.h"
+#import "MDFStyleProps.h"
 #import "MentionStyleProps.h"
 #import "StringExtension.h"
 #import "Strings.h"
@@ -201,14 +203,6 @@
   if (newViewProps.htmlStyle.checkbox.imageHeight !=
       oldViewProps.htmlStyle.checkbox.imageHeight) {
     [newConfig setCheckBoxHeight:newViewProps.htmlStyle.checkbox.imageHeight];
-    stylePropChanged = YES;
-  }
-
-  if (newViewProps.htmlStyle.checkbox.checkedTextColor !=
-      oldViewProps.htmlStyle.checkbox.checkedTextColor) {
-    [newConfig setCheckedTextColor:RCTUIColorFromSharedColor(
-                                       newViewProps.htmlStyle.checkbox
-                                           .checkedTextColor)];
     stylePropChanged = YES;
   }
 
@@ -476,6 +470,12 @@
       }
     }
     [newConfig setMentionIndicators:newIndicators];
+  }
+
+  if (oldViewProps.htmlStyle.mdf != newViewProps.htmlStyle.mdf) {
+    [newConfig setMDFStyle:[[MDFStyleProps alloc]
+                               initWithStruct:newViewProps.htmlStyle.mdf]];
+    stylePropChanged = YES;
   }
 
   return stylePropChanged ? newConfig : previousConfig;

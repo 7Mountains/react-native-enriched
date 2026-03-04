@@ -268,6 +268,31 @@ export interface HtmlStyleInternal {
     color?: ColorValue;
     thickness?: Float;
   };
+  mdf?: {
+    height?: Float;
+    imageUri: string;
+    borderRadius?: Float;
+    borderWidth?: Float;
+    stripeWidth?: Float;
+    borderColor?: ColorValue;
+    fontSize?: Float;
+    fontWeight?: string;
+    marginLeft?: Float;
+    marginRight?: Float;
+    marginTop?: Float;
+    marginBottom?: Float;
+    textColor?: ColorValue;
+    backgroundColor?: ColorValue;
+    imageHeight?: Float;
+    imageWidth?: Float;
+    imageBorderRadius?: Float;
+    paddingTop?: Float;
+    paddingBottom?: Float;
+    paddingRight?: Float;
+    paddingLeft?: Float;
+    imageContainerHeight?: Float;
+    imageContainerWidth?: Float;
+  };
 }
 
 export interface OnScrollEvent {

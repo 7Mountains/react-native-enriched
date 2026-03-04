@@ -5,6 +5,7 @@
 #import "EnrichedHeadingLevel.h"
 #import "ImageData.h"
 #import "LinkData.h"
+#import "MDFParams.h"
 #import "MentionParams.h"
 #import "ParagraphModifierStyle.h"
 #import "ParameterizedStyleProtocol.h"
@@ -149,6 +150,11 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
     : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (ContentParams *)getContentParams:(NSUInteger)location;
 - (void)addContent:(ContentParams *)params;
+@end
+
+@interface MDFStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
+- (MDFParams *)getParmsAt:(NSUInteger)location;
+- (void)addMdf:(MDFParams *)params;
 @end
 
 @interface ParagraphAlignmentStyle
