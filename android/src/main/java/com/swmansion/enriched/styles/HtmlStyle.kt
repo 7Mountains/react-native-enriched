@@ -1,20 +1,14 @@
 package com.swmansion.enriched.styles
 
-import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.graphics.drawable.toDrawable
 import com.facebook.react.bridge.ColorPropConverter
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.PixelUtil
-import com.facebook.react.views.text.ReactTypefaceUtils
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
 import com.swmansion.enriched.EnrichedTextInputView
-import com.swmansion.enriched.R
 import com.swmansion.enriched.drawables.HRDrawable
-import com.swmansion.enriched.loaders.EnrichedImageLoader
 import kotlin.Float
 import kotlin.Int
 import kotlin.String
@@ -81,6 +75,8 @@ class HtmlStyle {
   var dividerColor: Int = Color.GRAY
 
   private var hrDrawable: HRDrawable? = null
+
+  var mdf: MDFStyle = MDFStyle.default()
 
   var checkboxStyle = CheckboxStyle.fromReadableMap(null, view?.context as ReactContext?)
 
@@ -176,6 +172,8 @@ class HtmlStyle {
     getHorizontalRuleDrawable()
 
     checkboxStyle = CheckboxStyle.fromReadableMap(style.getMap("checkbox"), context = view?.context as ReactContext)
+
+    mdf = MDFStyle.fromMap(style.getMap("mdf"), view?.context as ReactContext?)
   }
 
   private fun parseFloat(

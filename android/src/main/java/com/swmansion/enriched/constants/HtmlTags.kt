@@ -40,4 +40,5 @@ object HtmlTags {
   const val MENTION = "mention"
   const val CONTENT = "content"
   const val CHECKLIST = "checklist"
+  const val MDF = "mdf"
 }

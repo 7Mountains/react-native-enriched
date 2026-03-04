@@ -27,6 +27,7 @@ import com.swmansion.enriched.spans.EnrichedImageSpan.Companion.createEnrichedIm
 import com.swmansion.enriched.spans.EnrichedInlineCodeSpan
 import com.swmansion.enriched.spans.EnrichedItalicSpan
 import com.swmansion.enriched.spans.EnrichedLinkSpan
+import com.swmansion.enriched.spans.EnrichedMDFSpan
 import com.swmansion.enriched.spans.EnrichedMentionSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedStrikeThroughSpan
@@ -186,6 +187,11 @@ class HtmlToSpannedConverter(
 
       HtmlTags.CONTENT -> {
         addContent(mSpannableStringBuilder, attributes, htmlStyle, isEmptyTag)
+        return
+      }
+
+      HtmlTags.MDF -> {
+        addMDF(mSpannableStringBuilder, attributes, htmlStyle, isEmptyTag)
         return
       }
 
@@ -565,6 +571,38 @@ class HtmlToSpannedConverter(
         type,
         src,
         attributesMap,
+        htmlStyle,
+      )
+    span.attachTo(textInputView)
+    builder.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    editable.append(builder)
+    editable.append(Strings.NEWLINE)
+  }
+
+  private fun addMDF(
+    editable: Editable,
+    attributes: Attributes?,
+    htmlStyle: HtmlStyle,
+    isEmptyTag: Boolean,
+  ) {
+    if (attributes == null) {
+      return
+    }
+
+    val label = attributes.getValue("", "label")
+    val tintColorString = attributes.getValue("", "tint-color")
+    val id = attributes.getValue("", "id")
+
+    if (isEmptyTag) {
+      editable.append(Strings.NEWLINE)
+    }
+    val builder = SpannableStringBuilder()
+    builder.append(Strings.MAGIC_CHAR)
+    val span =
+      EnrichedMDFSpan.Companion.createMDFSpan(
+        label,
+        id,
+        tintColorString,
         htmlStyle,
       )
     span.attachTo(textInputView)

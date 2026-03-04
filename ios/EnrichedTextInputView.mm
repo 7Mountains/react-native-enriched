@@ -599,7 +599,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
            .codeBlock = GET_STYLE_STATE([CodeBlockStyle getStyleType]),
            .image = GET_STYLE_STATE([ImageStyle getStyleType]),
            .checkList = GET_STYLE_STATE([CheckBoxStyle getStyleType]),
-           .content = GET_STYLE_STATE([ContentStyle getStyleType])});
+           .content = GET_STYLE_STATE([ContentStyle getStyleType]),
+           .mdf = GET_STYLE_STATE([MDFStyle getStyleType])});
     }
   }
 

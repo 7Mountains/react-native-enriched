@@ -13,6 +13,7 @@ import com.swmansion.enriched.spans.EnrichedH4Span
 import com.swmansion.enriched.spans.EnrichedH5Span
 import com.swmansion.enriched.spans.EnrichedH6Span
 import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
+import com.swmansion.enriched.spans.EnrichedMDFSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
@@ -65,6 +66,19 @@ object TagsRegistry {
               if (params.attributes != null) {
                 putAll(params.attributes)
               }
+            }
+          },
+        ),
+      EnrichedMDFSpan::class to
+        TagInfo(
+          tag = HtmlTags.MDF,
+          isSelfClosing = true,
+          attributes = { span ->
+            val params = (span as EnrichedMDFSpan).mdfParams
+            buildMap {
+              put("label", params.label)
+              put("tint-color", String.format("#%06X", 0xFFFFFF and params.tintColor))
+              put("id", params.id)
             }
           },
         ),

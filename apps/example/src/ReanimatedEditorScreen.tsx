@@ -206,6 +206,11 @@ const DEFAULT_STYLE: OnChangeStateEvent = {
     canNotBeApplied: false,
     isConflicting: false,
   },
+  mdf: {
+    isActive: false,
+    canNotBeApplied: false,
+    isConflicting: false,
+  },
 };
 
 export default function EditorScreen() {

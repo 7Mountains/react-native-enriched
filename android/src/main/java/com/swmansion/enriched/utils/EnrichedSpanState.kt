@@ -68,6 +68,8 @@ class EnrichedSpanState(
     private set
   var contentStart: Int? = null
     private set
+  var mdfStart: Int? = null
+    private set
 
   fun setContentStart(start: Int?) {
     contentStart = start
@@ -203,6 +205,10 @@ class EnrichedSpanState(
     this.checklistStart = start
   }
 
+  fun setMdfStart(start: Int?) {
+    this.mdfStart = start
+  }
+
   fun getStart(name: TextStyle): Int? {
     val start =
       when (name) {
@@ -229,6 +235,7 @@ class EnrichedSpanState(
         TextStyle.IMAGE -> imageStart
         TextStyle.MENTION -> mentionStart
         TextStyle.DIVIDER -> dividerStart
+        TextStyle.MDF -> mdfStart
       }
 
     return start
@@ -330,6 +337,10 @@ class EnrichedSpanState(
       TextStyle.CONTENT -> {
         setContentStart(start)
       }
+
+      TextStyle.MDF -> {
+        setMdfStart(start)
+      }
     }
   }
 
@@ -413,6 +424,7 @@ class EnrichedSpanState(
         if (linkStart != null) TextStyle.LINK else null,
         if (imageStart != null) TextStyle.IMAGE else null,
         if (mentionStart != null) TextStyle.MENTION else null,
+        if (mdfStart != null) TextStyle.MDF else null,
       )
     val payload = Arguments.createMap()
     payload.putMap("alignment", getStyleState(activeStyles, TextStyle.ALIGNMENT))
@@ -437,6 +449,7 @@ class EnrichedSpanState(
     payload.putMap("mention", getStyleState(activeStyles, TextStyle.MENTION))
     payload.putMap("checkList", getStyleState(activeStyles, TextStyle.CHECK_LIST))
     payload.putMap("content", getStyleState(activeStyles, TextStyle.CONTENT))
+    payload.putMap("mdf", getStyleState(activeStyles, TextStyle.MDF))
 
     // Do not emit event if payload is the same
     if (previousPayload == payload) {

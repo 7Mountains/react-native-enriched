@@ -116,6 +116,11 @@ export interface OnChangeStateEvent {
     isConflicting: boolean;
     canNotBeApplied: boolean;
   };
+  mdf: {
+    isActive: boolean;
+    isConflicting: boolean;
+    canNotBeApplied: boolean;
+  };
 }
 
 export interface OnLinkDetected {
