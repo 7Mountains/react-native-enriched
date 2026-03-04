@@ -148,12 +148,24 @@
 }
 
 - (void)drawTextInContainerRect:(CGRect)containerRect startX:(CGFloat)startX {
-  CGSize textSize = [_labelText size];
 
-  CGFloat textY = containerRect.origin.y +
-                  (containerRect.size.height - textSize.height) / 2;
+  CGFloat maxWidth = CGRectGetMaxX(containerRect) - startX;
 
-  [_labelText drawAtPoint:CGPointMake(startX, textY)];
+  UIFont *font = [_labelText attribute:NSFontAttributeName
+                               atIndex:0
+                        effectiveRange:nil];
+
+  CGFloat lineHeight = font.lineHeight;
+
+  CGFloat textY =
+      containerRect.origin.y + (containerRect.size.height - lineHeight) / 2.0;
+
+  CGRect textRect = CGRectMake(startX, textY, maxWidth, lineHeight);
+
+  [_labelText drawWithRect:textRect
+                   options:NSStringDrawingUsesLineFragmentOrigin |
+                           NSStringDrawingTruncatesLastVisibleLine
+                   context:nil];
 }
 
 - (CGRect)drawImageContainerRectInRect:(CGRect)rect {

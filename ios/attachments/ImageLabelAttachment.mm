@@ -162,7 +162,14 @@
   CGFloat textY = contentRect.origin.y + _inset.top +
                   (availableHeight - _textSize.height) * 0.5;
 
-  [_labelText drawAtPoint:CGPointMake(textX, textY)];
+  CGFloat maxWidth = CGRectGetMaxX(contentRect) - _inset.right - textX;
+
+  CGRect textRect = CGRectMake(textX, textY, maxWidth, _textSize.height);
+
+  [_labelText drawWithRect:textRect
+                   options:NSStringDrawingUsesLineFragmentOrigin |
+                           NSStringDrawingTruncatesLastVisibleLine
+                   context:nil];
 }
 
 - (CGRect)attachmentBoundsForTextContainer:(NSTextContainer *)textContainer
