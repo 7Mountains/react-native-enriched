@@ -13,3 +13,7 @@ NSString *const HrefAttributeName = @"href";
 NSString *const MentionTypeAttributeName = @"type";
 NSString *const MentionTextAttributeName = @"text";
 NSString *const MentionIndicatorAttributeName = @"indicator";
+
+NSString *const MDFLabelAttributeName = @"label";
+NSString *const MDFIdAttributeName = @"id";
+NSString *const MDFTintColorAttributeName = @"tint-color";

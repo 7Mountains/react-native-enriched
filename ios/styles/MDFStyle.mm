@@ -1,9 +1,7 @@
-#import "BaseLabelAttachment.h"
 #import "ColorExtension.h"
-#import "EnrichedImageLoader.h"
 #import "EnrichedTextInputView.h"
 #import "HtmlAttributeNames.h"
-#import "ImageLabelAttachment.h"
+#import "MdfAttachment.h"
 #import "OccurenceUtils.h"
 #import "Strings.h"
 #import "StyleHeaders.h"
@@ -12,9 +10,9 @@
 #import "WordsUtils.h"
 #import <React/RCTFont.h>
 
-static NSString *const ContentAttributeName = @"ContentAttributeName";
+static NSString *const MdfAttributeName = @"MdfAttributeName";
 
-@implementation ContentStyle {
+@implementation MDFStyle {
   EnrichedTextInputView *_input;
 }
 
@@ -27,7 +25,7 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 }
 
 + (StyleType)getStyleType {
-  return Content;
+  return MDF;
 }
 
 + (BOOL)isParagraphStyle {
@@ -39,7 +37,7 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 }
 
 + (const char *)tagName {
-  return "content";
+  return "mdf";
 }
 
 + (const char *)subTagName {
@@ -47,16 +45,16 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 }
 
 + (NSAttributedStringKey)attributeKey {
-  return ContentAttributeName;
+  return MdfAttributeName;
 }
 
 + (NSDictionary<NSString *, id> *_Nullable)getParametersFromValue:(id)value {
-  ContentParams *contentParams = value;
-  if (![contentParams isKindOfClass:[ContentParams class]]) {
+  MDFParams *mdfParams = value;
+  if (![mdfParams isKindOfClass:[MDFParams class]]) {
     return nil;
   }
 
-  return [contentParams toDictionary];
+  return [mdfParams toDictionary];
 }
 
 - (void)addAttributesInAttributedString:
@@ -64,55 +62,23 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
                                   range:(NSRange)range
                              attributes:
                                  (NSDictionary<NSString *, id> *)attributes {
-  if (range.length == 0 || attributes.count == 0)
+  if (range.length == 0)
     return;
 
-  ContentParams *params = [ContentParams new];
-
-  id text = attributes[ContentTextAttributeName];
-  if ([text isKindOfClass:NSString.class]) {
-    params.text = text;
-  }
-
-  id type = attributes[ContentTypeAttributeName];
-  if ([type isKindOfClass:NSString.class]) {
-    params.type = type;
-  }
-
-  id url = attributes[ContentSrcAttributeName];
-  if ([url isKindOfClass:NSString.class]) {
-    params.url = url;
-  }
-
-  NSMutableDictionary *extra = [attributes mutableCopy];
-  [extra removeObjectsForKeys:@[
-    ContentSrcAttributeName, ContentTypeAttributeName, ContentTextAttributeName
-  ]];
-  if ([extra isKindOfClass:NSDictionary.class]) {
-    params.attributes = extra;
-  }
+  MDFParams *params = [MDFParams fromdDictionary:attributes];
 
   [attributedString addAttributes:[self prepareAttributes:params] range:range];
 }
 
 #pragma mark - NO-OP STYLE METHODS
 
-/// Centralized NO-OP macro so all "do nothing" methods call the same code
-#define CONTENTSTYLE_NOOP()                                                    \
-  do {                                                                         \
-  } while (0)
-
 - (void)applyStyle:(NSRange)range {
-  CONTENTSTYLE_NOOP();
 }
 - (void)addAttributes:(NSRange)range {
-  CONTENTSTYLE_NOOP();
 }
 - (void)addTypingAttributes {
-  CONTENTSTYLE_NOOP();
 }
 - (void)removeTypingAttributes {
-  CONTENTSTYLE_NOOP();
 }
 
 - (void)removeAttributesFromAttributedString:(NSMutableAttributedString *)string
@@ -143,7 +109,7 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
   auto condition = [self contentCondition];
 
   if (range.length >= 1) {
-    return [OccurenceUtils detect:ContentAttributeName
+    return [OccurenceUtils detect:MdfAttributeName
                         withInput:_input
                           inRange:range
                     withCondition:condition];
@@ -156,14 +122,14 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 }
 
 - (BOOL)anyOccurence:(NSRange)range {
-  return [OccurenceUtils any:ContentAttributeName
+  return [OccurenceUtils any:MdfAttributeName
                    withInput:_input
                      inRange:range
                withCondition:[self contentCondition]];
 }
 
 - (NSArray<StylePair *> *)findAllOccurences:(NSRange)range {
-  return [OccurenceUtils all:ContentAttributeName
+  return [OccurenceUtils all:MdfAttributeName
                    withInput:_input
                      inRange:range
                withCondition:[self contentCondition]];
@@ -171,7 +137,7 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 
 #pragma mark - Attachment Params Lookup
 
-- (ContentParams *)getContentParams:(NSUInteger)location {
+- (MDFParams *)getParmsAt:(NSUInteger)location {
   if (location >= _input->textView.textStorage.length)
     return nil;
 
@@ -182,45 +148,29 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
   NSDictionary *attrs = [_input->textView.textStorage attributesAtIndex:location
                                                          effectiveRange:NULL];
 
-  id value = attrs[ContentAttributeName];
+  id value = attrs[MdfAttributeName];
   return [value isKindOfClass:[ContentParams class]] ? value : nil;
 }
 
-#pragma mark - Internal: Props & Attachments
+- (MediaAttachment *)prepareAttachment:(MDFParams *)params {
+  MDFAttachment *attachment =
+      [[MDFAttachment alloc] initWithParams:params
+                                     styles:_input->config.mdfStyle];
 
-- (ContentStyleProps *)stylePropsWithParams:(ContentParams *)params {
-  return [_input->config contentStylePropsForType:params.type];
-}
-
-- (MediaAttachment *)prepareAttachment:(ContentParams *)params {
-  ContentStyleProps *styles = [self stylePropsWithParams:params];
-
-  MediaAttachment *attachment;
-
-  BOOL hasImageURL = params.url != nil && params.url.length > 0;
-
-  if (hasImageURL) {
-    attachment = [[ImageLabelAttachment alloc] initWithParams:params
-                                                       styles:styles];
-    attachment.delegate = _input;
-  } else {
-    attachment = [[BaseLabelAttachment alloc] initWithParams:params
-                                                      styles:styles];
-    attachment.delegate = _input;
-  }
+  attachment.delegate = _input;
 
   return attachment;
 }
 
-- (NSDictionary *)prepareAttributes:(ContentParams *)params {
+- (NSDictionary *)prepareAttributes:(MDFParams *)params {
   NSMutableDictionary *attributes = _input->defaultTypingAttributes.mutableCopy;
   attributes[NSAttachmentAttributeName] = [self prepareAttachment:params];
-  attributes[ContentAttributeName] = params;
+  attributes[MdfAttributeName] = params;
   attributes[ReadOnlyParagraphKey] = @YES;
   return attributes;
 }
 
-- (void)addContent:(ContentParams *)params {
+- (void)addMdf:(MDFParams *)params {
   if (!_input || !params)
     return;
 

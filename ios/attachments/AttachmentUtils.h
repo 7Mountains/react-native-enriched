@@ -171,3 +171,25 @@ static inline void ApplyBorderStyleCG(CGContextRef ctx, BorderStyle style) {
     break;
   }
 }
+
+static inline CGFloat CenterOffset(CGFloat outer, CGFloat inner) {
+  return (outer - inner) * 0.5;
+}
+
+static inline CGRect CenterRectVertically(CGRect rect, CGFloat width,
+                                          CGFloat height, CGFloat x) {
+  return CGRectMake(x, rect.origin.y + (rect.size.height - height) * 0.5, width,
+                    height);
+}
+
+static inline void DrawRoundedBackground(CGRect rect, CGFloat radius,
+                                         UIColor *color) {
+  if (!color)
+    return;
+
+  UIBezierPath *bg = [UIBezierPath bezierPathWithRoundedRect:rect
+                                                cornerRadius:radius];
+
+  [color setFill];
+  [bg fill];
+}

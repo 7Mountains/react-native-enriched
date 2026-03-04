@@ -1,7 +1,7 @@
 #import "BaseLabelAttachment.h"
+#import "AttachmentUtils.h"
 #import "ContentParams.h"
 #import "ContentStyleProps.h"
-#import "ImageLabelAttachmentUtils.h"
 
 @implementation BaseLabelAttachment {
   NSAttributedString *_labelText;

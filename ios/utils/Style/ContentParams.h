@@ -7,4 +7,7 @@
 @property(nonatomic, strong, nullable) NSString *text;
 @property(nonatomic, strong, nullable) NSString *url;
 @property(nonatomic, strong, nullable) NSDictionary<NSString *, id> *attributes;
+
+- (NSDictionary<NSString *, NSString *> *_Nullable)toDictionary;
+
 @end

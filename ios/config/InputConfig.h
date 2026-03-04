@@ -5,6 +5,8 @@
 #import <React/RCTImageSource.h>
 #import <UIKit/UIKit.h>
 
+@class MDFStyleProps;
+
 @interface InputConfig : NSObject <NSCopying>
 - (instancetype)init;
 - (UIColor *)primaryColor;
@@ -100,8 +102,6 @@
 - (void)setCheckBoxListMarginLeft:(CGFloat)newValue;
 - (CGFloat)checkboxListGapWidth;
 - (void)setCheckBoxListGapWidth:(CGFloat)newValue;
-- (UIColor *)checkedTextColor;
-- (void)setCheckedTextColor:(UIColor *)newValue;
 - (CGFloat)dividerHeight;
 - (UIColor *)dividerColor;
 - (CGFloat)dividerThickness;
@@ -111,4 +111,6 @@
 - (void)setDividerThickness:(CGFloat)newValue;
 - (void)setContentStyleProps:(NSDictionary *)newValue;
 - (ContentStyleProps *)contentStylePropsForType:(NSString *)type;
+- (MDFStyleProps *)mdfStyle;
+- (void)setMDFStyle:(MDFStyleProps *)newValue;
 @end

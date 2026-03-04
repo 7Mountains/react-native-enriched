@@ -60,4 +60,29 @@
   return params;
 }
 
+- (NSDictionary<NSString *, NSString *> *)toDictionary {
+  NSUInteger capacity = _attributes.count + 3;
+
+  NSMutableDictionary *params =
+      [NSMutableDictionary dictionaryWithCapacity:capacity];
+
+  if (_type) {
+    params[ContentTypeAttributeName] = _type;
+  }
+
+  if (_url) {
+    params[ContentSrcAttributeName] = _url;
+  }
+
+  if (_text) {
+    params[ContentTextAttributeName] = _text;
+  }
+
+  if (_attributes.count > 0) {
+    [params addEntriesFromDictionary:_attributes];
+  }
+
+  return params.count ? params : nil;
+}
+
 @end

@@ -19,6 +19,7 @@
     @([InlineCodeStyle getStyleType]) :
         [[InlineCodeStyle alloc] initWithInput:input],
     @([LinkStyle getStyleType]) : [[LinkStyle alloc] initWithInput:input],
+    @([MDFStyle getStyleType]) : [[MDFStyle alloc] initWithInput:input],
     @([MentionStyle getStyleType]) : [[MentionStyle alloc] initWithInput:input],
     @([H1Style getStyleType]) : [[H1Style alloc] initWithInput:input],
     @([H2Style getStyleType]) : [[H2Style alloc] initWithInput:input],
@@ -63,6 +64,7 @@
         @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]),
         @([MentionStyle getStyleType])
       ],
+      @([MDFStyle getStyleType]) : @[],
       @([MentionStyle getStyleType]) : @[
         @([InlineCodeStyle getStyleType]), @([LinkStyle getStyleType]),
         @([BoldStyle getStyleType]), @([ItalicStyle getStyleType]),
@@ -191,77 +193,95 @@
     blocking = @{
       @([BoldStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([ItalicStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([UnderlineStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([StrikethroughStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([ColorStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([InlineCodeStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([LinkStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType]), @([MentionStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MentionStyle getStyleType]),
+        @([MDFStyle getStyleType])
+      ],
+      @([MDFStyle getStyleType]) : @[
+        @([CheckBoxStyle getStyleType]), @([H1Style getStyleType]),
+        @([H2Style getStyleType]), @([H3Style getStyleType]),
+        @([H4Style getStyleType]), @([H5Style getStyleType]),
+        @([H6Style getStyleType]), @([UnorderedListStyle getStyleType]),
+        @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
+        @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]),
+        @([LinkStyle getStyleType]), @([MentionStyle getStyleType]),
+        @([DividerStyle getStyleType]), @([ContentStyle getStyleType])
       ],
       @([MentionStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType]), @([LinkStyle getStyleType])
+        @([ContentStyle getStyleType]), @([LinkStyle getStyleType]),
+        @([MDFStyle getStyleType])
       ],
       @([H1Style getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([H2Style getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([H3Style getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([H4Style getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([H5Style getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([H6Style getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([UnorderedListStyle getStyleType]) : @[
         @([DividerStyle getStyleType]), @([CodeBlockStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
-      @([OrderedListStyle getStyleType]) :
-          @[ @([DividerStyle getStyleType]), @([ContentStyle getStyleType]) ],
-      @([BlockQuoteStyle getStyleType]) :
-          @[ @([DividerStyle getStyleType]), @([ContentStyle getStyleType]) ],
-      @([CodeBlockStyle getStyleType]) :
-          @[ @([DividerStyle getStyleType]), @([ContentStyle getStyleType]) ],
+      @([OrderedListStyle getStyleType]) : @[
+        @([DividerStyle getStyleType]), @([ContentStyle getStyleType]),
+        @([MDFStyle getStyleType])
+      ],
+      @([BlockQuoteStyle getStyleType]) : @[
+        @([DividerStyle getStyleType]), @([ContentStyle getStyleType]),
+        @([MDFStyle getStyleType])
+      ],
+      @([CodeBlockStyle getStyleType]) : @[
+        @([DividerStyle getStyleType]), @([ContentStyle getStyleType]),
+        @([MDFStyle getStyleType])
+      ],
       @([ImageStyle getStyleType]) : @[
         @([InlineCodeStyle getStyleType]), @([DividerStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([CheckBoxStyle getStyleType]) : @[
         @([CodeBlockStyle getStyleType]), @([ContentStyle getStyleType]),
-        @([DividerStyle getStyleType])
+        @([DividerStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([DividerStyle getStyleType]) : @[
         @([CheckBoxStyle getStyleType]), @([H1Style getStyleType]),
@@ -271,7 +291,7 @@
         @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
         @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]),
         @([LinkStyle getStyleType]), @([MentionStyle getStyleType]),
-        @([ContentStyle getStyleType])
+        @([ContentStyle getStyleType]), @([MDFStyle getStyleType])
       ],
       @([ContentStyle getStyleType]) : @[
         @([CheckBoxStyle getStyleType]), @([H1Style getStyleType]),
@@ -281,10 +301,12 @@
         @([OrderedListStyle getStyleType]), @([BlockQuoteStyle getStyleType]),
         @([CodeBlockStyle getStyleType]), @([InlineCodeStyle getStyleType]),
         @([LinkStyle getStyleType]), @([MentionStyle getStyleType]),
-        @([DividerStyle getStyleType])
+        @([DividerStyle getStyleType]), @([MDFStyle getStyleType])
       ],
-      @([ParagraphAlignmentStyle getStyleType]) :
-          @[ @([ContentStyle getStyleType]), @([DividerStyle getStyleType]) ]
+      @([ParagraphAlignmentStyle getStyleType]) : @[
+        @([ContentStyle getStyleType]), @([DividerStyle getStyleType]),
+        @([MDFStyle getStyleType])
+      ]
     };
   });
   return blocking;
