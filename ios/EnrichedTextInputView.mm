@@ -913,9 +913,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   if ([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType]
-                                    range:[[mentionStyleClass
-                                              getActiveMentionRange]
-                                              rangeValue]]) {
+                                    range:textView.selectedRange]) {
     NSDictionary<NSString *, id> *parsedAttributes = nil;
     if (attributes.length > 0) {
       NSData *data = [attributes dataUsingEncoding:NSUTF8StringEncoding];
