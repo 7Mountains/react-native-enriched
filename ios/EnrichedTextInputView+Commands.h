@@ -40,4 +40,6 @@
 
 - (void)addContent:(ContentParams *)params;
 
+- (void)insertTextAtSelection:(NSString *)text;
+
 @end

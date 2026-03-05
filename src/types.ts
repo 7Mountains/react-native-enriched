@@ -33,6 +33,8 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   setValue: (value: string) => void;
   setSelection: (start: number, end: number) => void;
   getHTML: (prettify?: boolean) => Promise<string>;
+  scrollTo: (x: number, y: number, animated?: boolean) => void;
+  insertTextAtSelection: (text: string) => void;
 
   // Text formatting commands
   toggleBold: () => void;
@@ -64,7 +66,6 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   removeColor: () => void;
   addDividerAtNewLine: () => void;
   setParagraphAlignment: (alignment: string) => void;
-  scrollTo: (x: number, y: number, animated?: boolean) => void;
   addContent: (
     text: string,
     type: string,

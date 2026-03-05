@@ -329,6 +329,10 @@ export default function EditorScreen() {
     });
   };
 
+  const insertEmojiAtSelection = () => {
+    ref.current?.insertTextAtSelection('😀');
+  };
+
   const handleFocusEvent = () => {
     console.log('Input focused');
   };
@@ -486,6 +490,10 @@ export default function EditorScreen() {
         <Button
           title="set default alignment"
           onPress={() => ref.current?.setParagraphAlignment('default')}
+        />
+        <Button
+          title="Insert emoji at selection"
+          onPress={insertEmojiAtSelection}
         />
         <Text>is Check list {stylesState.checkList.isActive}</Text>
         <HtmlSection currentHtml={currentHtml} />

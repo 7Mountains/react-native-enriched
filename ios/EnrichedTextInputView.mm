@@ -1016,6 +1016,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   return YES;
 }
 
+- (void)insertTextAtSelection:(NSString *)text {
+  if (text.length == 0) {
+    return;
+  }
+
+  NSAttributedString *insertedText =
+      [parser isHtmlString:text]
+          ? [parser attributedFromHtml:text]
+          : [[NSAttributedString alloc] initWithString:text
+                                            attributes:defaultTypingAttributes];
+
+  NSRange selectedRange = textView.selectedRange;
+  [_clipboardHandler handleInsertion:textView.textStorage
+                             iserted:insertedText
+                       selectedRange:selectedRange];
+}
+
 - (NSArray<NSNumber *> *)getPresentStyleTypesFrom:(NSArray<NSNumber *> *)types
                                             range:(NSRange)range {
   NSMutableArray<NSNumber *> *resultArray =

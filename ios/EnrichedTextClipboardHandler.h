@@ -9,5 +9,8 @@
 - (void)copy;
 - (void)paste;
 - (void)cut;
+- (void)handleInsertion:(NSMutableAttributedString *)current
+                iserted:(NSAttributedString *)inserted
+          selectedRange:(NSRange)selectedRange;
 
 @end

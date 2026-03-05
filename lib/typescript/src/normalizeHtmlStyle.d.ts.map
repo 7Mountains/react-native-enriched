@@ -1,1 +1,1 @@
-{"version":3,"file":"normalizeHtmlStyle.d.ts","sourceRoot":"","sources":["../../../src/normalizeHtmlStyle.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAEV,iBAAiB,EAElB,MAAM,oCAAoC,CAAC;AAC5C,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,SAAS,CAAC;AAsNzC,eAAO,MAAM,kBAAkB,GAAI,OAAO,SAAS,KAAG,iBAIrD,CAAC"}
+{"version":3,"file":"normalizeHtmlStyle.d.ts","sourceRoot":"","sources":["../../../src/normalizeHtmlStyle.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAEV,iBAAiB,EAElB,MAAM,oCAAoC,CAAC;AAC5C,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,SAAS,CAAC;AA+OzC,eAAO,MAAM,kBAAkB,GAAI,OAAO,SAAS,KAAG,iBAIrD,CAAC"}

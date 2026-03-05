@@ -268,6 +268,28 @@ class EnrichedTextInputView : AppCompatEditText {
     }
   }
 
+  private fun insertSpannable(spannable: Spannable) {
+    val currentText = text as Spannable
+    val start = minOf(selection?.start ?: 0, selection?.end ?: 0)
+    val end = maxOf(selection?.start ?: 0, selection?.end ?: 0)
+
+    val result = currentText.mergeSpannables(start, end, spannable)
+
+    setValue(result.text)
+
+    val cursor = start + result.insertedCharactersAmount
+    setSelection(cursor, cursor)
+  }
+
+  fun insertText(insertedText: String) {
+    val parsedText = parseText(insertedText)
+
+    val spannable =
+      parsedText as? Spannable ?: SpannableString(parsedText)
+
+    insertSpannable(spannable)
+  }
+
   private fun handleCustomPaste() {
     val clipboard =
       context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -276,34 +298,16 @@ class EnrichedTextInputView : AppCompatEditText {
     val clip = clipboard.primaryClip ?: return
     val item = clip.getItemAt(0)
 
-    val currentText = text as Spannable
-    val start = minOf(selection?.start ?: 0, selection?.end ?: 0)
-    val end = maxOf(selection?.start ?: 0, selection?.end ?: 0)
-
-    fun moveCursor(insertedCharacters: Int) {
-      val cursor = start + insertedCharacters
-      setSelection(cursor, cursor)
-    }
-
-    item.htmlText?.let { htmlText ->
-      val parsedText = parseText(htmlText)
-      if (parsedText is Spannable) {
-        val result =
-          currentText.mergeSpannables(start, end, parsedText)
-
-        setValue(result.text)
-        moveCursor(result.insertedCharactersAmount)
+    item.htmlText?.let { html ->
+      val parsed = parseText(html)
+      if (parsed is Spannable) {
+        insertSpannable(parsed)
         return
       }
     }
 
     val plainText = item.text?.toString() ?: return
-
-    val result =
-      currentText.mergeSpannables(start, end, SpannableString(plainText))
-
-    setValue(result.text)
-    moveCursor(result.insertedCharactersAmount)
+    insertSpannable(SpannableString(plainText))
 
     parametrizedStyles?.detectAllLinks()
   }

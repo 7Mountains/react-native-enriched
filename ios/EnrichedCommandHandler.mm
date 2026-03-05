@@ -155,6 +155,9 @@ static inline void RunOnMainThread(void (^block)(void)) {
       [scrollView setContentOffset:CGPointMake(clampedX, clampedY)
                           animated:animated];
     });
+  } else if ([commandName isEqualToString:@"insertTextAtSelection"]) {
+    NSString *text = args[0];
+    [_input insertTextAtSelection:text];
   }
 }
 

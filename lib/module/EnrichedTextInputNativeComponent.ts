@@ -116,6 +116,11 @@ export interface OnChangeStateEvent {
     isConflicting: boolean;
     canNotBeApplied: boolean;
   };
+  mdf: {
+    isActive: boolean;
+    isConflicting: boolean;
+    canNotBeApplied: boolean;
+  };
 }
 
 export interface OnLinkDetected {
@@ -267,6 +272,31 @@ export interface HtmlStyleInternal {
     height?: Float;
     color?: ColorValue;
     thickness?: Float;
+  };
+  mdf?: {
+    height?: Float;
+    imageUri: string;
+    borderRadius?: Float;
+    borderWidth?: Float;
+    stripeWidth?: Float;
+    borderColor?: ColorValue;
+    fontSize?: Float;
+    fontWeight?: string;
+    marginLeft?: Float;
+    marginRight?: Float;
+    marginTop?: Float;
+    marginBottom?: Float;
+    textColor?: ColorValue;
+    backgroundColor?: ColorValue;
+    imageHeight?: Float;
+    imageWidth?: Float;
+    imageBorderRadius?: Float;
+    paddingTop?: Float;
+    paddingBottom?: Float;
+    paddingRight?: Float;
+    paddingLeft?: Float;
+    imageContainerHeight?: Float;
+    imageContainerWidth?: Float;
   };
 }
 
@@ -448,6 +478,10 @@ interface NativeCommands {
     src: string,
     attributes: string
   ) => void;
+  insertTextAtSelection: (
+    viewRef: React.ElementRef<ComponentType>,
+    text: string
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -457,6 +491,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'blur',
     'setValue',
     'setSelection',
+    'insertTextAtSelection',
 
     // Text formatting commands
     'toggleBold',
