@@ -745,7 +745,7 @@ class EnrichedTextInputView : AppCompatEditText {
     val html =
       try {
         EnrichedParser.toHtmlWithDefault(text, prettify)
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         null
       }
 
@@ -884,6 +884,11 @@ class EnrichedTextInputView : AppCompatEditText {
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
+
+    // Used to ensure that text is selectable inside of removeClippedSubviews
+    // See https://github.com/facebook/react-native/issues/6805 for original
+    // fix that was ported to here.
+    runAsATransaction { super.setTextIsSelectable(true) }
 
     if (autoFocus && !didAttachToWindow) {
       requestFocusProgrammatically()
