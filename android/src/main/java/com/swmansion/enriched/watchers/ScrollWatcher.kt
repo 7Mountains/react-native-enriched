@@ -6,5 +6,5 @@ interface ScrollWatcher {
     vert: Int,
     oldHoriz: Int,
     oldVert: Int,
-  ): Unit
+  )
 }

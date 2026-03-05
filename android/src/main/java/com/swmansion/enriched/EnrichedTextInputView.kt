@@ -745,7 +745,7 @@ class EnrichedTextInputView : AppCompatEditText {
     val html =
       try {
         EnrichedParser.toHtmlWithDefault(text, prettify)
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         null
       }
 
