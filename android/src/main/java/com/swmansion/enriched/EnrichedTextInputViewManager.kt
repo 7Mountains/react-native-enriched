@@ -562,6 +562,14 @@ class EnrichedTextInputViewManager :
     view?.insertText(text)
   }
 
+  override fun insertTextAt(
+    view: EnrichedTextInputView?,
+    text: String,
+    at: Int,
+  ) {
+    view?.insertText(text, at)
+  }
+
   override fun measure(
     context: Context,
     localData: ReadableMap?,

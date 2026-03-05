@@ -1015,6 +1015,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)insertTextAtSelection:(NSString *)text {
+  NSRange selectedRange = textView.selectedRange;
+  [self insertTextAt:text range:selectedRange];
+}
+
+- (void)insertTextAt:(NSString *)text range:(NSRange)range {
   if (text.length == 0) {
     return;
   }
@@ -1025,10 +1030,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
           : [[NSAttributedString alloc] initWithString:text
                                             attributes:defaultTypingAttributes];
 
-  NSRange selectedRange = textView.selectedRange;
   [_clipboardHandler handleInsertion:textView.textStorage
                              iserted:insertedText
-                       selectedRange:selectedRange];
+                       selectedRange:range];
+
+  textView.selectedRange = NSMakeRange(range.location + insertedText.length, 0);
 }
 
 - (NSArray<NSNumber *> *)getPresentStyleTypesFrom:(NSArray<NSNumber *> *)types

@@ -268,9 +268,13 @@ class EnrichedTextInputView : AppCompatEditText {
     }
   }
 
-  private fun insertSpannable(spannable: Spannable) {
+  private fun insertSpannable(
+    spannable: Spannable,
+    at: Int? = null,
+  ) {
     val currentText = text as Spannable
-    val start = minOf(selection?.start ?: 0, selection?.end ?: 0)
+    val insertionStart = at ?: selection?.start ?: 0
+    val start = minOf(insertionStart, selection?.end ?: 0)
     val end = maxOf(selection?.start ?: 0, selection?.end ?: 0)
 
     val result = currentText.mergeSpannables(start, end, spannable)
@@ -281,13 +285,16 @@ class EnrichedTextInputView : AppCompatEditText {
     setSelection(cursor, cursor)
   }
 
-  fun insertText(insertedText: String) {
+  fun insertText(
+    insertedText: String,
+    at: Int? = null,
+  ) {
     val parsedText = parseText(insertedText)
 
     val spannable =
       parsedText as? Spannable ?: SpannableString(parsedText)
 
-    insertSpannable(spannable)
+    insertSpannable(spannable, at)
   }
 
   private fun handleCustomPaste() {
@@ -337,7 +344,6 @@ class EnrichedTextInputView : AppCompatEditText {
     withSelection: Boolean = false,
   ) {
     if (value == null) return
-    Log.i("EnrichedTextInputView", "setting value")
     runAsATransaction {
       blockTextEventEmitting = true
       val newText = parseText(value)
@@ -346,7 +352,7 @@ class EnrichedTextInputView : AppCompatEditText {
       observeAsyncImages()
       if (withSelection) {
         // Scroll to the last line of text
-        setSelection(text?.length ?: 0)
+        setSelection(text?.length ?: 0, text?.length ?: 0)
       }
       blockTextEventEmitting = false
     }
@@ -892,7 +898,11 @@ class EnrichedTextInputView : AppCompatEditText {
     // Used to ensure that text is selectable inside of removeClippedSubviews
     // See https://github.com/facebook/react-native/issues/6805 for original
     // fix that was ported to here.
-    runAsATransaction { super.setTextIsSelectable(true) }
+    runAsATransaction {
+      blockTextEventEmitting = true
+      super.setTextIsSelectable(true)
+      blockTextEventEmitting = false
+    }
 
     if (autoFocus && !didAttachToWindow) {
       requestFocusProgrammatically()

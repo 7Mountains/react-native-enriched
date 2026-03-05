@@ -482,6 +482,11 @@ interface NativeCommands {
     viewRef: React.ElementRef<ComponentType>,
     text: string
   ) => void;
+  insertTextAt: (
+    viewRef: React.ElementRef<ComponentType>,
+    text: string,
+    at: Int32
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -492,6 +497,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'setValue',
     'setSelection',
     'insertTextAtSelection',
+    'insertTextAt',
 
     // Text formatting commands
     'toggleBold',

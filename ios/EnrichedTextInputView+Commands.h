@@ -42,4 +42,6 @@
 
 - (void)insertTextAtSelection:(NSString *)text;
 
+- (void)insertTextAt:(NSString *)text range:(NSRange)range;
+
 @end
