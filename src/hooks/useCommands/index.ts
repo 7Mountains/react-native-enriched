@@ -175,6 +175,12 @@ const useCommands = (
       ) => {
         Commands.addContent(nullthrows(typedRef), text, type, src, attributes);
       },
+      insertTextAtSelection: (text: string) => {
+        Commands.insertTextAtSelection(nullthrows(typedRef), text);
+      },
+      insertTextAt: (text: string, at: number) => {
+        Commands.insertTextAt(nullthrows(typedRef), text, at);
+      },
     };
   }, [
     mentionIndicators,

@@ -290,21 +290,36 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
     additionalAttributes[NSUnderlineStyleAttributeName] =
         @(NSUnderlineStyleSingle);
   }
+  if (_activeMentionRange != nullptr) {
+    NSRange rangeToBeReplaced = [_activeMentionRange rangeValue];
+    NSString *newText = [NSString stringWithFormat:@"%@ ", text];
+    [TextInsertionUtils replaceText:newText
+                                 at:rangeToBeReplaced
+               additionalAttributes:nullptr
+                              input:_input
+                      withSelection:YES];
 
-  // add a single space after the mention
-  [TextInsertionUtils insertText:text
-                              at:_input->textView.selectedRange.location
-            additionalAttributes:additionalAttributes
-                           input:_input
-                   withSelection:NO];
+    // THEN, add the attributes to not apply them on the space
+    [_input->textView.textStorage
+        addAttributes:additionalAttributes
+                range:NSMakeRange(rangeToBeReplaced.location, text.length)];
 
-  // THEN, add the attributes to not apply them on the space
-  [TextInsertionUtils
-                insertText:@" "
-                        at:_input->textView.selectedRange.location + text.length
-      additionalAttributes:nil
-                     input:_input
-             withSelection:YES];
+    // mention editing should finish
+    [self removeActiveMentionRange];
+  } else {
+    // add a single space after the mention
+    [TextInsertionUtils insertText:text
+                                at:_input->textView.selectedRange.location
+              additionalAttributes:additionalAttributes
+                             input:_input
+                     withSelection:NO];
+    [TextInsertionUtils insertText:@" "
+                                at:_input->textView.selectedRange.location +
+                                   text.length
+              additionalAttributes:nil
+                             input:_input
+                     withSelection:YES];
+  }
 
   // mention editing should finish
   [self removeActiveMentionRange];

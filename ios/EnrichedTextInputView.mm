@@ -913,9 +913,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   if ([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType]
-                                    range:[[mentionStyleClass
-                                              getActiveMentionRange]
-                                              rangeValue]]) {
+                                    range:textView.selectedRange]) {
     NSDictionary<NSString *, id> *parsedAttributes = nil;
     if (attributes.length > 0) {
       NSData *data = [attributes dataUsingEncoding:NSUTF8StringEncoding];
@@ -1014,6 +1012,29 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
   }
   return YES;
+}
+
+- (void)insertTextAtSelection:(NSString *)text {
+  NSRange selectedRange = textView.selectedRange;
+  [self insertTextAt:text range:selectedRange];
+}
+
+- (void)insertTextAt:(NSString *)text range:(NSRange)range {
+  if (text.length == 0) {
+    return;
+  }
+
+  NSAttributedString *insertedText =
+      [parser isHtmlString:text]
+          ? [parser attributedFromHtml:text]
+          : [[NSAttributedString alloc] initWithString:text
+                                            attributes:defaultTypingAttributes];
+
+  [_clipboardHandler handleInsertion:textView.textStorage
+                             iserted:insertedText
+                       selectedRange:range];
+
+  textView.selectedRange = NSMakeRange(range.location + insertedText.length, 0);
 }
 
 - (NSArray<NSNumber *> *)getPresentStyleTypesFrom:(NSArray<NSNumber *> *)types

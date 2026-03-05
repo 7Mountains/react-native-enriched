@@ -59,8 +59,9 @@ export const EnrichedTextInput = ({
   useEffect(() => {
     const pendingRequests = pendingHtmlRequests.current;
     return () => {
+      const error = new Error('Component unmounted');
       pendingRequests.forEach(({ reject }) => {
-        reject(new Error('Component unmounted'));
+        reject(error);
       });
       pendingRequests.clear();
     };

@@ -121,6 +121,11 @@ export interface OnChangeStateEvent {
         isConflicting: boolean;
         canNotBeApplied: boolean;
     };
+    mdf: {
+        isActive: boolean;
+        isConflicting: boolean;
+        canNotBeApplied: boolean;
+    };
 }
 export interface OnLinkDetected {
     text: string;
@@ -252,6 +257,31 @@ export interface HtmlStyleInternal {
         color?: ColorValue;
         thickness?: Float;
     };
+    mdf?: {
+        height?: Float;
+        imageUri: string;
+        borderRadius?: Float;
+        borderWidth?: Float;
+        stripeWidth?: Float;
+        borderColor?: ColorValue;
+        fontSize?: Float;
+        fontWeight?: string;
+        marginLeft?: Float;
+        marginRight?: Float;
+        marginTop?: Float;
+        marginBottom?: Float;
+        textColor?: ColorValue;
+        backgroundColor?: ColorValue;
+        imageHeight?: Float;
+        imageWidth?: Float;
+        imageBorderRadius?: Float;
+        paddingTop?: Float;
+        paddingBottom?: Float;
+        paddingRight?: Float;
+        paddingLeft?: Float;
+        imageContainerHeight?: Float;
+        imageContainerWidth?: Float;
+    };
 }
 export interface OnScrollEvent {
     contentInset: {
@@ -367,6 +397,8 @@ interface NativeCommands {
     setParagraphAlignment: (viewRef: React.ElementRef<ComponentType>, alignment: string) => void;
     scrollTo: (viewRef: React.ElementRef<ComponentType>, x: Float, y: Float, animated: boolean) => void;
     addContent: (viewRef: React.ElementRef<ComponentType>, text: string, type: string, src: string, attributes: string) => void;
+    insertTextAtSelection: (viewRef: React.ElementRef<ComponentType>, text: string) => void;
+    insertTextAt: (viewRef: React.ElementRef<ComponentType>, text: string, at: Int32) => void;
 }
 export declare const Commands: NativeCommands;
 declare const _default: HostComponent<NativeProps>;

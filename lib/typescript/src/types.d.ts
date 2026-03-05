@@ -7,6 +7,9 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     setValue: (value: string) => void;
     setSelection: (start: number, end: number) => void;
     getHTML: (prettify?: boolean) => Promise<string>;
+    scrollTo: (x: number, y: number, animated?: boolean) => void;
+    insertTextAtSelection: (text: string) => void;
+    insertTextAt: (text: string, at: number) => void;
     toggleBold: () => void;
     toggleItalic: () => void;
     toggleUnderline: () => void;
@@ -31,7 +34,6 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     removeColor: () => void;
     addDividerAtNewLine: () => void;
     setParagraphAlignment: (alignment: string) => void;
-    scrollTo: (x: number, y: number, animated?: boolean) => void;
     addContent: (text: string, type: string, src: string, attributes: string) => void;
 }
 export interface OnChangeMentionEvent {
@@ -99,6 +101,31 @@ export interface HtmlStyle {
         height?: number;
         color?: ColorValue;
         thickness?: number;
+    };
+    mdf?: {
+        height?: number;
+        imageUri: string;
+        borderRadius?: number;
+        borderWidth?: number;
+        borderColor?: ColorValue;
+        stripeWidth?: number;
+        fontSize?: number;
+        fontWeight?: string;
+        marginLeft?: number;
+        marginRight?: number;
+        marginTop?: number;
+        marginBottom?: number;
+        textColor?: ColorValue;
+        backgroundColor?: ColorValue;
+        imageHeight?: number;
+        imageWidth?: number;
+        imageBorderRadius?: number;
+        paddingTop?: number;
+        paddingBottom?: number;
+        paddingRight?: number;
+        paddingLeft?: number;
+        imageContainerHeight?: number;
+        imageContainerWidth?: number;
     };
 }
 export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {

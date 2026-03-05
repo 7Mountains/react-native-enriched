@@ -108,10 +108,7 @@ const generateHugeHtml = (repeat = 1) => {
   // };
 
   for (let i = 0; i < repeat; i++) {
-    parts.push(
-      `<mdf label="test" id="123" tint-color="#0000ff" />`,
-      `\n<content type="image" src="https://picsum.photos/200/300" text="Test text" />`
-    );
+    parts.push(`<p>Test test</p>`);
   }
 
   parts.push('\n</html>');
@@ -329,6 +326,14 @@ export default function EditorScreen() {
     });
   };
 
+  const insertEmojiAtSelection = () => {
+    ref.current?.insertTextAtSelection('😀');
+  };
+
+  const insertTextAtStart = () => {
+    ref.current?.insertTextAt('Start: ', 0);
+  };
+
   const handleFocusEvent = () => {
     console.log('Input focused');
   };
@@ -487,6 +492,11 @@ export default function EditorScreen() {
           title="set default alignment"
           onPress={() => ref.current?.setParagraphAlignment('default')}
         />
+        <Button
+          title="Insert emoji at selection"
+          onPress={insertEmojiAtSelection}
+        />
+        <Button title="Insert text at start" onPress={insertTextAtStart} />
         <Text>is Check list {stylesState.checkList.isActive}</Text>
         <HtmlSection currentHtml={currentHtml} />
         {DEBUG_SCROLLABLE && <View style={styles.scrollPlaceholder} />}
