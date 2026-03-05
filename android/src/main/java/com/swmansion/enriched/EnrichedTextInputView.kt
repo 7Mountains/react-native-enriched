@@ -272,16 +272,23 @@ class EnrichedTextInputView : AppCompatEditText {
     spannable: Spannable,
     at: Int? = null,
   ) {
-    val currentText = text as Spannable
-    val insertionStart = at ?: selection?.start ?: 0
-    val start = minOf(insertionStart, selection?.end ?: 0)
-    val end = maxOf(selection?.start ?: 0, selection?.end ?: 0)
+    val currentText = (text as? Spannable) ?: return
+    val length = currentText.length
+
+    val insertionStart = selection?.start ?: 0
+    val insertionEnd = selection?.end ?: 0
+
+    val rawStart = at ?: minOf(insertionStart, insertionEnd)
+    val rawEnd = at ?: maxOf(insertionStart, insertionEnd)
+
+    val start = rawStart.coerceIn(0, length)
+    val end = rawEnd.coerceIn(start, length)
 
     val result = currentText.mergeSpannables(start, end, spannable)
 
     setValue(result.text)
 
-    val cursor = start + result.insertedCharactersAmount
+    val cursor = (start + result.insertedCharactersAmount).coerceIn(0, result.text.length)
     setSelection(cursor, cursor)
   }
 
