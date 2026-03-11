@@ -73,12 +73,12 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 @interface HeadingStyleBase : NSObject <BaseStyleProtocol> {
   id input;
 }
++ (EnrichedHeadingLevel)headingLevel;
 - (CGFloat)getHeadingFontSize;
 - (BOOL)isHeadingBold;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (void)addAttributes:(NSRange)range
     withTypingAttributes:(BOOL)withTypingAttributes;
-+ (EnrichedHeadingLevel)headingLevel;
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 @end
 

@@ -134,14 +134,14 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   }
   [storage endEditing];
 
+  UIColor *primaryColor = [_input->config primaryColor];
+
   // adjust typing attributes as well
   NSMutableDictionary *newTypingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  newTypingAttrs[NSForegroundColorAttributeName] =
-      [_input->config primaryColor];
-  newTypingAttrs[NSUnderlineColorAttributeName] = [_input->config primaryColor];
-  newTypingAttrs[NSStrikethroughColorAttributeName] =
-      [_input->config primaryColor];
+  newTypingAttrs[NSForegroundColorAttributeName] = primaryColor;
+  newTypingAttrs[NSUnderlineColorAttributeName] = primaryColor;
+  newTypingAttrs[NSStrikethroughColorAttributeName] = primaryColor;
   if ([_input->config linkDecorationLine] == DecorationUnderline) {
     [newTypingAttrs removeObjectForKey:NSUnderlineStyleAttributeName];
   }
@@ -150,38 +150,34 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 
 // used for conflicts, we have to remove the whole link
 - (void)removeTypingAttributes {
+  NSTextStorage *textStorage = _input->textView.textStorage;
+  UIColor *primaryColor = [_input->config primaryColor];
   NSRange linkRange =
       [self getFullLinkRangeAt:_input->textView.selectedRange.location];
-  [_input->textView.textStorage beginEditing];
-  [_input->textView.textStorage removeAttribute:ManualLinkAttributeName
-                                          range:linkRange];
-  [_input->textView.textStorage removeAttribute:AutomaticLinkAttributeName
-                                          range:linkRange];
-  [_input->textView.textStorage removeAttribute:LinkAttributeName
-                                          range:linkRange];
-  [_input->textView.textStorage addAttribute:NSForegroundColorAttributeName
-                                       value:[_input->config primaryColor]
-                                       range:linkRange];
-  [_input->textView.textStorage addAttribute:NSUnderlineColorAttributeName
-                                       value:[_input->config primaryColor]
-                                       range:linkRange];
-  [_input->textView.textStorage addAttribute:NSStrikethroughColorAttributeName
-                                       value:[_input->config primaryColor]
-                                       range:linkRange];
+  [textStorage beginEditing];
+  [textStorage removeAttribute:ManualLinkAttributeName range:linkRange];
+  [textStorage removeAttribute:AutomaticLinkAttributeName range:linkRange];
+  [textStorage removeAttribute:LinkAttributeName range:linkRange];
+  [textStorage addAttribute:NSForegroundColorAttributeName
+                      value:primaryColor
+                      range:linkRange];
+  [textStorage addAttribute:NSUnderlineColorAttributeName
+                      value:primaryColor
+                      range:linkRange];
+  [textStorage addAttribute:NSStrikethroughColorAttributeName
+                      value:primaryColor
+                      range:linkRange];
   if ([_input->config linkDecorationLine] == DecorationUnderline) {
-    [_input->textView.textStorage removeAttribute:NSUnderlineStyleAttributeName
-                                            range:linkRange];
+    [textStorage removeAttribute:NSUnderlineStyleAttributeName range:linkRange];
   }
-  [_input->textView.textStorage endEditing];
+  [textStorage endEditing];
 
   // adjust typing attributes as well
   NSMutableDictionary *newTypingAttrs =
       [_input->textView.typingAttributes mutableCopy];
-  newTypingAttrs[NSForegroundColorAttributeName] =
-      [_input->config primaryColor];
-  newTypingAttrs[NSUnderlineColorAttributeName] = [_input->config primaryColor];
-  newTypingAttrs[NSStrikethroughColorAttributeName] =
-      [_input->config primaryColor];
+  newTypingAttrs[NSForegroundColorAttributeName] = primaryColor;
+  newTypingAttrs[NSUnderlineColorAttributeName] = primaryColor;
+  newTypingAttrs[NSStrikethroughColorAttributeName] = primaryColor;
   if ([_input->config linkDecorationLine] == DecorationUnderline) {
     [newTypingAttrs removeObjectForKey:NSUnderlineStyleAttributeName];
   }
@@ -233,14 +229,16 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
             range:(NSRange)range
            manual:(BOOL)manual
     withSelection:(BOOL)withSelection {
-  NSString *currentText =
-      [_input->textView.textStorage.string substringWithRange:range];
+  UITextView *textView = _input->textView;
+  NSTextStorage *textStorage = textView.textStorage;
+  UIColor *linkColor = [_input->config linkColor];
+  NSString *currentText = [textStorage.string substringWithRange:range];
 
   NSMutableDictionary<NSAttributedStringKey, id> *newAttrs =
       [[NSMutableDictionary<NSAttributedStringKey, id> alloc] init];
-  newAttrs[NSForegroundColorAttributeName] = [_input->config linkColor];
-  newAttrs[NSUnderlineColorAttributeName] = [_input->config linkColor];
-  newAttrs[NSStrikethroughColorAttributeName] = [_input->config linkColor];
+  newAttrs[NSForegroundColorAttributeName] = linkColor;
+  newAttrs[NSUnderlineColorAttributeName] = linkColor;
+  newAttrs[NSStrikethroughColorAttributeName] = linkColor;
   NSString *copiedUrl = [url copy];
   newAttrs[LinkAttributeName] = copiedUrl;
   if ([_input->config linkDecorationLine] == DecorationUnderline) {
@@ -266,9 +264,8 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
     // manually set it behind the link ONLY with manual links, automatic ones
     // don't need the selection fix
     if (manual && withSelection) {
-      [_input->textView reactFocus];
-      _input->textView.selectedRange =
-          NSMakeRange(range.location + text.length, 0);
+      [textView reactFocus];
+      textView.selectedRange = NSMakeRange(range.location + text.length, 0);
     }
   } else {
     // replace text with link
@@ -281,8 +278,8 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 
   // mandatory connected links check
   NSDictionary *currentWord =
-      [WordsUtils getCurrentWord:_input->textView.textStorage.string
-                           range:_input->textView.selectedRange];
+      [WordsUtils getCurrentWord:textStorage.string
+                           range:textView.selectedRange];
   if (currentWord != nullptr) {
     // get word properties
     NSString *wordText = (NSString *)[currentWord objectForKey:@"word"];

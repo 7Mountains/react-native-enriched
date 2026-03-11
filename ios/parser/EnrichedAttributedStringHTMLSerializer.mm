@@ -348,33 +348,35 @@
 
   HTMLNode *currentNode = textNode;
 
-  for (const StyleDescriptor &d : _inlineStyleDescriptors) {
-    id value = attrs[d.attributeKey];
+  for (const StyleDescriptor &descriptor : _inlineStyleDescriptors) {
+    id value = attrs[descriptor.attributeKey];
     if (!value)
       continue;
 
-    if (d.conditionWithAttributesIMP) {
+    if (descriptor.conditionWithAttributesIMP) {
       CondWithAttributesIMP conditionFn =
-          (CondWithAttributesIMP)d.conditionWithAttributesIMP;
+          (CondWithAttributesIMP)descriptor.conditionWithAttributesIMP;
 
-      if (!conditionFn(d.styleObject, d.conditionWithAttributesSEL, attrs,
-                       range))
+      if (!conditionFn(descriptor.styleObject,
+                       descriptor.conditionWithAttributesSEL, attrs, range))
         continue;
     } else {
-      CondIMP fn = (CondIMP)d.conditionIMP;
+      CondIMP conditionImplementationFN = (CondIMP)descriptor.conditionIMP;
 
-      if (!fn(d.styleObject, d.conditionSEL, value, range))
+      if (!conditionImplementationFN(descriptor.styleObject,
+                                     descriptor.conditionSEL, value, range))
         continue;
     }
 
     HTMLElement *wrap = [HTMLElement new];
-    wrap.tag = d.tagName;
-    wrap.selfClosing = d.selfClosing;
+    wrap.tag = descriptor.tagName;
+    wrap.selfClosing = descriptor.selfClosing;
 
-    if (d.getParamsIMP) {
+    if (descriptor.getParamsIMP) {
       typedef NSDictionary *(*ParamsIMP)(id, SEL, id);
-      ParamsIMP pfn = (ParamsIMP)d.getParamsIMP;
-      wrap.attributes = pfn(d.styleObject, d.getParaimsSEL, value);
+      ParamsIMP paramsImplementationFN = (ParamsIMP)descriptor.getParamsIMP;
+      wrap.attributes = paramsImplementationFN(descriptor.styleObject,
+                                               descriptor.getParaimsSEL, value);
     }
 
     [wrap.children addObject:currentNode];
