@@ -1035,6 +1035,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                        selectedRange:range];
 
   textView.selectedRange = NSMakeRange(range.location + insertedText.length, 0);
+  [self anyTextMayHaveBeenModified];
 }
 
 - (NSArray<NSNumber *> *)getPresentStyleTypesFrom:(NSArray<NSNumber *> *)types
