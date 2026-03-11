@@ -23,12 +23,12 @@ const int MAIN_ATTRIBUTES_COUNT = 2;
     params.tintColor = tintColor;
   }
 
-  NSMutableDictionary *extra = dictionary.mutableCopy;
-  [extra removeObjectsForKeys:@[
+  NSMutableDictionary *extraAttributes = dictionary.mutableCopy;
+  [extraAttributes removeObjectsForKeys:@[
     MDFLabelAttributeName, MDFTintColorAttributeName
   ]];
-  if ([extra isKindOfClass:NSDictionary.class]) {
-    params.extraAttributes = extra;
+  if ([extraAttributes isKindOfClass:NSDictionary.class]) {
+    params.extraAttributes = extraAttributes;
   }
 
   return params;
@@ -44,8 +44,8 @@ const int MAIN_ATTRIBUTES_COUNT = 2;
     params[MDFLabelAttributeName] = _label;
   }
 
-  if (_label) {
-    params[MDFTintColorAttributeName] = _label;
+  if (_tintColor) {
+    params[MDFTintColorAttributeName] = _tintColor;
   }
 
   if (_extraAttributes.count > 0) {
