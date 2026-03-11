@@ -107,14 +107,14 @@ class EnrichedMDFSpan(
   companion object {
     data class MDFParams(
       val label: String,
-      val id: String,
       val tintColor: Int,
+      val attributes: Map<String, String>?,
     )
 
     fun createMDFSpan(
       label: String,
-      id: String,
       tintColor: String,
+      attributes: Map<String, String>?,
       htmlStyle: HtmlStyle,
     ): EnrichedMDFSpan {
       val color =
@@ -124,7 +124,7 @@ class EnrichedMDFSpan(
           Color.GRAY
         }
 
-      val params = MDFParams(label, id, color)
+      val params = MDFParams(label, color, attributes)
 
       return EnrichedMDFSpan(params, htmlStyle)
     }

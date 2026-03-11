@@ -1,6 +1,8 @@
 #import "ContentParams.h"
 #import "HtmlAttributeNames.h"
 
+const int MAIN_ATTRIBUTES_COUNT = 3;
+
 @implementation ContentParams
 
 + (NSDictionary *)dictionaryFromJSONString:(id)jsonValue {
@@ -61,7 +63,7 @@
 }
 
 - (NSDictionary<NSString *, NSString *> *)toDictionary {
-  NSUInteger capacity = _attributes.count + 3;
+  NSUInteger capacity = _attributes.count + MAIN_ATTRIBUTES_COUNT;
 
   NSMutableDictionary *params =
       [NSMutableDictionary dictionaryWithCapacity:capacity];

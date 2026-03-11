@@ -591,7 +591,15 @@ class HtmlToSpannedConverter(
 
     val label = attributes.getValue("", "label")
     val tintColorString = attributes.getValue("", "tint-color")
-    val id = attributes.getValue("", "id")
+    val attributesMap: MutableMap<String, String> = HashMap()
+
+    for (i in 0..<attributes.length) {
+      val localName = attributes.getLocalName(i)
+
+      if (("label" != localName) && ("tint-color" != localName)) {
+        attributesMap.put(localName, attributes.getValue(i))
+      }
+    }
 
     if (isEmptyTag) {
       editable.append(Strings.NEWLINE)
@@ -601,8 +609,8 @@ class HtmlToSpannedConverter(
     val span =
       EnrichedMDFSpan.Companion.createMDFSpan(
         label,
-        id,
         tintColorString,
+        attributesMap,
         htmlStyle,
       )
     span.attachTo(textInputView)

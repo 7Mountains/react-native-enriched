@@ -84,7 +84,7 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
     params.url = url;
   }
 
-  NSMutableDictionary *extra = [attributes mutableCopy];
+  NSMutableDictionary *extra = attributes.mutableCopy;
   [extra removeObjectsForKeys:@[
     ContentSrcAttributeName, ContentTypeAttributeName, ContentTextAttributeName
   ]];

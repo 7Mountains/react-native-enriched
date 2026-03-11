@@ -47,7 +47,7 @@ object TagsRegistry {
         ),
       EnrichedAlignmentSpan::class to
         TagInfo(
-          tag = "p",
+          tag = HtmlTags.PARAGRAPH,
           isSelfClosing = false,
           attributes = { span ->
             mapOf("alignment" to (span as EnrichedAlignmentSpan).alignmentString)
@@ -78,7 +78,9 @@ object TagsRegistry {
             buildMap {
               put("label", params.label)
               put("tint-color", String.format("#%06X", 0xFFFFFF and params.tintColor))
-              put("id", params.id)
+              if (params.attributes != null) {
+                putAll(params.attributes)
+              }
             }
           },
         ),
