@@ -1,5 +1,5 @@
 import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, TextStyle, ViewProps, ViewStyle } from 'react-native';
-import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent, CheckboxPressEvent } from './EnrichedTextInputNativeComponent';
+import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent, CheckboxPressEvent, OnKeyPressEvent } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
 export interface EnrichedTextInputInstance extends NativeMethods {
     focus: () => void;
@@ -162,6 +162,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     onParagraphAlignmentChange?: (e: NativeSyntheticEvent<OnParagraphAlignmentChangeEvent>) => void;
     onCheckboxPress?: (e: NativeSyntheticEvent<CheckboxPressEvent>) => void;
     onAnyContentChange?: () => void;
+    onKeyPress?: (e: NativeSyntheticEvent<OnKeyPressEvent>) => void;
     /**
      * If true, Android will use experimental synchronous events.
      * This will prevent from input flickering when updating component size.

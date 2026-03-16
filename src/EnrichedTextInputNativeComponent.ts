@@ -339,6 +339,10 @@ export interface Cookie {
   value: string;
 }
 
+export interface OnKeyPressEvent {
+  key: string;
+}
+
 export interface NativeProps extends ViewProps {
   // base props
   autoFocus?: boolean;
@@ -373,6 +377,7 @@ export interface NativeProps extends ViewProps {
   onCheckboxPress?: DirectEventHandler<CheckboxPressEvent>;
   // This is a special event that is emitted on text/style change
   onAnyContentChange?: DirectEventHandler<null>;
+  onInputKeyPress?: DirectEventHandler<OnKeyPressEvent>;
 
   // Style related props - used for generating proper setters in component's manager
   // These should not be passed as regular props

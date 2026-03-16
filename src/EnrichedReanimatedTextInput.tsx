@@ -78,6 +78,7 @@ export const EnrichedReanimatedTextInput = ({
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
   keyboardDismissMode = 'none',
+  onKeyPress,
   onScroll,
   ...rest
 }: Props) => {
@@ -143,6 +144,7 @@ export const EnrichedReanimatedTextInput = ({
       htmlStyle={normalizedHtmlStyle}
       onInputFocus={onFocus}
       onInputBlur={onBlur}
+      onInputKeyPress={onKeyPress}
       onChangeText={onChangeText}
       onChangeHtml={onChangeHtml}
       isOnChangeHtmlSet={onChangeHtml !== undefined}

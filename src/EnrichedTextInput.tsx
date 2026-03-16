@@ -47,6 +47,7 @@ export const EnrichedTextInput = ({
   onColorChangeInSelection,
   onParagraphAlignmentChange,
   onScroll,
+  onKeyPress,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
   keyboardDismissMode = 'none',
@@ -130,6 +131,7 @@ export const EnrichedTextInput = ({
       isOnChangeTextSet={onChangeText !== undefined}
       isOnScrollSet={onScroll !== undefined}
       onInputScroll={onScroll}
+      onInputKeyPress={onKeyPress}
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }

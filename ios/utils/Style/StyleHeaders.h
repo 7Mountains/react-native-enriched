@@ -162,4 +162,8 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (void)applyStyle:(NSRange)range alignment:(NSTextAlignment)alignment;
 @end
 
+@interface PlaceholderParagraphStyle
+    : NSObject <BaseStyleProtocol, ParagraphModifierStyle>
+@end
+
 NS_ASSUME_NONNULL_END

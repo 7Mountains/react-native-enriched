@@ -4,6 +4,8 @@ NSString *const AlignmentAttributeName = @"alignment";
 NSString *const CheckedAttributeName = @"checked";
 NSString *const ColorAttributeName = @"color";
 
+NSString *const PlaceholderAttributeName = @"placeholder";
+
 NSString *const ContentTextAttributeName = @"text";
 NSString *const ContentTypeAttributeName = @"type";
 NSString *const ContentSrcAttributeName = @"src";

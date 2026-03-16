@@ -108,7 +108,11 @@ const generateHugeHtml = (repeat = 1) => {
   // };
 
   for (let i = 0; i < repeat; i++) {
-    parts.push(`<p>Test test</p>`);
+    parts.push(
+      `<h4 placeholder="Test">Test</h4>`,
+      `<p placeholder="Test"></p>`,
+      `<p placeholder="Test"></p>`
+    );
   }
 
   parts.push('\n</html>');
@@ -428,6 +432,7 @@ export default function EditorScreen() {
             onAnyContentChange={() => {
               console.log('content changed');
             }}
+            onKeyPress={(e) => console.log(e.nativeEvent.key)}
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}

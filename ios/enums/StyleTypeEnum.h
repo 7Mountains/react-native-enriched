@@ -18,6 +18,7 @@ typedef NS_ENUM(NSInteger, StyleType) {
   Content,
   MDF,
   ParagraphAlignment,
+  PlaceholderParagraph,
   Link,
   Mention,
   Image,

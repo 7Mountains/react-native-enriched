@@ -5,6 +5,8 @@ FOUNDATION_EXPORT NSString *const AlignmentAttributeName;
 
 FOUNDATION_EXPORT NSString *const CheckedAttributeName;
 
+FOUNDATION_EXPORT NSString *const PlaceholderAttributeName;
+
 FOUNDATION_EXPORT NSString *const ColorAttributeName;
 
 FOUNDATION_EXPORT NSString *const ContentTextAttributeName;

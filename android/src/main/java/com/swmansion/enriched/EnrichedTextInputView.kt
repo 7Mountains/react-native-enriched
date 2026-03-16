@@ -18,6 +18,8 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import com.facebook.react.bridge.ReactContext
@@ -251,6 +253,21 @@ class EnrichedTextInputView : AppCompatEditText {
       }
     }
     return super.onTextContextMenuItem(id)
+  }
+
+  override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
+    var inputConnection = super.onCreateInputConnection(outAttrs)
+    if (inputConnection != null) {
+      inputConnection =
+        EnrichedTextInputConnectionWrapper(
+          inputConnection,
+          context as ReactContext,
+          this,
+          experimentalSynchronousEvents,
+        )
+    }
+
+    return inputConnection
   }
 
   private fun handleCustomCopy() {

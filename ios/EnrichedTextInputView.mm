@@ -829,6 +829,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   emitter->onCheckboxPress({isChecked = isChecked});
 }
 
+- (void)emitOnKeyPressEvent:(NSString *)key {
+  auto emitter = [self getEventEmitter];
+  if (emitter != nullptr) {
+    emitter->onInputKeyPress({.key = [key toCppString]});
+  }
+}
+
 // MARK: - Styles manipulation
 
 - (void)setColor:(NSString *)colorText {
@@ -1035,7 +1042,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                        selectedRange:range];
 
   textView.selectedRange = NSMakeRange(range.location + insertedText.length, 0);
-  [self anyTextMayHaveBeenModified];
 }
 
 - (NSArray<NSNumber *> *)getPresentStyleTypesFrom:(NSArray<NSNumber *> *)types
@@ -1201,6 +1207,24 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [self tryUpdatingActiveStyles];
 }
 
+- (void)handleKeyPressInRange:(NSString *)text range:(NSRange)range {
+  NSString *key = nil;
+
+  if (text.length == 0 && range.length > 0) {
+    key = @"Backspace";
+  } else if ([text isEqualToString:@"\n"]) {
+    key = @"Enter";
+  } else if ([text isEqualToString:@"\t"]) {
+    key = @"Tab";
+  } else if (text.length == 1) {
+    key = text;
+  }
+
+  if (key != nil) {
+    [self emitOnKeyPressEvent:key];
+  }
+}
+
 - (void)textStorage:(NSTextStorage *)textStorage
     didProcessEditing:(NSTextStorageEditActions)editedMask
                 range:(NSRange)editedRange
@@ -1255,7 +1279,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (bool)textView:(UITextView *)textView
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text {
-
+  [self handleKeyPressInRange:text range:range];
   if (![text isEqualToString:NewLine] &&
       [ParagraphsUtils isReadOnlyParagraphAtLocation:textView.textStorage
                                             location:range.location]) {

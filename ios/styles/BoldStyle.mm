@@ -120,28 +120,29 @@
 }
 
 - (BOOL)boldHeadingConflictsInRange:(NSRange)range type:(StyleType)type {
+  InputConfig *config = _input->config;
   if (type == H1) {
-    if (![_input->config h1Bold]) {
+    if (![config h1Bold]) {
       return NO;
     }
   } else if (type == H2) {
-    if (![_input->config h2Bold]) {
+    if (![config h2Bold]) {
       return NO;
     }
   } else if (type == H3) {
-    if (![_input->config h3Bold]) {
+    if (![config h3Bold]) {
       return NO;
     }
   } else if (type == H4) {
-    if (![_input->config h4Bold]) {
+    if (![config h4Bold]) {
       return NO;
     }
   } else if (type == H5) {
-    if (![_input->config h5Bold]) {
+    if (![config h5Bold]) {
       return NO;
     }
   } else if (type == H6) {
-    if (![_input->config h6Bold]) {
+    if (![config h6Bold]) {
       return NO;
     }
   }

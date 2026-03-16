@@ -23,6 +23,7 @@ import type {
   OnParagraphAlignmentChangeEvent,
   OnScrollEvent,
   CheckboxPressEvent,
+  OnKeyPressEvent,
 } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
 
@@ -208,6 +209,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   ) => void;
   onCheckboxPress?: (e: NativeSyntheticEvent<CheckboxPressEvent>) => void;
   onAnyContentChange?: () => void;
+  onKeyPress?: (e: NativeSyntheticEvent<OnKeyPressEvent>) => void;
   /**
    * If true, Android will use experimental synchronous events.
    * This will prevent from input flickering when updating component size.
