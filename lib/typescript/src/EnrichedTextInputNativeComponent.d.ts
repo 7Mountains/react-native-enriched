@@ -319,6 +319,9 @@ export interface Cookie {
     name: string;
     value: string;
 }
+export interface OnKeyPressEvent {
+    key: string;
+}
 export interface NativeProps extends ViewProps {
     autoFocus?: boolean;
     editable?: boolean;
@@ -349,6 +352,7 @@ export interface NativeProps extends ViewProps {
     onInputScroll?: DirectEventHandler<OnScrollEvent>;
     onCheckboxPress?: DirectEventHandler<CheckboxPressEvent>;
     onAnyContentChange?: DirectEventHandler<null>;
+    onInputKeyPress?: DirectEventHandler<OnKeyPressEvent>;
     color?: ColorValue;
     fontSize?: Float;
     fontFamily?: string;

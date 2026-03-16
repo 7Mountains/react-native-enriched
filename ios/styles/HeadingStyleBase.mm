@@ -147,11 +147,11 @@
       [input->defaultTypingAttributes[NSParagraphStyleAttributeName]
           mutableCopy];
   paragraphStyle.headingLevel = [self.class headingLevel];
-  [attributedString addAttributes:@{
+  NSDictionary *newAttributes = @{
     NSParagraphStyleAttributeName : paragraphStyle,
     NSFontAttributeName : newFont
-  }
-                            range:range];
+  };
+  [attributedString addAttributes:newAttributes range:range];
 }
 
 // will always be called on empty paragraphs so only typing attributes can be
@@ -240,7 +240,7 @@
     paragraphStyle.headingLevel = EnrichedHeadingNone;
     newTypingAttrs[NSParagraphStyleAttributeName] = paragraphStyle;
 
-    [self typedInput]->textView.typingAttributes = newTypingAttrs;
+    input->textView.typingAttributes = newTypingAttrs;
   }
 }
 
@@ -296,19 +296,20 @@
 
 // used to make sure headings dont persist after a newline is placed
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text {
+  EnrichedTextInputView *input = [self typedInput];
+  NSRange selectedRange = input->textView.selectedRange;
   // in a heading and a new text ends with a newline
-  if ([self detectStyle:[self typedInput]->textView.selectedRange] &&
-      text.length > 0 &&
+  if ([self detectStyle:selectedRange] && text.length > 0 &&
       [[NSCharacterSet newlineCharacterSet]
           characterIsMember:[text characterAtIndex:text.length - 1]]) {
     // do the replacement manually
     [TextInsertionUtils replaceText:text
                                  at:range
                additionalAttributes:nullptr
-                              input:[self typedInput]
+                              input:input
                       withSelection:YES];
     // remove the attribtues at the new selection
-    [self removeAttributes:[self typedInput]->textView.selectedRange];
+    [self removeAttributes:selectedRange];
     return YES;
   }
   return NO;

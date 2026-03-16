@@ -17,7 +17,7 @@
   NSArray<id> *_paragraphModifiers;
 
   std::vector<StyleContext> _styleContexts;
-  std::vector<StyleContext> _paragraphModifierSpans;
+  std::vector<StyleContext> _paragraphModifierStyleContexts;
 }
 
 - (instancetype)initWithStyles:
@@ -46,15 +46,12 @@
 
   _tagsRegistry = tags.copy;
   _paragraphModifiers = paragraphModifiers.copy;
+  _plain = [NSMutableString new];
 
   return self;
 }
 
 - (NSMutableAttributedString *)parseToAttributedString:(NSString *)html {
-  _plain = [NSMutableString new];
-  _styleContexts.clear();
-  _paragraphModifierSpans.clear();
-
   if (html.length == 0) {
     return [[NSMutableAttributedString alloc]
         initWithString:@""
@@ -93,7 +90,7 @@
                              attributes:styleApplication.attributes];
   }
 
-  for (const StyleContext &styleContext : _paragraphModifierSpans) {
+  for (const StyleContext &styleContext : _paragraphModifierStyleContexts) {
     [styleContext.style
         addAttributesInAttributedString:result
                                   range:styleContext.range
@@ -156,7 +153,8 @@
 
   BOOL hasContent = _plain.length > lengthBefore;
 
-  if (!hasContent && isBlock && !isParagraphTag(tagChar)) {
+  if (!hasContent && isBlock &&
+      (isParagraphTag(tagChar) && lengthBefore != 0)) {
     [self appendEmptyBlockPlaceholder];
   }
 
@@ -170,13 +168,13 @@
     }
   }
 
-  if (style) {
-    _styleStack.pop(style);
-  }
-
   if (isTopLevelNode(cur) && isLastRenderable) {
     [self collectParagraphModifiersIfNeeded:attributes];
     return;
+  }
+
+  if (style) {
+    _styleStack.pop(style);
   }
 }
 
@@ -215,12 +213,7 @@
 }
 
 - (void)appendEmptyLineToBLockTag {
-  NSUInteger start = _plain.length;
   [_plain appendString:NewLine];
-
-  NSRange newlineRange = NSMakeRange(start, 1);
-
-  _styleStack.applyActiveParagraphStyles(_styleContexts, newlineRange);
 }
 
 - (void)appendEmptyBlockPlaceholder {
@@ -256,8 +249,8 @@
                                            0)];
 
     for (id<BaseStyleProtocol> modifier in _paragraphModifiers) {
-      _paragraphModifierSpans.emplace_back(modifier, paragraphRange,
-                                           attributes);
+      _paragraphModifierStyleContexts.emplace_back(modifier, paragraphRange,
+                                                   attributes);
     }
 
     [self appendEmptyLineToBLockTag];
@@ -274,8 +267,8 @@
                                          0)];
 
   for (id<BaseStyleProtocol> modifier in _paragraphModifiers) {
-    StyleContext styleContext(modifier, paragraphRange, attributes);
-    _paragraphModifierSpans.push_back(styleContext);
+    _paragraphModifierStyleContexts.emplace_back(modifier, paragraphRange,
+                                                 attributes);
   }
 }
 
