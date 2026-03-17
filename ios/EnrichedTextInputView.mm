@@ -74,6 +74,7 @@ using namespace facebook::react;
   EnrichedTextClipboardHandler *_clipboardHandler;
   UIEdgeInsets _customContentInsets;
   UIEdgeInsets _layoutInsets;
+  int _paragraphsLimit;
 }
 
 // MARK: - Component utils
@@ -135,6 +136,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _customContentInsets = UIEdgeInsetsZero;
   _layoutInsets = UIEdgeInsetsZero;
   _clipboardHandler = [[EnrichedTextClipboardHandler alloc] initWithInput:self];
+  _paragraphsLimit = -1;
 }
 
 - (void)setupTextView {
@@ -359,6 +361,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       [textView reactFocus];
       _emitFocusBlur = YES;
     }
+  }
+
+  if (newViewProps.paragraphsLimit != oldViewProps.paragraphsLimit) {
+    _paragraphsLimit = newViewProps.paragraphsLimit;
   }
 
   // isOnChangeHtmlSet
@@ -1123,6 +1129,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
+- (NSInteger)currentParagraphsCount {
+  NSString *text = textView.textStorage.string;
+
+  if (text.length == 0) {
+    return 1;
+  }
+
+  NSInteger count = 1;
+  for (NSUInteger i = 0; i < text.length; i++) {
+    if ([text characterAtIndex:i] == NewLineUnsinedChar) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
 - (void)anyTextMayHaveBeenModified {
   // we don't do no text changes when working with iOS marked text
   if (textView.markedTextRange != nullptr) {
@@ -1280,6 +1303,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text {
   [self handleKeyPressInRange:text range:range];
+
+  if (_paragraphsLimit > 0 && [text isEqualToString:NewLine]) {
+    NSInteger paragraphs = [self currentParagraphsCount];
+    BOOL replacingNewline = NO;
+    if (range.length > 0) {
+      NSString *replaced =
+          [textView.textStorage.string substringWithRange:range];
+      if ([replaced containsString:NewLine]) {
+        replacingNewline = YES;
+      }
+    }
+
+    if (!replacingNewline && paragraphs >= _paragraphsLimit) {
+      return NO;
+    }
+  }
+
   if (![text isEqualToString:NewLine] &&
       [ParagraphsUtils isReadOnlyParagraphAtLocation:textView.textStorage
                                             location:range.location]) {
@@ -1392,6 +1432,16 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)handlePasteIntoTextView:(UITextView *)textView sender:(id)sender {
+  NSString *pasteText = UIPasteboard.generalPasteboard.string;
+  if (_paragraphsLimit > 0 && pasteText) {
+    NSInteger existing = [self currentParagraphsCount];
+    NSInteger incoming =
+        [[pasteText componentsSeparatedByString:NewLine] count];
+
+    if (existing + incoming - 1 > _paragraphsLimit) {
+      return;
+    }
+  }
   blockEmitting = YES;
   [_clipboardHandler paste];
   blockEmitting = NO;

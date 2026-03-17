@@ -37,6 +37,7 @@ import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.inputFilters.NonEditableParagraphFilter
+import com.swmansion.enriched.inputFilters.ParagraphLimitFilter
 import com.swmansion.enriched.loaders.EnrichedImageLoader
 import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.EnrichedH1Span
@@ -77,6 +78,7 @@ class EnrichedTextInputView : AppCompatEditText {
   private var scrollWatcher: EnrichedScrollWatcher? = null
   var spanWatcher: EnrichedSpanWatcher? = null
   var blockTextEventEmitting: Boolean = false
+  var paragraphsLimit: Int = -1
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
@@ -203,7 +205,7 @@ class EnrichedTextInputView : AppCompatEditText {
     this.spanWatcher = spanWatcher
     setEditableFactory(EnrichedEditableFactory(spanWatcher))
     addTextChangedListener(EnrichedTextWatcher(this))
-    filters = arrayOf(NonEditableParagraphFilter())
+    filters = arrayOf(NonEditableParagraphFilter(), ParagraphLimitFilter(this))
   }
 
   override fun canScrollVertically(direction: Int): Boolean = scrollEnabled

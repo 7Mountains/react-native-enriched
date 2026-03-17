@@ -147,6 +147,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     keyboardDismissMode?: 'none' | 'interactive' | 'on-drag';
     iOSparagraphSpacing?: number;
     iOSparagraphSpacingBefore?: number;
+    paragraphsLimit?: number;
     onFocus?: () => void;
     onBlur?: () => void;
     onChangeText?: (e: NativeSyntheticEvent<OnChangeTextEvent>) => void;
