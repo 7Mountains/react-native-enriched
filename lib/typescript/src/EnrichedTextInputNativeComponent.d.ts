@@ -337,6 +337,7 @@ export interface NativeProps extends ViewProps {
     keyboardDismissMode?: string;
     iOSparagraphSpacing?: Float;
     iOSparagraphSpacingBefore?: Float;
+    paragraphsLimit?: Int32;
     onInputFocus?: DirectEventHandler<null>;
     onInputBlur?: DirectEventHandler<null>;
     onChangeText?: DirectEventHandler<OnChangeTextEvent>;

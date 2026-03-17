@@ -222,6 +222,14 @@ class EnrichedTextInputViewManager :
     view.scrollEnabled = scrollEnabled
   }
 
+  @ReactProp(name = "paragraphsLimit")
+  override fun setParagraphsLimit(
+    view: EnrichedTextInputView?,
+    value: Int,
+  ) {
+    view?.paragraphsLimit = value
+  }
+
   override fun onAfterUpdateTransaction(view: EnrichedTextInputView) {
     super.onAfterUpdateTransaction(view)
     view.afterUpdateTransaction()

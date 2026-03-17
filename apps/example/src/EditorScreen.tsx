@@ -108,11 +108,7 @@ const generateHugeHtml = (repeat = 1) => {
   // };
 
   for (let i = 0; i < repeat; i++) {
-    parts.push(
-      `<h4 placeholder="Test">Test</h4>`,
-      `<p placeholder="Test"></p>`,
-      `<p placeholder="Test"></p>`
-    );
+    parts.push(`<h4>Test</h4>`, `<p ></p>`, `<p></p>`);
   }
 
   parts.push('\n</html>');
