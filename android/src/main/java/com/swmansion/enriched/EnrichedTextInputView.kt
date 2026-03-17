@@ -45,6 +45,7 @@ import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
 import com.swmansion.enriched.spans.EnrichedImageSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.ISpanConfig
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
@@ -79,6 +80,7 @@ class EnrichedTextInputView : AppCompatEditText {
   var spanWatcher: EnrichedSpanWatcher? = null
   var blockTextEventEmitting: Boolean = false
   var paragraphsLimit: Int = -1
+  var availableStyles: Map<TextStyle, ISpanConfig> = EnrichedSpans.allSpans
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
@@ -542,6 +544,14 @@ class EnrichedTextInputView : AppCompatEditText {
         InputType.TYPE_TEXT_FLAG_CAP_WORDS.inv() and
         InputType.TYPE_TEXT_FLAG_CAP_SENTENCES.inv()
     ) or if (flag == InputType.TYPE_NULL) 0 else flag
+  }
+
+  fun setStylesConfig(styles: List<String>?) {
+    availableStyles =
+      EnrichedSpans.filterStyles(
+        EnrichedSpans.allSpans,
+        styles,
+      )
   }
 
   // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L283C2-L284C1

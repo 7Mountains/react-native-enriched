@@ -46,7 +46,7 @@ using namespace facebook::react;
 #define GET_STYLE_STATE(TYPE_ENUM)                                             \
   {                                                                            \
     .isActive = [_activeStyles containsObject:@(TYPE_ENUM)],                   \
-    .canNotBeApplied = [self isStyle:TYPE_ENUM activeInMap:blockingStyles],    \
+    .canNotBeApplied = [self canStyleBeApplied:TYPE_ENUM],                     \
     .isConflicting = [self isStyle:TYPE_ENUM activeInMap:conflictingStyles]    \
   }
 
@@ -75,6 +75,7 @@ using namespace facebook::react;
   UIEdgeInsets _customContentInsets;
   UIEdgeInsets _layoutInsets;
   int _paragraphsLimit;
+  NSDictionary<NSNumber *, id<BaseStyleProtocol>> *_allStyles;
 }
 
 // MARK: - Component utils
@@ -126,8 +127,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   defaultTypingAttributes =
       [[NSMutableDictionary<NSAttributedStringKey, id> alloc] init];
-
-  stylesDict = [EnrichedTextStyleFactory makeStylesWithInput:self];
+  _allStyles = [EnrichedTextStyleFactory makeStylesWithInput:self];
+  stylesDict = _allStyles;
   conflictingStyles = [EnrichedTextStyleFactory makeConflictingStyles];
   blockingStyles = [EnrichedTextStyleFactory makeBlockingStyles];
 
@@ -367,6 +368,17 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     _paragraphsLimit = newViewProps.paragraphsLimit;
   }
 
+  if (newViewProps.stylesConfig != oldViewProps.stylesConfig) {
+    NSMutableArray<NSString *> *styleNames = [NSMutableArray array];
+    for (const auto &style : newViewProps.stylesConfig) {
+      [styleNames addObject:[NSString fromCppString:style]];
+    }
+
+    stylesDict = [EnrichedTextStyleFactory filterStyles:_allStyles
+                                                  names:styleNames];
+    [self tryUpdatingActiveStyles];
+  }
+
   // isOnChangeHtmlSet
   _emitHtml = newViewProps.isOnChangeHtmlSet;
 
@@ -466,40 +478,59 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   return NO;
 }
 
+- (BOOL)isStyleAvailable:(StyleType)type {
+  return stylesDict[@(type)] != nil;
+}
+
+- (BOOL)canStyleBeApplied:(StyleType)type {
+  if (![self isStyleAvailable:type]) {
+    return YES;
+  }
+
+  return [self isStyle:type activeInMap:blockingStyles];
+}
+
 // MARK: - Active styles
 
 - (void)tryUpdatingActiveStyles {
-  // style updates are emitted only if something differs from the previously
-  // active styles
   BOOL updateNeeded = NO;
 
-  // active styles are kept in a separate set until we're sure they can be
-  // emitted
   NSMutableSet *newActiveStyles = [_activeStyles mutableCopy];
-
-  // currently blocked styles are subject to change (e.g. bold being blocked by
-  // headings might change in reaction to prop change) so they also are kept
-  // separately
   NSMutableSet *newBlockedStyles = [_blockedStyles mutableCopy];
 
-  // data for onLinkDetected event
   LinkData *detectedLinkData;
   NSRange detectedLinkRange = NSMakeRange(0, 0);
 
-  // data for onMentionDetected event
   MentionParams *detectedMentionParams;
   NSRange detectedMentionRange = NSMakeRange(0, 0);
+
   NSRange selectionRange = textView.selectedRange;
 
-  for (NSNumber *type in stylesDict) {
+  for (NSNumber *type in _allStyles) {
+
     id<BaseStyleProtocol> style = stylesDict[type];
+
+    BOOL isAvailable = style != nil;
+
     BOOL wasActive = [newActiveStyles containsObject:type];
     BOOL wasBlocked = [newBlockedStyles containsObject:type];
-    BOOL isActive = [style detectStyle:selectionRange];
-    BOOL isBlocked = [self isStyle:(StyleType)[type integerValue]
-                       activeInMap:blockingStyles];
+
+    if (!isAvailable && !wasBlocked) {
+      updateNeeded = YES;
+    }
+
+    BOOL isActive = NO;
+    BOOL isBlocked = NO;
+
+    if (isAvailable) {
+      isActive = [style detectStyle:selectionRange];
+      isBlocked = [self isStyle:(StyleType)[type integerValue]
+                    activeInMap:blockingStyles];
+    }
+
     if (wasActive != isActive) {
       updateNeeded = YES;
+
       if (isActive) {
         [newActiveStyles addObject:type];
       } else {
@@ -507,9 +538,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       }
     }
 
-    // blocked state change for a style also needs an update
     if (wasBlocked != isBlocked) {
       updateNeeded = YES;
+
       if (isBlocked) {
         [newBlockedStyles addObject:type];
       } else {
@@ -517,59 +548,64 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       }
     }
 
-    // onLinkDetected event
-    if (isActive && [type intValue] == [LinkStyle getStyleType]) {
-      // get the link data
+    // onLinkDetected
+    if (isActive && type.intValue == [LinkStyle getStyleType]) {
+
       LinkData *candidateLinkData;
       NSRange candidateLinkRange = NSMakeRange(0, 0);
+
       LinkStyle *linkStyleClass =
           (LinkStyle *)stylesDict[@([LinkStyle getStyleType])];
+
       if (linkStyleClass != nullptr) {
         candidateLinkData =
             [linkStyleClass getLinkDataAt:textView.selectedRange.location];
+
         candidateLinkRange =
             [linkStyleClass getFullLinkRangeAt:textView.selectedRange.location];
       }
 
       if (wasActive == NO) {
-        // we changed selection from non-link to a link
         detectedLinkData = candidateLinkData;
         detectedLinkRange = candidateLinkRange;
+
       } else if (![_recentlyActiveLinkData.url
                      isEqualToString:candidateLinkData.url] ||
                  ![_recentlyActiveLinkData.text
                      isEqualToString:candidateLinkData.text] ||
                  !NSEqualRanges(_recentlyActiveLinkRange, candidateLinkRange)) {
-        // we changed selection from one link to the other or modified current
-        // link's text
+
         detectedLinkData = candidateLinkData;
         detectedLinkRange = candidateLinkRange;
       }
     }
 
-    // onMentionDetected event
-    if (isActive && [type intValue] == [MentionStyle getStyleType]) {
-      // get mention data
+    // onMentionDetected
+    if (isActive && type.intValue == [MentionStyle getStyleType]) {
+
       MentionParams *candidateMentionParams;
       NSRange candidateMentionRange = NSMakeRange(0, 0);
+
       MentionStyle *mentionStyleClass =
           (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
+
       if (mentionStyleClass != nullptr) {
         candidateMentionParams = [mentionStyleClass
             getMentionParamsAt:textView.selectedRange.location];
+
         candidateMentionRange = [mentionStyleClass
             getFullMentionRangeAt:textView.selectedRange.location];
       }
 
       if (wasActive == NO) {
-        // selection was changed from a non-mention to a mention
         detectedMentionParams = candidateMentionParams;
         detectedMentionRange = candidateMentionRange;
+
       } else if (![_recentlyActiveMentionParams
                      isEqualToMentionParams:candidateMentionParams] ||
                  !NSEqualRanges(_recentlyActiveMentionRange,
                                 candidateMentionRange)) {
-        // selection changed from one mention to another
+
         detectedMentionParams = candidateMentionParams;
         detectedMentionRange = candidateMentionRange;
       }
@@ -577,9 +613,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   if (updateNeeded) {
+
     auto emitter = [self getEventEmitter];
+
     if (emitter != nullptr) {
-      // update activeStyles only if emitter is available
+
       _activeStyles = newActiveStyles;
       _blockedStyles = newBlockedStyles;
 
@@ -611,14 +649,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   if (detectedLinkData != nullptr) {
-    // emit onLinkeDetected event
     [self emitOnLinkDetectedEvent:detectedLinkData.text
                               url:detectedLinkData.url
                             range:detectedLinkRange];
   }
 
   if (detectedMentionParams != nullptr) {
-    // emit onMentionDetected event
     [self emitOnMentionDetectedEvent:detectedMentionParams.text
                            indicator:detectedMentionParams.indicator
                           attributes:detectedMentionParams.extraAttributes];
@@ -630,7 +666,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [self emitCurrentSelectionColorIfChanged];
   [self emitParagraphAlignmentIfChanged];
 
-  // emit onChangeHtml event if needed
   [self tryEmittingOnChangeHtmlEvent];
 }
 

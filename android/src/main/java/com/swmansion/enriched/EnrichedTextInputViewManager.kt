@@ -525,6 +525,18 @@ class EnrichedTextInputViewManager :
     }
   }
 
+  override fun setStylesConfig(
+    view: EnrichedTextInputView?,
+    value: ReadableArray?,
+  ) {
+    val styles =
+      value
+        ?.toArrayList()
+        ?.filterIsInstance<String>()
+
+    view?.setStylesConfig(styles)
+  }
+
   override fun scrollTo(
     view: EnrichedTextInputView?,
     x: Float,

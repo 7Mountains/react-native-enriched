@@ -14,6 +14,11 @@
                replacementText:(NSString *)text
                          input:(id)input {
   EnrichedTextInputView *typedInput = (EnrichedTextInputView *)input;
+
+  if (typedInput == nullptr) {
+    return NO;
+  }
+
   UnorderedListStyle *ulStyle =
       typedInput->stylesDict[@([UnorderedListStyle getStyleType])];
   OrderedListStyle *olStyle =
@@ -24,10 +29,6 @@
       typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
   CheckBoxStyle *checkBoxStyle =
       (CheckBoxStyle *)typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
-
-  if (typedInput == nullptr) {
-    return NO;
-  }
 
   // we make sure it was a backspace (text with 0 length) and it deleted
   // something (range longer than 0)
@@ -58,8 +59,24 @@
     // applied
     // - reapply the paragraph style that was present so that a zero width space
     // appears here
-    NSArray *handledStyles =
-        @[ ulStyle, olStyle, bqStyle, cbStyle, checkBoxStyle ];
+    NSMutableArray<id<BaseStyleProtocol>> *handledStyles =
+        [NSMutableArray array];
+
+    if (ulStyle != nil) {
+      [handledStyles addObject:ulStyle];
+    }
+    if (olStyle != nil) {
+      [handledStyles addObject:olStyle];
+    }
+    if (bqStyle != nil) {
+      [handledStyles addObject:bqStyle];
+    }
+    if (cbStyle != nil) {
+      [handledStyles addObject:cbStyle];
+    }
+    if (checkBoxStyle != nil) {
+      [handledStyles addObject:checkBoxStyle];
+    }
     for (id<BaseStyleProtocol> style in handledStyles) {
       if ([style detectStyle:nonNewlineRange]) {
         [TextInsertionUtils replaceText:text

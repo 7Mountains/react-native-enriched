@@ -1,6 +1,7 @@
 #import "EnrichedTextStyleFactory.h"
 #import "EnrichedTextInputView.h"
 #import "StyleHeaders.h"
+#import "StylesConverter.h"
 
 @implementation EnrichedTextStyleFactory
 
@@ -310,6 +311,39 @@
     };
   });
   return blocking;
+}
+
++ (NSDictionary<NSNumber *, id> *)
+    filterStyles:(NSDictionary<NSNumber *, id> *)allowedStyles
+           names:(NSArray<NSString *> *)names {
+  if (allowedStyles == nil) {
+    return @{};
+  }
+
+  if (names == nil || names.count == 0) {
+    return allowedStyles;
+  }
+
+  NSMutableDictionary<NSNumber *, id> *filtered =
+      [[NSMutableDictionary alloc] initWithCapacity:names.count];
+
+  for (NSString *styleName in names) {
+    if (![styleName isKindOfClass:[NSString class]]) {
+      continue;
+    }
+
+    StyleType type = [StylesConverter styleTypeFromString:styleName];
+    if (type == None) {
+      continue;
+    }
+
+    id style = allowedStyles[@(type)];
+    if (style != nil) {
+      filtered[@(type)] = style;
+    }
+  }
+
+  return [filtered copy];
 }
 
 @end

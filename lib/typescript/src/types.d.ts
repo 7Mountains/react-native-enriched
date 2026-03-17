@@ -1,6 +1,7 @@
 import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, TextStyle, ViewProps, ViewStyle } from 'react-native';
 import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent, CheckboxPressEvent, OnKeyPressEvent } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
+import type { EnrichedStyles } from './enums';
 export interface EnrichedTextInputInstance extends NativeMethods {
     focus: () => void;
     blur: () => void;
@@ -148,6 +149,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     iOSparagraphSpacing?: number;
     iOSparagraphSpacingBefore?: number;
     paragraphsLimit?: number;
+    stylesConfig?: EnrichedStyles[];
     onFocus?: () => void;
     onBlur?: () => void;
     onChangeText?: (e: NativeSyntheticEvent<OnChangeTextEvent>) => void;

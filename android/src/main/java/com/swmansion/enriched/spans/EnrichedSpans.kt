@@ -7,38 +7,51 @@ interface ISpanConfig {
   val clazz: Class<out EnrichedSpan>
 }
 
-enum class TextStyle {
+enum class TextStyle(
+  val key: String,
+) {
   // inline styles
-  BOLD,
-  ITALIC,
-  UNDERLINE,
-  STRIKETHROUGH,
-  INLINE_CODE,
-  COLOR,
+  BOLD("bold"),
+  ITALIC("italic"),
+  UNDERLINE("underline"),
+  STRIKETHROUGH("strike"),
+  INLINE_CODE("inlinecode"),
+  COLOR("color"),
 
   // paragraph styles
-  H1,
-  H2,
-  H3,
-  H4,
-  H5,
-  H6,
-  BLOCK_QUOTE,
-  CODE_BLOCK,
-  DIVIDER,
-  CONTENT,
-  MDF,
-  ALIGNMENT,
+  H1("h1"),
+  H2("h2"),
+  H3("h3"),
+  H4("h4"),
+  H5("h5"),
+  H6("h6"),
+  BLOCK_QUOTE("blockquote"),
+  CODE_BLOCK("codeblock"),
+  DIVIDER("divider"),
+  CONTENT("content"),
+  MDF("mdf"),
+  ALIGNMENT("align"),
 
   // list styles
-  UNORDERED_LIST,
-  ORDERED_LIST,
-  CHECK_LIST,
+  UNORDERED_LIST("ul"),
+  ORDERED_LIST("ol"),
+  CHECK_LIST("checkbox"),
 
   // parametrized styles
-  LINK,
-  IMAGE,
-  MENTION,
+  LINK("link"),
+  IMAGE("image"),
+  MENTION("mention"),
+  ;
+
+  companion object {
+    private val byKey = entries.associateBy { it.key.lowercase() }
+
+    fun fromKey(value: String?): TextStyle? =
+      value
+        ?.trim()
+        ?.lowercase()
+        ?.let(byKey::get)
+  }
 }
 
 data class BaseSpanConfig(
@@ -59,6 +72,12 @@ data class ListSpanConfig(
 data class StylesMergingConfig(
   val conflictingStyles: Array<TextStyle> = emptyArray(),
   val blockingStyles: Array<TextStyle> = emptyArray(),
+)
+
+data class StyleState(
+  val isActive: Boolean,
+  val canNotBeApplied: Boolean,
+  val isConflicting: Boolean,
 )
 
 object EnrichedSpans {
@@ -101,6 +120,38 @@ object EnrichedSpans {
       TextStyle.IMAGE to BaseSpanConfig(EnrichedImageSpan::class.java),
       TextStyle.MENTION to BaseSpanConfig(EnrichedMentionSpan::class.java),
     )
+
+  val allSpans: Map<TextStyle, ISpanConfig> =
+    buildMap {
+      putAll(inlineSpans)
+      putAll(paragraphSpans)
+      putAll(listSpans)
+      putAll(parametrizedStyles)
+    }
+
+  fun filterStyles(
+    allowedStyles: Map<TextStyle, ISpanConfig>,
+    names: List<String>?,
+  ): Map<TextStyle, ISpanConfig> {
+    if (names.isNullOrEmpty()) {
+      return allowedStyles
+    }
+
+    val result = linkedMapOf<TextStyle, ISpanConfig>()
+
+    names.forEach { name ->
+      val style = TextStyle.fromKey(name) ?: return@forEach
+      val config = allowedStyles[style] ?: return@forEach
+      result[style] = config
+    }
+
+    return result
+  }
+
+  fun isStyleAvailable(
+    style: TextStyle,
+    availableStyles: Map<TextStyle, ISpanConfig>,
+  ): Boolean = availableStyles.containsKey(style)
 
   fun getMergingConfigForStyle(
     style: TextStyle,

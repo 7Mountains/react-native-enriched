@@ -21,4 +21,6 @@ export type {
   CheckboxPressEvent,
 } from './EnrichedTextInputNativeComponent';
 
+export { EnrichedStyles } from './enums';
+
 export { default as useReanimatedScrollOffset } from './hooks/useReanimatedScrollOffset';
