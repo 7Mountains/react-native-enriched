@@ -93,9 +93,8 @@
       [ParagraphsUtils getSeparateParagraphsRangesIn:input->textView
                                                range:range];
 
-  NSMutableDictionary *newAttrs = [NSMutableDictionary new];
-
   for (NSValue *value in paragraphs) {
+    NSMutableDictionary *newAttrs = [NSMutableDictionary new];
     NSRange paragraphRange = value.rangeValue;
 
     [attributedString
@@ -309,7 +308,7 @@
                               input:input
                       withSelection:YES];
     // remove the attribtues at the new selection
-    [self removeAttributes:selectedRange];
+    [self removeTypingAttributes];
     return YES;
   }
   return NO;
@@ -319,13 +318,14 @@
 // text not receiving heading font attributes.
 // Hence, we fix these attributes then.
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text {
+  EnrichedTextInputView *input = [self typedInput];
   // Must be a backspace.
   if (text.length != 0) {
     return NO;
   }
   // Backspace must have removed a newline character.
   NSString *removedString =
-      [[self typedInput]->textView.textStorage.string substringWithRange:range];
+      [input->textView.textStorage.string substringWithRange:range];
   if ([removedString
           rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]]
           .location == NSNotFound) {
@@ -334,9 +334,8 @@
 
   // Heading style must have been present in a paragraph before the backspaced
   // range.
-  NSRange paragraphBeforeBackspaceRange =
-      [[self typedInput]->textView.textStorage.string
-          paragraphRangeForRange:NSMakeRange(range.location, 0)];
+  NSRange paragraphBeforeBackspaceRange = [input->textView.textStorage.string
+      paragraphRangeForRange:NSMakeRange(range.location, 0)];
   if (![self detectStyle:paragraphBeforeBackspaceRange]) {
     return NO;
   }
@@ -345,7 +344,7 @@
   [TextInsertionUtils replaceText:text
                                at:range
              additionalAttributes:nullptr
-                            input:[self typedInput]
+                            input:input
                     withSelection:YES];
   // Reapply attributes at the beginning of the backspaced range (it will cover
   // the whole paragraph properly).

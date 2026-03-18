@@ -49,43 +49,80 @@ static inline void appendC(NSMutableData *buf, const char *c) {
   [buf appendBytes:c length:strlen(c)];
 }
 
+static inline void appendCLen(NSMutableData *buf, const char *c, size_t len) {
+  if (!c)
+    return;
+  [buf appendBytes:c length:len];
+}
+
 static inline void appendEscapedRange(NSMutableData *buf, NSString *src,
                                       NSRange r) {
 
-  NSString *substring = [src substringWithRange:r];
-  const char *utf8 = [substring UTF8String];
-  if (!utf8)
+  if (r.length == 0)
     return;
 
-  const char *segmentStart = utf8;
-  const char *p = utf8;
+  CFStringRef cfStr = (__bridge CFStringRef)src;
 
-  while (*p) {
-    if (*p == HtmlLessThanChar || *p == HtmlGreaterThanChar ||
-        *p == HtmlAmpersandChar) {
+  CFIndex maxSize =
+      CFStringGetMaximumSizeForEncoding(r.length, kCFStringEncodingUTF8);
 
+  char stackBuf[4096];
+  char *buffer = stackBuf;
+
+  BOOL usedHeap = NO;
+
+  if (maxSize > sizeof(stackBuf)) {
+    buffer = (char *)malloc(maxSize);
+    if (!buffer)
+      return;
+    usedHeap = YES;
+  }
+
+  CFIndex usedBytes = 0;
+
+  CFStringGetBytes(cfStr, CFRangeMake(r.location, r.length),
+                   kCFStringEncodingUTF8, 0, false, (UInt8 *)buffer, maxSize,
+                   &usedBytes);
+
+  const char *p = buffer;
+  const char *end = buffer + usedBytes;
+  const char *segmentStart = p;
+
+  static const uint8_t escapeTable[256] = {['<'] = 1, ['>'] = 2, ['&'] = 3};
+
+  while (p < end) {
+    uint8_t type = escapeTable[(unsigned char)*p];
+
+    if (type) {
       if (p > segmentStart) {
         [buf appendBytes:segmentStart length:(p - segmentStart)];
       }
 
-      if (*p == HtmlLessThanChar) {
-        appendC(buf, EscapeLT);
-      } else if (*p == HtmlGreaterThanChar) {
-        appendC(buf, EscapeGT);
-      } else {
-        appendC(buf, EscapeAmp);
+      switch (type) {
+      case 1:
+        appendCLen(buf, EscapeLT, 4);
+        break; // &lt;
+      case 2:
+        appendCLen(buf, EscapeGT, 4);
+        break; // &gt;
+      case 3:
+        appendCLen(buf, EscapeAmp, 5);
+        break; // &amp;
       }
 
       p++;
       segmentStart = p;
-      continue;
+    } else {
+      p++;
     }
-
-    p++;
   }
 
   if (p > segmentStart) {
     [buf appendBytes:segmentStart length:(p - segmentStart)];
+  }
+
+  if (usedHeap) {
+    free(buffer);
   }
 }
 
