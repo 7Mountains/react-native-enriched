@@ -26,9 +26,6 @@ object EnrichedParser {
     HTMLSchema()
   }
 
-  private val htmlScope =
-    CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
   /**
    * Returns displayable styled text from the provided HTML string. Any &lt;img&gt; tags in the HTML
    * will use the specified ImageGetter to request a representation of the image (use null if you
@@ -55,6 +52,15 @@ object EnrichedParser {
     }
 
     return HtmlToSpannedConverter(source, style, imageGetter, parser, textInputView).convert()
+  }
+
+  fun isHtml(string: String): Boolean {
+    val trimmed = string.trim()
+    if (trimmed.isEmpty()) {
+      return false
+    }
+
+    return trimmed.startsWith("<html>") && trimmed.endsWith("</html>")
   }
 
   fun toHtml(

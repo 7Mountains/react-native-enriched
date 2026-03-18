@@ -370,8 +370,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   if (newViewProps.stylesConfig != oldViewProps.stylesConfig) {
     NSMutableArray<NSString *> *styleNames = [NSMutableArray array];
-    for (const auto &style : newViewProps.stylesConfig) {
-      [styleNames addObject:[NSString fromCppString:style]];
+    for (const auto &styleName : newViewProps.stylesConfig) {
+      [styleNames addObject:[NSString fromCppString:styleName]];
     }
 
     stylesDict = [EnrichedTextStyleFactory filterStyles:_allStyles
@@ -439,7 +439,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       facebook::react::EnrichedTextInputViewState(newSize, selfRef));
 }
 
-- (CGSize)measureInitialSizeWithMaxWidth:(CGFloat)maxWidth {
+- (CGSize)measureSizeWithMaxWidth:(CGFloat)maxWidth {
   NSTextContainer *container = textView.textContainer;
   NSLayoutManager *layoutManager = textView.layoutManager;
 
@@ -491,6 +491,17 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 // MARK: - Active styles
+
+- (void)resetActiveStylesState {
+  [_activeStyles removeAllObjects];
+  [_blockedStyles removeAllObjects];
+
+  _recentlyActiveLinkData = nullptr;
+  _recentlyActiveLinkRange = NSMakeRange(0, 0);
+
+  _recentlyActiveMentionParams = nullptr;
+  _recentlyActiveMentionRange = NSMakeRange(0, 0);
+}
 
 - (void)tryUpdatingActiveStyles {
   BOOL updateNeeded = NO;

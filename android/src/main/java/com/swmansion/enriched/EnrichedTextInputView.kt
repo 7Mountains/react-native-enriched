@@ -81,6 +81,21 @@ class EnrichedTextInputView : AppCompatEditText {
   var blockTextEventEmitting: Boolean = false
   var paragraphsLimit: Int = -1
   var availableStyles: Map<TextStyle, ISpanConfig> = EnrichedSpans.allSpans
+  var shouldEmitHtml: Boolean = false
+  var shouldEmitOnChangeText: Boolean = false
+  var experimentalSynchronousEvents: Boolean = false
+
+  var fontSize: Float? = null
+  private var autoFocus = false
+  private var typefaceDirty = false
+  private var didAttachToWindow = false
+  private var fontFamily: String? = null
+  private var fontStyle: Int = ReactConstants.UNSET
+  private var fontWeight: Int = ReactConstants.UNSET
+  private var defaultValue: CharSequence? = null
+  private var defaultValueDirty: Boolean = false
+
+  private var inputMethodManager: InputMethodManager? = null
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
@@ -151,22 +166,6 @@ class EnrichedTextInputView : AppCompatEditText {
 
     return super.onTouchEvent(event)
   }
-
-  var shouldEmitHtml: Boolean = false
-  var shouldEmitOnChangeText: Boolean = false
-  var experimentalSynchronousEvents: Boolean = false
-
-  var fontSize: Float? = null
-  private var autoFocus = false
-  private var typefaceDirty = false
-  private var didAttachToWindow = false
-  private var fontFamily: String? = null
-  private var fontStyle: Int = ReactConstants.UNSET
-  private var fontWeight: Int = ReactConstants.UNSET
-  private var defaultValue: CharSequence? = null
-  private var defaultValueDirty: Boolean = false
-
-  private var inputMethodManager: InputMethodManager? = null
 
   constructor(context: Context) : super(context) {
     prepareComponent()
@@ -354,13 +353,13 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   private fun parseText(text: CharSequence): CharSequence {
-    val isHtml = text.startsWith("<html>") && text.endsWith("</html>")
-    if (!isHtml) return text
+    val stringText = text.toString()
+    if (!EnrichedParser.isHtml(stringText)) return text
 
     try {
-      val parsed = EnrichedParser.fromHtml(text.toString(), htmlStyle, null, this)
-      val withoutLastNewLine = parsed.trimEnd(Strings.NEWLINE)
-      return withoutLastNewLine
+      val parsed = EnrichedParser.fromHtml(stringText, htmlStyle, null, this)
+      val textWithoutLastNewLine = parsed.trimEnd(Strings.NEWLINE)
+      return textWithoutLastNewLine
     } catch (e: Exception) {
       Log.e("EnrichedTextInputView", "Error parsing HTML: ${e.message}")
       return text
