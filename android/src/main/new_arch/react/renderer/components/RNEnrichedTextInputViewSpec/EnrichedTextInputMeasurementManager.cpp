@@ -11,43 +11,19 @@ namespace facebook::react {
 
 Size EnrichedTextInputMeasurementManager::measure(
     SurfaceId surfaceId, int viewTag, const EnrichedTextInputViewProps &props,
-    LayoutConstraints layoutConstraints) const {
-  const jni::global_ref<jobject> &fabricUIManager =
-      contextContainer_->at<jni::global_ref<jobject>>("FabricUIManager");
-
-  static const auto measure =
-      facebook::jni::findClassStatic(
-          "com/facebook/react/fabric/FabricUIManager")
-          ->getMethod<jlong(jint, jstring, ReadableMap::javaobject,
-                            ReadableMap::javaobject, ReadableMap::javaobject,
-                            jfloat, jfloat, jfloat, jfloat)>("measure");
+    LayoutConstraints layoutConstraints, float stateHeight) const {
 
   auto minimumSize = layoutConstraints.minimumSize;
   auto maximumSize = layoutConstraints.maximumSize;
 
-  local_ref<JString> componentName = make_jstring("EnrichedTextInputView");
+  float width = maximumSize.width;
 
-  // Prepare extraData map with viewTag
-  folly::dynamic extraData = folly::dynamic::object();
-  extraData["viewTag"] = viewTag;
-  local_ref<ReadableNativeMap::javaobject> extraDataRNM =
-      ReadableNativeMap::newObjectCxxArgs(extraData);
-  local_ref<ReadableMap::javaobject> extraDataRM =
-      make_local(reinterpret_cast<ReadableMap::javaobject>(extraDataRNM.get()));
+  float height = stateHeight > 0 ? stateHeight : 40.0f;
 
-  // Prepare layout metrics affecting props
-  auto serializedProps = toDynamic(props);
-  local_ref<ReadableNativeMap::javaobject> propsRNM =
-      ReadableNativeMap::newObjectCxxArgs(serializedProps);
-  local_ref<ReadableMap::javaobject> propsRM =
-      make_local(reinterpret_cast<ReadableMap::javaobject>(propsRNM.get()));
+  width = std::max(minimumSize.width, std::min(width, maximumSize.width));
+  height = std::max(minimumSize.height, std::min(height, maximumSize.height));
 
-  auto measurement = yogaMeassureToSize(
-      measure(fabricUIManager, surfaceId, componentName.get(),
-              extraDataRM.get(), propsRM.get(), nullptr, minimumSize.width,
-              maximumSize.width, minimumSize.height, maximumSize.height));
-
-  return measurement;
+  return {width, height};
 }
 
 } // namespace facebook::react

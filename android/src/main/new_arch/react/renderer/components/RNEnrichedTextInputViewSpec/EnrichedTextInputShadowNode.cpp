@@ -28,8 +28,11 @@ void EnrichedTextInputShadowNode::dirtyLayoutIfNeeded() {
 Size EnrichedTextInputShadowNode::measureContent(
     const LayoutContext &layoutContext,
     const LayoutConstraints &layoutConstraints) const {
+  const auto state = this->getStateData();
+
   return measurementsManager_->measure(getSurfaceId(), getTag(),
-                                       getConcreteProps(), layoutConstraints);
+                                       getConcreteProps(), layoutConstraints,
+                                       state.getHeight());
 }
 
 } // namespace facebook::react

@@ -1,6 +1,7 @@
 package com.swmansion.enriched
 
 import com.facebook.react.bridge.Arguments
+import com.facebook.react.uimanager.PixelUtil
 
 class EnrichedTextInputViewLayoutManager(
   private val view: EnrichedTextInputView,
@@ -15,7 +16,7 @@ class EnrichedTextInputViewLayoutManager(
     lastHeight = height
 
     val state = Arguments.createMap()
-    state.putInt("height", height)
+    state.putInt("height", PixelUtil.toDIPFromPixel(layout.height.toFloat()).toInt())
     view.stateWrapper?.updateState(state)
   }
 

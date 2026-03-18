@@ -592,66 +592,6 @@ class EnrichedTextInputViewManager :
     view?.insertText(text, at)
   }
 
-  override fun measure(
-    context: Context,
-    localData: ReadableMap?,
-    props: ReadableMap?,
-    state: ReadableMap?,
-    width: Float,
-    widthMode: YogaMeasureMode?,
-    height: Float,
-    heightMode: YogaMeasureMode?,
-    attachmentsPositions: FloatArray?,
-  ): Long {
-    val layout = view?.layout
-
-    val measuredWidthDip =
-      when {
-        widthMode == YogaMeasureMode.EXACTLY -> {
-          width
-        }
-
-        layout != null -> {
-          val contentWidthPx = layout.width
-          val contentWidthDip = PixelUtil.toDIPFromPixel(contentWidthPx.toFloat())
-
-          when (widthMode) {
-            YogaMeasureMode.AT_MOST -> contentWidthDip.coerceAtMost(width)
-            YogaMeasureMode.UNDEFINED, null -> contentWidthDip
-            else -> contentWidthDip
-          }
-        }
-
-        else -> {
-          0f
-        }
-      }
-
-    val measuredHeightDip =
-      when {
-        heightMode == YogaMeasureMode.EXACTLY -> {
-          height
-        }
-
-        layout != null -> {
-          val contentHeightPx = layout.height
-          val contentHeightDip = PixelUtil.toDIPFromPixel(contentHeightPx.toFloat())
-
-          when (heightMode) {
-            YogaMeasureMode.AT_MOST -> contentHeightDip.coerceAtMost(height)
-            YogaMeasureMode.UNDEFINED, null -> contentHeightDip
-            else -> contentHeightDip
-          }
-        }
-
-        else -> {
-          0f
-        }
-      }
-
-    return YogaMeasureOutput.make(measuredWidthDip, measuredHeightDip)
-  }
-
   companion object {
     const val NAME = "EnrichedTextInputView"
     const val REGISTRATION_NAME = "registrationName"

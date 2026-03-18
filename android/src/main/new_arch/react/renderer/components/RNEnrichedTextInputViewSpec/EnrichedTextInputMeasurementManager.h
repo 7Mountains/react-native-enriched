@@ -16,7 +16,7 @@ public:
 
   Size measure(SurfaceId surfaceId, int viewTag,
                const EnrichedTextInputViewProps &props,
-               LayoutConstraints layoutConstraints) const;
+               LayoutConstraints layoutConstraints, float stateHeight) const;
 
 private:
   const std::shared_ptr<const ContextContainer> contextContainer_;
