@@ -17,63 +17,12 @@ class EnrichedSpanState(
   private var previousPayload: WritableMap? = null
   private var previousDispatchedColor: Int? = null
   private var previousDispatchedAlignment: String? = null
+  private val styleStarts = mutableMapOf<TextStyle, Int?>()
 
-  var boldStart: Int? = null
-    private set
-  var italicStart: Int? = null
-    private set
-  var underlineStart: Int? = null
-    private set
-  var strikethroughStart: Int? = null
-    private set
-  var inlineCodeStart: Int? = null
-    private set
-  var h1Start: Int? = null
-    private set
-  var h2Start: Int? = null
-    private set
-  var h3Start: Int? = null
-    private set
-  var h4Start: Int? = null
-    private set
-  var h5Start: Int? = null
-    private set
-  var h6Start: Int? = null
-    private set
-  var codeBlockStart: Int? = null
-    private set
-  var blockQuoteStart: Int? = null
-    private set
-  var orderedListStart: Int? = null
-    private set
-  var unorderedListStart: Int? = null
-    private set
-  var linkStart: Int? = null
-    private set
-  var imageStart: Int? = null
-    private set
-  var mentionStart: Int? = null
-    private set
-  var dividerStart: Int? = null
-    private set
-  var checklistStart: Int? = null
-    private set
-  var colorStart: Int? = null
-    private set
   var typingColor: Int? = null
     private set
   var paragraphAlignment: String? = null
     private set
-  var alignmentStart: Int? = null
-    private set
-  var contentStart: Int? = null
-    private set
-  var mdfStart: Int? = null
-    private set
-
-  fun setContentStart(start: Int?) {
-    contentStart = start
-  }
 
   fun setTypingColor(color: Int?) {
     typingColor = color
@@ -92,7 +41,7 @@ class EnrichedSpanState(
     start: Int?,
     color: Int?,
   ) {
-    colorStart = start
+    setStyleStart(TextStyle.COLOR, start)
     setTypingColor(color)
   }
 
@@ -121,125 +70,11 @@ class EnrichedSpanState(
     start: Int?,
     alignment: String?,
   ) {
-    this.alignmentStart = start
+    setStyleStart(TextStyle.ALIGNMENT, start)
     setAlignment(alignment)
   }
 
-  fun setBoldStart(start: Int?) {
-    this.boldStart = start
-  }
-
-  fun setItalicStart(start: Int?) {
-    this.italicStart = start
-  }
-
-  fun setUnderlineStart(start: Int?) {
-    this.underlineStart = start
-  }
-
-  fun setStrikethroughStart(start: Int?) {
-    this.strikethroughStart = start
-  }
-
-  fun setInlineCodeStart(start: Int?) {
-    this.inlineCodeStart = start
-  }
-
-  fun setH1Start(start: Int?) {
-    this.h1Start = start
-  }
-
-  fun setH2Start(start: Int?) {
-    this.h2Start = start
-  }
-
-  fun setH3Start(start: Int?) {
-    this.h3Start = start
-  }
-
-  fun setH4Start(start: Int?) {
-    this.h4Start = start
-  }
-
-  fun setH5Start(start: Int?) {
-    this.h5Start = start
-  }
-
-  fun setH6Start(start: Int?) {
-    this.h6Start = start
-  }
-
-  fun setCodeBlockStart(start: Int?) {
-    this.codeBlockStart = start
-  }
-
-  fun setBlockQuoteStart(start: Int?) {
-    this.blockQuoteStart = start
-  }
-
-  fun setOrderedListStart(start: Int?) {
-    this.orderedListStart = start
-  }
-
-  fun setUnorderedListStart(start: Int?) {
-    this.unorderedListStart = start
-  }
-
-  fun setLinkStart(start: Int?) {
-    this.linkStart = start
-  }
-
-  fun setImageStart(start: Int?) {
-    this.imageStart = start
-  }
-
-  fun setMentionStart(start: Int?) {
-    this.mentionStart = start
-  }
-
-  fun setDividerStart(start: Int?) {
-    this.dividerStart = start
-  }
-
-  fun setChecklistStart(start: Int?) {
-    this.checklistStart = start
-  }
-
-  fun setMdfStart(start: Int?) {
-    this.mdfStart = start
-  }
-
-  fun getStart(name: TextStyle): Int? {
-    val start =
-      when (name) {
-        TextStyle.ALIGNMENT -> alignmentStart
-        TextStyle.BOLD -> boldStart
-        TextStyle.ITALIC -> italicStart
-        TextStyle.UNDERLINE -> underlineStart
-        TextStyle.STRIKETHROUGH -> strikethroughStart
-        TextStyle.INLINE_CODE -> inlineCodeStart
-        TextStyle.COLOR -> colorStart
-        TextStyle.CONTENT -> contentStart
-        TextStyle.H1 -> h1Start
-        TextStyle.H2 -> h2Start
-        TextStyle.H3 -> h3Start
-        TextStyle.H4 -> h4Start
-        TextStyle.H5 -> h5Start
-        TextStyle.H6 -> h6Start
-        TextStyle.CODE_BLOCK -> codeBlockStart
-        TextStyle.BLOCK_QUOTE -> blockQuoteStart
-        TextStyle.ORDERED_LIST -> orderedListStart
-        TextStyle.UNORDERED_LIST -> unorderedListStart
-        TextStyle.CHECK_LIST -> checklistStart
-        TextStyle.LINK -> linkStart
-        TextStyle.IMAGE -> imageStart
-        TextStyle.MENTION -> mentionStart
-        TextStyle.DIVIDER -> dividerStart
-        TextStyle.MDF -> mdfStart
-      }
-
-    return start
-  }
+  fun getStart(name: TextStyle): Int? = styleStarts[name]
 
   fun setStart(
     name: TextStyle,
@@ -250,97 +85,24 @@ class EnrichedSpanState(
         setAlignmentStart(start)
       }
 
-      TextStyle.BOLD -> {
-        setBoldStart(start)
-      }
-
-      TextStyle.ITALIC -> {
-        setItalicStart(start)
-      }
-
-      TextStyle.UNDERLINE -> {
-        setUnderlineStart(start)
-      }
-
       TextStyle.COLOR -> {
         setColorStart(start)
       }
 
-      TextStyle.STRIKETHROUGH -> {
-        setStrikethroughStart(start)
+      else -> {
+        setStyleStart(name, start)
       }
+    }
+  }
 
-      TextStyle.INLINE_CODE -> {
-        setInlineCodeStart(start)
-      }
-
-      TextStyle.H1 -> {
-        setH1Start(start)
-      }
-
-      TextStyle.H2 -> {
-        setH2Start(start)
-      }
-
-      TextStyle.H3 -> {
-        setH3Start(start)
-      }
-
-      TextStyle.H4 -> {
-        setH4Start(start)
-      }
-
-      TextStyle.H5 -> {
-        setH5Start(start)
-      }
-
-      TextStyle.H6 -> {
-        setH6Start(start)
-      }
-
-      TextStyle.CODE_BLOCK -> {
-        setCodeBlockStart(start)
-      }
-
-      TextStyle.BLOCK_QUOTE -> {
-        setBlockQuoteStart(start)
-      }
-
-      TextStyle.ORDERED_LIST -> {
-        setOrderedListStart(start)
-      }
-
-      TextStyle.UNORDERED_LIST -> {
-        setUnorderedListStart(start)
-      }
-
-      TextStyle.CHECK_LIST -> {
-        setChecklistStart(start)
-      }
-
-      TextStyle.LINK -> {
-        setLinkStart(start)
-      }
-
-      TextStyle.IMAGE -> {
-        setImageStart(start)
-      }
-
-      TextStyle.MENTION -> {
-        setMentionStart(start)
-      }
-
-      TextStyle.DIVIDER -> {
-        setDividerStart(start)
-      }
-
-      TextStyle.CONTENT -> {
-        setContentStart(start)
-      }
-
-      TextStyle.MDF -> {
-        setMdfStart(start)
-      }
+  private fun setStyleStart(
+    name: TextStyle,
+    start: Int?,
+  ) {
+    if (start == null) {
+      styleStarts.remove(name)
+    } else {
+      styleStarts[name] = start
     }
   }
 
@@ -400,32 +162,10 @@ class EnrichedSpanState(
 
   fun emitStateChangeEvent() {
     val activeStyles =
-      listOfNotNull(
-        if (alignmentStart != null) TextStyle.ALIGNMENT else null,
-        if (boldStart != null) TextStyle.BOLD else null,
-        if (colorStart != null) TextStyle.COLOR else null,
-        if (italicStart != null) TextStyle.ITALIC else null,
-        if (underlineStart != null) TextStyle.UNDERLINE else null,
-        if (strikethroughStart != null) TextStyle.STRIKETHROUGH else null,
-        if (inlineCodeStart != null) TextStyle.INLINE_CODE else null,
-        if (h1Start != null) TextStyle.H1 else null,
-        if (h2Start != null) TextStyle.H2 else null,
-        if (h3Start != null) TextStyle.H3 else null,
-        if (h4Start != null) TextStyle.H4 else null,
-        if (h5Start != null) TextStyle.H5 else null,
-        if (h6Start != null) TextStyle.H6 else null,
-        if (codeBlockStart != null) TextStyle.CODE_BLOCK else null,
-        if (blockQuoteStart != null) TextStyle.BLOCK_QUOTE else null,
-        if (orderedListStart != null) TextStyle.ORDERED_LIST else null,
-        if (unorderedListStart != null) TextStyle.UNORDERED_LIST else null,
-        if (checklistStart != null) TextStyle.CHECK_LIST else null,
-        if (dividerStart != null) TextStyle.DIVIDER else null,
-        if (contentStart != null) TextStyle.CONTENT else null,
-        if (linkStart != null) TextStyle.LINK else null,
-        if (imageStart != null) TextStyle.IMAGE else null,
-        if (mentionStart != null) TextStyle.MENTION else null,
-        if (mdfStart != null) TextStyle.MDF else null,
-      )
+      styleStarts
+        .filterValues { it != null }
+        .keys
+        .toList()
     val payload = Arguments.createMap()
     payload.putMap("alignment", getStyleState(activeStyles, TextStyle.ALIGNMENT))
     payload.putMap("bold", getStyleState(activeStyles, TextStyle.BOLD))
@@ -483,12 +223,22 @@ class EnrichedSpanState(
 
     val state = Arguments.createMap()
 
-    state.putBoolean("isActive", activeStyles.contains(type))
+    val isActive = activeStyles.contains(type)
+    state.putBoolean("isActive", isActive)
 
-    val hasBlockingStyles = blockingList?.any { activeStyles.contains(it) } ?: false
-    state.putBoolean("canNotBeApplied", hasBlockingStyles)
+    val isAvailable = EnrichedSpans.isStyleAvailable(type, view.availableStyles)
 
-    val isConflicting = conflictingList?.any { activeStyles.contains(it) } ?: false
+    val hasBlockingStyles =
+      blockingList?.any { activeStyles.contains(it) } ?: false
+
+    state.putBoolean(
+      "canNotBeApplied",
+      !isAvailable || hasBlockingStyles,
+    )
+
+    val isConflicting =
+      conflictingList?.any { activeStyles.contains(it) } ?: false
+
     state.putBoolean("isConflicting", isConflicting)
 
     return state

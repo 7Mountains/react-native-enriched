@@ -206,7 +206,7 @@ class InlineStyles(
 
     if (start == end) {
       val spanState = view.spanState
-      if (spanState?.colorStart != null && spanState.typingColor == color) {
+      if (spanState?.getStart(TextStyle.COLOR) != null && spanState.typingColor == color) {
         view.spanState.setColorStartWithEventEmitting(null, null)
       } else {
         view.spanState?.setColorStartWithEventEmitting(start, color)
@@ -285,7 +285,7 @@ class InlineStyles(
     cursor: Int,
   ) {
     val state = view.spanState ?: return
-    val colorStart = state.colorStart ?: return
+    val colorStart = state.getStart(TextStyle.COLOR) ?: return
     val color = state.typingColor ?: return
 
     val existing =

@@ -26,6 +26,7 @@ import type {
   OnKeyPressEvent,
 } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
+import type { EnrichedStyles } from './enums';
 
 export interface EnrichedTextInputInstance extends NativeMethods {
   // General commands
@@ -191,6 +192,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   iOSparagraphSpacing?: number;
   iOSparagraphSpacingBefore?: number;
   paragraphsLimit?: number;
+  stylesConfig?: EnrichedStyles[];
   onFocus?: () => void;
   onBlur?: () => void;
   onChangeText?: (e: NativeSyntheticEvent<OnChangeTextEvent>) => void;

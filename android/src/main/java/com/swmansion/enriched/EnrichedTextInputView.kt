@@ -45,6 +45,7 @@ import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
 import com.swmansion.enriched.spans.EnrichedImageSpan
 import com.swmansion.enriched.spans.EnrichedSpans
+import com.swmansion.enriched.spans.ISpanConfig
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
@@ -79,6 +80,7 @@ class EnrichedTextInputView : AppCompatEditText {
   var spanWatcher: EnrichedSpanWatcher? = null
   var blockTextEventEmitting: Boolean = false
   var paragraphsLimit: Int = -1
+  var availableStyles: Map<TextStyle, ISpanConfig> = EnrichedSpans.allSpans
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
@@ -544,6 +546,14 @@ class EnrichedTextInputView : AppCompatEditText {
     ) or if (flag == InputType.TYPE_NULL) 0 else flag
   }
 
+  fun setStylesConfig(styles: List<String>?) {
+    availableStyles =
+      EnrichedSpans.filterStyles(
+        EnrichedSpans.allSpans,
+        styles,
+      )
+  }
+
   // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L283C2-L284C1
   // After the text changes inside an EditText, TextView checks if a layout() has been requested.
   // If it has, it will not scroll the text to the end of the new text inserted, but wait for the
@@ -562,6 +572,8 @@ class EnrichedTextInputView : AppCompatEditText {
     defaultValue = value
     defaultValueDirty = true
   }
+
+  private fun canApplyStyle(name: TextStyle): Boolean = EnrichedSpans.isStyleAvailable(name, availableStyles)
 
   private fun updateDefaultValue() {
     if (!defaultValueDirty) return
@@ -665,6 +677,9 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   fun verifyStyle(name: TextStyle): Boolean {
+    if (!canApplyStyle(name)) {
+      return false
+    }
     val mergingConfig = EnrichedSpans.getMergingConfigForStyle(name, htmlStyle) ?: return true
     val conflictingStyles = mergingConfig.conflictingStyles
     val blockingStyles = mergingConfig.blockingStyles
@@ -737,14 +752,23 @@ class EnrichedTextInputView : AppCompatEditText {
     parametrizedStyles?.setImageSpan(src, width, height)
   }
 
-  fun insertDivider() = paragraphStyles?.insertDivider()
+  fun insertDivider() =
+    {
+      if (canApplyStyle(TextStyle.DIVIDER)) {
+        paragraphStyles?.insertDivider()
+      }
+    }
 
   fun addContent(
     text: String,
     type: String,
     src: String,
     attributes: Map<String, String>?,
-  ) = paragraphStyles?.addContent(text, type, src, attributes)
+  ) = {
+    if (canApplyStyle(TextStyle.DIVIDER)) {
+      paragraphStyles?.addContent(text, type, src, attributes)
+    }
+  }
 
   fun startMention(indicator: String) {
     val isValid = verifyStyle(TextStyle.MENTION)

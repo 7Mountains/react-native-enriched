@@ -338,6 +338,7 @@ export interface NativeProps extends ViewProps {
     iOSparagraphSpacing?: Float;
     iOSparagraphSpacingBefore?: Float;
     paragraphsLimit?: Int32;
+    stylesConfig?: string[];
     onInputFocus?: DirectEventHandler<null>;
     onInputBlur?: DirectEventHandler<null>;
     onChangeText?: DirectEventHandler<OnChangeTextEvent>;
