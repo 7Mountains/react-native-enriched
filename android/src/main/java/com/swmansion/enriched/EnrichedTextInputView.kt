@@ -752,20 +752,19 @@ class EnrichedTextInputView : AppCompatEditText {
     parametrizedStyles?.setImageSpan(src, width, height)
   }
 
-  fun insertDivider() =
-    {
-      if (canApplyStyle(TextStyle.DIVIDER)) {
-        paragraphStyles?.insertDivider()
-      }
+  fun insertDivider() {
+    if (canApplyStyle(TextStyle.DIVIDER)) {
+      paragraphStyles?.insertDivider()
     }
+  }
 
   fun addContent(
     text: String,
     type: String,
     src: String,
     attributes: Map<String, String>?,
-  ) = {
-    if (canApplyStyle(TextStyle.DIVIDER)) {
+  ) {
+    if (canApplyStyle(TextStyle.CONTENT)) {
       paragraphStyles?.addContent(text, type, src, attributes)
     }
   }
