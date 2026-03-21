@@ -15,6 +15,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 @implementation InputTextView {
   UILabel *_placeholderView;
   CGSize _lastCommittedSize;
+  NSAttributedString *_lastMeasuredString;
 };
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -30,6 +31,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
     self.scrollsToTop = NO;
     self.alwaysBounceVertical = YES;
     _lastCommittedSize = CGSizeZero;
+    _lastMeasuredString = [[NSAttributedString alloc] initWithString:@""];
   }
   return self;
 }
@@ -120,9 +122,29 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 
   _placeholderView.frame = textFrame;
 
-  CGRect usedRect =
-      [self.layoutManager usedRectForTextContainer:self.textContainer];
-  CGSize newSize = usedRect.size;
+  CGSize newSize;
+
+  if (self.scrollEnabled) {
+    CGRect usedRect =
+        [self.layoutManager usedRectForTextContainer:self.textContainer];
+    newSize = usedRect.size;
+  } else {
+    if ([_lastMeasuredString isEqualToAttributedString:self.textStorage]) {
+      return;
+    }
+    _lastMeasuredString = [self.textStorage copy];
+
+    CGFloat maxWidth = self.bounds.size.width;
+    UIEdgeInsets savedInset = self.textContainerInset;
+    CGFloat savedLinePadding = self.textContainer.lineFragmentPadding;
+
+    CGSize fitSize = [self sizeThatFits:CGSizeMake(maxWidth, CGFLOAT_MAX)];
+
+    CGFloat height = fitSize.height - savedLinePadding * 2 - savedInset.top -
+                     savedInset.bottom;
+
+    newSize = CGSizeMake(maxWidth, height);
+  }
 
   if (CGSizeAlmostEqual(newSize, _lastCommittedSize, 0.5)) {
     return;

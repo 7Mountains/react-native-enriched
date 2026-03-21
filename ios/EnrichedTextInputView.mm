@@ -1274,6 +1274,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   // update active styles as well
   [self tryUpdatingActiveStyles];
+  if (!textView.scrollEnabled) {
+    [textView setNeedsLayout];
+  }
 }
 
 - (void)handleKeyPressInRange:(NSString *)text range:(NSRange)range {
