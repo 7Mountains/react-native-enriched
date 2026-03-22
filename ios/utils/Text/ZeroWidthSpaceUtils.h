@@ -6,4 +6,6 @@
 + (BOOL)handleBackspaceInRange:(NSRange)range
                replacementText:(NSString *)text
                          input:(id)input;
++ (NSUInteger)actualIndexFromVisibleIndex:(NSInteger)visibleIndex
+                                     text:(NSString *)text;
 @end
