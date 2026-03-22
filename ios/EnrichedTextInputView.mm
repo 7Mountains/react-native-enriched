@@ -14,8 +14,11 @@
 #import "EnrichedTextViewClipboardDelegate.h"
 #import "EnrichedTextViewLayoutDelegate.h"
 #import "InsetsOperators.h"
+#import "KeyPressConverter.h"
 #import "LayoutManagerExtension.h"
+#import "NSDictionary+JSON.h"
 #import "NSString+Autocapitalization.h"
+#import "NSString+JSON.h"
 #import "ParagraphAttributesUtils.h"
 #import "ParagraphsUtils.h"
 #import "SelectionUtils.h"
@@ -811,10 +814,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                                        attributes {
   auto emitter = [self getEventEmitter];
   if (emitter != nullptr) {
-    auto data = [NSJSONSerialization dataWithJSONObject:attributes
-                                                options:0
-                                                  error:nil];
-    std::string json((const char *)data.bytes, data.length);
+    NSString *jsonString = [attributes toJSONString];
+    std::string json = jsonString ? [jsonString toCppString] : "";
     emitter->onMentionDetected({.text = [text toCppString],
                                 .indicator = [indicator toCppString],
                                 .payload = json});
@@ -884,7 +885,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)emitOnKeyPressEvent:(NSString *)key {
   auto emitter = [self getEventEmitter];
   if (emitter != nullptr) {
-    emitter->onInputKeyPress({.key = [key toCppString]});
+    NSRange selectedRange = textView.selectedRange;
+    emitter->onInputKeyPress(
+        {.key = [key toCppString],
+         .selection = {.start = static_cast<int>(selectedRange.location),
+                       .end = static_cast<int>(selectedRange.location +
+                                               selectedRange.length)}});
   }
 }
 
@@ -973,22 +979,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   if ([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType]
                                     range:textView.selectedRange]) {
-    NSDictionary<NSString *, id> *parsedAttributes = nil;
-    if (attributes.length > 0) {
-      NSData *data = [attributes dataUsingEncoding:NSUTF8StringEncoding];
-
-      if (data) {
-        NSError *error = nil;
-        id json = [NSJSONSerialization
-            JSONObjectWithData:data
-                       options:NSJSONReadingMutableContainers
-                         error:&error];
-
-        if (!error && [json isKindOfClass:[NSDictionary class]]) {
-          parsedAttributes = (NSDictionary *)json;
-        }
-      }
-    }
+    NSDictionary<NSString *, id> *parsedAttributes =
+        [attributes jsonDictionary];
 
     [mentionStyleClass addMention:indicator
                              text:text
@@ -1175,23 +1167,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
-- (NSInteger)currentParagraphsCount {
-  NSString *text = textView.textStorage.string;
-
-  if (text.length == 0) {
-    return 1;
-  }
-
-  NSInteger count = 1;
-  for (NSUInteger i = 0; i < text.length; i++) {
-    if ([text characterAtIndex:i] == NewLineUnsinedChar) {
-      count++;
-    }
-  }
-
-  return count;
-}
-
 - (void)anyTextMayHaveBeenModified {
   // we don't do no text changes when working with iOS marked text
   if (textView.markedTextRange != nullptr) {
@@ -1280,17 +1255,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)handleKeyPressInRange:(NSString *)text range:(NSRange)range {
-  NSString *key = nil;
-
-  if (text.length == 0 && range.length > 0) {
-    key = @"Backspace";
-  } else if ([text isEqualToString:@"\n"]) {
-    key = @"Enter";
-  } else if ([text isEqualToString:@"\t"]) {
-    key = @"Tab";
-  } else if (text.length == 1) {
-    key = text;
-  }
+  NSString *key = [KeyPressConverter keyFromText:text range:range];
 
   if (key != nil) {
     [self emitOnKeyPressEvent:key];
@@ -1354,15 +1319,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [self handleKeyPressInRange:text range:range];
 
   if (_paragraphsLimit > 0 && [text isEqualToString:NewLine]) {
-    NSInteger paragraphs = [self currentParagraphsCount];
-    BOOL replacingNewline = NO;
-    if (range.length > 0) {
-      NSString *replaced =
-          [textView.textStorage.string substringWithRange:range];
-      if ([replaced containsString:NewLine]) {
-        replacingNewline = YES;
-      }
-    }
+    NSInteger paragraphs = [ParagraphsUtils paragraphsCountInTextView:textView];
+    BOOL replacingNewline =
+        [ParagraphsUtils isReplacingNewlineInRange:range
+                                              text:text
+                                        inTextView:textView];
 
     if (!replacingNewline && paragraphs >= _paragraphsLimit) {
       return NO;
@@ -1483,9 +1444,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)handlePasteIntoTextView:(UITextView *)textView sender:(id)sender {
   NSString *pasteText = UIPasteboard.generalPasteboard.string;
   if (_paragraphsLimit > 0 && pasteText) {
-    NSInteger existing = [self currentParagraphsCount];
+    NSInteger existing = [ParagraphsUtils paragraphsCountInTextView:textView];
     NSInteger incoming =
-        [[pasteText componentsSeparatedByString:NewLine] count];
+        [ParagraphsUtils incomingParagraphsCountFromString:pasteText];
 
     if (existing + incoming - 1 > _paragraphsLimit) {
       return;

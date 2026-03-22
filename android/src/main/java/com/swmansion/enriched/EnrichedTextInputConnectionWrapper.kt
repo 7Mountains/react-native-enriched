@@ -122,11 +122,15 @@ class EnrichedTextInputConnectionWrapper(
     val resolvedKey = if (inputKey == NEWLINE_RAW_VALUE) ENTER_KEY_VALUE else inputKey
     val surfaceId = UIManagerHelper.getSurfaceId(editText)
     val eventDispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, editText.id)
+
+    val selection = Pair<Int, Int>(editText.selectionStart, editText.selectionEnd)
+
     eventDispatcher?.dispatchEvent(
       OnInputKeyPressEvent(
         surfaceId = surfaceId,
         viewId = editText.id,
         key = resolvedKey,
+        selection,
         experimentalSynchronousEvents = experimentalSynchronousEvents,
       ),
     )
