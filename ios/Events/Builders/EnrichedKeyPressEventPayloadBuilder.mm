@@ -10,8 +10,6 @@ using namespace facebook::react;
                   key:(NSString *)key {
   NSRange range = textView.selectedRange;
 
-  NSString *text = [textView.textStorage.string substringWithRange:range];
-
   return {.key = [key toCppString],
           .selection = {
               .start = (int)range.location,

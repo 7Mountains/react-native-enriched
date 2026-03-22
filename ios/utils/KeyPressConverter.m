@@ -4,7 +4,7 @@
 @implementation KeyPressConverter
 
 + (NSString *)keyFromText:(NSString *)text range:(NSRange)range {
-  if (text.length == 0 && range.length > 0) {
+  if (text.length == 0) {
     return @"Backspace";
   } else if ([text isEqualToString:NewLine]) {
     return @"Enter";
