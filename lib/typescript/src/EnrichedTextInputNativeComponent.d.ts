@@ -321,6 +321,10 @@ export interface Cookie {
 }
 export interface OnKeyPressEvent {
     key: string;
+    selection: {
+        start: Int32;
+        end: Int32;
+    };
 }
 export interface NativeProps extends ViewProps {
     autoFocus?: boolean;
