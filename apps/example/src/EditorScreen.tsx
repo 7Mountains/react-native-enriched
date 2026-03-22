@@ -428,7 +428,9 @@ export default function EditorScreen() {
             onAnyContentChange={() => {
               console.log('content changed');
             }}
-            onKeyPress={(e) => console.log(e.nativeEvent.key)}
+            onKeyPress={(e) =>
+              console.log(e.nativeEvent.key, e.nativeEvent.selection)
+            }
             onLinkDetected={handleLinkDetected}
             onMentionDetected={console.log}
             onStartMention={handleStartMention}

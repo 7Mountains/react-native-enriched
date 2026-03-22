@@ -303,4 +303,24 @@
   return NO;
 }
 
++ (NSUInteger)actualIndexFromVisibleIndex:(NSInteger)visibleIndex
+                                     text:(NSString *)text {
+  NSUInteger currentVisibleCount = 0;
+  NSUInteger actualIndex = 0;
+
+  while (actualIndex < text.length) {
+    if (currentVisibleCount == visibleIndex) {
+      return actualIndex;
+    }
+
+    if ([text characterAtIndex:actualIndex] != ZWSChar) {
+      currentVisibleCount++;
+    }
+
+    actualIndex++;
+  }
+
+  return actualIndex;
+}
+
 @end

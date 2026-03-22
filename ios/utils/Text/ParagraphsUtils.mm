@@ -1,4 +1,5 @@
 #import "ParagraphsUtils.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 
 @implementation ParagraphsUtils
@@ -100,6 +101,44 @@
                       }];
 
   return results;
+}
+
++ (NSInteger)paragraphsCountInTextView:(UITextView *)textView {
+  NSString *text = textView.textStorage.string;
+
+  if (text.length == 0) {
+    return 1;
+  }
+
+  NSInteger count = 1;
+  for (NSUInteger i = 0; i < text.length; i++) {
+    if ([text characterAtIndex:i] == NewLineUnsinedChar) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
++ (NSInteger)incomingParagraphsCountFromString:(NSString *)text {
+  if (text.length == 0) {
+    return 0;
+  }
+
+  // split by newline → lines/paragraphs amount
+  return [[text componentsSeparatedByString:NewLine] count];
+}
+
++ (BOOL)isReplacingNewlineInRange:(NSRange)range
+                             text:(NSString *)text
+                       inTextView:(UITextView *)textView {
+  if (range.length == 0) {
+    return NO;
+  }
+
+  NSString *replaced = [textView.textStorage.string substringWithRange:range];
+
+  return [replaced containsString:NewLine];
 }
 
 @end

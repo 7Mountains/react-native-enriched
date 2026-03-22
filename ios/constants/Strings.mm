@@ -2,6 +2,7 @@
 
 NSString *const ZWS = @"\u200B";
 NSString *const NewLine = @"\n";
+NSString *const Tab = @"\t";
 NSString *const ZWSWithNewLine = @"\u200B\n";
 NSString *const ORC = @"\uFFFC";
 

@@ -3,6 +3,7 @@
 
 FOUNDATION_EXPORT NSString *const ZWS;
 FOUNDATION_EXPORT NSString *const NewLine;
+FOUNDATION_EXPORT NSString *const Tab;
 FOUNDATION_EXPORT NSString *const ZWSWithNewLine;
 FOUNDATION_EXPORT NSString *const ORC;
 

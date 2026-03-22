@@ -7,15 +7,22 @@
 #import "EnrichedCookieManager.h"
 #import "EnrichedCookiesOperators.h"
 #import "EnrichedHeadingLevel.h"
+#import "EnrichedKeyPressEventPayloadBuilder.h"
 #import "EnrichedParagraphStyle.h"
+#import "EnrichedScrollEventPayloadBuilder.h"
+#import "EnrichedSelectionEventPayloadBuilder.h"
 #import "EnrichedTextClipboardHandler.h"
 #import "EnrichedTextConfigBuilder.h"
 #import "EnrichedTextStyleFactory.h"
 #import "EnrichedTextViewClipboardDelegate.h"
 #import "EnrichedTextViewLayoutDelegate.h"
+#import "EnrichedTypingAttributesBuilder.h"
 #import "InsetsOperators.h"
+#import "KeyPressConverter.h"
 #import "LayoutManagerExtension.h"
+#import "NSDictionary+JSON.h"
 #import "NSString+Autocapitalization.h"
+#import "NSString+JSON.h"
 #import "ParagraphAttributesUtils.h"
 #import "ParagraphsUtils.h"
 #import "SelectionUtils.h"
@@ -267,23 +274,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
 
     // fill the typing attributes with style props
-    defaultTypingAttributes[NSForegroundColorAttributeName] =
-        [config primaryColor];
-    defaultTypingAttributes[NSFontAttributeName] = [config primaryFont];
-    defaultTypingAttributes[NSUnderlineColorAttributeName] =
-        [config primaryColor];
-    defaultTypingAttributes[NSStrikethroughColorAttributeName] =
-        [config primaryColor];
-    EnrichedParagraphStyle *paragraphStyle = [EnrichedParagraphStyle new];
-    // slight tail indent to avoid weird layout calculations with zero width
-    // spaces in lists
-    paragraphStyle.tailIndent = -0.01;
-    paragraphStyle.paragraphSpacing = newViewProps.iOSparagraphSpacing;
-    paragraphStyle.paragraphSpacingBefore =
-        newViewProps.iOSparagraphSpacingBefore;
-    paragraphStyle.alignment = NSTextAlignmentNatural;
-    paragraphStyle.headingLevel = EnrichedHeadingNone;
-    defaultTypingAttributes[NSParagraphStyleAttributeName] = paragraphStyle;
+    defaultTypingAttributes = [[EnrichedTypingAttributesBuilder
+        buildWithConfig:config
+                  props:newViewProps] mutableCopy];
     textView.typingAttributes = defaultTypingAttributes;
     textView.selectedRange = prevSelectedRange;
   }
@@ -624,7 +617,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   if (updateNeeded) {
-
     auto emitter = [self getEventEmitter];
 
     if (emitter != nullptr) {
@@ -721,33 +713,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)setCustomSelection:(NSInteger)visibleStart end:(NSInteger)visibleEnd {
   NSString *text = textView.textStorage.string;
 
-  NSUInteger actualStart = [self getActualIndex:visibleStart text:text];
-  NSUInteger actualEnd = [self getActualIndex:visibleEnd text:text];
+  NSUInteger actualStart =
+      [ZeroWidthSpaceUtils actualIndexFromVisibleIndex:visibleStart text:text];
+  NSUInteger actualEnd =
+      [ZeroWidthSpaceUtils actualIndexFromVisibleIndex:visibleEnd text:text];
 
   textView.selectedRange = NSMakeRange(actualStart, actualEnd - actualStart);
-}
-
-// Helper: Walks through the string skipping ZWSPs to find the Nth visible
-// character
-- (NSUInteger)getActualIndex:(NSInteger)visibleIndex text:(NSString *)text {
-  NSUInteger currentVisibleCount = 0;
-  NSUInteger actualIndex = 0;
-
-  while (actualIndex < text.length) {
-    if (currentVisibleCount == visibleIndex) {
-      return actualIndex;
-    }
-
-    // If the current char is not a hidden space, it counts towards our visible
-    // index.
-    if ([text characterAtIndex:actualIndex] != ZWSChar) {
-      currentVisibleCount++;
-    }
-
-    actualIndex++;
-  }
-
-  return actualIndex;
 }
 
 - (void)emitOnLinkDetectedEvent:(NSString *)text
@@ -811,10 +782,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                                        attributes {
   auto emitter = [self getEventEmitter];
   if (emitter != nullptr) {
-    auto data = [NSJSONSerialization dataWithJSONObject:attributes
-                                                options:0
-                                                  error:nil];
-    std::string json((const char *)data.bytes, data.length);
+    NSString *jsonString = [attributes toJSONString];
+    std::string json = jsonString ? [jsonString toCppString] : "";
     emitter->onMentionDetected({.text = [text toCppString],
                                 .indicator = [indicator toCppString],
                                 .payload = json});
@@ -884,7 +853,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)emitOnKeyPressEvent:(NSString *)key {
   auto emitter = [self getEventEmitter];
   if (emitter != nullptr) {
-    emitter->onInputKeyPress({.key = [key toCppString]});
+    emitter->onInputKeyPress([EnrichedKeyPressEventPayloadBuilder
+        buildFromTextView:textView
+                      key:key]);
   }
 }
 
@@ -973,22 +944,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   if ([self handleStyleBlocksAndConflicts:[MentionStyle getStyleType]
                                     range:textView.selectedRange]) {
-    NSDictionary<NSString *, id> *parsedAttributes = nil;
-    if (attributes.length > 0) {
-      NSData *data = [attributes dataUsingEncoding:NSUTF8StringEncoding];
-
-      if (data) {
-        NSError *error = nil;
-        id json = [NSJSONSerialization
-            JSONObjectWithData:data
-                       options:NSJSONReadingMutableContainers
-                         error:&error];
-
-        if (!error && [json isKindOfClass:[NSDictionary class]]) {
-          parsedAttributes = (NSDictionary *)json;
-        }
-      }
-    }
+    NSDictionary<NSString *, id> *parsedAttributes =
+        [attributes jsonDictionary];
 
     [mentionStyleClass addMention:indicator
                              text:text
@@ -1175,23 +1132,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
-- (NSInteger)currentParagraphsCount {
-  NSString *text = textView.textStorage.string;
-
-  if (text.length == 0) {
-    return 1;
-  }
-
-  NSInteger count = 1;
-  for (NSUInteger i = 0; i < text.length; i++) {
-    if ([text characterAtIndex:i] == NewLineUnsinedChar) {
-      count++;
-    }
-  }
-
-  return count;
-}
-
 - (void)anyTextMayHaveBeenModified {
   // we don't do no text changes when working with iOS marked text
   if (textView.markedTextRange != nullptr) {
@@ -1280,17 +1220,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)handleKeyPressInRange:(NSString *)text range:(NSRange)range {
-  NSString *key = nil;
-
-  if (text.length == 0 && range.length > 0) {
-    key = @"Backspace";
-  } else if ([text isEqualToString:@"\n"]) {
-    key = @"Enter";
-  } else if ([text isEqualToString:@"\t"]) {
-    key = @"Tab";
-  } else if (text.length == 1) {
-    key = text;
-  }
+  NSString *key = [KeyPressConverter keyFromText:text range:range];
 
   if (key != nil) {
     [self emitOnKeyPressEvent:key];
@@ -1326,14 +1256,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       emitter->onInputFocus({});
     }
 
-    NSString *textAtSelection =
-        [[[NSMutableString alloc] initWithString:textView.textStorage.string]
-            substringWithRange:textView.selectedRange];
     emitter->onChangeSelection(
-        {.start = static_cast<int>(textView.selectedRange.location),
-         .end = static_cast<int>(textView.selectedRange.location +
-                                 textView.selectedRange.length),
-         .text = [textAtSelection toCppString]});
+        [EnrichedSelectionEventPayloadBuilder buildFromTextView:textView]);
   }
   // manage selection changes since textViewDidChangeSelection sometimes doesn't
   // run on focus
@@ -1353,23 +1277,21 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
             replacementText:(NSString *)text {
   [self handleKeyPressInRange:text range:range];
 
-  if (_paragraphsLimit > 0 && [text isEqualToString:NewLine]) {
-    NSInteger paragraphs = [self currentParagraphsCount];
-    BOOL replacingNewline = NO;
-    if (range.length > 0) {
-      NSString *replaced =
-          [textView.textStorage.string substringWithRange:range];
-      if ([replaced containsString:NewLine]) {
-        replacingNewline = YES;
-      }
-    }
+  BOOL isNewLine = [text isEqualToString:NewLine];
+
+  if (_paragraphsLimit > 0 && isNewLine) {
+    NSInteger paragraphs = [ParagraphsUtils paragraphsCountInTextView:textView];
+    BOOL replacingNewline =
+        [ParagraphsUtils isReplacingNewlineInRange:range
+                                              text:text
+                                        inTextView:textView];
 
     if (!replacingNewline && paragraphs >= _paragraphsLimit) {
       return NO;
     }
   }
 
-  if (![text isEqualToString:NewLine] &&
+  if (!isNewLine &&
       [ParagraphsUtils isReadOnlyParagraphAtLocation:textView.textStorage
                                             location:range.location]) {
     if (text.length == 0)
@@ -1446,21 +1368,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 }
 
 - (void)textViewDidChangeSelection:(UITextView *)textView {
-  // emit the event
-  NSString *textAtSelection =
-      [[[NSMutableString alloc] initWithString:textView.textStorage.string]
-          substringWithRange:textView.selectedRange];
-
   auto emitter = [self getEventEmitter];
   if (emitter != nullptr) {
     // iOS range works differently because it specifies location and length
     // here, start is the location, but end is the first index BEHIND the end.
     // So a 0 length range will have equal start and end
     emitter->onChangeSelection(
-        {.start = static_cast<int>(textView.selectedRange.location),
-         .end = static_cast<int>(textView.selectedRange.location +
-                                 textView.selectedRange.length),
-         .text = [textAtSelection toCppString]});
+        [EnrichedSelectionEventPayloadBuilder buildFromTextView:textView]);
   }
 
   // manage selection changes
@@ -1483,9 +1397,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 - (void)handlePasteIntoTextView:(UITextView *)textView sender:(id)sender {
   NSString *pasteText = UIPasteboard.generalPasteboard.string;
   if (_paragraphsLimit > 0 && pasteText) {
-    NSInteger existing = [self currentParagraphsCount];
+    NSInteger existing = [ParagraphsUtils paragraphsCountInTextView:textView];
     NSInteger incoming =
-        [[pasteText componentsSeparatedByString:NewLine] count];
+        [ParagraphsUtils incomingParagraphsCountFromString:pasteText];
 
     if (existing + incoming - 1 > _paragraphsLimit) {
       return;
@@ -1524,44 +1438,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     return;
   }
 
-  UIEdgeInsets inset = scrollView.contentInset;
-  CGPoint offset = scrollView.contentOffset;
-  CGSize contentSize = scrollView.contentSize;
-  CGSize layoutSize = scrollView.bounds.size;
-
-  CGPoint velocity = CGPointZero;
-  if (scrollView.panGestureRecognizer) {
-    velocity = [scrollView.panGestureRecognizer velocityInView:scrollView];
-  }
-
-  emitter->onInputScroll({.contentInset =
-                              {
-                                  .top = inset.top,
-                                  .bottom = inset.bottom,
-                                  .left = inset.left,
-                                  .right = inset.right,
-                              },
-                          .contentOffset =
-                              {
-                                  .x = offset.x,
-                                  .y = offset.y,
-                              },
-                          .contentSize =
-                              {
-                                  .width = contentSize.width,
-                                  .height = contentSize.height,
-                              },
-                          .layoutMeasurement =
-                              {
-                                  .width = layoutSize.width,
-                                  .height = layoutSize.height,
-                              },
-                          .velocity =
-                              {
-                                  .x = velocity.x,
-                                  .y = velocity.y,
-                              },
-                          .target = (int)[self.reactTag integerValue]});
+  emitter->onInputScroll([EnrichedScrollEventPayloadBuilder
+      buildFromScrollView:scrollView
+                   target:self.reactTag]);
 }
 
 // MARK: - Media attachments delegate
