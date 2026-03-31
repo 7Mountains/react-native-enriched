@@ -108,9 +108,7 @@ const htmlStyle: HtmlStyle = {
         borderColor: 'blue',
       },
       textContainer: {
-        paddingBottom: 16,
         paddingLeft: 10,
-        marginBottom: 10,
       },
       title: {
         color: 'black',
@@ -134,7 +132,7 @@ const htmlStyle: HtmlStyle = {
     },
     placeholder: {
       container: {
-        minHeight: 56,
+        minHeight: 44,
         borderRadius: 4,
         backgroundColor: 'lightgrey',
         marginTop: 4,
@@ -148,12 +146,12 @@ const htmlStyle: HtmlStyle = {
         fontWeight: '400',
       },
       imageContainer: {
-        width: 56,
-        height: 56,
+        width: 44,
+        height: 44,
       },
       image: {
-        width: 56,
-        height: 56,
+        width: 44,
+        height: 44,
       },
       description: {
         color: '#6B7280',

@@ -167,6 +167,7 @@
                                        completion:^(UIImage *fallbackImage) {
                                          [strongSelf updateImage:fallbackImage];
                                        }];
+          return;
         };
 
         [strongSelf updateImage:img];
