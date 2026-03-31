@@ -204,16 +204,27 @@ export interface ContentImageContainerStyle {
     width?: Float;
     height?: Float;
     borderRadius?: Float;
-    resizeMode?: string;
 }
 export interface ContentImageStyle {
     width?: Float;
     height?: Float;
+    resizeMode?: string;
+}
+export interface ContentTextContainerStyle {
+    paddingTop?: Float;
+    paddingBottom?: Float;
+    paddingRight?: Float;
+    paddingLeft?: Float;
+    marginLeft?: Float;
+    marginRight?: Float;
+    marginTop?: Float;
+    marginBottom?: Float;
 }
 export interface ContentStyleProperties {
     title?: ContentTitleStyle;
     description?: ContentDescriptionStyle;
     container?: ContentContainerStyle;
+    textContainer?: ContentTextContainerStyle;
     imageContainer?: ContentImageContainerStyle;
     image?: ContentImageStyle;
     fallbackImageURI?: string;
@@ -281,6 +292,7 @@ export interface HtmlStyleInternal {
         title: ContentTitleStyle;
         container?: ContentContainerStyle;
         imageContainer?: ContentImageContainerStyle;
+        textContainer?: ContentTextContainerStyle;
         image?: ContentImageStyle;
     };
 }

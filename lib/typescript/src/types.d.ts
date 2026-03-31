@@ -1,4 +1,4 @@
-import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, TextStyle, ViewProps, ViewStyle } from 'react-native';
+import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, ReactNativeElement, TextStyle, ViewProps, ViewStyle } from 'react-native';
 import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent, CheckboxPressEvent, OnKeyPressEvent, HtmlStyleInternal } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
 import type { EnrichedStyles } from './enums';
@@ -155,7 +155,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     onScroll?: (event: NativeSyntheticEvent<OnScrollEvent>) => void;
     loaderCookies?: Cookie[];
 }
-export type ComponentType = (Component<NativeProps, {}, any> & NativeMethods) | null;
+export type ComponentType = ((Component<NativeProps, {}, any> & NativeMethods) & ReactNativeElement) | null;
 export type HtmlRequest = {
     resolve: (html: string) => void;
     reject: (error: Error) => void;
