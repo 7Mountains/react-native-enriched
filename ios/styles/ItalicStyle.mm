@@ -4,7 +4,7 @@
 #import "StyleHeaders.h"
 
 @implementation ItalicStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 + (StyleType)getStyleType {

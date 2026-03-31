@@ -6,7 +6,7 @@
 #import "TextInsertionUtils.h"
 
 @implementation ParagraphAlignmentStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 #pragma mark - Init

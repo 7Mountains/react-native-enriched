@@ -13,7 +13,7 @@
 static NSString *const MdfAttributeName = @"MdfAttributeName";
 
 @implementation MDFStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 #pragma mark - Init

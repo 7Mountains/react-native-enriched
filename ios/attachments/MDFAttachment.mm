@@ -1,31 +1,16 @@
 #import "MDFAttachment.h"
 #import "AttachmentUtils.h"
 #import "ColorExtension.h"
+#import "EnrichedImageLoader.h"
 #import "MDFParams.h"
 #import "MDFStyleProps.h"
+#import "RichImageLabelView.h"
 
 @implementation MDFAttachment {
-  NSAttributedString *_labelText;
-
-  UIColor *_tintColor;
-  UIColor *_backgroundColor;
-  UIColor *_textColor;
-
-  CGFloat _cornerRadius;
-  UIColor *_borderColor;
-  CGFloat _borderWidth;
-
-  UIEdgeInsets _margin;
-  UIEdgeInsets _inset;
-
-  CGFloat _imageWidth;
-  CGFloat _imageHeight;
-  CGFloat _imageBorderRadius;
-
-  CGFloat _stripeWidth;
-
-  CGFloat _imageContainerWidth;
-  CGFloat _imageContainerHeight;
+  RichImageLabelView *_view;
+  MDFStyleProps *_styles;
+  MDFParams *_params;
+  BOOL _needsRedraw;
 }
 
 #pragma mark - Init
@@ -37,156 +22,144 @@
   if (!self)
     return nil;
 
-  self.height = styles.height + styles.marginTop + styles.marginBottom;
-
-  self.needsRedraw = YES;
-
-  _tintColor = [UIColor colorFromString:params.tintColor];
-  _backgroundColor = styles.backgroundColor;
-  _textColor = styles.textColor ?: UIColor.labelColor;
-  _borderColor = styles.borderColor;
-  _borderWidth = styles.borderWidth;
-
-  _cornerRadius = styles.borderRadius;
-
-  _margin = UIEdgeInsetsMake(styles.marginTop, styles.marginLeft,
-                             styles.marginBottom, styles.marginRight);
-
-  _inset = UIEdgeInsetsMake(styles.paddingTop, styles.paddingLeft,
-                            styles.paddingBottom, styles.paddingRight);
-
-  _imageWidth = styles.imageWidth;
-  _imageHeight = styles.imageHeight;
-  _imageBorderRadius = styles.imageBorderRadius;
-
-  _stripeWidth = styles.stripeWidth;
-
-  _imageContainerWidth = styles.imageContainerWidth;
-  _imageContainerHeight = styles.imageContainerHeight;
-
-  UIFont *font = styles.font ?: [UIFont systemFontOfSize:14];
-
-  _labelText = [[NSAttributedString alloc]
-      initWithString:params.label
-          attributes:@{
-            NSFontAttributeName : font,
-            NSForegroundColorAttributeName : _textColor
-          }];
-
-  [self loadImageAsyncWithURI:styles.imageUri];
+  _styles = styles;
+  _params = params;
 
   return self;
 }
 
-- (void)drawContentInBounds:(CGRect)bounds context:(CGContextRef)ctx {
+#pragma mark - Build View
 
-  CGRect contentRect = ContentRect(bounds, _margin);
-  CGRect innerRect = UIEdgeInsetsInsetRect(contentRect, _inset);
+- (RichImageLabelView *)buildView {
+  RichImageLabelView *view = [[RichImageLabelView alloc] init];
 
-  DrawRoundedBackground(contentRect, _cornerRadius, _backgroundColor);
-  [self drawBorderInRect:contentRect context:ctx];
+  view.minHeight = _styles.minHeight;
 
-  CGRect imageContainerRect = [self drawImageContainerRectInRect:innerRect];
+  view.backgroundColor = _styles.backgroundColor;
+  view.containerBorderWidth = _styles.borderWidth;
+  view.containerCornerRadius = _styles.borderRadius;
+  view.containerBorderColor = _styles.borderColor;
+  view.borderLeftWidth = _styles.borderLeftWidth;
 
-  [self drawImageInRect:imageContainerRect];
+  view.padding = _styles.padding;
 
-  CGFloat textStartX = CGRectGetMaxX(imageContainerRect) + 8;
+  view.imageSize = _styles.imageSize;
 
-  [self drawTextInContainerRect:innerRect startX:textStartX];
+  view.imageContainerCornerRadius = _styles.imageContainerBorderRadius;
+  view.imageContainerSize = _styles.imageContainerSize;
+
+  view.textPadding = _styles.textContainerPadding;
+  view.textMargin = _styles.textContainerMargin;
+
+  UIColor *tintColor =
+      [UIColor colorFromString:_params.tintColor] ?: UIColor.clearColor;
+
+  view.imageContainerColor = tintColor;
+  view.borderLeftColor = tintColor;
+
+  view.titleText = [[NSAttributedString alloc]
+      initWithString:_params.label
+          attributes:@{
+            NSFontAttributeName : _styles.font ?: [UIFont systemFontOfSize:14],
+            NSForegroundColorAttributeName : _styles.textColor
+                ?: UIColor.labelColor
+          }];
+
+  view.image = MakeLoaderImage();
+
+  [self loadImageAsyncWithURL:_styles.imageURL];
+
+  return view;
 }
 
-- (void)drawImageInRect:(CGRect)containerRect {
-  if (!self.image) {
+- (RichImageLabelView *)view {
+  if (!_view) {
+    _view = [self buildView];
+  }
+  return _view;
+}
+
+#pragma mark - Layout
+
+- (CGRect)attachmentBoundsForTextContainer:(NSTextContainer *)textContainer
+                      proposedLineFragment:(CGRect)lineFrag
+                             glyphPosition:(CGPoint)position
+                            characterIndex:(NSUInteger)charIndex {
+
+  CGFloat padding = textContainer ? textContainer.lineFragmentPadding : 0.0;
+  CGFloat width = lineFrag.size.width - padding * 2;
+
+  CGSize contentSize = CGSizeMake(
+      width - _styles.margin.left - _styles.margin.right, CGFLOAT_MAX);
+
+  CGSize fitting = [self.view sizeThatFits:contentSize];
+
+  CGFloat height = fitting.height + _styles.margin.top + _styles.margin.bottom;
+
+  return CGRectMake(0, 0, width, height);
+}
+
+#pragma mark - Render
+
+- (UIImage *)imageForBounds:(CGRect)imageBounds
+              textContainer:(NSTextContainer *)textContainer
+             characterIndex:(NSUInteger)charIndex {
+
+  if (!_needsRedraw && self.image) {
+    return self.image;
+  }
+
+  _needsRedraw = NO;
+
+  CGSize contentSize = CGSizeMake(imageBounds.size.width - _styles.margin.left -
+                                      _styles.margin.right,
+                                  CGFLOAT_MAX);
+  CGSize fitting = [self.view sizeThatFits:contentSize];
+
+  CGSize finalSize =
+      CGSizeMake(imageBounds.size.width,
+                 fitting.height + _styles.margin.top + _styles.margin.bottom);
+
+  UIGraphicsImageRenderer *renderer =
+      [[UIGraphicsImageRenderer alloc] initWithSize:finalSize];
+
+  self.image =
+      [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        self.view.frame = CGRectMake(0, 0, fitting.width, fitting.height);
+
+        CGContextRef cg = context.CGContext;
+        CGContextSaveGState(cg);
+
+        CGContextTranslateCTM(cg, _styles.margin.left, _styles.margin.top);
+
+        [self.view.layer renderInContext:cg];
+
+        CGContextRestoreGState(cg);
+      }];
+
+  return self.image;
+}
+
+#pragma mark - Image
+
+- (void)loadImageAsyncWithURL:(NSURL *)url {
+  if (!url)
     return;
-  }
 
-  CGRect imageRect = CGRectMake(
-      containerRect.origin.x + (_imageContainerWidth - _imageWidth) / 2,
-      containerRect.origin.y + (_imageContainerHeight - _imageHeight) / 2,
-      _imageWidth, _imageHeight);
+  __weak __typeof__(self) weakSelf = self;
 
-  [self.image drawInRect:imageRect];
-}
+  [[EnrichedImageLoader shared] loadImage:url
+                               completion:^(UIImage *img) {
+                                 __strong __typeof__(weakSelf) self = weakSelf;
+                                 if (!self)
+                                   return;
 
-- (void)drawBorderInRect:(CGRect)rect context:(CGContextRef)ctx {
-
-  // border
-  if (_borderWidth > 0 && _borderColor) {
-    CGRect borderRect =
-        CGRectInset(rect, _borderWidth * 0.5, _borderWidth * 0.5);
-
-    UIBezierPath *border =
-        [UIBezierPath bezierPathWithRoundedRect:borderRect
-                                   cornerRadius:_cornerRadius];
-
-    border.lineWidth = _borderWidth;
-
-    [_borderColor setStroke];
-    [border stroke];
-  }
-
-  // stripe
-  if (_tintColor && _stripeWidth > 0) {
-
-    UIBezierPath *clipPath =
-        [UIBezierPath bezierPathWithRoundedRect:rect
-                                   cornerRadius:_cornerRadius];
-
-    CGContextSaveGState(ctx);
-
-    CGContextAddPath(ctx, clipPath.CGPath);
-    CGContextClip(ctx);
-
-    CGRect stripeRect = CGRectMake(rect.origin.x, rect.origin.y, _stripeWidth,
-                                   rect.size.height);
-
-    CGContextSetFillColorWithColor(ctx, _tintColor.CGColor);
-    CGContextFillRect(ctx, stripeRect);
-
-    CGContextRestoreGState(ctx);
-  }
-}
-
-- (void)drawTextInContainerRect:(CGRect)containerRect startX:(CGFloat)startX {
-
-  CGFloat maxWidth = CGRectGetMaxX(containerRect) - startX;
-
-  UIFont *font = [_labelText attribute:NSFontAttributeName
-                               atIndex:0
-                        effectiveRange:nil];
-
-  CGFloat lineHeight = font.lineHeight;
-
-  CGFloat textY =
-      containerRect.origin.y + (containerRect.size.height - lineHeight) / 2.0;
-
-  CGRect textRect = CGRectMake(startX, textY, maxWidth, lineHeight);
-
-  [_labelText drawWithRect:textRect
-                   options:NSStringDrawingUsesLineFragmentOrigin |
-                           NSStringDrawingTruncatesLastVisibleLine
-                   context:nil];
-}
-
-- (CGRect)drawImageContainerRectInRect:(CGRect)rect {
-  CGFloat startX = rect.origin.x + _stripeWidth;
-
-  CGRect imageContainerRect = CenterRectVertically(
-      rect, _imageContainerWidth, _imageContainerHeight, startX);
-
-  if (_tintColor) {
-    UIBezierPath *container =
-        [UIBezierPath bezierPathWithRoundedRect:imageContainerRect
-                                   cornerRadius:_imageBorderRadius];
-    [_tintColor setFill];
-    [container fill];
-  }
-
-  if (self.image) {
-    [self drawImageInRect:imageContainerRect];
-  }
-
-  return imageContainerRect;
+                                 dispatch_async(dispatch_get_main_queue(), ^{
+                                   self.view.image = img;
+                                   self->_needsRedraw = YES;
+                                   [self notifyUpdate];
+                                 });
+                               }];
 }
 
 @end

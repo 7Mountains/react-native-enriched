@@ -33,8 +33,6 @@ import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getParagraphsBounds
 import com.swmansion.enriched.utils.isTheSameParagraphInSelection
 import com.swmansion.enriched.utils.removeZWS
-import kotlin.collections.plusAssign
-import kotlin.compareTo
 
 class ParagraphStyles(
   private val view: EnrichedTextInputView,
@@ -235,7 +233,7 @@ class ParagraphStyles(
     attributes: Map<String, String>?,
   ) {
     view.spanState?.setStart(TextStyle.CONTENT, null)
-    val span = EnrichedContentSpan.createEnrichedContentSpan(text, type, src, attributes, view.htmlStyle)
+    val span = EnrichedContentSpan.createEnrichedContentSpan(text, null, type, src, attributes, view.htmlStyle)
     span.attachTo(view)
     insertEscapingParagraph(
       span,
@@ -418,14 +416,4 @@ class ParagraphStyles(
 
     view.setSelection(insertIndex)
   }
-}
-
-private fun Editable.isParagraphZeroOrOneAndEmpty(range: IntRange): Boolean {
-  val text = substring(range)
-
-  if (text.length > 1) return false
-  if (text.isEmpty()) return true
-
-  val c = text[0]
-  return c == Strings.SPACE_CHAR || c == Strings.ZERO_WIDTH_SPACE_CHAR || c == Strings.NEWLINE
 }

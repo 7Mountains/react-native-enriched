@@ -1,5 +1,5 @@
 import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, TextStyle, ViewProps, ViewStyle } from 'react-native';
-import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent, CheckboxPressEvent, OnKeyPressEvent } from './EnrichedTextInputNativeComponent';
+import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent, CheckboxPressEvent, OnKeyPressEvent, HtmlStyleInternal } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
 import type { EnrichedStyles } from './enums';
 export interface EnrichedTextInputInstance extends NativeMethods {
@@ -103,31 +103,7 @@ export interface HtmlStyle {
         color?: ColorValue;
         thickness?: number;
     };
-    mdf?: {
-        height?: number;
-        imageUri: string;
-        borderRadius?: number;
-        borderWidth?: number;
-        borderColor?: ColorValue;
-        stripeWidth?: number;
-        fontSize?: number;
-        fontWeight?: string;
-        marginLeft?: number;
-        marginRight?: number;
-        marginTop?: number;
-        marginBottom?: number;
-        textColor?: ColorValue;
-        backgroundColor?: ColorValue;
-        imageHeight?: number;
-        imageWidth?: number;
-        imageBorderRadius?: number;
-        paddingTop?: number;
-        paddingBottom?: number;
-        paddingRight?: number;
-        paddingLeft?: number;
-        imageContainerHeight?: number;
-        imageContainerWidth?: number;
-    };
+    mdf?: HtmlStyleInternal['mdf'];
 }
 export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     ref?: RefObject<EnrichedTextInputInstance | null>;

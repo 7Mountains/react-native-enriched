@@ -1,7 +1,6 @@
-import { StyleSheet, Image } from 'react-native';
+import { StyleSheet } from 'react-native';
 import {
   type EnrichedTextInputInstance,
-  type HtmlStyle,
   type OnChangeStateEvent,
   EnrichedReanimatedTextInput,
   useReanimatedScrollOffset,
@@ -22,8 +21,9 @@ import {
 } from 'react-native-keyboard-controller';
 import { Toolbar } from './components/Toolbar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import htmlStyle from './styles';
 
-const generateHugeHtml = (repeat = 2) => {
+const generateHugeHtml = (repeat = 1) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -41,7 +41,7 @@ const generateHugeHtml = (repeat = 2) => {
     const imgW = 200 + (i % 5) * 40;
     const imgH = 100 + (i % 3) * 30;
     parts.push(
-      `\n<content type="image" text="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`
+      `\n<content type="image" title="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`
     );
 
     parts.push(
@@ -59,6 +59,7 @@ const generateHugeHtml = (repeat = 2) => {
 
       // Line break
       `\n<hr>`,
+      `<mdf tint-color="#ff0000" label="Test" />`,
 
       // Unordered list
       `<ul>`,
@@ -77,7 +78,7 @@ const generateHugeHtml = (repeat = 2) => {
       // Blockquote
       `\n<blockquote>Blockquote line 1 for ${i}.</blockquote>`,
       `\n<blockquote>Blockquote line 2 for ${i}.</blockquote>`,
-      `\n<content type="image" text="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`
+      `\n<content type="image" title="Test text Test text Test text Test text Test text Test text Test text Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`
     );
   }
 
@@ -359,146 +360,6 @@ export default function EditorScreen() {
     </>
   );
 }
-
-const htmlStyle: HtmlStyle = {
-  h1: {
-    fontSize: 72,
-    bold: false,
-  },
-  h2: {
-    fontSize: 60,
-    bold: false,
-  },
-  h3: {
-    fontSize: 50,
-    bold: false,
-  },
-  h4: {
-    fontSize: 40,
-    bold: false,
-  },
-  h5: {
-    fontSize: 30,
-    bold: false,
-  },
-  h6: {
-    fontSize: 24,
-    bold: false,
-  },
-  blockquote: {
-    borderColor: 'navy',
-    borderWidth: 4,
-    gapWidth: 4,
-    color: 'black',
-  },
-  codeblock: {
-    color: 'black',
-    borderRadius: 8,
-    backgroundColor: 'aquamarine',
-  },
-  code: {
-    color: 'black',
-    backgroundColor: 'yellow',
-  },
-  a: {
-    color: 'blue',
-    textDecorationLine: 'underline',
-  },
-  mention: {
-    channel: {
-      color: 'blue',
-      backgroundColor: 'lightblue',
-      textDecorationLine: 'none',
-    },
-    user: {
-      color: 'green',
-      backgroundColor: 'lightgreen',
-      textDecorationLine: 'none',
-    },
-  },
-  content: {
-    image: {
-      textColor: 'black',
-      backgroundColor: 'lightgray',
-      borderRadius: 4,
-      marginTop: 4,
-      marginBottom: 4,
-      paddingLeft: 0,
-      paddingRight: 0,
-      imageBorderRadiusTopLeft: 4,
-      imageBorderRadiusBottomLeft: 4,
-      imageResizeMode: 'stretch',
-      imageWidth: 50,
-      imageHeight: 56,
-      fontSize: 14,
-      fontWeight: '900',
-      fallbackImageURI: Image.resolveAssetSource(
-        require('../assets/placeholder.png')
-      ).uri,
-    },
-    video: {
-      borderWidth: 1,
-      borderColor: 'blue',
-      textColor: 'blue',
-      borderStyle: 'dotted',
-      borderRadius: 4,
-      marginTop: 4,
-      marginBottom: 4,
-    },
-    placeholder: {
-      borderWidth: 1,
-      borderColor: 'blue',
-      textColor: 'blue',
-      borderStyle: 'dotted',
-      borderRadius: 4,
-      marginTop: 8,
-      marginBottom: 8,
-      imageWidth: 50,
-      imageBorderRadiusTopLeft: 4,
-      imageBorderRadiusBottomLeft: 4,
-      imageResizeMode: 'cover',
-    },
-    test: {
-      borderColor: 'red',
-      borderWidth: 1,
-      paddingTop: 10,
-      paddingBottom: 10,
-      borderRadius: 8,
-      borderStyle: 'dashed',
-      textColor: 'blue',
-    },
-  },
-  img: {
-    width: 50,
-    height: 50,
-  },
-  ol: {
-    gapWidth: 16,
-    marginLeft: 24,
-    markerColor: 'navy',
-    markerFontWeight: 'bold',
-  },
-  ul: {
-    bulletColor: 'aquamarine',
-    bulletSize: 8,
-    marginLeft: 24,
-    gapWidth: 16,
-  },
-  checkbox: {
-    imageWidth: 24,
-    imageHeight: 24,
-    checkedImage: require('../assets/images/checkbox_checked.png'),
-    uncheckedImage: require('../assets/images/checkbox.png'),
-    marginLeft: 0,
-    gapWidth: 6,
-    checkedTextColor: 'gray',
-  },
-  divider: {
-    height: 24,
-    color: 'gray',
-    thickness: 2,
-  },
-};
 
 const styles = StyleSheet.create({
   container: {

@@ -13,7 +13,7 @@ static NSTextList *const NumberBulletList =
 static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
 
 @implementation OrderedListStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
   NSParagraphStyle *_cachedAttributes;
   CGFloat _cachedHeadIntent;
 }

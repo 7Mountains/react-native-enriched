@@ -441,16 +441,16 @@
     }
 
     if (newSingleProps) {
-      [newConfig setContentStyleProps:
-                     [ContentStyleProps
-                         getSinglePropsFromFollyDynamic:newContentStyle
-                                            defaultFont:newConfig.primaryFont]];
+      [newConfig
+          setContentStyleProps:[ContentStyleProps
+                                   singleStylesFromDynamic:newContentStyle
+                                               defaultFont:newConfig
+                                                               .primaryFont]];
     } else {
       [newConfig
-          setContentStyleProps:
-              [ContentStyleProps
-                  getComplexPropsFromFollyDynamic:newContentStyle
-                                      defaultFont:newConfig.primaryFont]];
+          setContentStyleProps:[ContentStyleProps
+                                   stylesFromDynamicMap:newContentStyle
+                                            defaultFont:newConfig.primaryFont]];
     }
 
     stylePropChanged = YES;

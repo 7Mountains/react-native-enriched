@@ -7,7 +7,7 @@
 #import "StyleTypeEnum.h"
 
 @implementation ColorStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 - (NSArray<NSNumber *> *)coloredStyleTypes {

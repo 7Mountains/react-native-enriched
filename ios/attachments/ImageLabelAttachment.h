@@ -1,9 +1,9 @@
 #pragma once
-#import "BaseImageAttachment.h"
+#import "MediaAttachment.h"
 
 @class ContentParams, ContentStyleProps;
 
-@interface ImageLabelAttachment : BaseImageAttachment
+@interface ImageLabelAttachment : MediaAttachment
 
 - (instancetype)initWithParams:(ContentParams *)params
                         styles:(ContentStyleProps *)styles;

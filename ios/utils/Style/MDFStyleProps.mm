@@ -15,108 +15,103 @@ using namespace facebook::react;
   if (!self)
     return nil;
 
-  _height = mdf.height;
-  _imageUri = [NSString fromCppString:mdf.imageUri.c_str()];
+  _minHeight = mdf.container.minHeight;
 
-  _borderRadius = mdf.borderRadius;
-  _borderWidth = mdf.borderWidth;
+  _borderRadius = mdf.container.borderRadius;
+  _borderWidth = mdf.container.borderWidth;
+  _borderLeftWidth = mdf.container.borderLeftWidth;
 
-  _stripeWidth = mdf.stripeWidth;
+  _margin =
+      UIEdgeInsetsMake(mdf.container.marginTop, mdf.container.marginLeft,
+                       mdf.container.marginBottom, mdf.container.marginRight);
 
-  if (mdf.borderColor) {
-    _borderColor = RCTUIColorFromSharedColor(mdf.borderColor);
+  _padding =
+      UIEdgeInsetsMake(mdf.container.paddingTop, mdf.container.paddingLeft,
+                       mdf.container.paddingBottom, mdf.container.paddingRight);
+
+  _textContainerMargin = UIEdgeInsetsMake(
+      mdf.textContainer.marginTop, mdf.textContainer.marginLeft,
+      mdf.textContainer.marginBottom, mdf.textContainer.marginRight);
+
+  _textContainerPadding = UIEdgeInsetsMake(
+      mdf.textContainer.paddingTop, mdf.textContainer.paddingLeft,
+      mdf.textContainer.paddingBottom, mdf.textContainer.paddingRight);
+
+  _backgroundColor =
+      mdf.container.backgroundColor
+          ? RCTUIColorFromSharedColor(mdf.container.backgroundColor)
+          : UIColor.clearColor;
+
+  if (mdf.container.borderColor) {
+    _borderColor = RCTUIColorFromSharedColor(mdf.container.borderColor);
   }
 
-  CGFloat fontSize = mdf.fontSize ?: 14.0;
-  NSString *fontWeight =
-      mdf.fontWeight.empty() ? @"500" : [NSString fromCppString:mdf.fontWeight];
+  CGFloat fontSize = mdf.title.fontSize ?: 14.0;
+
+  NSString *fontFamily = mdf.title.fontFamily.empty()
+                             ? nil
+                             : [NSString fromCppString:mdf.title.fontFamily];
+
+  NSString *fontWeight = mdf.title.fontWeight.empty()
+                             ? @"400"
+                             : [NSString fromCppString:mdf.title.fontWeight];
+
   UIFont *defaultFont = [UIFont systemFontOfSize:fontSize];
+
   _font = [RCTFont updateFont:defaultFont
-                   withFamily:nil
+                   withFamily:fontFamily
                          size:@(fontSize)
                        weight:fontWeight
                         style:nil
                       variant:nil
               scaleMultiplier:1.0];
 
-  _marginLeft = mdf.marginLeft;
-  _marginRight = mdf.marginRight;
-  _marginTop = mdf.marginTop;
-  _marginBottom = mdf.marginBottom;
+  _textColor = mdf.title.color ? RCTUIColorFromSharedColor(mdf.title.color)
+                               : UIColor.blackColor;
 
-  _paddingTop = mdf.paddingTop;
-  _paddingLeft = mdf.paddingLeft;
-  _paddingRight = mdf.paddingRight;
-  _paddingBottom = mdf.paddingBottom;
-
-  if (mdf.textColor) {
-    _textColor = RCTUIColorFromSharedColor(mdf.textColor);
-  } else {
-    _textColor = UIColor.blackColor;
+  if (!mdf.imageUri.empty()) {
+    NSString *uri = [NSString fromCppString:mdf.imageUri];
+    _imageURL = [NSURL URLWithString:uri];
   }
 
-  if (mdf.backgroundColor) {
-    _backgroundColor = RCTUIColorFromSharedColor(mdf.backgroundColor);
-  }
+  _imageSize = CGSizeMake(mdf.image.width, mdf.image.height);
 
-  if (mdf.imageHeight) {
-    _imageHeight = mdf.imageHeight;
-  } else {
-    _imageHeight = 0.0;
-  }
+  _imageContainerSize =
+      CGSizeMake(mdf.imageContainer.width, mdf.imageContainer.height);
 
-  if (mdf.imageWidth) {
-    _imageWidth = mdf.imageWidth;
-  } else {
-    _imageWidth = 0.0;
-  }
-
-  if (mdf.imageBorderRadius) {
-    _imageBorderRadius = mdf.imageBorderRadius;
-  } else {
-    _imageBorderRadius = 0.0;
-  }
-
-  _imageContainerHeight = mdf.imageContainerHeight;
-  _imageContainerWidth = mdf.imageContainerWidth;
+  _imageContainerBorderRadius = mdf.imageContainer.borderRadius;
 
   return self;
 }
 
+#pragma mark - Copy
+
 - (id)copyWithZone:(NSZone *)zone {
   MDFStyleProps *copy = [[[self class] allocWithZone:zone] init];
 
-  copy->_height = _height;
-  copy->_imageUri = [_imageUri copy];
+  copy->_minHeight = _minHeight;
+
+  copy->_imageURL = [_imageURL copy];
 
   copy->_borderRadius = _borderRadius;
   copy->_borderWidth = _borderWidth;
+  copy->_borderLeftWidth = _borderLeftWidth;
 
   copy->_borderColor = _borderColor;
-
-  copy->_font = [_font copy];
-
-  copy->_stripeWidth = _stripeWidth;
-
-  copy->_marginLeft = _marginLeft;
-  copy->_marginRight = _marginRight;
-  copy->_marginTop = _marginTop;
-  copy->_marginBottom = _marginBottom;
-
-  copy->_paddingLeft = _paddingLeft;
-  copy->_paddingRight = _paddingRight;
-  copy->_paddingTop = _paddingTop;
-  copy->_paddingBottom = _paddingBottom;
-
-  copy->_textColor = _textColor;
   copy->_backgroundColor = _backgroundColor;
 
-  copy->_imageWidth = _imageWidth;
-  copy->_imageHeight = _imageHeight;
-  copy->_imageBorderRadius = _imageBorderRadius;
+  copy->_font = _font; // UIFont immutable
+  copy->_textColor = _textColor;
 
-  copy->_imageContainerWidth = _imageContainerWidth;
-  copy->_imageContainerHeight = _imageContainerHeight;
+  copy->_margin = _margin;
+  copy->_padding = _padding;
+
+  copy->_textContainerMargin = _textContainerMargin;
+  copy->_textContainerPadding = _textContainerPadding;
+
+  copy->_imageSize = _imageSize;
+  copy->_imageContainerSize = _imageContainerSize;
+  copy->_imageContainerBorderRadius = _imageContainerBorderRadius;
 
   return copy;
 }

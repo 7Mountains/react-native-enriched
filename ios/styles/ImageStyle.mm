@@ -10,7 +10,7 @@
 static NSString *const ImageAttributeName = @"ImageAttributeName";
 
 @implementation ImageStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 + (StyleType)getStyleType {

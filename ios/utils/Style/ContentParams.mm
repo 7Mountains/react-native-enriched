@@ -33,9 +33,9 @@ const int MAIN_ATTRIBUTES_COUNT = 3;
 
   ContentParams *params = [ContentParams new];
 
-  // text
+  // title
   if ([args[0] isKindOfClass:NSString.class]) {
-    params.text = args[0];
+    params.title = args[0];
   }
 
   // type
@@ -43,18 +43,23 @@ const int MAIN_ATTRIBUTES_COUNT = 3;
     params.type = args[1];
   }
 
-  // src
+  // url
   if ([args[2] isKindOfClass:NSString.class]) {
     params.url = args[2];
   }
 
+  // description
+  if ([args[3] isKindOfClass:NSString.class]) {
+    params.descriptionText = args[3];
+  }
+
   // attributes = JSON string
-  NSDictionary *attributesDict = [self dictionaryFromJSONString:args[3]];
+  NSDictionary *attributesDict = [self dictionaryFromJSONString:args[4]];
   if (attributesDict) {
     params.attributes = attributesDict;
   }
 
-  if (!params.type && !params.url && !params.text &&
+  if (!params.type && !params.url && !params.title && !params.descriptionText &&
       params.attributes.count == 0) {
     return nil;
   }
@@ -76,8 +81,12 @@ const int MAIN_ATTRIBUTES_COUNT = 3;
     params[ContentSrcAttributeName] = _url;
   }
 
-  if (_text) {
-    params[ContentTextAttributeName] = _text;
+  if (_title) {
+    params[ContentTitleAttributeName] = _title;
+  }
+
+  if (_descriptionText) {
+    params[ContentDescriptionTextAttrbiuteName] = _descriptionText;
   }
 
   if (_attributes.count > 0) {

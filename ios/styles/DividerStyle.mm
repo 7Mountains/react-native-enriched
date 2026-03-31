@@ -6,7 +6,7 @@
 #import "TextInsertionUtils.h"
 
 @implementation DividerStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
   NSDictionary *_cachedAttributes;
   InputConfig *_cachedConfig;
 }

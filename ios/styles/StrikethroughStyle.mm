@@ -3,7 +3,7 @@
 #import "StyleHeaders.h"
 
 @implementation StrikethroughStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 + (StyleType)getStyleType {

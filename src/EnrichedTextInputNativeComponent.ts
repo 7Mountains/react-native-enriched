@@ -5,12 +5,7 @@ import type {
   Int32,
   UnsafeMixed,
 } from 'react-native/Libraries/Types/CodegenTypes';
-import type {
-  ColorValue,
-  HostComponent,
-  TextStyle,
-  ViewProps,
-} from 'react-native';
+import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import React from 'react';
 
 export interface OnChangeTextEvent {
@@ -177,40 +172,69 @@ type Heading = {
   bold?: boolean;
 };
 
-export interface ContentStyleProperties {
-  textColor?: ColorValue;
-  borderStyle?: 'solid' | 'dashed' | 'dotted';
-  borderRadius?: number;
-  backgroundColor?: ColorValue;
-  borderWidth?: number;
+interface ContentTitleStyle {
+  color?: ColorValue;
+  fontWeight?: string;
+  fontSize?: Float;
+  fontFamily?: string;
+}
+
+interface ContentDescriptionStyle {
+  color?: ColorValue;
+  fontWeight?: string;
+  fontSize?: Float;
+  fontFamily?: string;
+}
+
+interface ContentContainerStyle {
+  minHeight?: Float;
+  borderWidth?: Float;
   borderColor?: ColorValue;
-  paddingTop?: number;
-  paddingBottom?: number;
-  paddingRight?: number;
-  paddingLeft?: number;
-  marginLeft?: number;
-  marginRight?: number;
-  marginTop?: number;
-  marginBottom?: number;
-  imageBorderRadiusTopLeft?: number;
-  imageBorderRadiusTopRight?: number;
-  imageBorderRadiusBottomRight?: number;
-  imageBorderRadiusBottomLeft?: number;
-  imageWidth?: number;
-  imageHeight?: number;
-  imageResizeMode?:
-    | 'contain'
-    | 'fill'
-    | 'cover'
-    | 'stretch'
-    | 'center'
-    | 'none'
-    | 'scale-down';
-  fontSize?: number;
-  fontWeight?: TextStyle['fontWeight'];
+  paddingTop?: Float;
+  paddingBottom?: Float;
+  paddingRight?: Float;
+  paddingLeft?: Float;
+  marginLeft?: Float;
+  marginRight?: Float;
+  marginTop?: Float;
+  marginBottom?: Float;
+  backgroundColor?: ColorValue;
+  borderStyle?: string;
+  borderRadius?: Float;
+  borderLeftWidth?: Float;
+}
+
+export interface ContentImageContainerStyle {
+  width?: Float;
+  height?: Float;
+  borderRadius?: Float;
+}
+
+export interface ContentImageStyle {
+  width?: Float;
+  height?: Float;
+  resizeMode?: string;
+}
+
+export interface ContentTextContainerStyle {
+  paddingTop?: Float;
+  paddingBottom?: Float;
+  paddingRight?: Float;
+  paddingLeft?: Float;
+  marginLeft?: Float;
+  marginRight?: Float;
+  marginTop?: Float;
+  marginBottom?: Float;
+}
+
+export interface ContentStyleProperties {
+  title?: ContentTitleStyle;
+  description?: ContentDescriptionStyle;
+  container?: ContentContainerStyle;
+  textContainer?: ContentTextContainerStyle;
+  imageContainer?: ContentImageContainerStyle;
+  image?: ContentImageStyle;
   fallbackImageURI?: string;
-  width?: number;
-  height?: number;
 }
 
 export interface HtmlStyleInternal {
@@ -274,29 +298,12 @@ export interface HtmlStyleInternal {
     thickness?: Float;
   };
   mdf?: {
-    height?: Float;
     imageUri: string;
-    borderRadius?: Float;
-    borderWidth?: Float;
-    stripeWidth?: Float;
-    borderColor?: ColorValue;
-    fontSize?: Float;
-    fontWeight?: string;
-    marginLeft?: Float;
-    marginRight?: Float;
-    marginTop?: Float;
-    marginBottom?: Float;
-    textColor?: ColorValue;
-    backgroundColor?: ColorValue;
-    imageHeight?: Float;
-    imageWidth?: Float;
-    imageBorderRadius?: Float;
-    paddingTop?: Float;
-    paddingBottom?: Float;
-    paddingRight?: Float;
-    paddingLeft?: Float;
-    imageContainerHeight?: Float;
-    imageContainerWidth?: Float;
+    title: ContentTitleStyle;
+    container?: ContentContainerStyle;
+    imageContainer?: ContentImageContainerStyle;
+    textContainer?: ContentTextContainerStyle;
+    image?: ContentImageStyle;
   };
 }
 

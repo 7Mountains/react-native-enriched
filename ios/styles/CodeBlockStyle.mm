@@ -10,7 +10,7 @@
 static NSString *const CodeBlockMarker = @"codeblock";
 
 @implementation CodeBlockStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
   NSArray *_stylesToExclude;
 }
 

@@ -3,7 +3,7 @@
 #import "StyleHeaders.h"
 
 @implementation UnderlineStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 + (StyleType)getStyleType {

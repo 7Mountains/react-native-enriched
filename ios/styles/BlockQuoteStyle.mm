@@ -10,7 +10,7 @@
 #import "TextInsertionUtils.h"
 
 @implementation BlockQuoteStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
   NSArray *_stylesToExclude;
   UIColor *_blockQuoteForegroundColor;
   CGFloat _cachedHeadIntent;
