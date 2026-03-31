@@ -1,9 +1,5 @@
 import { type ColorValue, Image, processColor } from 'react-native';
-import type {
-  MentionStyleProperties,
-  HtmlStyleInternal,
-  ContentStyleProperties,
-} from './EnrichedTextInputNativeComponent';
+import type { HtmlStyleInternal } from './EnrichedTextInputNativeComponent';
 import type { HtmlStyle } from './types';
 
 const defaultStyle: Required<HtmlStyle> = {
@@ -56,28 +52,29 @@ const defaultStyle: Required<HtmlStyle> = {
     textDecorationLine: 'underline',
   },
   content: {
-    backgroundColor: 'transparent',
-    textColor: 'black',
-    borderColor: 'darkgray',
-    borderRadius: 8,
-    borderStyle: 'solid',
-    borderWidth: 1,
-    marginRight: 0,
-    marginLeft: 0,
-    paddingRight: 0,
-    paddingLeft: 0,
-    paddingTop: 8,
-    paddingBottom: 8,
-    marginTop: 0,
-    marginBottom: 0,
-    imageBorderRadiusBottomLeft: 0,
-    imageBorderRadiusBottomRight: 0,
-    imageBorderRadiusTopLeft: 0,
-    imageBorderRadiusTopRight: 0,
-    imageHeight: 0,
-    imageWidth: 0,
-    imageResizeMode: 'stretch',
-    fontSize: 14,
+    title: {
+      fontSize: 14,
+      color: 'black',
+    },
+    description: {
+      fontSize: 10,
+      color: 'gray',
+    },
+    container: {
+      borderStyle: 'solid',
+      borderRadius: 8,
+      marginRight: 0,
+      marginLeft: 0,
+      paddingRight: 0,
+      paddingLeft: 0,
+      paddingTop: 8,
+      paddingBottom: 8,
+      marginTop: 0,
+      marginBottom: 0,
+    },
+    imageContainer: {},
+    image: {},
+    textContainer: {},
   },
   img: {
     width: 80,
@@ -110,29 +107,27 @@ const defaultStyle: Required<HtmlStyle> = {
     thickness: 2,
   },
   mdf: {
-    height: 44,
     imageUri: '',
-    borderRadius: 0,
-    borderWidth: 0,
-    borderColor: 'transparent',
-    stripeWidth: 0,
-    fontSize: 14,
-    fontWeight: 'normal',
-    marginLeft: 0,
-    marginRight: 0,
-    marginTop: 0,
-    marginBottom: 0,
-    textColor: 'black',
-    backgroundColor: 'transparent',
-    imageHeight: 0,
-    imageWidth: 0,
-    imageBorderRadius: 0,
-    paddingTop: 0,
-    paddingBottom: 0,
-    paddingRight: 0,
-    paddingLeft: 0,
-    imageContainerHeight: 24,
-    imageContainerWidth: 24,
+    title: {
+      fontSize: 14,
+      color: 'black',
+    },
+    container: {
+      minHeight: 56,
+      borderRadius: 6,
+      borderColor: 'gray',
+      borderWidth: 1,
+      backgroundColor: 'lightgrey',
+    },
+    image: {
+      width: 14,
+      height: 16,
+    },
+    imageContainer: {
+      width: 24,
+      height: 24,
+      borderRadius: 6,
+    },
   },
 };
 
@@ -197,54 +192,30 @@ const parseStyle = (name: string, value: unknown) => {
   return processColor(value as ColorValue);
 };
 
-const parseColors = (style: HtmlStyleInternal): HtmlStyleInternal => {
-  const finalStyle: Record<string, any> = {};
-
-  for (const [tagName, tagStyle] of Object.entries(style)) {
-    const tagStyles: Record<string, any> = {};
-
-    if (tagName === 'mention') {
-      for (const [type, mentionStyle] of Object.entries(tagStyle)) {
-        tagStyles[type] = {};
-
-        for (const [styleName, styleValue] of Object.entries(
-          mentionStyle as MentionStyleProperties
-        )) {
-          tagStyles[type][styleName] = parseStyle(styleName, styleValue);
-        }
-      }
-
-      finalStyle[tagName] = tagStyles;
-      continue;
-    }
-
-    if (tagName === 'content') {
-      for (const [type, contentStyle] of Object.entries(tagStyle)) {
-        tagStyles[type] = {};
-
-        for (const [styleName, styleValue] of Object.entries(
-          contentStyle as ContentStyleProperties
-        )) {
-          tagStyles[type][styleName] = parseStyle(styleName, styleValue);
-        }
-      }
-
-      finalStyle[tagName] = tagStyles;
-      continue;
-    }
-
-    for (const [styleName, styleValue] of Object.entries(tagStyle)) {
-      tagStyles[styleName] = parseStyle(styleName, styleValue);
-    }
-
-    finalStyle[tagName] = tagStyles;
+const parseRecursive = (obj: any): any => {
+  if (obj == null || typeof obj !== 'object') {
+    return obj;
   }
 
-  return finalStyle;
+  if (Array.isArray(obj)) {
+    return obj.map(parseRecursive);
+  }
+
+  const result: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    if (value != null && typeof value === 'object') {
+      result[key] = parseRecursive(value);
+    } else {
+      result[key] = parseStyle(key, value);
+    }
+  }
+
+  return result;
 };
 
 export const normalizeHtmlStyle = (style: HtmlStyle): HtmlStyleInternal => {
   const converted = convertToHtmlStyleInternal(style);
   const withDefaults = assignDefaultValues(converted);
-  return parseColors(withDefaults);
+  return parseRecursive(withDefaults);
 };

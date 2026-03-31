@@ -76,7 +76,7 @@ class HtmlStyle {
 
   private var hrDrawable: HRDrawable? = null
 
-  var mdf: MDFStyle = MDFStyle.default()
+  var mdf: ContentStyle = ContentStyle.default()
 
   var checkboxStyle = CheckboxStyle.fromReadableMap(null, view?.context as ReactContext?)
 
@@ -173,7 +173,7 @@ class HtmlStyle {
 
     checkboxStyle = CheckboxStyle.fromReadableMap(style.getMap("checkbox"), context = view?.context as ReactContext)
 
-    mdf = MDFStyle.fromMap(style.getMap("mdf"), view?.context as ReactContext?)
+    mdf = ContentStyle.fromReadableMap(style.getMap("mdf"), view?.context as ReactContext)
   }
 
   private fun parseFloat(

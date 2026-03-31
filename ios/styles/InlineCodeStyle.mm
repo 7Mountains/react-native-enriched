@@ -7,7 +7,7 @@
 #import "StyleHeaders.h"
 
 @implementation InlineCodeStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 + (StyleType)getStyleType {

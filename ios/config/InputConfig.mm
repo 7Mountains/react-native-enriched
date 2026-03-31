@@ -492,20 +492,20 @@
   }
 
   ContentStyleProps *fallback = [ContentStyleProps new];
+
   fallback.backgroundColor = [UIColor clearColor];
   fallback.textColor = self.primaryColor ?: [UIColor blackColor];
+
   fallback.borderColor = nil;
   fallback.borderWidth = 0;
-  fallback.borderStyle = @"solid";
+  fallback.borderStyle = EnrichedBorderStyleSolid;
   fallback.borderRadius = 8.0;
-  fallback.marginTop = 0.0;
-  fallback.marginBottom = 0.0;
-  fallback.marginLeft = 0.0;
-  fallback.marginRight = 0.0;
-  fallback.paddingTop = 8.0;
-  fallback.paddingBottom = 8.0;
-  fallback.paddingLeft = 0.0;
-  fallback.paddingRight = 0.0;
+
+  fallback.margin = UIEdgeInsetsMake(0.0, 0.0, 0.0, 0.0);
+  fallback.padding = UIEdgeInsetsMake(8.0, 0.0, 8.0, 0.0);
+
+  fallback.minHeight = 0;
+
   return fallback;
 }
 

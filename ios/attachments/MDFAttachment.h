@@ -1,10 +1,10 @@
 #pragma once
-#import "BaseImageAttachment.h"
+#import "MediaAttachment.h"
 #import <UIKit/UIKit.h>
 
 @class MDFParams, MDFStyleProps;
 
-@interface MDFAttachment : BaseImageAttachment
+@interface MDFAttachment : MediaAttachment
 - (instancetype)initWithParams:(MDFParams *)params
                         styles:(MDFStyleProps *)styles;
 @end

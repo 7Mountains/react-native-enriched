@@ -6,9 +6,10 @@ NSString *const ColorAttributeName = @"color";
 
 NSString *const PlaceholderAttributeName = @"placeholder";
 
-NSString *const ContentTextAttributeName = @"text";
+NSString *const ContentTitleAttributeName = @"title";
 NSString *const ContentTypeAttributeName = @"type";
 NSString *const ContentSrcAttributeName = @"src";
+NSString *const ContentDescriptionTextAttrbiuteName = @"description";
 
 NSString *const HrefAttributeName = @"href";
 

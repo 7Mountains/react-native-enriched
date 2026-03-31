@@ -548,7 +548,8 @@ class HtmlToSpannedConverter(
       return
     }
 
-    val text = attributes.getValue("", "text")
+    val title = attributes.getValue("", "title")
+    val description = attributes.getValue("", "description")
     val type = attributes.getValue("", "type")
     val src = attributes.getValue("", "src")
 
@@ -556,7 +557,7 @@ class HtmlToSpannedConverter(
     for (i in 0..<attributes.length) {
       val localName = attributes.getLocalName(i)
 
-      if (("text" != localName) && ("type" != localName) && ("src" != localName)) {
+      if (("title" != localName) && ("description" != localName) && ("type" != localName) && ("src" != localName)) {
         attributesMap.put(localName, attributes.getValue(i))
       }
     }
@@ -567,7 +568,8 @@ class HtmlToSpannedConverter(
     builder.append(Strings.MAGIC_CHAR)
     val span =
       EnrichedContentSpan.Companion.createEnrichedContentSpan(
-        text,
+        title,
+        description,
         type,
         src,
         attributesMap,

@@ -3,6 +3,7 @@ import type {
   ImageRequireSource,
   NativeMethods,
   NativeSyntheticEvent,
+  ReactNativeElement,
   TextStyle,
   ViewProps,
   ViewStyle,
@@ -24,6 +25,7 @@ import type {
   OnScrollEvent,
   CheckboxPressEvent,
   OnKeyPressEvent,
+  HtmlStyleInternal,
 } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
 import type { EnrichedStyles } from './enums';
@@ -145,31 +147,7 @@ export interface HtmlStyle {
     color?: ColorValue;
     thickness?: number;
   };
-  mdf?: {
-    height?: number;
-    imageUri: string;
-    borderRadius?: number;
-    borderWidth?: number;
-    borderColor?: ColorValue;
-    stripeWidth?: number;
-    fontSize?: number;
-    fontWeight?: string;
-    marginLeft?: number;
-    marginRight?: number;
-    marginTop?: number;
-    marginBottom?: number;
-    textColor?: ColorValue;
-    backgroundColor?: ColorValue;
-    imageHeight?: number;
-    imageWidth?: number;
-    imageBorderRadius?: number;
-    paddingTop?: number;
-    paddingBottom?: number;
-    paddingRight?: number;
-    paddingLeft?: number;
-    imageContainerHeight?: number;
-    imageContainerWidth?: number;
-  };
+  mdf?: HtmlStyleInternal['mdf'];
 }
 
 export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
@@ -228,7 +206,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
 }
 
 export type ComponentType =
-  | (Component<NativeProps, {}, any> & NativeMethods)
+  | ((Component<NativeProps, {}, any> & NativeMethods) & ReactNativeElement)
   | null;
 
 export type HtmlRequest = {

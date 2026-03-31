@@ -13,7 +13,6 @@ import {
   type OnChangeMentionEvent,
   type OnChangeStateEvent,
   type OnChangeSelectionEvent,
-  type HtmlStyle,
   type OnChangeColorEvent,
   type Cookie,
 } from 'react-native-enriched';
@@ -36,6 +35,7 @@ import {
 import ColorPreview from './components/ColorPreview';
 import { Rectangle } from './Rectangle';
 import { ContentModal } from './components/ContentModal';
+import htmlStyle from './styles';
 
 type CurrentLinkState = OnLinkDetected;
 
@@ -108,7 +108,51 @@ const generateHugeHtml = (repeat = 1) => {
   // };
 
   for (let i = 0; i < repeat; i++) {
-    parts.push(`<h4>Test</h4>`, `<p ></p>`, `<p></p>`, `<div>test</div>`);
+    // const col = colorAt(i);
+    const imgW = 200 + (i % 5) * 40;
+    const imgH = 100 + (i % 3) * 30;
+    parts.push(
+      `\n<content type="image" description="test description" title="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`,
+      `<mdf tint-color="#ff0000" label="Test" />`,
+      `\n<content type="automation" description="test description" title="Test text" src="${Image.resolveAssetSource(require('../assets/images/Primary_Inline_VideoGfx.png')).uri}" />`
+    );
+
+    parts.push(
+      // Headings
+      `\n<h1>Section ${i + 1}</h1>`,
+      `\n<h2 alignment="center">Subsection ${i + 1}.1</h2>`,
+      `\n<h3>Topic ${i + 1}.1.a</h3>`, // Paragraph with mixed inline styles
+      `\n<p>This is a <b>bold</b> and <i>italic</i> paragraph with <u>underline</u>, ` +
+        `<s>strike</s>,` +
+        ` <font color="#ff0000">colored text</font>, ` +
+        `<a href="https://example.com/${i}">a link ${i}</a>, ` +
+        `<mention text="@alex_${i}" type="user" indicator="@">@alex_${i}</mention>, ` +
+        `<mention text="#general" type="channel" indicator="#" text="#general">#general</mention>, ` +
+        `and some plain text to bulk it up.</p>`,
+
+      // Line break
+      `\n<hr>`,
+      `<mdf tint-color="#ff0000" label="Test" />`,
+
+      // Unordered list
+      `<ul>`,
+      `<li>bullet A ${i}</li>`,
+      `<li>bullet B ${i}</li>`,
+      `<li>bullet C ${i}</li>`,
+      `</ul>`,
+
+      // Ordered list
+      `\n<ol>`,
+      `\n<li>step 1.${i}</li>`,
+      `\n<li>step 2.${i}</li>`,
+      `\n<li>step 3.${i}</li>`,
+      `\n</ol>`,
+
+      // Blockquote
+      `\n<blockquote>Blockquote line 1 for ${i}.</blockquote>`,
+      `\n<blockquote>Blockquote line 2 for ${i}.</blockquote>`,
+      `\n<content type="image" title="Test text Test text Test text Test text Test text Test text Test text Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`
+    );
   }
 
   parts.push('\n</html>');
@@ -544,166 +588,6 @@ export default function EditorScreen() {
     </>
   );
 }
-
-const htmlStyle: HtmlStyle = {
-  h1: {
-    fontSize: 72,
-    bold: false,
-  },
-  h2: {
-    fontSize: 60,
-    bold: false,
-  },
-  h3: {
-    fontSize: 50,
-    bold: false,
-  },
-  h4: {
-    fontSize: 40,
-    bold: false,
-  },
-  h5: {
-    fontSize: 30,
-    bold: false,
-  },
-  h6: {
-    fontSize: 24,
-    bold: false,
-  },
-  blockquote: {
-    borderColor: 'navy',
-    borderWidth: 4,
-    gapWidth: 4,
-    color: 'black',
-  },
-  codeblock: {
-    color: 'black',
-    borderRadius: 8,
-    backgroundColor: 'aquamarine',
-  },
-  code: {
-    color: 'black',
-    backgroundColor: 'yellow',
-  },
-  a: {
-    color: 'blue',
-    textDecorationLine: 'underline',
-  },
-  mention: {
-    channel: {
-      color: 'blue',
-      backgroundColor: 'lightblue',
-      textDecorationLine: 'none',
-    },
-    user: {
-      color: 'green',
-      backgroundColor: 'lightgreen',
-      textDecorationLine: 'none',
-    },
-  },
-  content: {
-    image: {
-      textColor: 'black',
-      backgroundColor: 'lightgray',
-      borderRadius: 4,
-      marginTop: 4,
-      marginBottom: 4,
-      paddingLeft: 0,
-      paddingRight: 0,
-      imageBorderRadiusTopLeft: 4,
-      imageBorderRadiusBottomLeft: 4,
-      imageResizeMode: 'stretch',
-      imageWidth: 50,
-      height: 50,
-      imageHeight: 50,
-      fontSize: 14,
-      fontWeight: '900',
-      fallbackImageURI: Image.resolveAssetSource(
-        require('../assets/placeholder.png')
-      ).uri,
-    },
-    video: {
-      borderWidth: 1,
-      borderColor: 'blue',
-      textColor: 'blue',
-      borderStyle: 'dotted',
-      borderRadius: 4,
-      paddingTop: 16,
-      paddingBottom: 16,
-      marginTop: 4,
-      marginBottom: 4,
-    },
-    placeholder: {
-      borderWidth: 1,
-      borderColor: 'blue',
-      textColor: 'blue',
-      borderStyle: 'dotted',
-      borderRadius: 4,
-      height: 50,
-      imageBorderRadiusTopLeft: 4,
-      imageBorderRadiusBottomLeft: 4,
-      imageResizeMode: 'stretch',
-      imageWidth: 50,
-      imageHeight: 50,
-      fallbackImageURI: Image.resolveAssetSource(
-        require('../assets/placeholder.png')
-      ).uri,
-    },
-  },
-  img: {
-    width: 50,
-    height: 50,
-  },
-  ol: {
-    gapWidth: 16,
-    marginLeft: 24,
-    markerColor: 'navy',
-    markerFontWeight: 'bold',
-  },
-  ul: {
-    bulletColor: 'aquamarine',
-    bulletSize: 8,
-    marginLeft: 24,
-    gapWidth: 16,
-  },
-  checkbox: {
-    imageWidth: 24,
-    imageHeight: 24,
-    checkedImage: require('../assets/images/checkbox_checked.png'),
-    uncheckedImage: require('../assets/images/checkbox.png'),
-    marginLeft: 0,
-    gapWidth: 6,
-    checkedTextColor: 'gray',
-  },
-  divider: {
-    height: 24,
-    color: 'gray',
-    thickness: 2,
-  },
-  mdf: {
-    height: 48,
-    imageUri: Image.resolveAssetSource(
-      require('../assets/images/block_icon.png')
-    ).uri,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'lightblue',
-    stripeWidth: 4,
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 4,
-    marginBottom: 4,
-    textColor: 'black',
-    backgroundColor: 'lightgray',
-    imageHeight: 18,
-    imageWidth: 16,
-    imageBorderRadius: 4,
-    paddingLeft: 8,
-    paddingRight: 8,
-    imageContainerHeight: 24,
-    imageContainerWidth: 24,
-  },
-};
 
 const styles = StyleSheet.create({
   container: {

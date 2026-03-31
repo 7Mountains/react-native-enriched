@@ -60,7 +60,12 @@ object TagsRegistry {
           attributes = { span ->
             val params = (span as EnrichedContentSpan).getAttributes()
             buildMap {
-              put("text", params.text)
+              put("title", params.title)
+
+              params.description?.let {
+                put("description", it)
+              }
+
               put("type", params.type)
               put("src", params.src ?: "")
               if (params.attributes != null) {

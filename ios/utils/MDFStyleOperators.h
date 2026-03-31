@@ -4,22 +4,53 @@
 namespace facebook {
 namespace react {
 
-inline bool operator==(const EnrichedTextInputViewHtmlStyleMdfStruct &a,
-                       const EnrichedTextInputViewHtmlStyleMdfStruct &b) {
+inline bool operator==(const EnrichedTextInputViewHtmlStyleMdfTitleStruct &a,
+                       const EnrichedTextInputViewHtmlStyleMdfTitleStruct &b) {
+  return a.color == b.color && a.fontWeight == b.fontWeight &&
+         a.fontSize == b.fontSize && a.fontFamily == b.fontFamily;
+}
 
-  return a.height == b.height && a.imageUri == b.imageUri &&
-         a.borderRadius == b.borderRadius && a.borderWidth == b.borderWidth &&
-         a.borderColor == b.borderColor && a.stripeWidth == b.stripeWidth &&
-         a.fontSize == b.fontSize && a.fontWeight == b.fontWeight &&
+inline bool
+operator==(const EnrichedTextInputViewHtmlStyleMdfImageContainerStruct &a,
+           const EnrichedTextInputViewHtmlStyleMdfImageContainerStruct &b) {
+  return a.width == b.width && a.height == b.height &&
+         a.borderRadius == b.borderRadius;
+}
+
+inline bool
+operator==(const EnrichedTextInputViewHtmlStyleMdfContainerStruct &a,
+           const EnrichedTextInputViewHtmlStyleMdfContainerStruct &b) {
+  return a.minHeight == b.minHeight && a.borderWidth == b.borderWidth &&
+         a.borderColor == b.borderColor && a.paddingTop == b.paddingTop &&
+         a.paddingBottom == b.paddingBottom &&
+         a.paddingRight == b.paddingRight && a.paddingLeft == b.paddingLeft &&
          a.marginLeft == b.marginLeft && a.marginRight == b.marginRight &&
          a.marginTop == b.marginTop && a.marginBottom == b.marginBottom &&
-         a.textColor == b.textColor && a.backgroundColor == b.backgroundColor &&
-         a.imageHeight == b.imageHeight && a.imageWidth == b.imageWidth &&
-         a.imageBorderRadius == b.imageBorderRadius &&
-         a.paddingTop == b.paddingTop && a.paddingBottom == b.paddingBottom &&
+         a.backgroundColor == b.backgroundColor &&
+         a.borderStyle == b.borderStyle && a.borderRadius == b.borderRadius &&
+         a.borderLeftWidth == b.borderLeftWidth;
+}
+
+inline bool operator==(const EnrichedTextInputViewHtmlStyleMdfImageStruct &a,
+                       const EnrichedTextInputViewHtmlStyleMdfImageStruct &b) {
+  return a.width == b.width && a.height == b.height &&
+         a.resizeMode == b.resizeMode;
+}
+
+inline bool
+operator==(const EnrichedTextInputViewHtmlStyleMdfTextContainerStruct &a,
+           const EnrichedTextInputViewHtmlStyleMdfTextContainerStruct &b) {
+  return a.paddingTop == b.paddingTop && a.paddingBottom == b.paddingBottom &&
          a.paddingRight == b.paddingRight && a.paddingLeft == b.paddingLeft &&
-         a.imageContainerWidth == b.imageContainerWidth &&
-         a.imageContainerHeight == b.imageContainerHeight;
+         a.marginLeft == b.marginLeft && a.marginRight == b.marginRight &&
+         a.marginTop == b.marginTop && a.marginBottom == b.marginBottom;
+}
+
+inline bool operator==(const EnrichedTextInputViewHtmlStyleMdfStruct &a,
+                       const EnrichedTextInputViewHtmlStyleMdfStruct &b) {
+  return a.imageUri == b.imageUri && a.title == b.title &&
+         a.container == b.container && a.imageContainer == b.imageContainer &&
+         a.image == b.image && a.textContainer == b.textContainer;
 }
 
 inline bool operator!=(const EnrichedTextInputViewHtmlStyleMdfStruct &a,

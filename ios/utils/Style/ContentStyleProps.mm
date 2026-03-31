@@ -5,205 +5,247 @@
 
 @implementation ContentStyleProps
 
-+ (ContentStyleProps *)fromFolly:(folly::dynamic)folly
+#pragma mark - Helpers
+
+static folly::dynamic ObjectOrEmpty(folly::dynamic obj, const char *key) {
+  return obj[key].isObject() ? obj[key] : folly::dynamic::object();
+}
+
+static CGFloat CGFloatFromFolly(folly::dynamic obj, const char *key,
+                                CGFloat defaultValue) {
+  return obj[key].isNumber() ? obj[key].asDouble() : defaultValue;
+}
+
+static BOOL BoolFromFolly(folly::dynamic obj, const char *key,
+                          BOOL defaultValue) {
+  return obj[key].isBool() ? obj[key].asBool() : defaultValue;
+}
+
+static NSString *NSStringFromFolly(folly::dynamic obj, const char *key,
+                                   NSString *defaultValue) {
+  return obj[key].isString() ? [NSString fromCppString:obj[key].asString()]
+                             : defaultValue;
+}
+
+static id NSObjectFromFolly(folly::dynamic value) {
+  if (value.isNull()) {
+    return nil;
+  }
+
+  if (value.isBool()) {
+    return @(value.asBool());
+  }
+
+  if (value.isInt()) {
+    return @(value.asInt());
+  }
+
+  if (value.isDouble()) {
+    return @(value.asDouble());
+  }
+
+  if (value.isString()) {
+    return [NSString fromCppString:value.asString()];
+  }
+
+  if (value.isArray()) {
+    NSMutableArray *result = [NSMutableArray new];
+    for (const auto &item : value) {
+      id converted = NSObjectFromFolly(item);
+      if (converted) {
+        [result addObject:converted];
+      }
+    }
+    return result;
+  }
+
+  if (value.isObject()) {
+    NSMutableDictionary *result = [NSMutableDictionary new];
+    for (const auto &item : value.items()) {
+      if (item.first.isString()) {
+        NSString *key = [NSString fromCppString:item.first.asString()];
+        id converted = NSObjectFromFolly(item.second);
+        if (converted) {
+          result[key] = converted;
+        }
+      }
+    }
+    return result;
+  }
+
+  return nil;
+}
+
+static UIColor *UIColorFromFolly(folly::dynamic obj, const char *key,
+                                 UIColor *defaultValue) {
+  auto value = obj[key];
+
+  if (value.isNull()) {
+    return defaultValue;
+  }
+
+  if (value.isNumber()) {
+    auto color =
+        facebook::react::SharedColor(facebook::react::Color(value.asInt()));
+    return RCTUIColorFromSharedColor(color);
+  }
+
+  id nsValue = NSObjectFromFolly(value);
+  if (nsValue) {
+    UIColor *color = [RCTConvert UIColor:nsValue];
+    return color ?: defaultValue;
+  }
+
+  return defaultValue;
+}
+
+static UIEdgeInsets EdgeInsetsFromFolly(folly::dynamic obj) {
+  return UIEdgeInsetsMake(CGFloatFromFolly(obj, "paddingTop", 0),
+                          CGFloatFromFolly(obj, "paddingLeft", 0),
+                          CGFloatFromFolly(obj, "paddingBottom", 0),
+                          CGFloatFromFolly(obj, "paddingRight", 0));
+}
+
+static UIEdgeInsets MarginInsetsFromFolly(folly::dynamic obj) {
+  return UIEdgeInsetsMake(CGFloatFromFolly(obj, "marginTop", 0),
+                          CGFloatFromFolly(obj, "marginLeft", 0),
+                          CGFloatFromFolly(obj, "marginBottom", 0),
+                          CGFloatFromFolly(obj, "marginRight", 0));
+}
+
+static CGSize SizeFromWidthHeight(folly::dynamic obj) {
+  return CGSizeMake(CGFloatFromFolly(obj, "width", 0),
+                    CGFloatFromFolly(obj, "height", 0));
+}
+
+static EnrichedBorderStyle BorderStyleFromFolly(folly::dynamic obj) {
+  NSString *value = NSStringFromFolly(obj, "borderStyle", @"solid");
+
+  if ([value isEqualToString:@"dashed"])
+    return EnrichedBorderStyleDashed;
+  if ([value isEqualToString:@"dotted"])
+    return EnrichedBorderStyleDotted;
+  if ([value isEqualToString:@"none"])
+    return EnrichedBorderStyleNone;
+
+  return EnrichedBorderStyleSolid;
+}
+
+static ContentImageResizeMode ImageResizeModeFromFolly(folly::dynamic obj) {
+  NSString *value = NSStringFromFolly(obj, "resizeMode", @"cover");
+
+  if ([value isEqualToString:@"contain"])
+    return ContentImageResizeModeContain;
+  if ([value isEqualToString:@"stretch"])
+    return ContentImageResizeModeStretch;
+  return ContentImageResizeModeCover;
+}
+
+static UIFont *FontFromFolly(folly::dynamic obj, UIFont *defaultFont,
+                             CGFloat defaultSize) {
+  NSString *family = NSStringFromFolly(obj, "fontFamily", nil);
+  NSString *weight = NSStringFromFolly(obj, "fontWeight", nil);
+  CGFloat size = CGFloatFromFolly(obj, "fontSize", defaultSize);
+  BOOL bold = BoolFromFolly(obj, "bold", NO);
+
+  NSString *resolvedWeight = weight;
+  if (resolvedWeight == nil && bold) {
+    resolvedWeight = @"700";
+  }
+
+  return [RCTFont updateFont:defaultFont
+                  withFamily:family
+                        size:@(size)
+                      weight:resolvedWeight
+                       style:nil
+                     variant:nil
+             scaleMultiplier:1.0];
+}
+
+static NSURL *URLFromFolly(folly::dynamic obj, const char *key) {
+  NSString *stringValue = NSStringFromFolly(obj, key, nil);
+  if (stringValue.length == 0) {
+    return nil;
+  }
+
+  return [NSURL URLWithString:stringValue];
+}
+
+#pragma mark - Main
+
++ (instancetype)styleFromDynamic:(folly::dynamic)folly
                      defaultFont:(UIFont *)defaultFont {
-  ContentStyleProps *props = [[ContentStyleProps alloc] init];
+  ContentStyleProps *props = [ContentStyleProps new];
 
-  if (folly["backgroundColor"].isNumber()) {
-    auto color = facebook::react::SharedColor(
-        facebook::react::Color(folly["backgroundColor"].asInt()));
-    props.backgroundColor = RCTUIColorFromSharedColor(color);
-  } else {
-    props.backgroundColor = [UIColor clearColor];
-  }
+  folly::dynamic container = ObjectOrEmpty(folly, "container");
+  folly::dynamic title = ObjectOrEmpty(folly, "title");
+  folly::dynamic description = ObjectOrEmpty(folly, "description");
+  folly::dynamic image = ObjectOrEmpty(folly, "image");
+  folly::dynamic imageContainer = ObjectOrEmpty(folly, "imageContainer");
+  folly::dynamic textContainer = ObjectOrEmpty(folly, "textContainer");
 
-  if (folly["textColor"].isNumber()) {
-    auto color = facebook::react::SharedColor(
-        facebook::react::Color(folly["textColor"].asInt()));
-    props.textColor = RCTUIColorFromSharedColor(color);
-  } else {
-    props.textColor = [UIColor blackColor];
-  }
+  props.backgroundColor =
+      UIColorFromFolly(container, "backgroundColor", UIColor.clearColor);
+  props.borderColor = UIColorFromFolly(container, "borderColor", nil);
+  props.borderWidth = CGFloatFromFolly(container, "borderWidth", 0);
+  props.borderRadius = CGFloatFromFolly(container, "borderRadius", 0);
+  props.borderStyle = BorderStyleFromFolly(container);
+  props.padding = EdgeInsetsFromFolly(container);
+  props.margin = MarginInsetsFromFolly(container);
+  props.minHeight = CGFloatFromFolly(container, "minHeight", 0);
 
-  if (folly["borderColor"].isNumber()) {
-    auto color = facebook::react::SharedColor(
-        facebook::react::Color(folly["borderColor"].asInt()));
-    props.borderColor = RCTUIColorFromSharedColor(color);
-  } else {
-    props.borderColor = nil;
-  }
+  props.textContainerMargin = MarginInsetsFromFolly(textContainer);
+  props.textContainerPadding = EdgeInsetsFromFolly(textContainer);
 
-  if (folly["borderWidth"].isNumber()) {
-    props.borderWidth = folly["borderWidth"].asDouble();
-  } else {
-    props.borderWidth = 0;
-  }
+  props.titleColor = UIColorFromFolly(title, "color", UIColor.blackColor);
+  props.titleFont = FontFromFolly(title, defaultFont, 14.0);
+  CGFloat titleFontSize = CGFloatFromFolly(title, "fontSize", 14.0);
+  props.descriptionColor =
+      UIColorFromFolly(description, "color", props.textColor);
+  props.descriptionFont =
+      FontFromFolly(description, defaultFont, titleFontSize);
+  props.descriptionColor =
+      UIColorFromFolly(description, "color", UIColor.grayColor);
 
-  if (folly["borderStyle"].isString()) {
-    props.borderStyle =
-        [NSString fromCppString:folly["borderStyle"].asString()];
-  } else {
-    props.borderStyle = @"solid";
-  }
+  // Image
+  props.imageSize = SizeFromWidthHeight(image);
+  props.imageResizeMode = ImageResizeModeFromFolly(image);
 
-  if (folly["borderRadius"].isNumber()) {
-    props.borderRadius = folly["borderRadius"].asDouble();
-  } else {
-    props.borderRadius = 0;
-  }
+  // Image container
+  props.imageContainerSize = SizeFromWidthHeight(imageContainer);
 
-  if (folly["marginTop"].isNumber()) {
-    props.marginTop = folly["marginTop"].asDouble();
-  } else {
-    props.marginTop = 0;
-  }
-
-  if (folly["marginBottom"].isNumber()) {
-    props.marginBottom = folly["marginBottom"].asDouble();
-  } else {
-    props.marginBottom = 0;
-  }
-
-  if (folly["marginRight"].isNumber()) {
-    props.marginRight = folly["marginRight"].asDouble();
-  } else {
-    props.marginRight = 0;
-  }
-
-  if (folly["marginLeft"].isNumber()) {
-    props.marginLeft = folly["marginLeft"].asDouble();
-  } else {
-    props.marginLeft = 0;
-  }
-
-  if (folly["paddingTop"].isNumber()) {
-    props.paddingTop = folly["paddingTop"].asDouble();
-  } else {
-    props.paddingTop = 0;
-  }
-
-  if (folly["paddingBottom"].isNumber()) {
-    props.paddingBottom = folly["paddingBottom"].asDouble();
-  } else {
-    props.paddingBottom = 0;
-  }
-
-  if (folly["paddingRight"].isNumber()) {
-    props.paddingRight = folly["paddingRight"].asDouble();
-  } else {
-    props.paddingRight = 0;
-  }
-
-  if (folly["paddingLeft"].isNumber()) {
-    props.paddingLeft = folly["paddingLeft"].asDouble();
-  } else {
-    props.paddingLeft = 0;
-  }
-
-  if (folly["imageWidth"].isNumber()) {
-    props.imageWidth = folly["imageWidth"].asDouble();
-  } else {
-    props.imageWidth = 0;
-  }
-
-  if (folly["imageHeight"].isNumber()) {
-    props.imageHeight = folly["imageHeight"].asDouble();
-  } else {
-    props.imageHeight = 0;
-  }
-
-  if (folly["imageBorderRadiusTopLeft"].isNumber()) {
-    props.imageBorderRadiusTopLeft =
-        folly["imageBorderRadiusTopLeft"].asDouble();
-  } else {
-    props.imageBorderRadiusTopLeft = 0.0;
-  }
-
-  if (folly["imageBorderRadiusTopRight"].isNumber()) {
-    props.imageBorderRadiusTopRight =
-        folly["imageBorderRadiusTopRight"].asDouble();
-  } else {
-    props.imageBorderRadiusTopRight = 0.0;
-  }
-
-  if (folly["imageBorderRadiusBottomLeft"].isNumber()) {
-    props.imageBorderRadiusBottomLeft =
-        folly["imageBorderRadiusBottomLeft"].asDouble();
-  } else {
-    props.imageBorderRadiusBottomLeft = 0.0;
-  }
-
-  if (folly["imageBorderRadiusTopRight"].isNumber()) {
-    props.imageBorderRadiusBottomRight =
-        folly["imageBorderRadiusBottomRight"].asDouble();
-  } else {
-    props.imageBorderRadiusBottomRight = 0.0;
-  }
-
-  if (folly["imageResizeMode"].isString()) {
-    props.imageResizeMode =
-        [NSString fromCppString:folly["imageResizeMode"].asString()];
-  } else {
-    props.imageResizeMode = @"cover";
-  }
-
-  if (folly["fallbackImageURI"].isString()) {
-    props.fallbackImageURI =
-        [NSString fromCppString:folly["fallbackImageURI"].asString()];
-  } else {
-    props.fallbackImageURI = nil;
-  }
-
-  if (folly["width"].isNumber()) {
-    props.width = folly["width"].asDouble();
-  } else {
-    props.width = 0.0;
-  }
-
-  if (folly["height"].isNumber()) {
-    props.height = folly["height"].asDouble();
-  } else {
-    props.height = props.imageHeight > 0 ? props.imageHeight : 50.0;
-  }
-
-  NSString *fontWeight =
-      folly["fontWeight"].isString()
-          ? [NSString fromCppString:folly["fontWeight"].asString()]
-          : @"400";
-
-  CGFloat fontSize =
-      folly["fontSize"].isNumber() ? folly["fontSize"].asDouble() : 14.0;
-
-  props.font = [RCTFont updateFont:defaultFont
-                        withFamily:nil
-                              size:@(fontSize)
-                            weight:fontWeight
-                             style:nil
-                           variant:nil
-                   scaleMultiplier:1.0];
+  // Fallback image
+  props.fallbackImageURL = URLFromFolly(folly, "fallbackImageURI");
 
   return props;
 }
 
-+ (NSDictionary *)getSinglePropsFromFollyDynamic:(folly::dynamic)folly
-                                     defaultFont:(UIFont *)defaultFont {
-  ContentStyleProps *props = [ContentStyleProps fromFolly:folly
-                                              defaultFont:defaultFont];
-  return @{@"all" : props};
+#pragma mark - Dictionaries
+
++ (NSDictionary<NSString *, ContentStyleProps *> *)
+    singleStylesFromDynamic:(folly::dynamic)folly
+                defaultFont:(UIFont *)defaultFont {
+  ContentStyleProps *style = [ContentStyleProps styleFromDynamic:folly
+                                                     defaultFont:defaultFont];
+  return @{@"all" : style};
 }
 
-+ (NSDictionary *)getComplexPropsFromFollyDynamic:(folly::dynamic)folly
-                                      defaultFont:(UIFont *)defaultFont {
-  NSMutableDictionary *dict = [NSMutableDictionary new];
++ (NSDictionary<NSString *, ContentStyleProps *> *)
+    stylesFromDynamicMap:(folly::dynamic)folly
+             defaultFont:(UIFont *)defaultFont {
+  NSMutableDictionary<NSString *, ContentStyleProps *> *dict =
+      [NSMutableDictionary new];
 
-  for (const auto &obj : folly.items()) {
-    if (obj.first.isString() && obj.second.isObject()) {
-      NSString *key = [NSString fromCppString:obj.first.asString()];
-      ContentStyleProps *props = [ContentStyleProps fromFolly:obj.second
-                                                  defaultFont:defaultFont];
-      dict[key] = props;
+  for (const auto &item : folly.items()) {
+    if (item.first.isString() && item.second.isObject()) {
+      NSString *key = [NSString fromCppString:item.first.asString()];
+      ContentStyleProps *style =
+          [ContentStyleProps styleFromDynamic:item.second
+                                  defaultFont:defaultFont];
+      dict[key] = style;
     }
   }
+
   return dict;
 }
 

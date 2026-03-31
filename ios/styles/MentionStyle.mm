@@ -11,7 +11,7 @@
 static NSString *const MentionAttributeName = @"MentionAttributeName";
 
 @implementation MentionStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
   NSValue *_activeMentionRange;
   NSString *_activeMentionIndicator;
   BOOL _blockMentionEditing;

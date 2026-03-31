@@ -3,6 +3,7 @@
 #import "EnrichedTextInputView.h"
 #import "ParagraphsUtils.h"
 #import "StyleHeaders.h"
+#import "WeakBox.h"
 #import <objc/runtime.h>
 
 @implementation NSLayoutManager (LayoutManagerExtension)
@@ -21,12 +22,18 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 #pragma mark - Associated input
 
 - (id)input {
-  return objc_getAssociatedObject(self, kInputKey);
+  WeakBox *box = objc_getAssociatedObject(self, kInputKey);
+  return box.value;
 }
 
 - (void)setInput:(id)value {
-  objc_setAssociatedObject(self, kInputKey, value,
-                           OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+  WeakBox *box = objc_getAssociatedObject(self, kInputKey);
+  if (!box) {
+    box = [WeakBox new];
+    objc_setAssociatedObject(self, kInputKey, box,
+                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+  }
+  box.value = value;
 }
 
 #pragma mark - Swizzle

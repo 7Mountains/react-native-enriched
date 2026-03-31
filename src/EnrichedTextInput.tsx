@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import EnrichedTextInputNativeComponent from './EnrichedTextInputNativeComponent';
 import { normalizeHtmlStyle } from './normalizeHtmlStyle';
 import type {
@@ -97,7 +97,7 @@ export const EnrichedTextInput = ({
 
   return (
     <EnrichedTextInputNativeComponent
-      ref={nativeRef}
+      ref={nativeRef as RefObject<ComponentType | null>}
       mentionIndicators={mentionIndicators}
       editable={editable}
       contentInsets={contentInsets}

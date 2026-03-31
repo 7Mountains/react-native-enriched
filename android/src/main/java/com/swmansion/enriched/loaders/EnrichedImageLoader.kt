@@ -110,14 +110,18 @@ class EnrichedImageLoader private constructor(
           if (!dataSource.isFinished) return
 
           val ref = dataSource.result ?: return
-          val image = ref.get()
 
-          val bmp = (image as? CloseableBitmap)?.underlyingBitmap
-          val safeBitmap =
-            bmp?.copy(bmp.config ?: Bitmap.Config.ARGB_8888, false)
+          try {
+            val image = ref.get()
 
-          mainHandler.post { callback(safeBitmap) }
-          CloseableReference.closeSafely(ref)
+            val bmp = (image as? CloseableBitmap)?.underlyingBitmap
+            val safeBitmap =
+              bmp?.copy(bmp.config ?: Bitmap.Config.ARGB_8888, false)
+
+            mainHandler.post { callback(safeBitmap) }
+          } finally {
+            CloseableReference.closeSafely(ref)
+          }
         }
 
         override fun onFailure(dataSource: DataSource<CloseableReference<CloseableImage>?>) {

@@ -6,52 +6,45 @@
 #import "StyleHeaders.h"
 
 @implementation InputParser {
-  EnrichedTextInputView *_input;
-  EnrichedAttributedStringHTMLSerializer *_attributedStringHTMLSerializer;
-}
-
-- (instancetype)initWithInput:(id)input {
-  self = [super init];
-  if (!self)
-    return nil;
-
-  _input = (EnrichedTextInputView *)input;
-  _attributedStringHTMLSerializer =
-      [[EnrichedAttributedStringHTMLSerializer alloc]
-          initWithStyles:_input->stylesDict];
-
-  return self;
 }
 
 #pragma mark - HTML → attributed
 
-- (NSMutableAttributedString *)attributedFromHtml:(NSString *)html {
+- (NSMutableAttributedString *)
+    attributedFromHtml:(NSString *)html
+                styles:(NSDictionary<NSNumber *, id> *_Nonnull)styles
+     defaultAttributes:(NSDictionary *_Nonnull)defaultAttributes {
 
   EnrichedHTMLToAttributedStringParser *parser =
       [[EnrichedHTMLToAttributedStringParser alloc]
-             initWithStyles:_input->stylesDict
-          defaultAttributes:_input->defaultTypingAttributes];
+             initWithStyles:styles
+          defaultAttributes:defaultAttributes];
 
   return [parser parseToAttributedString:html];
 }
 
 #pragma mark - Public API
-- (NSString *)parseToHtmlFromRange:(NSRange)range {
-  NSAttributedString *sub =
-      [_input->textView.textStorage attributedSubstringFromRange:range];
+- (NSString *)parseToHtml:(NSAttributedString *)attributedString
+                   styles:(NSDictionary<NSNumber *, id> *)styles {
+  EnrichedAttributedStringHTMLSerializer *attributedStringHTMLSerializer =
+      [[EnrichedAttributedStringHTMLSerializer alloc] initWithStyles:styles];
 
-  return [_attributedStringHTMLSerializer buildHtmlFromAttributedString:sub
-                                                               prettify:NO];
+  return [attributedStringHTMLSerializer
+      buildHtmlFromAttributedString:attributedString
+                           prettify:NO];
 }
 
-- (void)parseToHTMLAsync:(BOOL)prettify
+- (void)parseToHTMLAsync:(NSAttributedString *)attributedString
+                  styles:(NSDictionary<NSNumber *, id> *)styles
+                prettify:(BOOL)prettify
               completion:(void (^_Nonnull)(NSString *_Nullable,
                                            NSError *_Nullable))completion {
-  NSAttributedString *snapshot = _input->textView.textStorage.copy;
+  EnrichedAttributedStringHTMLSerializer *attributedStringHTMLSerializer =
+      [[EnrichedAttributedStringHTMLSerializer alloc] initWithStyles:styles];
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                  ^{
-                   NSString *html = [self->_attributedStringHTMLSerializer
-                       buildHtmlFromAttributedString:snapshot
+                   NSString *html = [attributedStringHTMLSerializer
+                       buildHtmlFromAttributedString:attributedString
                                             prettify:prettify];
 
                    dispatch_async(dispatch_get_main_queue(), ^{

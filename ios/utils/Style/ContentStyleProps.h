@@ -1,59 +1,52 @@
 #pragma once
+#import "EnrichedBorderStyle.h"
 #import <UIKit/UIKit.h>
 #import <folly/dynamic.h>
 
+typedef NS_ENUM(NSInteger, ContentImageResizeMode) {
+  ContentImageResizeModeCover,
+  ContentImageResizeModeContain,
+  ContentImageResizeModeStretch,
+};
+
 @interface ContentStyleProps : NSObject
 
-@property UIColor *borderColor;
-@property UIColor *borderTopColor;
-@property UIColor *borderBottomColor;
-@property UIColor *borderRightColor;
-@property UIColor *borderLeftColor;
+@property(nonatomic, strong) UIColor *backgroundColor;
+@property(nonatomic, strong) UIColor *textColor;
+@property(nonatomic, strong) UIColor *borderColor;
 
-@property CGFloat borderWidth;
-@property CGFloat borderLeftWidth;
-@property CGFloat borderRightWidth;
-@property CGFloat borderTopWidth;
-@property CGFloat borderBottomWidth;
+@property(nonatomic) CGFloat borderWidth;
+@property(nonatomic) CGFloat borderRadius;
+@property(nonatomic) EnrichedBorderStyle borderStyle;
 
-@property NSString *borderStyle;
+@property(nonatomic) UIEdgeInsets padding;
+@property(nonatomic) UIEdgeInsets margin;
 
-@property CGFloat borderRadius;
+@property(nonatomic) UIEdgeInsets textContainerPadding;
+@property(nonatomic) UIEdgeInsets textContainerMargin;
 
-@property UIColor *textColor;
-@property UIColor *backgroundColor;
+@property(nonatomic) CGSize imageSize;
+@property(nonatomic) CGSize imageContainerSize;
+@property(nonatomic) ContentImageResizeMode imageResizeMode;
 
-@property CGFloat paddingTop;
-@property CGFloat paddingBottom;
-@property CGFloat paddingRight;
-@property CGFloat paddingLeft;
+@property(nonatomic, strong) UIFont *titleFont;
+@property(nonatomic, strong) UIColor *titleColor;
+@property(nonatomic, strong) UIFont *descriptionFont;
+@property(nonatomic, strong) UIColor *descriptionColor;
 
-@property CGFloat marginTop;
-@property CGFloat marginBottom;
-@property CGFloat marginRight;
-@property CGFloat marginLeft;
+@property(nonatomic) CGFloat minHeight;
 
-@property CGFloat width;
-@property CGFloat height;
+@property(nonatomic, strong) NSURL *fallbackImageURL;
 
-@property(nonatomic, strong) UIFont *font;
++ (instancetype)styleFromDynamic:(folly::dynamic)dynamic
+                     defaultFont:(UIFont *)defaultFont;
 
-@property(nonatomic) CGFloat imageBorderRadius;
-@property(nonatomic) CGFloat imageBorderRadiusTopLeft;
-@property(nonatomic) CGFloat imageBorderRadiusTopRight;
-@property(nonatomic) CGFloat imageBorderRadiusBottomLeft;
-@property(nonatomic) CGFloat imageBorderRadiusBottomRight;
-@property(nonatomic) CGFloat imageWidth;
-@property(nonatomic) CGFloat imageHeight;
-@property(nonatomic) NSString *imageResizeMode;
++ (NSDictionary<NSString *, ContentStyleProps *> *)
+    singleStylesFromDynamic:(folly::dynamic)dynamic
+                defaultFont:(UIFont *)defaultFont;
 
-@property(nonatomic, strong) NSString *fallbackImageURI;
-
-+ (ContentStyleProps *)fromFolly:(folly::dynamic)folly
-                     defaultFont:(UIFont *)font;
-+ (NSDictionary *)getSinglePropsFromFollyDynamic:(folly::dynamic)folly
-                                     defaultFont:(UIFont *)defaultFont;
-+ (NSDictionary *)getComplexPropsFromFollyDynamic:(folly::dynamic)folly
-                                      defaultFont:(UIFont *)defaultFont;
++ (NSDictionary<NSString *, ContentStyleProps *> *)
+    stylesFromDynamicMap:(folly::dynamic)dynamic
+             defaultFont:(UIFont *)defaultFont;
 
 @end

@@ -1,6 +1,4 @@
-#import "BaseLabelAttachment.h"
 #import "ColorExtension.h"
-#import "EnrichedImageLoader.h"
 #import "EnrichedTextInputView.h"
 #import "HtmlAttributeNames.h"
 #import "ImageLabelAttachment.h"
@@ -15,7 +13,7 @@
 static NSString *const ContentAttributeName = @"ContentAttributeName";
 
 @implementation ContentStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 #pragma mark - Init
@@ -69,9 +67,9 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 
   ContentParams *params = [ContentParams new];
 
-  id text = attributes[ContentTextAttributeName];
-  if ([text isKindOfClass:NSString.class]) {
-    params.text = text;
+  id title = attributes[ContentTitleAttributeName];
+  if ([title isKindOfClass:NSString.class]) {
+    params.title = title;
   }
 
   id type = attributes[ContentTypeAttributeName];
@@ -84,9 +82,14 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
     params.url = url;
   }
 
+  id descriptionText = attributes[ContentDescriptionTextAttrbiuteName];
+  if ([descriptionText isKindOfClass:NSString.class]) {
+    params.descriptionText = descriptionText;
+  }
+
   NSMutableDictionary *extra = attributes.mutableCopy;
   [extra removeObjectsForKeys:@[
-    ContentSrcAttributeName, ContentTypeAttributeName, ContentTextAttributeName
+    ContentSrcAttributeName, ContentTypeAttributeName, ContentTitleAttributeName
   ]];
   if ([extra isKindOfClass:NSDictionary.class]) {
     params.attributes = extra;
@@ -188,26 +191,16 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 
 #pragma mark - Internal: Props & Attachments
 
-- (ContentStyleProps *)stylePropsWithParams:(ContentParams *)params {
+- (ContentStyleProps *_Nullable)stylePropsWithParams:(ContentParams *)params {
   return [_input->config contentStylePropsForType:params.type];
 }
 
-- (MediaAttachment *)prepareAttachment:(ContentParams *)params {
+- (ImageLabelAttachment *)prepareAttachment:(ContentParams *)params {
   ContentStyleProps *styles = [self stylePropsWithParams:params];
 
-  MediaAttachment *attachment;
-
-  BOOL hasImageURL = params.url != nil && params.url.length > 0;
-
-  if (hasImageURL) {
-    attachment = [[ImageLabelAttachment alloc] initWithParams:params
-                                                       styles:styles];
-    attachment.delegate = _input;
-  } else {
-    attachment = [[BaseLabelAttachment alloc] initWithParams:params
-                                                      styles:styles];
-    attachment.delegate = _input;
-  }
+  ImageLabelAttachment *attachment =
+      [[ImageLabelAttachment alloc] initWithParams:params styles:styles];
+  attachment.delegate = _input;
 
   return attachment;
 }

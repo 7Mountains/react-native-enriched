@@ -13,7 +13,7 @@ static NSTextList *const bullet =
 static NSArray<NSTextList *> *const TextLists = @[ bullet ];
 
 @implementation UnorderedListStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
   NSParagraphStyle *_cachedAttributes;
   CGFloat _cachedHeadIntent;
 }

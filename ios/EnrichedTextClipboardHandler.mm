@@ -28,7 +28,11 @@
       stringByReplacingOccurrencesOfString:ZWS
                                 withString:@""];
 
-  NSString *html = [_input->parser parseToHtmlFromRange:range];
+  NSAttributedString *substring =
+      [_input->textView.textStorage attributedSubstringFromRange:range];
+
+  NSString *html = [_input->parser parseToHtml:substring
+                                        styles:_input->stylesDict];
 
   NSMutableAttributedString *attr =
       [[storage attributedSubstringFromRange:range] mutableCopy];
@@ -170,7 +174,10 @@
     }
 
     if (html.length > 0) {
-      return [_input->parser attributedFromHtml:html];
+      return
+          [_input->parser attributedFromHtml:html
+                                      styles:_input->stylesDict
+                           defaultAttributes:_input->defaultTypingAttributes];
     }
   }
 

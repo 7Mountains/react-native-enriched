@@ -15,7 +15,7 @@ static NSString *const AutomaticLinkAttributeName =
 static NSString *const LinkAttributeName = @"LinkAttributeName";
 
 @implementation LinkStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 + (StyleType)getStyleType {

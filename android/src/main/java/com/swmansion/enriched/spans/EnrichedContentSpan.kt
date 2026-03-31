@@ -1,17 +1,21 @@
 package com.swmansion.enriched.spans
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.text.style.ReplacementSpan
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.withTranslation
 import com.swmansion.enriched.EnrichedTextInputView
-import com.swmansion.enriched.drawables.BaseContentDrawable
-import com.swmansion.enriched.drawables.ImageContentDrawable
-import com.swmansion.enriched.drawables.LabelContentDrawable
+import com.swmansion.enriched.R
+import com.swmansion.enriched.drawables.ImageLabelRenderer
+import com.swmansion.enriched.loaders.EnrichedImageLoader
 import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
+import com.swmansion.enriched.styles.ContentStyle
 import com.swmansion.enriched.styles.HtmlStyle
+import com.swmansion.enriched.utils.ResourceManager
 import java.lang.ref.WeakReference
 
 class EnrichedContentSpan(
@@ -20,7 +24,21 @@ class EnrichedContentSpan(
 ) : ReplacementSpan(),
   EnrichedNonEditableParagraphSpan,
   EnrichedFullWidthSpan {
+  private var hasRequestedImage = false
+
   private var tvRef: WeakReference<EnrichedTextInputView>? = null
+
+  private val style = htmlStyle.contentStyle[contentParams.type] ?: ContentStyle.default()
+
+  private var renderer: ImageLabelRenderer? = null
+  private var bitmap: Bitmap? = ResourceManager.getDrawableResource(R.drawable.loader_placeholder).toBitmap(40, 40)
+  private var measuredHeight = 0
+
+  override val dependsOnHtmlStyle: Boolean = true
+
+  override fun copyWithStyle(htmlStyle: HtmlStyle): EnrichedContentSpan = this
+
+  override fun copy() = this
 
   fun attachTo(tv: EnrichedTextInputView) {
     tvRef = WeakReference(tv)
@@ -28,17 +46,69 @@ class EnrichedContentSpan(
 
   private fun invalidate() {
     val tv = tvRef?.get() ?: return
+    renderer = null
     tv.redrawSpan(this)
   }
 
-  private val style = htmlStyle.contentStyle[contentParams.type]!!
-  override val dependsOnHtmlStyle: Boolean = true
+  private fun getOrCreateRenderer(): ImageLabelRenderer {
+    renderer?.let { return it }
 
-  private var internalDrawable: BaseContentDrawable? = null
+    val renderer =
+      ImageLabelRenderer(
+        contentStyle = style,
+        title = contentParams.title,
+        description = contentParams.description,
+        bitmap = bitmap,
+      )
 
-  override fun copyWithStyle(htmlStyle: HtmlStyle): EnrichedContentSpan = this
+    this.renderer = renderer
 
-  override fun copy() = this
+    loadImage()
+
+    return renderer
+  }
+
+  private fun loadImage() {
+    if (hasRequestedImage) return
+    hasRequestedImage = true
+
+    val uri = contentParams.src
+    println("loadImage src=$uri")
+
+    if (uri.isNullOrEmpty()) {
+      println("src empty -> fallback")
+      loadFallbackImage()
+      return
+    }
+
+    EnrichedImageLoader.instance.load(uri) { bmp ->
+      println("main load result = ${bmp != null}")
+      if (bmp != null) {
+        updateBitmap(bmp)
+      } else {
+        println("main load failed -> fallback")
+        loadFallbackImage()
+      }
+    }
+  }
+
+  private fun loadFallbackImage() {
+    val uri = style.fallbackImageURI
+    println("loadFallbackImage uri=$uri")
+
+    EnrichedImageLoader.instance.load(uri) { bmp ->
+      println("fallback result = ${bmp != null}")
+      if (bmp != null) {
+        updateBitmap(bmp)
+      }
+    }
+  }
+
+  private fun updateBitmap(bitmap: Bitmap) {
+    this.bitmap = bitmap
+    renderer = null
+    invalidate()
+  }
 
   override fun getSize(
     paint: Paint,
@@ -47,20 +117,28 @@ class EnrichedContentSpan(
     end: Int,
     fm: Paint.FontMetricsInt?,
   ): Int {
-    val drawable = getOrCreateDrawable()
-    val height = drawable.measureHeight()
+    val margin = style.container.margin
+
+    val marginHorizontal = (margin.left + margin.right)
+    val marginVertical = (margin.top + margin.bottom)
+
+    val contentWidth = htmlStyle.editorWidth - marginHorizontal
+
+    val renderer = getOrCreateRenderer()
+    val contentHeight = renderer.measure(contentWidth.toInt())
+
+    val finalHeight = contentHeight + marginVertical
+
+    measuredHeight = finalHeight.toInt()
 
     fm?.let {
-      it.ascent = -height
+      it.ascent = -measuredHeight
       it.descent = 0
       it.top = it.ascent
       it.bottom = 0
     }
-    val width = htmlStyle.editorWidth
 
-    drawable.setBounds(0, 0, width, height)
-
-    return width
+    return htmlStyle.editorWidth
   }
 
   override fun draw(
@@ -74,12 +152,27 @@ class EnrichedContentSpan(
     bottom: Int,
     paint: Paint,
   ) {
-    val drawable = getOrCreateDrawable()
-    val height = drawable.measureHeight()
-    val centerY = top + (bottom - top - height) / 2f
+    val style = htmlStyle.contentStyle[contentParams.type] ?: ContentStyle.default()
+    val margin = style.container.margin
 
-    canvas.withTranslation(x, centerY) {
-      drawable.draw(this)
+    val marginLeft = margin.left
+    val marginTop = margin.top
+    val marginRight = margin.right
+    val marginBottom = margin.bottom
+
+    val contentWidth = htmlStyle.editorWidth - (marginLeft + marginRight)
+    val contentHeight = measuredHeight - (marginTop + marginBottom)
+
+    val renderer = getOrCreateRenderer()
+
+    val centerY = top + (bottom - top - measuredHeight) / 2f
+
+    canvas.withTranslation(x + marginLeft, centerY + marginTop) {
+      renderer.draw(
+        this,
+        contentWidth.toInt(),
+        contentHeight.toInt(),
+      )
     }
   }
 
@@ -87,43 +180,23 @@ class EnrichedContentSpan(
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedSpan = this
 
-  private fun getOrCreateDrawable(): BaseContentDrawable {
-    val existing = internalDrawable
-    if (existing is BaseContentDrawable) return existing
-
-    val src = contentParams.src
-
-    val drawable =
-      if (src != null) {
-        ImageContentDrawable(style, contentParams.text, contentParams.src).apply {
-          onContentLoadEnd = {
-            invalidate()
-          }
-        }
-      } else {
-        LabelContentDrawable(style, contentParams.text)
-      }
-
-    internalDrawable = drawable
-
-    return drawable
-  }
-
   companion object {
     fun createEnrichedContentSpan(
-      text: String,
+      title: String,
+      description: String?,
       type: String,
       src: String?,
       attributes: Map<String, String>?,
       htmlStyle: HtmlStyle,
     ): EnrichedContentSpan {
-      val params = ContentParams(text, type, src, attributes)
+      val params = ContentParams(title, description, type, src, attributes)
 
       return EnrichedContentSpan(params, htmlStyle)
     }
 
     data class ContentParams(
-      val text: String,
+      val title: String,
+      val description: String?,
       val type: String,
       val src: String?,
       val attributes: Map<String, String>?,

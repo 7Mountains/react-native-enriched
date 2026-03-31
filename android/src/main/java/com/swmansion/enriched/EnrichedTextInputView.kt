@@ -411,7 +411,6 @@ class EnrichedTextInputView : AppCompatEditText {
     text.removeSpan(marker)
   }
 
-  // Helper: Walks through the string skipping ZWSPs to find the Nth visible character
   private fun getActualIndex(visibleIndex: Int): Int {
     val currentText = text as Spannable
     var currentVisibleCount = 0

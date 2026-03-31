@@ -1,7 +1,6 @@
 #import "EnrichedTextInputView.h"
 #import "AlignmentConverter.h"
 #import "AttachmentInvalidationBatcher.h"
-#import "BaseLabelAttachment.h"
 #import "ColorExtension.h"
 #import "EnrichedCommandHandler.h"
 #import "EnrichedCookieManager.h"
@@ -53,8 +52,8 @@ using namespace facebook::react;
 #define GET_STYLE_STATE(TYPE_ENUM)                                             \
   {                                                                            \
     .isActive = [_activeStyles containsObject:@(TYPE_ENUM)],                   \
+    .isConflicting = [self isStyle:TYPE_ENUM activeInMap:conflictingStyles],   \
     .canNotBeApplied = [self canStyleBeApplied:TYPE_ENUM],                     \
-    .isConflicting = [self isStyle:TYPE_ENUM activeInMap:conflictingStyles]    \
   }
 
 @implementation EnrichedTextInputView {
@@ -139,7 +138,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   conflictingStyles = [EnrichedTextStyleFactory makeConflictingStyles];
   blockingStyles = [EnrichedTextStyleFactory makeBlockingStyles];
 
-  parser = [[InputParser alloc] initWithInput:self];
+  parser = [[InputParser alloc] init];
   _commandHandler = [[EnrichedCommandHandler alloc] initWithInput:self];
   _customContentInsets = UIEdgeInsetsZero;
   _layoutInsets = UIEdgeInsetsZero;
@@ -176,7 +175,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)replaceWholeWithString:(NSString *)string {
   if ([parser isHtmlString:string]) {
-    NSMutableAttributedString *inserted = [parser attributedFromHtml:string];
+    NSMutableAttributedString *inserted =
+        [parser attributedFromHtml:string
+                            styles:self->stylesDict
+                 defaultAttributes:self->defaultTypingAttributes];
 
     NSTextStorage *storage = self->textView.textStorage;
 
@@ -262,9 +264,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       // being used!
 
       // the html needs to be generated using the old config
-      NSString *currentHtml = [parser
-          parseToHtmlFromRange:NSMakeRange(0,
-                                           textView.textStorage.string.length)];
+      NSString *currentHtml = [parser parseToHtml:textView.textStorage.copy
+                                           styles:self->stylesDict];
       // no emitting during styles reload
       blockEmitting = YES;
 
@@ -631,15 +632,15 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
            .underline = GET_STYLE_STATE([UnderlineStyle getStyleType]),
            .strikeThrough = GET_STYLE_STATE([StrikethroughStyle getStyleType]),
            .colored = GET_STYLE_STATE([ColorStyle getStyleType]),
-           .inlineCode = GET_STYLE_STATE([InlineCodeStyle getStyleType]),
-           .link = GET_STYLE_STATE([LinkStyle getStyleType]),
-           .mention = GET_STYLE_STATE([MentionStyle getStyleType]),
            .h1 = GET_STYLE_STATE([H1Style getStyleType]),
            .h2 = GET_STYLE_STATE([H2Style getStyleType]),
            .h3 = GET_STYLE_STATE([H3Style getStyleType]),
            .h4 = GET_STYLE_STATE([H4Style getStyleType]),
            .h5 = GET_STYLE_STATE([H5Style getStyleType]),
            .h6 = GET_STYLE_STATE([H6Style getStyleType]),
+           .inlineCode = GET_STYLE_STATE([InlineCodeStyle getStyleType]),
+           .link = GET_STYLE_STATE([LinkStyle getStyleType]),
+           .mention = GET_STYLE_STATE([MentionStyle getStyleType]),
            .unorderedList = GET_STYLE_STATE([UnorderedListStyle getStyleType]),
            .orderedList = GET_STYLE_STATE([OrderedListStyle getStyleType]),
            .blockQuote = GET_STYLE_STATE([BlockQuoteStyle getStyleType]),
@@ -809,9 +810,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
   auto emitter = [self getEventEmitter];
   if (emitter != nullptr) {
-    NSString *htmlOutput = [parser
-        parseToHtmlFromRange:NSMakeRange(0,
-                                         textView.textStorage.string.length)];
+    NSString *htmlOutput = [parser parseToHtml:textView.textStorage.copy
+                                        styles:self->stylesDict];
     // make sure html really changed
     if (![htmlOutput isEqualToString:_recentlyEmittedHtml]) {
       _recentlyEmittedHtml = htmlOutput;
@@ -826,7 +826,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 
   [self->parser
-      parseToHTMLAsync:prettify
+      parseToHTMLAsync:textView.textStorage.copy
+                styles:self->stylesDict
+              prettify:prettify
             completion:^(NSString *_Nullable html, NSError *_Nullable error) {
               if (error || !html) {
                 emitter->onRequestHtmlResult(
@@ -1042,7 +1044,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   NSAttributedString *insertedText =
       [parser isHtmlString:text]
-          ? [parser attributedFromHtml:text]
+          ? [parser attributedFromHtml:text
+                                styles:self->stylesDict
+                     defaultAttributes:self->defaultTypingAttributes]
           : [[NSAttributedString alloc] initWithString:text
                                             attributes:defaultTypingAttributes];
 

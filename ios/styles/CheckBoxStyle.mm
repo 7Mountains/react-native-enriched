@@ -20,7 +20,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
                                         options:0] ];
 
 @implementation CheckBoxStyle {
-  EnrichedTextInputView *_input;
+  __weak EnrichedTextInputView *_input;
 }
 
 #pragma mark - Class Info
