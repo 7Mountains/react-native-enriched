@@ -3,7 +3,6 @@ package com.swmansion.enriched.watchers
 import android.text.SpanWatcher
 import android.text.Spannable
 import android.text.style.ParagraphStyle
-import android.util.Log
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
