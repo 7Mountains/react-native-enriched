@@ -41,7 +41,7 @@ static const char *HtmlContentTag = "content";
 static const char *HtmlParagraphTag = "p";
 static const char *HtmlMdfTag = "mdf";
 
-static NSString *const DefaultHtmlValue = @"<html>\n<p></p>\n</html>";
+static NSString *const DefaultHtmlValue = @"<html><p></p></html>";
 
 static inline void appendC(NSMutableData *buf, const char *c) {
   if (!c)
