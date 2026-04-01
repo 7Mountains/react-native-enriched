@@ -5,7 +5,6 @@ import android.view.MotionEvent
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.events.OnCheckboxPressEvent
-import com.swmansion.enriched.events.OnScrollEvent
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 
@@ -76,7 +75,7 @@ class CheckListClickHandler(
 
     val (_, paragraphEnd) = text.getParagraphBounds(offset, offset)
     if (!view.isFocused) {
-      view.requestFocusProgrammatically()
+      view.requestFocusProgrammatically(false)
     }
     view.setSelection(paragraphEnd)
 

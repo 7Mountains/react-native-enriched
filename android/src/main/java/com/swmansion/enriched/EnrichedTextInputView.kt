@@ -375,10 +375,12 @@ class EnrichedTextInputView : AppCompatEditText {
     parametrizedStyles?.detectAllLinks()
   }
 
-  fun requestFocusProgrammatically() {
+  fun requestFocusProgrammatically(withSelection: Boolean = true) {
     requestFocus()
     inputMethodManager?.showSoftInput(this, 0)
-    setSelection(selection?.start ?: text?.length ?: 0)
+    if (withSelection) {
+      setSelection(selection?.start ?: text?.length ?: 0)
+    }
   }
 
   private fun parseText(text: CharSequence): CharSequence {
