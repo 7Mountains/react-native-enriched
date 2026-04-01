@@ -286,6 +286,9 @@ class EnrichedTextInputView : AppCompatEditText {
       val clip = ClipData.newHtmlText(CLIPBOARD_TAG, selectedText, selectedHtml)
       clipboard.setPrimaryClip(clip)
     }
+
+    val cursor = end.coerceAtLeast(0)
+    setSelection(cursor, cursor)
   }
 
   private fun insertSpannable(
