@@ -47,7 +47,6 @@
                                           whitespaceAndNewlineCharacterSet]]
       lowercaseString];
 
-  // Expanded named colors (add more from CSS list as needed)
   NSDictionary *namedColors = @{
     @"red" : [UIColor redColor],
     @"green" : [UIColor greenColor],
@@ -59,8 +58,6 @@
     @"grey" : [UIColor grayColor],
     @"transparent" : [UIColor clearColor],
     @"aliceblue" : [UIColor colorWithRed:0.941 green:0.973 blue:1.0 alpha:1.0],
-    // Add additional CSS names here, e.g., "chartreuse": [UIColor
-    // colorWithRed:0.498 green:1.0 blue:0.0 alpha:1.0],
   };
 
   UIColor *namedColor = namedColors[input];

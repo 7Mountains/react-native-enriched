@@ -62,7 +62,7 @@
   UIColor *color = value;
 
   return @{
-    ColorAttributeName : [color hexString],
+    ColorAttributeName : [[color hexString] lowercaseString],
   };
 }
 
