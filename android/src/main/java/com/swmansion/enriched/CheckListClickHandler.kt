@@ -86,7 +86,7 @@ class CheckListClickHandler(
 
     val (_, paragraphEnd) = text.getParagraphBounds(offset, offset)
     if (!view.isFocused) {
-      view.requestFocusProgrammatically()
+      view.requestFocusProgrammatically(false)
     }
     view.setSelection(paragraphEnd)
 
