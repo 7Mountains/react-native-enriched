@@ -14,7 +14,7 @@ class EnrichedColoredSpan(
 
   fun getHexColor(): String {
     val rgb = foregroundColor and 0x00FFFFFF
-    return String.format("#%06X", rgb)
+    return String.format("#%06X", rgb).lowercase()
   }
 
   override fun copy(): EnrichedColoredSpan = EnrichedColoredSpan(color)
