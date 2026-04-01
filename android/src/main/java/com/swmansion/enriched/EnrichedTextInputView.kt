@@ -237,6 +237,7 @@ class EnrichedTextInputView : AppCompatEditText {
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, id)
 
     if (focused) {
+      inputMethodManager?.showSoftInput(this, 0)
       dispatcher?.dispatchEvent(OnInputFocusEvent(surfaceId, id, experimentalSynchronousEvents))
     } else {
       dispatcher?.dispatchEvent(OnInputBlurEvent(surfaceId, id, experimentalSynchronousEvents))
@@ -252,6 +253,11 @@ class EnrichedTextInputView : AppCompatEditText {
 
       android.R.id.paste -> {
         handleCustomPaste()
+        return true
+      }
+
+      android.R.id.cut -> {
+        handleCustomCut()
         return true
       }
     }
@@ -286,6 +292,29 @@ class EnrichedTextInputView : AppCompatEditText {
       val clip = ClipData.newHtmlText(CLIPBOARD_TAG, selectedText, selectedHtml)
       clipboard.setPrimaryClip(clip)
     }
+  }
+
+  private fun handleCustomCut() {
+    val start = selectionStart
+    val end = selectionEnd
+    val spannable = text as? Spannable ?: return
+
+    if (start >= end) return
+
+    val selectedText = spannable.subSequence(start, end) as Spannable
+    val selectedHtml = EnrichedParser.toHtml(selectedText)
+
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clip = ClipData.newHtmlText(CLIPBOARD_TAG, selectedText, selectedHtml)
+    clipboard.setPrimaryClip(clip)
+
+    runAsATransaction {
+      val result = spannable.mergeSpannables(start, end, SpannableString(""))
+      setValue(result.text)
+    }
+
+    val cursor = start.coerceAtLeast(0)
+    setSelection(cursor, cursor)
   }
 
   private fun insertSpannable(
