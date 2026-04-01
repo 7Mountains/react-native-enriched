@@ -5,13 +5,14 @@ import android.view.MotionEvent
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.events.OnCheckboxPressEvent
-import com.swmansion.enriched.events.OnScrollEvent
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 
 class CheckListClickHandler(
   private val view: EnrichedTextInputView,
 ) {
+  private var pressedSpan: EnrichedChecklistSpan? = null
+
   private fun dispatchOnCheckboxPressEvent(isChecked: Boolean) {
     val context = view.context as ReactContext
     val surfaceId = UIManagerHelper.getSurfaceId(context)
@@ -41,7 +42,8 @@ class CheckListClickHandler(
 
     return when (event.action) {
       MotionEvent.ACTION_DOWN -> handleDown(text, offset, x)
-      MotionEvent.ACTION_UP -> handleUp(text, offset, x)
+      MotionEvent.ACTION_UP -> handleUp(text, offset, x, event)
+      MotionEvent.ACTION_CANCEL -> reset()
       else -> false
     }
   }
@@ -55,6 +57,8 @@ class CheckListClickHandler(
       text.getSpans(offset, offset, EnrichedChecklistSpan::class.java).firstOrNull()
         ?: return false
 
+    pressedSpan = span
+
     return hitTestCheckbox(clickX, span)
   }
 
@@ -62,10 +66,16 @@ class CheckListClickHandler(
     text: Spannable,
     offset: Int,
     clickX: Float,
+    event: MotionEvent,
   ): Boolean {
     val span =
       text.getSpans(offset, offset, EnrichedChecklistSpan::class.java).firstOrNull()
         ?: return false
+
+    if (span != pressedSpan) {
+      reset()
+      return false
+    }
 
     if (!hitTestCheckbox(clickX, span)) return false
 
@@ -80,7 +90,21 @@ class CheckListClickHandler(
     }
     view.setSelection(paragraphEnd)
 
+    reset()
+
+    // cancel event to hide system context menus
+    val cancelEvent = MotionEvent.obtain(event)
+    cancelEvent.action = MotionEvent.ACTION_CANCEL
+    view.onTouchEvent(cancelEvent)
+    cancelEvent.recycle()
+
     return true
+  }
+
+  private fun reset(): Boolean {
+    pressedSpan = null
+
+    return false
   }
 
   private fun hitTestCheckbox(
