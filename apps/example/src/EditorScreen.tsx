@@ -455,7 +455,7 @@ export default function EditorScreen() {
             placeholderTextColor="rgb(0, 26, 114)"
             selectionColor="deepskyblue"
             cursorColor="dodgerblue"
-            autoCapitalize="sentences"
+            autoCapitalize="none"
             // onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
             defaultValue={initialHugeHtml}
