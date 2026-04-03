@@ -312,18 +312,19 @@ class InlineStyles(
 
   fun toggleStyle(name: TextStyle) {
     if (view.selection == null) return
+    val spanState = view.spanState ?: return
     val (start, end) = view.selection.getInlineSelection()
     val config = EnrichedSpans.inlineSpans[name] ?: return
     val type = config.clazz
 
     // We either start or end current span
     if (start == end) {
-      val styleStart = view.spanState?.getStart(name)
+      val styleStart = spanState.getStart(name)
 
       if (styleStart != null) {
-        view.spanState.setStartWithStateChangeEmitting(name, null)
+        spanState.setStartWithStateChangeEmitting(name, null)
       } else {
-        view.spanState?.setStartWithStateChangeEmitting(name, start)
+        spanState.setStartWithStateChangeEmitting(name, start)
       }
 
       return
@@ -344,9 +345,9 @@ class InlineStyles(
     val spans = spannable.getSpans(start, end, config.clazz)
     if (spans.isEmpty()) return false
 
-    for (span in spans) {
-      spannable.removeSpan(span)
-    }
+    spans.forEach { it -> spannable.removeSpan(it) }
+
+    view.spanState?.setStart(name, null)
 
     return true
   }
