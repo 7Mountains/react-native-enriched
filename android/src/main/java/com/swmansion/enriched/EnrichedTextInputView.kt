@@ -13,6 +13,7 @@ import android.os.Build
 import android.text.InputType
 import android.text.Spannable
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.util.AttributeSet
 import android.util.Log
 import android.util.TypedValue
@@ -300,11 +301,11 @@ class EnrichedTextInputView : AppCompatEditText {
   private fun handleCustomCut() {
     val start = selectionStart
     val end = selectionEnd
-    val spannable = text as? Spannable ?: return
+    val editable = text as? SpannableStringBuilder ?: return
 
     if (start >= end) return
 
-    val selectedText = spannable.subSequence(start, end) as Spannable
+    val selectedText = editable.subSequence(start, end) as Spannable
     val selectedHtml = EnrichedParser.toHtml(selectedText)
 
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -312,8 +313,7 @@ class EnrichedTextInputView : AppCompatEditText {
     clipboard.setPrimaryClip(clip)
 
     runAsATransaction {
-      val result = spannable.mergeSpannables(start, end, SpannableString(""))
-      setValue(result.text)
+      editable.replace(start, end, "")
     }
 
     val cursor = start.coerceAtLeast(0)
@@ -324,7 +324,7 @@ class EnrichedTextInputView : AppCompatEditText {
     spannable: Spannable,
     at: Int? = null,
   ) {
-    val currentText = (text as? Spannable) ?: return
+    val currentText = (text as? SpannableStringBuilder) ?: return
     val length = currentText.length
 
     val insertionStart = selection?.start ?: 0
@@ -338,7 +338,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
     val result = currentText.mergeSpannables(start, end, spannable)
 
-    setValue(result.text)
+    currentText.replace(start, end, spannable)
 
     val cursor = (start + result.insertedCharactersAmount).coerceIn(0, result.text.length)
     setSelection(cursor, cursor)
