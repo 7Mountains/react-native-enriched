@@ -374,8 +374,6 @@ class EnrichedTextInputView : AppCompatEditText {
 
     val plainText = item.text?.toString() ?: return
     insertSpannable(SpannableString(plainText))
-
-    parametrizedStyles?.detectAllLinks()
   }
 
   fun requestFocusProgrammatically(withSelection: Boolean = true) {
