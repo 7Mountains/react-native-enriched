@@ -1,11 +1,4 @@
-import {
-  View,
-  StyleSheet,
-  Text,
-  ScrollView,
-  Platform,
-  Image,
-} from 'react-native';
+import { View, StyleSheet, Text, Platform, Image } from 'react-native';
 import {
   EnrichedTextInput,
   type EnrichedTextInputInstance,
@@ -36,6 +29,7 @@ import ColorPreview from './components/ColorPreview';
 import { Rectangle } from './Rectangle';
 import { ContentModal } from './components/ContentModal';
 import htmlStyle from './styles';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 type CurrentLinkState = OnLinkDetected;
 
@@ -94,7 +88,7 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 1) => {
+const generateHugeHtml = (repeat = 100) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -421,7 +415,7 @@ export default function EditorScreen() {
 
   return (
     <>
-      <ScrollView
+      <KeyboardAwareScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
       >
@@ -548,7 +542,7 @@ export default function EditorScreen() {
         <HtmlSection currentHtml={currentHtml} />
         {DEBUG_SCROLLABLE && <View style={styles.scrollPlaceholder} />}
         <ColorPreview color={selectionColor} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
       <LinkModal
         isOpen={isLinkModalOpen}
         editedText={
