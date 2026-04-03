@@ -1,14 +1,22 @@
 package com.swmansion.enriched.spans
 
-import android.graphics.Typeface
-import android.text.style.StyleSpan
+import android.text.TextPaint
+import android.text.style.MetricAffectingSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 class EnrichedBoldSpan :
-  StyleSpan(Typeface.BOLD),
+  MetricAffectingSpan(),
   EnrichedInlineSpan {
   override val dependsOnHtmlStyle: Boolean = false
+
+  override fun updateDrawState(textPaint: TextPaint) {
+    textPaint.isFakeBoldText = true
+  }
+
+  override fun updateMeasureState(textPaint: TextPaint) {
+    textPaint.isFakeBoldText = true
+  }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedBoldSpan = EnrichedBoldSpan()
 
