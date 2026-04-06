@@ -406,7 +406,14 @@ class EnrichedTextInputView : AppCompatEditText {
     runAsATransaction {
       blockTextEventEmitting = true
       val newText = parseText(value)
-      setText(newText)
+
+      val spannable = text as SpannableStringBuilder?
+
+      if (spannable == null) {
+        setText(newText)
+      } else {
+        spannable.replace(0, spannable.length, newText)
+      }
 
       observeAsyncImages()
       if (withSelection) {

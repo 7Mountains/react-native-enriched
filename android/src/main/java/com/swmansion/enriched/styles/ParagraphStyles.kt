@@ -26,7 +26,6 @@ import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.EnrichedSelection
-import com.swmansion.enriched.utils.ParagraphUtils
 import com.swmansion.enriched.utils.asBuilder
 import com.swmansion.enriched.utils.getListRange
 import com.swmansion.enriched.utils.getParagraphBounds
@@ -78,6 +77,11 @@ class ParagraphStyles(
     return removedAny
   }
 
+  private fun buildZWSWithSpan(span: EnrichedSpan): Spannable =
+    SpannableStringBuilder(Strings.ZERO_WIDTH_SPACE_STRING).apply {
+      setSpan(span, 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+
   private fun applyParagraphSpan(
     spannable: Spannable,
     span: EnrichedSpan,
@@ -98,7 +102,7 @@ class ParagraphStyles(
   ) {
     var endCursorPosition = endPosition
     val isBackspace = s.length < previousTextLength
-    val isNewLine = endCursorPosition == 0 || (endCursorPosition > 0 && s[endCursorPosition - 1] == '\n')
+    val isNewLine = endCursorPosition == 0 || (endCursorPosition > 0 && s[endCursorPosition - 1] == Strings.NEWLINE)
     val spanState = view.spanState ?: return
     var hasAppliedZWS = false
     for ((style, config) in EnrichedSpans.paragraphSpans) {
@@ -107,15 +111,15 @@ class ParagraphStyles(
       val styleStart = spanState.getStart(style)
       if (styleStart == null) continue
 
+      if (isBackspace) {
+        endCursorPosition -= 1
+        spanState.setStart(style, null)
+        continue
+      }
+
       if (isNewLine) {
         if (!config.isContinuous) {
           trimNonContinuousSpanAtNewLine(s, endCursorPosition, config.clazz)
-          continue
-        }
-
-        if (isBackspace) {
-          endCursorPosition -= 1
-          spanState.setStart(style, null)
           continue
         }
         if (hasAppliedZWS) continue
@@ -126,16 +130,11 @@ class ParagraphStyles(
             .getSpans(prevPStart, prevPEnd, config.clazz)
             .firstOrNull() ?: continue
 
-        s.insert(endCursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
+        val zeroWidthSpace = buildZWSWithSpan(prevSpan.copy())
+
+        s.insert(endCursorPosition, zeroWidthSpace)
         endCursorPosition += 1
 
-        val (pStart, pEnd) = s.getParagraphBounds(endCursorPosition)
-
-        applyParagraphSpan(s, prevSpan.copy(), pStart, pEnd)
-
-        ParagraphUtils.copyPreviousAlignmentIfSameSpan(s, pStart, pEnd)
-
-        spanState.setStart(style, null)
         hasAppliedZWS = true
       }
     }
@@ -187,23 +186,15 @@ class ParagraphStyles(
 
     val (pStart, pEnd) = ssb.getParagraphBounds(start)
 
-    val hasRealText = ssb.substring(pStart, pEnd).any { it != '\u200B' && it != '\n' }
+    val hasRealText = ssb.substring(pStart, pEnd).any { it != Strings.ZERO_WIDTH_SPACE_CHAR && it != Strings.NEWLINE }
 
     val span = createSpan(name) ?: return
 
     if (!hasRealText) {
       // Insert ZWS with paragraph style
-      val zwsBuilder =
-        SpannableStringBuilder(Strings.ZERO_WIDTH_SPACE_STRING).apply {
-          setSpan(
-            span,
-            0,
-            length,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-          )
-        }
+      val zeroWidthSpace = buildZWSWithSpan(span)
 
-      ssb.replace(pStart, pEnd, zwsBuilder)
+      ssb.replace(pStart, pEnd, zeroWidthSpace)
 
       view.setSelection(pStart + 1)
       view.selection.validateStyles()

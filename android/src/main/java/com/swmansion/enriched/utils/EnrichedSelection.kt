@@ -23,6 +23,7 @@ class EnrichedSelection(
 ) {
   var start: Int = 0
   var end: Int = 0
+  var prevText: String? = null
 
   val inlineStylesList =
     EnrichedSpans.inlineSpans.map { (type, config) -> type to config } +
@@ -49,6 +50,12 @@ class EnrichedSelection(
       shouldValidateStyles = true
     }
 
+    val stringText = view.text.toString()
+
+    if (prevText != stringText) {
+      shouldValidateStyles = true
+    }
+
     val textLength = view.text?.length ?: 0
     val finalStart = newStart.coerceAtMost(newEnd).coerceAtLeast(0).coerceAtMost(textLength)
     val finalEnd = newEnd.coerceAtLeast(newStart).coerceAtLeast(0).coerceAtMost(textLength)
@@ -62,6 +69,7 @@ class EnrichedSelection(
 
     start = finalStart
     end = finalEnd
+    prevText = stringText
     validateStyles()
     emitSelectionChangeEvent(view.text, finalStart, finalEnd)
   }
