@@ -140,13 +140,24 @@ class EnrichedSelection(
     }
 
     for ((type, config) in inlineStylesList) {
-      val span = spans.firstOrNull { it.javaClass == config.clazz }
+      val span =
+        if (config.clazz == EnrichedColoredSpan::class.java) {
+          spans
+            .filterIsInstance<EnrichedColoredSpan>()
+            .minByOrNull { spannable.getSpanStart(it) }
+        } else {
+          spans.firstOrNull { it.javaClass == config.clazz }
+        }
+
+      val isSingleSelection = start == end
 
       span?.let {
         val spanStart = spannable.getSpanStart(it)
         val spanEnd = spannable.getSpanEnd(it)
 
-        if (start < spanStart || end > spanEnd) {
+        val isSpanInSelection = if (isSingleSelection) start <= spanStart || end > spanEnd else start < spanStart || end > spanEnd
+
+        if (isSpanInSelection) {
           spanState.setStart(type, null)
           return@let
         }
