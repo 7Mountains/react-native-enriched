@@ -14,8 +14,10 @@ import com.facebook.common.references.CloseableReference
 import com.facebook.datasource.DataSource
 import com.facebook.datasource.DataSubscriber
 import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.common.Priority
 import com.facebook.imagepipeline.image.CloseableBitmap
 import com.facebook.imagepipeline.image.CloseableImage
+import com.facebook.imagepipeline.request.ImageRequest
 import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
@@ -88,7 +90,10 @@ class EnrichedImageLoader private constructor(
     val uri = url.toUri()
 
     val requestBuilder =
-      ImageRequestBuilder.newBuilderWithSource(uri)
+      ImageRequestBuilder
+        .newBuilderWithSource(uri)
+        .setCacheChoice(ImageRequest.CacheChoice.DEFAULT)
+        .setRequestPriority(Priority.HIGH)
     val cookieHeader =
       EnrichedCookieManager.cookieHeaderForUrl(url)
 

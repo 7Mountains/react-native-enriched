@@ -2,6 +2,7 @@ package com.swmansion.enriched.inputFilters
 
 import android.text.InputFilter
 import android.text.Spanned
+import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 
 class NonEditableParagraphFilter : InputFilter {
@@ -16,7 +17,7 @@ class NonEditableParagraphFilter : InputFilter {
     if (source.isNullOrEmpty()) return null
 
     // Allow newline always
-    if (source.length == 1 && source[0] == '\n') {
+    if (source.length == 1 && source[0] == Strings.NEWLINE) {
       return null
     }
 

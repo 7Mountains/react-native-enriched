@@ -12,6 +12,7 @@ import com.swmansion.enriched.spans.EnrichedStrikeThroughSpan
 import com.swmansion.enriched.spans.EnrichedUnderlineSpan
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 
 class InlineStyles(
@@ -206,7 +207,8 @@ class InlineStyles(
 
     if (start == end) {
       val spanState = view.spanState
-      if (spanState?.getStart(TextStyle.COLOR) != null && spanState.typingColor == color) {
+      splitSpan(spannable, start, end, EnrichedColoredSpan::class.java)
+      if (spanState?.getStart(TextStyle.COLOR) != null && color == spanState.typingColor) {
         view.spanState.setColorStartWithEventEmitting(null, null)
       } else {
         view.spanState?.setColorStartWithEventEmitting(start, color)
@@ -251,6 +253,8 @@ class InlineStyles(
     view.spanState?.setColorStart(null, null)
 
     if (start == end) {
+      val spannable = view.text as Spannable
+      splitSpan(spannable, start, end, EnrichedColoredSpan::class.java)
       return
     }
 
@@ -310,18 +314,39 @@ class InlineStyles(
     view.spanState.setColorStart(cursor, color)
   }
 
+  private fun splitSpan(
+    spannable: Spannable,
+    start: Int,
+    end: Int,
+    type: Class<out EnrichedSpan>,
+  ) {
+    val currentSpans = spannable.getSpans(start, end, type)
+
+    for (span in currentSpans) {
+      val spanStart = spannable.getSpanStart(span)
+      val spanEnd = spannable.getSpanEnd(span)
+
+      spannable.removeSpan(span)
+
+      spannable.setSpan(span.copy(), spanStart, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+      spannable.setSpan(span.copy(), end, spanEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+  }
+
   fun toggleStyle(name: TextStyle) {
     if (view.selection == null) return
     val spanState = view.spanState ?: return
     val (start, end) = view.selection.getInlineSelection()
     val config = EnrichedSpans.inlineSpans[name] ?: return
     val type = config.clazz
+    val spannable = view.text as Spannable
 
     // We either start or end current span
     if (start == end) {
       val styleStart = spanState.getStart(name)
 
       if (styleStart != null) {
+        splitSpan(spannable, start, end, type)
         spanState.setStartWithStateChangeEmitting(name, null)
       } else {
         spanState.setStartWithStateChangeEmitting(name, start)
@@ -330,7 +355,6 @@ class InlineStyles(
       return
     }
 
-    val spannable = view.text as Spannable
     setAndMergeSpans(spannable, type, start, end, name)
     view.selection.validateStyles()
   }
