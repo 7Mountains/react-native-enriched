@@ -47,6 +47,7 @@
 
   view.imageContainerSize = _styles.imageContainerSize;
   view.imageSize = _styles.imageSize;
+  view.imageContainerColor = _styles.imageContainerBackgroundColor;
 
   view.image = MakeLoaderImage();
 

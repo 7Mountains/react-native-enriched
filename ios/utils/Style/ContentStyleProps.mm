@@ -228,6 +228,8 @@ static NSURL *URLFromFolly(folly::dynamic obj, const char *key) {
 
   // Image container
   props.imageContainerSize = SizeFromWidthHeight(imageContainer);
+  props.imageContainerBackgroundColor =
+      UIColorFromFolly(imageContainer, "backgroundColor", UIColor.clearColor);
 
   // Fallback image
   props.fallbackImageURL = URLFromFolly(folly, "fallbackImageURI");

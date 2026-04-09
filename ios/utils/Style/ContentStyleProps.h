@@ -27,6 +27,7 @@ typedef NS_ENUM(NSInteger, ContentImageResizeMode) {
 
 @property(nonatomic) CGSize imageSize;
 @property(nonatomic) CGSize imageContainerSize;
+@property(nonatomic, strong) UIColor *imageContainerBackgroundColor;
 @property(nonatomic) ContentImageResizeMode imageResizeMode;
 
 @property(nonatomic, strong) UIFont *titleFont;

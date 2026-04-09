@@ -50,6 +50,7 @@ data class ContentStyle(
       val width: Float,
       val height: Float,
       val borderRadius: Float,
+      val backgroundColor: Int?,
     )
 
     data class TextContainerStyle(
@@ -221,6 +222,7 @@ data class ContentStyle(
             width = dip(imageContainer, "width"),
             height = dip(imageContainer, "height"),
             borderRadius = dip(imageContainer, "borderRadius"),
+            backgroundColor = clr(imageContainer, "backgroundColor", null),
           ),
         textContainer =
           TextContainerStyle(
@@ -280,6 +282,7 @@ data class ContentStyle(
             width = 56f,
             height = 56f,
             borderRadius = 0f,
+            backgroundColor = null,
           ),
         textContainer =
           TextContainerStyle(

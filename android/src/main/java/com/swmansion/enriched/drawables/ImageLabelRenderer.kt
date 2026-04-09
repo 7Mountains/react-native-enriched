@@ -318,7 +318,8 @@ class ImageLabelRenderer(
     canvas: Canvas,
     path: Path,
   ) {
-    imageBackgroundColor?.let { color ->
+    val color = imageBackgroundColor ?: contentStyle.imageContainer.backgroundColor
+    color?.let { color ->
       val paint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
           this.color = color
