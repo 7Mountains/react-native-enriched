@@ -201,6 +201,8 @@ static NSURL *URLFromFolly(folly::dynamic obj, const char *key) {
 
   props.titleColor = UIColorFromFolly(title, "color", UIColor.blackColor);
   props.titleFont = FontFromFolly(title, defaultFont, 14.0);
+  props.titleMargin = MarginInsetsFromFolly(title);
+
   CGFloat titleFontSize = CGFloatFromFolly(title, "fontSize", 14.0);
   props.descriptionColor =
       UIColorFromFolly(description, "color", props.textColor);
@@ -208,14 +210,17 @@ static NSURL *URLFromFolly(folly::dynamic obj, const char *key) {
       FontFromFolly(description, defaultFont, titleFontSize);
   props.descriptionColor =
       UIColorFromFolly(description, "color", UIColor.grayColor);
+  props.descriptionMargin = MarginInsetsFromFolly(description);
 
   props.subTitleFont = FontFromFolly(subDescription, defaultFont, 14.0);
   props.subTitleColor = UIColorFromFolly(subtitle, "color", UIColor.blackColor);
+  props.subtitleMargin = MarginInsetsFromFolly(subtitle);
 
   props.subDescriptionFont =
       FontFromFolly(subDescription, defaultFont, titleFontSize);
   props.subdescriptionColor =
       UIColorFromFolly(subDescription, "color", UIColor.grayColor);
+  props.subdescriptionMargin = MarginInsetsFromFolly(subDescription);
 
   // Image
   props.imageSize = SizeFromWidthHeight(image);

@@ -7,7 +7,9 @@ namespace react {
 inline bool operator==(const EnrichedTextInputViewHtmlStyleMdfTitleStruct &a,
                        const EnrichedTextInputViewHtmlStyleMdfTitleStruct &b) {
   return a.color == b.color && a.fontWeight == b.fontWeight &&
-         a.fontSize == b.fontSize && a.fontFamily == b.fontFamily;
+         a.fontSize == b.fontSize && a.fontFamily == b.fontFamily &&
+         a.marginLeft == b.marginLeft && a.marginRight == b.marginRight &&
+         a.marginTop == b.marginTop && a.marginBottom == b.marginBottom;
 }
 
 inline bool

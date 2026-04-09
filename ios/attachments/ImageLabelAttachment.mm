@@ -50,6 +50,11 @@
 
   view.image = MakeLoaderImage();
 
+  view.titleMargin = _styles.titleMargin;
+  view.descriptionMargin = _styles.descriptionMargin;
+  view.subtitleMargin = _styles.subtitleMargin;
+  view.subdescriptionMargin = _styles.subdescriptionMargin;
+
   view.titleText = [[NSAttributedString alloc]
       initWithString:_params.title
           attributes:@{
