@@ -106,7 +106,7 @@ const generateHugeHtml = (repeat = 1) => {
     const imgW = 200 + (i % 5) * 40;
     const imgH = 100 + (i % 3) * 30;
     parts.push(
-      `\n<content type="image" subtitle="Test subtitle" subdescription="test subdescription" description="test description" title="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`,
+      `\n<content type="image" description="test description" title="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`,
       `<mdf tint-color="#ff0000" label="Test" />`,
       `\n<content type="automation" description="test description" title="Test text" src="${Image.resolveAssetSource(require('../assets/images/Primary_Inline_VideoGfx.png')).uri}" />`
     );

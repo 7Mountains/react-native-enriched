@@ -98,28 +98,10 @@ class ImageLabelRenderer(
 
     val safeWidth = max(textWidth.toInt(), 1)
 
-    titleLayout = createTitleLayout(title, titlePaint, safeWidth)
-
-    descLayout =
-      if (description.isNullOrEmpty()) {
-        null
-      } else {
-        createDescriptionLayout(description, descPaint, safeWidth)
-      }
-
-    subtitleLayout =
-      if (subTitle.isNullOrEmpty()) {
-        null
-      } else {
-        createDescriptionLayout(subTitle, subtitlePaint, safeWidth)
-      }
-
-    subDescriptionLayout =
-      if (subDescription.isNullOrEmpty()) {
-        null
-      } else {
-        createDescriptionLayout(subDescription, subdescPaint, safeWidth)
-      }
+    val titleLayout = createTitleLayoutIfNeeded(title, titlePaint, safeWidth)
+    val descLayout = createDescriptionLayoutIfNeeded(description, descPaint, safeWidth)
+    val subtitleLayout = createSubTitleLayoutIfNeeded(subTitle, subtitlePaint, safeWidth)
+    val subDescriptionLayout = createSubTitleLayoutIfNeeded(subDescription, subdescPaint, safeWidth)
 
     val titleHeight = titleLayout?.height ?: 0
     val descHeight = descLayout?.height ?: 0
@@ -444,6 +426,83 @@ class ImageLabelRenderer(
         it.draw(this)
       }
     }
+  }
+
+  private fun createTitleLayoutIfNeeded(
+    text: CharSequence?,
+    paint: TextPaint,
+    width: Int,
+  ): StaticLayout? {
+    if (text.isNullOrEmpty()) {
+      return null
+    }
+
+    val titleLayout = titleLayout
+    if (titleLayout != null) {
+      return titleLayout
+    }
+
+    val layout = createTitleLayout(text, paint, width)
+    this.titleLayout = layout
+
+    return layout
+  }
+
+  private fun createSubTitleLayoutIfNeeded(
+    text: CharSequence?,
+    paint: TextPaint,
+    width: Int,
+  ): StaticLayout? {
+    if (text.isNullOrEmpty()) {
+      return null
+    }
+    val titleLayout = subtitleLayout
+    if (titleLayout != null) {
+      return titleLayout
+    }
+
+    val layout = createTitleLayout(text, paint, width)
+    this.subtitleLayout = layout
+
+    return layout
+  }
+
+  private fun createDescriptionLayoutIfNeeded(
+    text: CharSequence?,
+    paint: TextPaint,
+    width: Int,
+  ): StaticLayout? {
+    if (text.isNullOrEmpty()) {
+      return null
+    }
+    val descriptionLayout = descLayout
+    if (descriptionLayout != null) {
+      return descriptionLayout
+    }
+
+    val layout = createDescriptionLayout(text, paint, width)
+    this.descLayout = layout
+
+    return layout
+  }
+
+  private fun createSubDescriptionLayoutIfNeeded(
+    text: CharSequence?,
+    paint: TextPaint,
+    width: Int,
+  ): StaticLayout? {
+    if (text.isNullOrEmpty()) {
+      return null
+    }
+    val descriptionLayout = subDescriptionLayout
+    if (descriptionLayout != null) {
+      return descriptionLayout
+    }
+
+    val layout = createDescriptionLayout(text, paint, width)
+    this.subDescriptionLayout = layout
+
+    return layout
   }
 
   private fun createDescriptionLayout(

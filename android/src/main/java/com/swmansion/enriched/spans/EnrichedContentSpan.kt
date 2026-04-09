@@ -75,20 +75,16 @@ class EnrichedContentSpan(
     hasRequestedImage = true
 
     val uri = contentParams.src
-    println("loadImage src=$uri")
 
     if (uri.isNullOrEmpty()) {
-      println("src empty -> fallback")
       loadFallbackImage()
       return
     }
 
     EnrichedImageLoader.instance.load(uri) { bmp ->
-      println("main load result = ${bmp != null}")
       if (bmp != null) {
         updateBitmap(bmp)
       } else {
-        println("main load failed -> fallback")
         loadFallbackImage()
       }
     }
@@ -96,10 +92,8 @@ class EnrichedContentSpan(
 
   private fun loadFallbackImage() {
     val uri = style.fallbackImageURI
-    println("loadFallbackImage uri=$uri")
 
     EnrichedImageLoader.instance.load(uri) { bmp ->
-      println("fallback result = ${bmp != null}")
       if (bmp != null) {
         updateBitmap(bmp)
       }
