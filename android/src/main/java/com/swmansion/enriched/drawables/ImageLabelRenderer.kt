@@ -382,12 +382,29 @@ class ImageLabelRenderer(
     val descHeight = descLayout?.height ?: 0
 
     val subtitleHeight = subtitleLayout?.height ?: 0
-    val subdescHeight = subDescriptionLayout?.height ?: 0
+    val subDescHeight = subDescriptionLayout?.height ?: 0
 
-    var textHeight = titleHeight
-    if (descLayout != null) textHeight += descHeight
-    if (subtitleLayout != null) textHeight += subtitleHeight
-    if (subDescriptionLayout != null) textHeight += subdescHeight
+    var textHeight = 0f
+
+    if (titleLayout != null) {
+      val margin = contentStyle.title.margin
+      textHeight += margin.top + titleHeight + margin.bottom
+    }
+
+    if (descLayout != null) {
+      val margin = contentStyle.description.margin
+      textHeight += margin.top + descHeight + margin.bottom
+    }
+
+    if (subtitleLayout != null) {
+      val margin = contentStyle.subtitle.margin
+      textHeight += margin.top + subtitleHeight + margin.bottom
+    }
+
+    if (subDescriptionLayout != null) {
+      val margin = contentStyle.subDescription.margin
+      textHeight += margin.top + subDescHeight + margin.bottom
+    }
 
     val containerHeight =
       textHeight +
@@ -401,27 +418,46 @@ class ImageLabelRenderer(
     var currentY = containerY + contentStyle.textContainer.padding.top
 
     titleLayout?.let {
+      val margin = contentStyle.title.margin
+
+      currentY += margin.top
+
       canvas.withTranslation(textStartX, currentY) {
         it.draw(this)
       }
-      currentY += it.height
+
+      currentY += it.height + margin.bottom
     }
 
     descLayout?.let {
+      val margin = contentStyle.description.margin
+
+      currentY += margin.top
+
       canvas.withTranslation(textStartX, currentY) {
         it.draw(this)
       }
-      currentY += it.height
+
+      currentY += it.height + margin.bottom
     }
 
     subtitleLayout?.let {
+      val margin = contentStyle.subtitle.margin
+
+      currentY += margin.top
+
       canvas.withTranslation(textStartX, currentY) {
         it.draw(this)
       }
-      currentY += it.height
+
+      currentY += it.height + margin.bottom
     }
 
     subDescriptionLayout?.let {
+      val margin = contentStyle.subDescription.margin
+
+      currentY += margin.top
+
       canvas.withTranslation(textStartX, currentY) {
         it.draw(this)
       }

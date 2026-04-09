@@ -37,6 +37,7 @@ data class ContentStyle(
       val fontSize: Float,
       val typefaceStyle: Int,
       val fontFamily: String?,
+      val margin: Insets,
     )
 
     data class ImageStyle(
@@ -183,6 +184,7 @@ data class ContentStyle(
             fontSize = dip(title, "fontSize", 14f),
             typefaceStyle = ReactTypefaceUtils.parseFontWeight(str(title, "fontWeight")),
             fontFamily = str(title, "fontFamily"),
+            margin = parseInsets(title, "margin"),
           ),
         subtitle =
           TextStyle(
@@ -190,6 +192,7 @@ data class ContentStyle(
             fontSize = dip(subtitle, "fontSize", 14f),
             typefaceStyle = ReactTypefaceUtils.parseFontWeight(str(subtitle, "fontWeight")),
             fontFamily = str(subtitle, "fontFamily"),
+            margin = parseInsets(subtitle, "margin"),
           ),
         description =
           TextStyle(
@@ -197,6 +200,7 @@ data class ContentStyle(
             fontSize = dip(description, "fontSize", 14f),
             typefaceStyle = ReactTypefaceUtils.parseFontWeight(str(description, "fontWeight")),
             fontFamily = str(description, "fontFamily"),
+            margin = parseInsets(description, "margin"),
           ),
         subDescription =
           TextStyle(
@@ -204,6 +208,7 @@ data class ContentStyle(
             fontSize = dip(subDescription, "fontSize", 14f),
             typefaceStyle = ReactTypefaceUtils.parseFontWeight(str(subDescription, "fontWeight")),
             fontFamily = str(subDescription, "fontFamily"),
+            margin = parseInsets(subDescription, "margin"),
           ),
         image =
           ImageStyle(
@@ -227,12 +232,15 @@ data class ContentStyle(
       )
     }
 
+    val defaultInsets = Insets(0f, 0f, 0f, 0f)
+
     val defaultTitleStyle =
       TextStyle(
         color = Color.BLACK,
         fontSize = 14f,
         typefaceStyle = ReactTypefaceUtils.parseFontWeight("400"),
         fontFamily = null,
+        margin = defaultInsets,
       )
     val defaultDescriptionStyle =
       TextStyle(
@@ -240,6 +248,7 @@ data class ContentStyle(
         fontSize = 14f,
         typefaceStyle = ReactTypefaceUtils.parseFontWeight("400"),
         fontFamily = null,
+        margin = defaultInsets,
       )
 
     fun default(): ContentStyle =
@@ -252,8 +261,8 @@ data class ContentStyle(
             borderRadius = 0f,
             borderLeftWidth = 0f,
             borderStyle = BorderStyle.SOLID,
-            padding = Insets(0f, 0f, 0f, 0f),
-            margin = Insets(0f, 0f, 0f, 0f),
+            padding = defaultInsets,
+            margin = defaultInsets,
             minHeight = 56f,
           ),
         title = defaultTitleStyle,
@@ -274,8 +283,8 @@ data class ContentStyle(
           ),
         textContainer =
           TextContainerStyle(
-            padding = Insets(0f, 0f, 0f, 0f),
-            margin = Insets(0f, 0f, 0f, 0f),
+            padding = defaultInsets,
+            margin = defaultInsets,
           ),
         fallbackImageURI = null,
         imageUri = null,

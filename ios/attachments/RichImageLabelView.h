@@ -34,12 +34,16 @@
 
 // title
 @property(nonatomic, strong) NSAttributedString *titleText;
+@property(nonatomic) UIEdgeInsets titleMargin;
 
 // description
 @property(nonatomic, strong) NSAttributedString *descriptionText;
+@property(nonatomic) UIEdgeInsets descriptionMargin;
 
 @property(nonatomic, strong) NSAttributedString *subTitleText;
+@property(nonatomic) UIEdgeInsets subtitleMargin;
 
 @property(nonatomic, strong) NSAttributedString *subDescriptionText;
+@property(nonatomic) UIEdgeInsets subdescriptionMargin;
 
 @end

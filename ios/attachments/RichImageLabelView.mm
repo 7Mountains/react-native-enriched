@@ -80,8 +80,28 @@ static const CGSize kDefaultImageContainerSize = CGSizeMake(56.0, 56.0);
   CGSize subtitleSize = [self sizeForLabel:_subtitleLabel width:textWidth];
   CGSize subdescSize = [self sizeForLabel:_subdescriptionLabel width:textWidth];
 
-  return titleSize.height + descSize.height + subtitleSize.height +
-         subdescSize.height;
+  CGFloat height = 0;
+
+  if (_titleLabel.attributedText.length > 0) {
+    height += _titleMargin.top + titleSize.height + _titleMargin.bottom;
+  }
+
+  if (_descriptionLabel.attributedText.length > 0) {
+    height +=
+        _descriptionMargin.top + descSize.height + _descriptionMargin.bottom;
+  }
+
+  if (_subtitleLabel.attributedText.length > 0) {
+    height +=
+        _subtitleMargin.top + subtitleSize.height + _subtitleMargin.bottom;
+  }
+
+  if (_subdescriptionLabel.attributedText.length > 0) {
+    height += _subdescriptionMargin.top + subdescSize.height +
+              _subdescriptionMargin.bottom;
+  }
+
+  return height;
 }
 
 - (CGSize)sizeThatFits:(CGSize)size {
@@ -177,25 +197,40 @@ static const CGSize kDefaultImageContainerSize = CGSizeMake(56.0, 56.0);
   CGFloat contentX = self.textPadding.left;
   CGFloat currentY = self.textPadding.top;
 
+  currentY += _titleMargin.top;
+
   _titleLabel.frame =
       CGRectMake(contentX, currentY, innerWidth, titleSize.height);
-  currentY = CGRectGetMaxY(_titleLabel.frame);
+
+  currentY = CGRectGetMaxY(_titleLabel.frame) + _titleMargin.bottom;
 
   if (hasDesc) {
+    currentY += _descriptionMargin.top;
+
     _descriptionLabel.frame =
         CGRectMake(contentX, currentY, innerWidth, descSize.height);
-    currentY = CGRectGetMaxY(_descriptionLabel.frame);
+
+    currentY =
+        CGRectGetMaxY(_descriptionLabel.frame) + _descriptionMargin.bottom;
   }
 
   if (hasSubtitle) {
+    currentY += _subtitleMargin.top;
+
     _subtitleLabel.frame =
         CGRectMake(contentX, currentY, innerWidth, subtitleSize.height);
-    currentY = CGRectGetMaxY(_subtitleLabel.frame);
+
+    currentY = CGRectGetMaxY(_subtitleLabel.frame) + _subtitleMargin.bottom;
   }
 
   if (hasSubdesc) {
+    currentY += _subdescriptionMargin.top;
+
     _subdescriptionLabel.frame =
         CGRectMake(contentX, currentY, innerWidth, subdescSize.height);
+
+    currentY = CGRectGetMaxY(_subdescriptionLabel.frame) +
+               _subdescriptionMargin.bottom;
   }
 
   [self updateBorderPathIfNeeded];
