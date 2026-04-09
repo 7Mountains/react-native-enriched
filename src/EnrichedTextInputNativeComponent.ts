@@ -204,6 +204,20 @@ interface ContentContainerStyle {
   borderLeftWidth?: Float;
 }
 
+interface ContentSubTitleStyle {
+  color?: ColorValue;
+  fontWeight?: string;
+  fontSize?: Float;
+  fontFamily?: string;
+}
+
+interface ContentSubDescriptionStyle {
+  color?: ColorValue;
+  fontWeight?: string;
+  fontSize?: Float;
+  fontFamily?: string;
+}
+
 export interface ContentImageContainerStyle {
   width?: Float;
   height?: Float;
@@ -230,6 +244,8 @@ export interface ContentTextContainerStyle {
 export interface ContentStyleProperties {
   title?: ContentTitleStyle;
   description?: ContentDescriptionStyle;
+  subtitle?: ContentSubTitleStyle;
+  subDescription?: ContentSubDescriptionStyle;
   container?: ContentContainerStyle;
   textContainer?: ContentTextContainerStyle;
   imageContainer?: ContentImageContainerStyle;

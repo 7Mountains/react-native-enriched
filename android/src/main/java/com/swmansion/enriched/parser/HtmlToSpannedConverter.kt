@@ -7,6 +7,7 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import androidx.core.graphics.toColorInt
 import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.constants.HtmlAttributeNames
 import com.swmansion.enriched.constants.HtmlTags
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.EnrichedAlignmentSpan
@@ -288,7 +289,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.LINK -> {
         val ctx = popTag(tag) ?: return
-        val href = ctx.attributes?.getValue("", "href") ?: return
+        val href = ctx.attributes?.getValue("", HtmlAttributeNames.LINK_HREF) ?: return
 
         applyInline(ctx) {
           EnrichedLinkSpan(href, mStyle, true)
@@ -352,23 +353,32 @@ class HtmlToSpannedConverter(
 
       HtmlTags.MENTION -> {
         val ctx = popTag(tag) ?: return
-        val text = ctx.attributes?.getValue("", "text") ?: return
-        val indicator = ctx.attributes.getValue("", "indicator") ?: ""
-        val type = ctx.attributes.getValue("", "type") ?: ""
+        val attributes = ctx.attributes ?: return
+
+        val text = attributes.getValue("", HtmlAttributeNames.MENTION_TEXT) ?: return
+        val indicator = attributes.getValue("", HtmlAttributeNames.MENTION_INDICATOR) ?: ""
+        val type = attributes.getValue("", HtmlAttributeNames.MENTION_TYPE) ?: ""
+
+        val excluded =
+          setOf(
+            HtmlAttributeNames.MENTION_TEXT,
+            HtmlAttributeNames.MENTION_INDICATOR,
+            HtmlAttributeNames.MENTION_TYPE,
+          )
 
         val attrs = mutableMapOf<String, String>()
-        ctx.attributes.let { a ->
-          for (i in 0 until a.length) {
-            val name = a.getLocalName(i)
-            if (name != "text" && name != "indicator" && name != "type") {
-              attrs[name] = a.getValue(i)
-            }
+
+        for (i in 0 until attributes.length) {
+          val name = attributes.getLocalName(i)
+          if (name !in excluded) {
+            attrs[name] = attributes.getValue(i)
           }
         }
 
         applyInline(ctx) {
           EnrichedMentionSpan(text, indicator, type, attrs, mStyle)
         }
+
         return
       }
 
@@ -379,7 +389,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.FONT -> {
         val ctx = popTag(tag) ?: return
-        val colorValue = ctx.attributes?.getValue("", "color") ?: return
+        val colorValue = ctx.attributes?.getValue("", HtmlAttributeNames.COLOR) ?: return
         val color = parseCssColor(colorValue)
 
         applyInline(ctx) {
@@ -527,7 +537,7 @@ class HtmlToSpannedConverter(
   ) {
     if (attributes == null) return
 
-    val alignmentString = attributes.getValue("", "alignment")
+    val alignmentString = attributes.getValue("", HtmlAttributeNames.ALIGNMENT)
     if (alignmentString == null) return
 
     text.setSpan(
@@ -548,17 +558,26 @@ class HtmlToSpannedConverter(
       return
     }
 
-    val title = attributes.getValue("", "title")
-    val description = attributes.getValue("", "description")
-    val type = attributes.getValue("", "type")
-    val src = attributes.getValue("", "src")
+    val title = attributes.getValue("", HtmlAttributeNames.CONTENT_TITLE)
+    val description = attributes.getValue("", HtmlAttributeNames.CONTENT_DESCRIPTION)
+    val subTitle = attributes.getValue("", HtmlAttributeNames.CONTENT_SUBTITLE)
+    val subDescription = attributes.getValue("", HtmlAttributeNames.CONTENT_SUBDESCRIPTION)
+    val type = attributes.getValue("", HtmlAttributeNames.CONTENT_TYPE)
+    val src = attributes.getValue("", HtmlAttributeNames.CONTENT_SRC)
 
     val attributesMap: MutableMap<String, String> = HashMap()
-    for (i in 0..<attributes.length) {
+    for (i in 0 until attributes.length) {
       val localName = attributes.getLocalName(i)
 
-      if (("title" != localName) && ("description" != localName) && ("type" != localName) && ("src" != localName)) {
-        attributesMap.put(localName, attributes.getValue(i))
+      if (
+        localName != HtmlAttributeNames.CONTENT_TITLE &&
+        localName != HtmlAttributeNames.CONTENT_DESCRIPTION &&
+        localName != HtmlAttributeNames.CONTENT_TYPE &&
+        localName != HtmlAttributeNames.CONTENT_SRC &&
+        localName != HtmlAttributeNames.CONTENT_SUBTITLE &&
+        localName != HtmlAttributeNames.CONTENT_SUBDESCRIPTION
+      ) {
+        attributesMap[localName] = attributes.getValue(i)
       }
     }
     if (isEmptyTag) {
@@ -570,6 +589,8 @@ class HtmlToSpannedConverter(
       EnrichedContentSpan.Companion.createEnrichedContentSpan(
         title,
         description,
+        subTitle,
+        subDescription,
         type,
         src,
         attributesMap,
@@ -591,14 +612,14 @@ class HtmlToSpannedConverter(
       return
     }
 
-    val label = attributes.getValue("", "label")
-    val tintColorString = attributes.getValue("", "tint-color")
+    val label = attributes.getValue("", HtmlAttributeNames.MDF_LABEL)
+    val tintColorString = attributes.getValue("", HtmlAttributeNames.MDF_TINT_COLOR)
     val attributesMap: MutableMap<String, String> = HashMap()
 
     for (i in 0..<attributes.length) {
       val localName = attributes.getLocalName(i)
 
-      if (("label" != localName) && ("tint-color" != localName)) {
+      if ((HtmlAttributeNames.MDF_LABEL != localName) && (HtmlAttributeNames.MDF_TINT_COLOR != localName)) {
         attributesMap.put(localName, attributes.getValue(i))
       }
     }
@@ -762,7 +783,7 @@ class HtmlToSpannedConverter(
       if (attributes == null) {
         return
       }
-      val src = attributes.getValue("", "src")
+      val src = attributes.getValue("", HtmlAttributeNames.CONTENT_SRC)
       val width = attributes.getValue("", "width")
       val height = attributes.getValue("", "height")
 

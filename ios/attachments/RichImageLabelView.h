@@ -33,9 +33,13 @@
 @property(nonatomic) UIViewContentMode imageContentMode;
 
 // title
-@property(nonatomic, copy) NSAttributedString *titleText;
+@property(nonatomic, strong) NSAttributedString *titleText;
 
 // description
-@property(nonatomic, copy) NSAttributedString *descriptionText;
+@property(nonatomic, strong) NSAttributedString *descriptionText;
+
+@property(nonatomic, strong) NSAttributedString *subTitleText;
+
+@property(nonatomic, strong) NSAttributedString *subDescriptionText;
 
 @end

@@ -183,6 +183,8 @@ static NSURL *URLFromFolly(folly::dynamic obj, const char *key) {
   folly::dynamic image = ObjectOrEmpty(folly, "image");
   folly::dynamic imageContainer = ObjectOrEmpty(folly, "imageContainer");
   folly::dynamic textContainer = ObjectOrEmpty(folly, "textContainer");
+  folly::dynamic subtitle = ObjectOrEmpty(folly, "subtitle");
+  folly::dynamic subDescription = ObjectOrEmpty(folly, "subDescription");
 
   props.backgroundColor =
       UIColorFromFolly(container, "backgroundColor", UIColor.clearColor);
@@ -206,6 +208,14 @@ static NSURL *URLFromFolly(folly::dynamic obj, const char *key) {
       FontFromFolly(description, defaultFont, titleFontSize);
   props.descriptionColor =
       UIColorFromFolly(description, "color", UIColor.grayColor);
+
+  props.subTitleFont = FontFromFolly(subDescription, defaultFont, 14.0);
+  props.subTitleColor = UIColorFromFolly(subtitle, "color", UIColor.blackColor);
+
+  props.subDescriptionFont =
+      FontFromFolly(subDescription, defaultFont, titleFontSize);
+  props.subdescriptionColor =
+      UIColorFromFolly(subDescription, "color", UIColor.grayColor);
 
   // Image
   props.imageSize = SizeFromWidthHeight(image);

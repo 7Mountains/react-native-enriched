@@ -33,6 +33,10 @@ typedef NS_ENUM(NSInteger, ContentImageResizeMode) {
 @property(nonatomic, strong) UIColor *titleColor;
 @property(nonatomic, strong) UIFont *descriptionFont;
 @property(nonatomic, strong) UIColor *descriptionColor;
+@property(nonatomic, strong) UIFont *subTitleFont;
+@property(nonatomic, strong) UIColor *subTitleColor;
+@property(nonatomic, strong) UIFont *subDescriptionFont;
+@property(nonatomic, strong) UIColor *subdescriptionColor;
 
 @property(nonatomic) CGFloat minHeight;
 

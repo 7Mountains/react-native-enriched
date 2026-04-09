@@ -7,6 +7,8 @@
 @property(nonatomic, strong, nullable) NSString *title;
 @property(nonatomic, strong, nullable) NSString *url;
 @property(nonatomic, strong, nullable) NSString *descriptionText;
+@property(nonatomic, strong, nullable) NSString *subTitle;
+@property(nonatomic, strong, nullable) NSString *subDescriptionText;
 @property(nonatomic, strong, nullable) NSDictionary<NSString *, id> *attributes;
 
 - (NSDictionary<NSString *, NSString *> *_Nullable)toDictionary;

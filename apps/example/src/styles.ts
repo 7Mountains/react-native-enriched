@@ -75,6 +75,16 @@ const htmlStyle: HtmlStyle = {
         fontSize: 14,
         fontWeight: '400',
       },
+      subtitle: {
+        color: 'black',
+        fontSize: 14,
+        fontWeight: '400',
+      },
+      subDescription: {
+        color: '#6B7280',
+        fontSize: 12,
+        fontWeight: '500',
+      },
       textContainer: {
         paddingBottom: 4,
         paddingTop: 4,

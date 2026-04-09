@@ -20,6 +20,8 @@ class ImageLabelRenderer(
   private val contentStyle: ContentStyle,
   private val title: CharSequence,
   private val description: CharSequence?,
+  private val subTitle: CharSequence? = null,
+  private val subDescription: CharSequence? = null,
   private val bitmap: Bitmap?,
   private val imageBackgroundColor: Int? = null,
   private val borderLeftColor: Int? = null,
@@ -38,8 +40,42 @@ class ImageLabelRenderer(
       typeface = Typeface.create(contentStyle.description.fontFamily, contentStyle.description.typefaceStyle)
     }
 
+  private val subtitlePaint =
+    TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = contentStyle.subtitle.color
+      textSize = contentStyle.subtitle.fontSize
+      typeface = Typeface.create(contentStyle.subtitle.fontFamily, contentStyle.subtitle.typefaceStyle)
+    }
+
+  private val subdescPaint =
+    TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = contentStyle.subDescription.color
+      textSize = contentStyle.subDescription.fontSize
+      typeface = Typeface.create(contentStyle.subDescription.fontFamily, contentStyle.subDescription.typefaceStyle)
+    }
+
   private var titleLayout: StaticLayout? = null
   private var descLayout: StaticLayout? = null
+  private var subtitleLayout: StaticLayout? = null
+  private var subDescriptionLayout: StaticLayout? = null
+
+  constructor(
+    contentStyle: ContentStyle,
+    title: CharSequence,
+    description: CharSequence?,
+    bitmap: Bitmap?,
+    imageBackgroundColor: Int? = null,
+    borderLeftColor: Int? = null,
+  ) : this(
+    contentStyle = contentStyle,
+    title = title,
+    description = description,
+    subTitle = null,
+    subDescription = null,
+    bitmap = bitmap,
+    imageBackgroundColor = imageBackgroundColor,
+    borderLeftColor = borderLeftColor,
+  )
 
   fun measure(width: Int): Int {
     val contentWidth = width.toFloat()
@@ -71,10 +107,38 @@ class ImageLabelRenderer(
         createDescriptionLayout(description, descPaint, safeWidth)
       }
 
+    subtitleLayout =
+      if (subTitle.isNullOrEmpty()) {
+        null
+      } else {
+        createDescriptionLayout(subTitle, subtitlePaint, safeWidth)
+      }
+
+    subDescriptionLayout =
+      if (subDescription.isNullOrEmpty()) {
+        null
+      } else {
+        createDescriptionLayout(subDescription, subdescPaint, safeWidth)
+      }
+
     val titleHeight = titleLayout?.height ?: 0
     val descHeight = descLayout?.height ?: 0
+    val subtitleHeight = subtitleLayout?.height ?: 0
+    val subDescHeight = subDescriptionLayout?.height ?: 0
 
-    val textHeight = titleHeight + descHeight
+    var textHeight = titleHeight
+
+    if (descLayout != null) {
+      textHeight += descHeight
+    }
+
+    if (subtitleLayout != null) {
+      textHeight += subtitleHeight
+    }
+
+    if (subDescriptionLayout != null) {
+      textHeight += subDescHeight
+    }
 
     val totalTextHeight =
       textHeight +
@@ -335,7 +399,13 @@ class ImageLabelRenderer(
     val titleHeight = titleLayout?.height ?: 0
     val descHeight = descLayout?.height ?: 0
 
-    val textHeight = titleHeight + descHeight
+    val subtitleHeight = subtitleLayout?.height ?: 0
+    val subdescHeight = subDescriptionLayout?.height ?: 0
+
+    var textHeight = titleHeight
+    if (descLayout != null) textHeight += descHeight
+    if (subtitleLayout != null) textHeight += subtitleHeight
+    if (subDescriptionLayout != null) textHeight += subdescHeight
 
     val containerHeight =
       textHeight +
@@ -352,11 +422,24 @@ class ImageLabelRenderer(
       canvas.withTranslation(textStartX, currentY) {
         it.draw(this)
       }
+      currentY += it.height
     }
 
-    currentY += titleHeight
-
     descLayout?.let {
+      canvas.withTranslation(textStartX, currentY) {
+        it.draw(this)
+      }
+      currentY += it.height
+    }
+
+    subtitleLayout?.let {
+      canvas.withTranslation(textStartX, currentY) {
+        it.draw(this)
+      }
+      currentY += it.height
+    }
+
+    subDescriptionLayout?.let {
       canvas.withTranslation(textStartX, currentY) {
         it.draw(this)
       }

@@ -82,9 +82,19 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
     params.url = url;
   }
 
-  id descriptionText = attributes[ContentDescriptionTextAttrbiuteName];
+  id descriptionText = attributes[ContentDescriptionTextAttrbuteName];
   if ([descriptionText isKindOfClass:NSString.class]) {
     params.descriptionText = descriptionText;
+  }
+
+  id subTitle = attributes[ContentSubTitleAttributeName];
+  if ([subTitle isKindOfClass:NSString.class]) {
+    params.subTitle = subTitle;
+  }
+
+  id subDescription = attributes[ContentSubDescriptionTextAttrbuteName];
+  if ([subDescription isKindOfClass:NSString.class]) {
+    params.subDescriptionText = subDescription;
   }
 
   NSMutableDictionary *extra = attributes.mutableCopy;
