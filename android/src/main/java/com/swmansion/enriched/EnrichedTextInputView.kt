@@ -48,7 +48,6 @@ import com.swmansion.enriched.spans.EnrichedImageSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.ISpanConfig
 import com.swmansion.enriched.spans.TextStyle
-import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.spans.utils.ForceRedrawSpan
 import com.swmansion.enriched.styles.HtmlStyle
@@ -114,12 +113,9 @@ class EnrichedTextInputView : AppCompatEditText {
   ) {
     super.onLayout(changed, l, t, r, b)
     val textLayoutWidth = layout?.width ?: return
-    // during screen rotation or initial mount
-    // we have to reapply styles that depend on the view width
     if (textLayoutWidth != editorWidth) {
       editorWidth = textLayoutWidth
       htmlStyle.invalidateStyles()
-      reApplyFullWidthSpans(htmlStyle)
     }
   }
 
@@ -890,26 +886,6 @@ class EnrichedTextInputView : AppCompatEditText {
     val maxScrollY = (textLayout.height - visibleTextHeight).coerceAtLeast(0)
     targetScrollY = targetScrollY.coerceIn(0, maxScrollY)
     scrollTo(scrollX, targetScrollY)
-  }
-
-  private fun reApplyFullWidthSpans(htmlStyle: HtmlStyle) {
-    val spannable = text as? Spannable ?: return
-    if (spannable.isEmpty()) return
-    runAsATransaction {
-      blockTextEventEmitting = true
-      val spans = spannable.getSpans(0, spannable.length, EnrichedFullWidthSpan::class.java)
-      for (span in spans) {
-        val start = spannable.getSpanStart(span)
-        val end = spannable.getSpanEnd(span)
-        val flags = spannable.getSpanFlags(span)
-
-        if (start == -1 || end == -1) continue
-        spannable.removeSpan(span)
-        val copiedSpan = span.copyWithStyle(htmlStyle)
-        spannable.setSpan(copiedSpan, start, end, flags)
-      }
-      blockTextEventEmitting = false
-    }
   }
 
   private fun reApplyHtmlStyleForSpans(

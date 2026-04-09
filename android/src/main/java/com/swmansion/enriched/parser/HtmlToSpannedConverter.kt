@@ -58,6 +58,7 @@ class HtmlToSpannedConverter(
   private var isInOrderedList = false
   private var isEmptyTag = false
   private val tagsStack = ArrayDeque<TagContext>()
+  private val textBuffer = StringBuilder()
 
   fun convert(): Spanned {
     parser.contentHandler = this
@@ -88,19 +89,14 @@ class HtmlToSpannedConverter(
 
   private fun popTag(tag: String): TagContext? {
     val last = tagsStack.lastOrNull()
-    if (last != null && last.tag == tag) {
-      return tagsStack.removeLast()
+    if (last?.tag == tag) {
+      tagsStack.removeLast()
+      return last
     }
 
-    // fallback if we get some trash
-    for (i in tagsStack.lastIndex downTo 0) {
-      val ctx = tagsStack[i]
-      if (ctx.tag == tag) {
-        tagsStack.removeAt(i)
-        return ctx
-      }
-    }
-    return null
+    // fallback
+    val idx = tagsStack.indexOfLast { it.tag == tag }
+    return if (idx >= 0) tagsStack.removeAt(idx) else null
   }
 
   private fun applyInline(
@@ -359,21 +355,7 @@ class HtmlToSpannedConverter(
         val indicator = attributes.getValue("", HtmlAttributeNames.MENTION_INDICATOR) ?: ""
         val type = attributes.getValue("", HtmlAttributeNames.MENTION_TYPE) ?: ""
 
-        val excluded =
-          setOf(
-            HtmlAttributeNames.MENTION_TEXT,
-            HtmlAttributeNames.MENTION_INDICATOR,
-            HtmlAttributeNames.MENTION_TYPE,
-          )
-
-        val attrs = mutableMapOf<String, String>()
-
-        for (i in 0 until attributes.length) {
-          val name = attributes.getLocalName(i)
-          if (name !in excluded) {
-            attrs[name] = attributes.getValue(i)
-          }
-        }
+        val attrs = extractAttributes(attributes, MENTION_EXCLUDED)
 
         applyInline(ctx) {
           EnrichedMentionSpan(text, indicator, type, attrs, mStyle)
@@ -472,7 +454,7 @@ class HtmlToSpannedConverter(
     isEmptyTag: Boolean,
   ) {
     val ctx = popTag(HtmlTags.CHECKLIST) ?: return
-    val isChecked = ctx.attributes?.getValue("", "checked") == "true"
+    val isChecked = ctx.attributes?.getValue("", HtmlAttributeNames.CHECKED) == "true"
     var end = text.length
     if (isEmptyTag) {
       text.append(Strings.ZERO_WIDTH_SPACE_CHAR)
@@ -565,21 +547,7 @@ class HtmlToSpannedConverter(
     val type = attributes.getValue("", HtmlAttributeNames.CONTENT_TYPE)
     val src = attributes.getValue("", HtmlAttributeNames.CONTENT_SRC)
 
-    val attributesMap: MutableMap<String, String> = HashMap()
-    for (i in 0 until attributes.length) {
-      val localName = attributes.getLocalName(i)
-
-      if (
-        localName != HtmlAttributeNames.CONTENT_TITLE &&
-        localName != HtmlAttributeNames.CONTENT_DESCRIPTION &&
-        localName != HtmlAttributeNames.CONTENT_TYPE &&
-        localName != HtmlAttributeNames.CONTENT_SRC &&
-        localName != HtmlAttributeNames.CONTENT_SUBTITLE &&
-        localName != HtmlAttributeNames.CONTENT_SUBDESCRIPTION
-      ) {
-        attributesMap[localName] = attributes.getValue(i)
-      }
-    }
+    val attributesMap = extractAttributes(attributes, CONTENT_EXCLUDED)
     if (isEmptyTag) {
       editable.append(Strings.NEWLINE)
     }
@@ -614,15 +582,7 @@ class HtmlToSpannedConverter(
 
     val label = attributes.getValue("", HtmlAttributeNames.MDF_LABEL)
     val tintColorString = attributes.getValue("", HtmlAttributeNames.MDF_TINT_COLOR)
-    val attributesMap: MutableMap<String, String> = HashMap()
-
-    for (i in 0..<attributes.length) {
-      val localName = attributes.getLocalName(i)
-
-      if ((HtmlAttributeNames.MDF_LABEL != localName) && (HtmlAttributeNames.MDF_TINT_COLOR != localName)) {
-        attributesMap.put(localName, attributes.getValue(i))
-      }
-    }
+    val attributesMap = extractAttributes(attributes, MDF_EXCLUDED)
 
     if (isEmptyTag) {
       editable.append(Strings.NEWLINE)
@@ -678,7 +638,7 @@ class HtmlToSpannedConverter(
     start: Int,
     length: Int,
   ) {
-    val sb = StringBuilder()
+    textBuffer.setLength(0)
     if (length > 0) isEmptyTag = false
 
     /*
@@ -689,7 +649,7 @@ class HtmlToSpannedConverter(
       val c = ch[i + start]
       if (c == Strings.SPACE_CHAR || c == Strings.NEWLINE) {
         val prev: Char
-        var len = sb.length
+        var len = textBuffer.length
         if (len == 0) {
           len = mSpannableStringBuilder.length
           prev =
@@ -699,16 +659,16 @@ class HtmlToSpannedConverter(
               mSpannableStringBuilder[len - 1]
             }
         } else {
-          prev = sb[len - 1]
+          prev = textBuffer[len - 1]
         }
         if (prev != Strings.SPACE_CHAR && prev != Strings.NEWLINE) {
-          sb.append(Strings.SPACE_CHAR)
+          textBuffer.append(Strings.SPACE_CHAR)
         }
       } else {
-        sb.append(c)
+        textBuffer.append(c)
       }
     }
-    mSpannableStringBuilder.append(sb)
+    mSpannableStringBuilder.append(textBuffer)
   }
 
   override fun ignorableWhitespace(
@@ -733,6 +693,23 @@ class HtmlToSpannedConverter(
   override fun skippedEntity(name: String?) {}
 
   companion object {
+    private val CONTENT_EXCLUDED =
+      setOf<String>(
+        HtmlAttributeNames.CONTENT_TITLE,
+        HtmlAttributeNames.CONTENT_DESCRIPTION,
+        HtmlAttributeNames.CONTENT_TYPE,
+        HtmlAttributeNames.CONTENT_SRC,
+        HtmlAttributeNames.CONTENT_SUBTITLE,
+        HtmlAttributeNames.CONTENT_SUBDESCRIPTION,
+      )
+    private val MENTION_EXCLUDED =
+      setOf(
+        HtmlAttributeNames.MENTION_TEXT,
+        HtmlAttributeNames.MENTION_INDICATOR,
+        HtmlAttributeNames.MENTION_TYPE,
+      )
+    private val MDF_EXCLUDED = setOf<String>(HtmlAttributeNames.MDF_LABEL, HtmlAttributeNames.MDF_TINT_COLOR)
+
     private fun appendNewlines(
       text: Editable,
       minNewline: Int,
@@ -796,6 +773,22 @@ class HtmlToSpannedConverter(
         )
       text.append(Strings.MAGIC_CHAR)
       text.setSpan(span, len, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+
+    private fun extractAttributes(
+      attributes: Attributes,
+      excluded: Set<String>,
+    ): Map<String, String> {
+      val attrs = mutableMapOf<String, String>()
+
+      for (i in 0 until attributes.length) {
+        val name = attributes.getLocalName(i)
+        if (name !in excluded) {
+          attrs[name] = attributes.getValue(i)
+        }
+      }
+
+      return attrs
     }
 
     private fun parseCssColor(css: String?): Int {
