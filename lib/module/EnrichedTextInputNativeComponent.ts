@@ -172,18 +172,15 @@ type Heading = {
   bold?: boolean;
 };
 
-interface ContentTitleStyle {
+interface ContentTextStyle {
   color?: ColorValue;
   fontWeight?: string;
   fontSize?: Float;
   fontFamily?: string;
-}
-
-interface ContentDescriptionStyle {
-  color?: ColorValue;
-  fontWeight?: string;
-  fontSize?: Float;
-  fontFamily?: string;
+  marginTop?: Float;
+  marginBottom?: Float;
+  marginRight?: Float;
+  marginLeft?: Float;
 }
 
 interface ContentContainerStyle {
@@ -228,8 +225,10 @@ export interface ContentTextContainerStyle {
 }
 
 export interface ContentStyleProperties {
-  title?: ContentTitleStyle;
-  description?: ContentDescriptionStyle;
+  title?: ContentTextStyle;
+  description?: ContentTextStyle;
+  subtitle?: ContentTextStyle;
+  subDescription?: ContentTextStyle;
   container?: ContentContainerStyle;
   textContainer?: ContentTextContainerStyle;
   imageContainer?: ContentImageContainerStyle;
@@ -299,7 +298,7 @@ export interface HtmlStyleInternal {
   };
   mdf?: {
     imageUri: string;
-    title: ContentTitleStyle;
+    title: ContentTextStyle;
     container?: ContentContainerStyle;
     imageContainer?: ContentImageContainerStyle;
     textContainer?: ContentTextContainerStyle;
