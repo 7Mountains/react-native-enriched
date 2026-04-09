@@ -88,7 +88,7 @@ const DEBUG_SCROLLABLE = false;
 // See: https://github.com/software-mansion/react-native-enriched/issues/229
 const ANDROID_EXPERIMENTAL_SYNCHRONOUS_EVENTS = false;
 
-const generateHugeHtml = (repeat = 100) => {
+const generateHugeHtml = (repeat = 1) => {
   const parts: string[] = [];
   parts.push('<html>');
 
@@ -106,7 +106,7 @@ const generateHugeHtml = (repeat = 100) => {
     const imgW = 200 + (i % 5) * 40;
     const imgH = 100 + (i % 3) * 30;
     parts.push(
-      `\n<content type="image" description="test description" title="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`,
+      `\n<content type="image" subtitle="Test subtitle" subdescription="test subdescription" description="test description" title="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`,
       `<mdf tint-color="#ff0000" label="Test" />`,
       `\n<content type="automation" description="test description" title="Test text" src="${Image.resolveAssetSource(require('../assets/images/Primary_Inline_VideoGfx.png')).uri}" />`
     );

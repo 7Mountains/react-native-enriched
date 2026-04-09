@@ -67,6 +67,24 @@
             }];
   }
 
+  if ([_params.subTitle isKindOfClass:NSString.class]) {
+    view.subTitleText = [[NSAttributedString alloc]
+        initWithString:_params.subTitle
+            attributes:@{
+              NSFontAttributeName : _styles.subTitleFont,
+              NSForegroundColorAttributeName : _styles.subTitleColor
+            }];
+  }
+
+  if ([_params.subDescriptionText isKindOfClass:NSString.class]) {
+    view.subDescriptionText = [[NSAttributedString alloc]
+        initWithString:_params.subDescriptionText
+            attributes:@{
+              NSFontAttributeName : _styles.subDescriptionFont,
+              NSForegroundColorAttributeName : _styles.subdescriptionColor
+            }];
+  }
+
   return view;
 }
 

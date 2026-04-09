@@ -224,7 +224,7 @@ class ParagraphStyles(
     attributes: Map<String, String>?,
   ) {
     view.spanState?.setStart(TextStyle.CONTENT, null)
-    val span = EnrichedContentSpan.createEnrichedContentSpan(text, null, type, src, attributes, view.htmlStyle)
+    val span = EnrichedContentSpan.createEnrichedContentSpan(text, null, null, null, type, src, attributes, view.htmlStyle)
     span.attachTo(view)
     insertEscapingParagraph(
       span,

@@ -66,6 +66,14 @@ object TagsRegistry {
                 put("description", it)
               }
 
+              params.subtitle?.let {
+                put("subtitle", it)
+              }
+
+              params.subDescription?.let {
+                put("subdescription", it)
+              }
+
               put("type", params.type)
               put("src", params.src ?: "")
               if (params.attributes != null) {

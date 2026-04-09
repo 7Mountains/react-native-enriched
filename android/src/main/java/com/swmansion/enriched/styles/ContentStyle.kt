@@ -11,6 +11,8 @@ data class ContentStyle(
   val container: ContainerStyle,
   val title: TextStyle,
   val description: TextStyle,
+  val subtitle: TextStyle,
+  val subDescription: TextStyle,
   val image: ImageStyle,
   val imageContainer: ImageContainerStyle,
   val textContainer: TextContainerStyle,
@@ -156,6 +158,8 @@ data class ContentStyle(
       val container = obj("container")
       val title = obj("title")
       val description = obj("description")
+      val subtitle = obj("subtitle")
+      val subDescription = obj("subDescription")
       val image = obj("image")
       val imageContainer = obj("imageContainer")
       val textContainer = obj("textContainer")
@@ -180,12 +184,26 @@ data class ContentStyle(
             typefaceStyle = ReactTypefaceUtils.parseFontWeight(str(title, "fontWeight")),
             fontFamily = str(title, "fontFamily"),
           ),
+        subtitle =
+          TextStyle(
+            color = clr(subtitle, "color", Color.BLACK)!!,
+            fontSize = dip(subtitle, "fontSize", 14f),
+            typefaceStyle = ReactTypefaceUtils.parseFontWeight(str(subtitle, "fontWeight")),
+            fontFamily = str(subtitle, "fontFamily"),
+          ),
         description =
           TextStyle(
             color = clr(description, "color", Color.GRAY)!!,
             fontSize = dip(description, "fontSize", 14f),
             typefaceStyle = ReactTypefaceUtils.parseFontWeight(str(description, "fontWeight")),
             fontFamily = str(description, "fontFamily"),
+          ),
+        subDescription =
+          TextStyle(
+            color = clr(subDescription, "color", Color.GRAY)!!,
+            fontSize = dip(subDescription, "fontSize", 14f),
+            typefaceStyle = ReactTypefaceUtils.parseFontWeight(str(subDescription, "fontWeight")),
+            fontFamily = str(subDescription, "fontFamily"),
           ),
         image =
           ImageStyle(
@@ -209,6 +227,21 @@ data class ContentStyle(
       )
     }
 
+    val defaultTitleStyle =
+      TextStyle(
+        color = Color.BLACK,
+        fontSize = 14f,
+        typefaceStyle = ReactTypefaceUtils.parseFontWeight("400"),
+        fontFamily = null,
+      )
+    val defaultDescriptionStyle =
+      TextStyle(
+        color = Color.GRAY,
+        fontSize = 14f,
+        typefaceStyle = ReactTypefaceUtils.parseFontWeight("400"),
+        fontFamily = null,
+      )
+
     fun default(): ContentStyle =
       ContentStyle(
         container =
@@ -223,20 +256,10 @@ data class ContentStyle(
             margin = Insets(0f, 0f, 0f, 0f),
             minHeight = 56f,
           ),
-        title =
-          TextStyle(
-            color = Color.BLACK,
-            fontSize = 14f,
-            typefaceStyle = ReactTypefaceUtils.parseFontWeight("400"),
-            fontFamily = null,
-          ),
-        description =
-          TextStyle(
-            color = Color.GRAY,
-            fontSize = 14f,
-            typefaceStyle = ReactTypefaceUtils.parseFontWeight("400"),
-            fontFamily = null,
-          ),
+        title = defaultTitleStyle,
+        description = defaultDescriptionStyle,
+        subtitle = defaultTitleStyle,
+        subDescription = defaultDescriptionStyle,
         image =
           ImageStyle(
             width = 40f,

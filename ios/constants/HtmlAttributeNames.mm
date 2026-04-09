@@ -9,7 +9,9 @@ NSString *const PlaceholderAttributeName = @"placeholder";
 NSString *const ContentTitleAttributeName = @"title";
 NSString *const ContentTypeAttributeName = @"type";
 NSString *const ContentSrcAttributeName = @"src";
-NSString *const ContentDescriptionTextAttrbiuteName = @"description";
+NSString *const ContentDescriptionTextAttrbuteName = @"description";
+NSString *const ContentSubTitleAttributeName = @"subtitle";
+NSString *const ContentSubDescriptionTextAttrbuteName = @"subdescription";
 
 NSString *const HrefAttributeName = @"href";
 

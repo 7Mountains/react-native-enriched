@@ -58,6 +58,8 @@ class EnrichedContentSpan(
         contentStyle = style,
         title = contentParams.title,
         description = contentParams.description,
+        subTitle = contentParams.subtitle,
+        subDescription = contentParams.subDescription,
         bitmap = bitmap,
       )
 
@@ -184,12 +186,14 @@ class EnrichedContentSpan(
     fun createEnrichedContentSpan(
       title: String,
       description: String?,
+      subtitle: String?,
+      subDescription: String?,
       type: String,
       src: String?,
       attributes: Map<String, String>?,
       htmlStyle: HtmlStyle,
     ): EnrichedContentSpan {
-      val params = ContentParams(title, description, type, src, attributes)
+      val params = ContentParams(title, description, subtitle, subDescription, type, src, attributes)
 
       return EnrichedContentSpan(params, htmlStyle)
     }
@@ -197,6 +201,8 @@ class EnrichedContentSpan(
     data class ContentParams(
       val title: String,
       val description: String?,
+      val subtitle: String?,
+      val subDescription: String?,
       val type: String,
       val src: String?,
       val attributes: Map<String, String>?,

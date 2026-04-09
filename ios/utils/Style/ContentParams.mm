@@ -1,7 +1,7 @@
 #import "ContentParams.h"
 #import "HtmlAttributeNames.h"
 
-const int MAIN_ATTRIBUTES_COUNT = 3;
+const int MAIN_ATTRIBUTES_COUNT = 6;
 
 @implementation ContentParams
 
@@ -53,6 +53,16 @@ const int MAIN_ATTRIBUTES_COUNT = 3;
     params.descriptionText = args[3];
   }
 
+  // subTitle
+  if ([args[4] isKindOfClass:NSString.class]) {
+    params.subTitle = args[4];
+  }
+
+  // subdescription
+  if ([args[5] isKindOfClass:NSString.class]) {
+    params.subDescriptionText = args[5];
+  }
+
   // attributes = JSON string
   NSDictionary *attributesDict = [self dictionaryFromJSONString:args[4]];
   if (attributesDict) {
@@ -85,8 +95,16 @@ const int MAIN_ATTRIBUTES_COUNT = 3;
     params[ContentTitleAttributeName] = _title;
   }
 
+  if (_subTitle) {
+    params[ContentSubTitleAttributeName] = _subTitle;
+  }
+
+  if (_subDescriptionText) {
+    params[ContentSubDescriptionTextAttrbuteName] = _subDescriptionText;
+  }
+
   if (_descriptionText) {
-    params[ContentDescriptionTextAttrbiuteName] = _descriptionText;
+    params[ContentDescriptionTextAttrbuteName] = _descriptionText;
   }
 
   if (_attributes.count > 0) {

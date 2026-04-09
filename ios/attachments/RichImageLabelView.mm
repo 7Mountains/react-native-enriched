@@ -4,8 +4,6 @@ static const CGSize kDefaultImageSize = CGSizeMake(40.0, 40.0);
 static const CGFloat kDefaultMinHeight = 56.0;
 static const CGSize kDefaultImageContainerSize = CGSizeMake(56.0, 56.0);
 
-static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
-
 @implementation RichImageLabelView {
   CALayer *_leftBorderLayer;
   UIView *_imageContainer;
@@ -13,6 +11,8 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
   UIImageView *_imageView;
   UILabel *_titleLabel;
   UILabel *_descriptionLabel;
+  UILabel *_subtitleLabel;
+  UILabel *_subdescriptionLabel;
 
   CAShapeLayer *_borderLayer;
 }
@@ -34,13 +34,8 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
   _imageView.clipsToBounds = YES;
 
   _titleLabel = [UILabel new];
-  _descriptionLabel = [UILabel new];
-
   _titleLabel.numberOfLines = 1;
-  _descriptionLabel.numberOfLines = 0;
-
   _titleLabel.textAlignment = NSTextAlignmentLeft;
-  _descriptionLabel.textAlignment = NSTextAlignmentLeft;
 
   _imageSize = kDefaultImageSize;
   _minHeight = kDefaultMinHeight;
@@ -55,7 +50,6 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
 
   [_imageContainer addSubview:_imageView];
   [_textContainer addSubview:_titleLabel];
-  [_textContainer addSubview:_descriptionLabel];
 
   [self addSubview:_imageContainer];
   [self addSubview:_textContainer];
@@ -65,8 +59,8 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
 
 #pragma mark - Helpers
 
-- (CGSize)sizeForLabel:(UILabel *)label width:(CGFloat)width {
-  if (!label.attributedText.length || width <= 0)
+- (CGSize)sizeForLabel:(UILabel *_Nullable)label width:(CGFloat)width {
+  if (!label || !label.attributedText.length || width <= 0)
     return CGSizeZero;
 
   CGRect rect = [label.attributedText
@@ -79,6 +73,16 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
 }
 
 #pragma mark - Layout
+
+- (CGFloat)calculateTextHeight:(CGFloat)textWidth {
+  CGSize titleSize = [self sizeForLabel:_titleLabel width:textWidth];
+  CGSize descSize = [self sizeForLabel:_descriptionLabel width:textWidth];
+  CGSize subtitleSize = [self sizeForLabel:_subtitleLabel width:textWidth];
+  CGSize subdescSize = [self sizeForLabel:_subdescriptionLabel width:textWidth];
+
+  return titleSize.height + descSize.height + subtitleSize.height +
+         subdescSize.height;
+}
 
 - (CGSize)sizeThatFits:(CGSize)size {
   CGFloat contentWidth = size.width;
@@ -94,22 +98,13 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
   textWidth =
       MAX(textWidth - self.textPadding.left - self.textPadding.right, 0);
 
-  CGSize titleSize = [self sizeForLabel:_titleLabel width:textWidth];
-  CGSize descSize = _descriptionLabel.attributedText.length
-                        ? [self sizeForLabel:_descriptionLabel width:textWidth]
-                        : CGSizeZero;
-
-  CGFloat textHeight =
-      titleSize.height + (descSize.height > 0
-                              ? descSize.height + kDefaultDescriptionTopSpacing
-                              : 0);
-
-  CGFloat totalTextHeight =
-      textHeight + self.textPadding.top + self.textPadding.bottom;
+  CGFloat textHeight = [self calculateTextHeight:textWidth] + _textPadding.top +
+                       _textPadding.bottom;
 
   CGFloat imageHeight =
       _imageContainerSize.height > 0 ? _imageContainerSize.height : 0;
-  CGFloat contentHeight = MAX(totalTextHeight, imageHeight);
+
+  CGFloat contentHeight = MAX(textHeight, imageHeight);
 
   CGFloat finalHeight = MAX(
       contentHeight + self.padding.top + self.padding.bottom, self.minHeight);
@@ -158,16 +153,17 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
   CGFloat innerWidth =
       MAX(textWidth - self.textPadding.left - self.textPadding.right, 0);
 
-  CGSize titleSize = [self sizeForLabel:_titleLabel width:innerWidth];
   BOOL hasDesc = _descriptionLabel.attributedText.length > 0;
+  BOOL hasSubtitle = _subtitleLabel.attributedText.length > 0;
+  BOOL hasSubdesc = _subdescriptionLabel.attributedText.length > 0;
 
-  CGSize descSize = hasDesc
-                        ? [self sizeForLabel:_descriptionLabel width:innerWidth]
-                        : CGSizeZero;
+  CGSize titleSize = [self sizeForLabel:_titleLabel width:innerWidth];
+  CGSize descSize = [self sizeForLabel:_descriptionLabel width:innerWidth];
+  CGSize subtitleSize = [self sizeForLabel:_subtitleLabel width:innerWidth];
+  CGSize subdescSize = [self sizeForLabel:_subdescriptionLabel
+                                    width:innerWidth];
 
-  CGFloat textHeight =
-      titleSize.height +
-      (hasDesc ? descSize.height + kDefaultDescriptionTopSpacing : 0);
+  CGFloat textHeight = [self calculateTextHeight:textWidth];
 
   CGFloat containerHeight =
       textHeight + self.textPadding.top + self.textPadding.bottom;
@@ -183,14 +179,23 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
 
   _titleLabel.frame =
       CGRectMake(contentX, currentY, innerWidth, titleSize.height);
+  currentY = CGRectGetMaxY(_titleLabel.frame);
 
   if (hasDesc) {
-    _descriptionLabel.frame = CGRectMake(contentX,
-                                         CGRectGetMaxY(_titleLabel.frame) +
-                                             kDefaultDescriptionTopSpacing,
-                                         innerWidth, descSize.height);
-  } else {
-    _descriptionLabel.frame = CGRectZero;
+    _descriptionLabel.frame =
+        CGRectMake(contentX, currentY, innerWidth, descSize.height);
+    currentY = CGRectGetMaxY(_descriptionLabel.frame);
+  }
+
+  if (hasSubtitle) {
+    _subtitleLabel.frame =
+        CGRectMake(contentX, currentY, innerWidth, subtitleSize.height);
+    currentY = CGRectGetMaxY(_subtitleLabel.frame);
+  }
+
+  if (hasSubdesc) {
+    _subdescriptionLabel.frame =
+        CGRectMake(contentX, currentY, innerWidth, subdescSize.height);
   }
 
   [self updateBorderPathIfNeeded];
@@ -267,6 +272,16 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
 }
 
 - (void)setDescriptionText:(NSAttributedString *)descriptionText {
+  if (_descriptionLabel == nil) {
+    _descriptionLabel = [UILabel new];
+    _descriptionLabel.numberOfLines = 0;
+    _descriptionLabel.textAlignment = NSTextAlignmentLeft;
+  }
+
+  if (descriptionText.length > 0 && !_descriptionLabel.superview) {
+    [_textContainer addSubview:_descriptionLabel];
+  }
+
   _descriptionLabel.attributedText = descriptionText;
 }
 
@@ -325,6 +340,38 @@ static const CGFloat kDefaultDescriptionTopSpacing = 0.0;
 
 - (void)setBorderLeftColor:(UIColor *)color {
   _leftBorderLayer.backgroundColor = color.CGColor;
+}
+
+- (void)setSubTitleText:(NSAttributedString *)subtitleText {
+  if (!_subtitleLabel) {
+    _subtitleLabel = [UILabel new];
+    _subtitleLabel.numberOfLines = 1;
+    _subtitleLabel.textAlignment = NSTextAlignmentLeft;
+  }
+
+  _subtitleLabel.attributedText = subtitleText;
+
+  if (subtitleText.length > 0 && !_subtitleLabel.superview) {
+    [_textContainer addSubview:_subtitleLabel];
+  }
+
+  [self setNeedsLayout];
+}
+
+- (void)setSubDescriptionText:(NSAttributedString *)subdescriptionText {
+  if (!_subdescriptionLabel) {
+    _subdescriptionLabel = [UILabel new];
+    _subdescriptionLabel.numberOfLines = 0;
+    _subdescriptionLabel.textAlignment = NSTextAlignmentLeft;
+  }
+
+  _subdescriptionLabel.attributedText = subdescriptionText;
+
+  if (subdescriptionText.length > 0 && !_subdescriptionLabel.superview) {
+    [_textContainer addSubview:_subdescriptionLabel];
+  }
+
+  [self setNeedsLayout];
 }
 
 @end
