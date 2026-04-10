@@ -286,8 +286,6 @@ export interface HtmlStyleInternal {
   checkbox?: {
     imageWidth?: Float;
     imageHeight?: Float;
-    checkedImage?: string;
-    uncheckedImage?: string;
     marginLeft?: Float;
     gapWidth?: Float;
     checkedTextColor?: ColorValue;

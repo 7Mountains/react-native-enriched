@@ -1,4 +1,4 @@
-import { type ColorValue, Image, processColor } from 'react-native';
+import { type ColorValue, processColor } from 'react-native';
 import type { HtmlStyleInternal } from './EnrichedTextInputNativeComponent';
 import type { HtmlStyle } from './types';
 
@@ -95,8 +95,6 @@ const defaultStyle: Required<HtmlStyle> = {
   checkbox: {
     imageWidth: 24,
     imageHeight: 24,
-    checkedImage: undefined,
-    uncheckedImage: undefined,
     marginLeft: 8,
     gapWidth: 8,
     checkedTextColor: 'gray',
@@ -146,20 +144,9 @@ const convertToHtmlStyleInternal = (style: HtmlStyle): HtmlStyleInternal => {
     markerFontWeight: markerFontWeight,
   };
 
-  const checkboxStyles: HtmlStyleInternal['checkbox'] = {
-    ...style.checkbox,
-    checkedImage: style.checkbox?.checkedImage
-      ? Image.resolveAssetSource(style.checkbox.checkedImage).uri
-      : undefined,
-    uncheckedImage: style.checkbox?.uncheckedImage
-      ? Image.resolveAssetSource(style.checkbox.uncheckedImage).uri
-      : undefined,
-  };
-
   return {
     ...style,
     ol: olStyles,
-    checkbox: checkboxStyles,
   };
 };
 

@@ -1,14 +1,11 @@
 package com.swmansion.enriched.styles
 
-import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.graphics.drawable.toDrawable
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.PixelUtil
 import com.swmansion.enriched.R
-import com.swmansion.enriched.loaders.EnrichedImageLoader
 
 data class CheckboxStyle(
   val imageWidth: Float = 0f,
@@ -19,15 +16,25 @@ data class CheckboxStyle(
   val gapWidth: Float = 8f,
 ) {
   companion object {
-    fun loadImageWithFallback(
-      src: String?,
-      fallback: Drawable?,
-      assign: (Drawable?) -> Unit,
-    ) {
-      EnrichedImageLoader.instance.load(src) {
-        assign(it?.toDrawable(Resources.getSystem()) ?: fallback)
+    private fun getDrawableByNameOrNull(
+      context: ReactContext,
+      name: String,
+    ): Drawable? {
+      val resId = context.resources.getIdentifier(name, "drawable", context.packageName)
+      return if (resId != 0) {
+        AppCompatResources.getDrawable(context, resId)
+      } else {
+        null
       }
     }
+
+    private fun getCheckboxDrawable(
+      context: ReactContext,
+      enrichedName: String,
+      fallbackRes: Int,
+    ): Drawable? =
+      getDrawableByNameOrNull(context, enrichedName)
+        ?: AppCompatResources.getDrawable(context, fallbackRes)
 
     fun fromReadableMap(
       map: ReadableMap?,
@@ -42,8 +49,11 @@ data class CheckboxStyle(
         )
       }
 
-      val defaultChecked = AppCompatResources.getDrawable(context, R.drawable.checkbox_checked)
-      val defaultUnchecked = AppCompatResources.getDrawable(context, R.drawable.checkbox_unchecked)
+      val defaultChecked =
+        getCheckboxDrawable(context, "enriched_checkbox_on", R.drawable.checkbox_checked)
+
+      val defaultUnchecked =
+        getCheckboxDrawable(context, "enriched_checkbox_off", R.drawable.checkbox_unchecked)
 
       if (map == null) {
         return CheckboxStyle(
@@ -64,9 +74,6 @@ data class CheckboxStyle(
           def
         }
 
-      val checkedSource = map.getString("checkedImage")
-      val uncheckedSource = map.getString("uncheckedImage")
-
       val style =
         CheckboxStyle(
           imageWidth = optFloat("imageWidth", 24f),
@@ -76,13 +83,6 @@ data class CheckboxStyle(
           marginLeft = optFloat("marginLeft", 0f),
           gapWidth = optFloat("gapWidth", 8f),
         )
-
-      loadImageWithFallback(checkedSource, defaultChecked) {
-        style.checkedImage = it
-      }
-      loadImageWithFallback(uncheckedSource, defaultUnchecked) {
-        style.uncheckedImage = it
-      }
 
       return style
     }

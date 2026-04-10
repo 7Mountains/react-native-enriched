@@ -67,6 +67,8 @@
   _primaryFontNeedsRecreation = YES;
   _monospacedFontNeedsRecreation = YES;
   _olMarkerFontNeedsRecreation = YES;
+  _checkedImage = [UIImage imageNamed:@"enriched_checkbox_on"];
+  _uncheckedImage = [UIImage imageNamed:@"enriched_checkbox_off"];
   return self;
 }
 
@@ -547,14 +549,6 @@
 
 - (void)setImageHeight:(CGFloat)newValue {
   _imageHeight = newValue;
-}
-
-- (void)setUncheckedmage:(UIImage *)newValue {
-  _uncheckedImage = newValue;
-}
-
-- (void)setCheckedImage:(UIImage *)newValue {
-  _checkedImage = newValue;
 }
 
 - (UIImage *)uncheckedImage {
