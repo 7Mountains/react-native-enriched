@@ -154,32 +154,6 @@
     }
   }
 
-  if (newViewProps.htmlStyle.checkbox.uncheckedImage !=
-      oldViewProps.htmlStyle.checkbox.uncheckedImage) {
-    auto uri = newViewProps.htmlStyle.checkbox.uncheckedImage;
-    NSURL *url = [NSURL URLWithString:[NSString fromCppString:uri]];
-    [[EnrichedImageLoader shared] loadImage:url
-                                 completion:^(UIImage *image) {
-                                   if (image != nullptr) {
-                                     [newConfig setUncheckedmage:image];
-                                   }
-                                 }];
-    stylePropChanged = YES;
-  }
-
-  if (newViewProps.htmlStyle.checkbox.checkedImage !=
-      oldViewProps.htmlStyle.checkbox.checkedImage) {
-    auto uri = newViewProps.htmlStyle.checkbox.checkedImage;
-    NSURL *url = [NSURL URLWithString:[NSString fromCppString:uri]];
-    [[EnrichedImageLoader shared] loadImage:url
-                                 completion:^(UIImage *image) {
-                                   if (image != nullptr) {
-                                     [newConfig setCheckedImage:image];
-                                   }
-                                 }];
-    stylePropChanged = YES;
-  }
-
   if (newViewProps.htmlStyle.checkbox.gapWidth !=
       oldViewProps.htmlStyle.checkbox.gapWidth) {
     [newConfig

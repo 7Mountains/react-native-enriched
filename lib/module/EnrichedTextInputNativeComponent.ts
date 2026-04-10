@@ -205,6 +205,7 @@ export interface ContentImageContainerStyle {
   width?: Float;
   height?: Float;
   borderRadius?: Float;
+  backgroundColor?: ColorValue;
 }
 
 export interface ContentImageStyle {
