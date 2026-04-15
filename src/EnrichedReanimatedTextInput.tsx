@@ -23,6 +23,7 @@ import Reanimated, {
   type EventHandlerProcessed,
 } from 'react-native-reanimated';
 import type { NativeSyntheticEvent } from 'react-native';
+import useContextMenuItems from './hooks/useContextMenuItems';
 
 const DEFAULT_INSETS = {
   top: 0,
@@ -74,9 +75,11 @@ export const EnrichedReanimatedTextInput = ({
   onChangeSelection,
   onColorChangeInSelection,
   onParagraphAlignmentChange,
+  onContextMenuItemPress,
   contentInsets = DEFAULT_INSETS,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
+  contextMenuItems,
   keyboardDismissMode = 'none',
   onKeyPress,
   onScroll,
@@ -123,6 +126,8 @@ export const EnrichedReanimatedTextInput = ({
     pendingHtmlRequests,
   });
 
+  const nativeContextMenuItems = useContextMenuItems(contextMenuItems);
+
   return (
     <EnrichedReanimatedNativeComponent
       ref={nativeRef}
@@ -157,6 +162,7 @@ export const EnrichedReanimatedTextInput = ({
       onColorChangeInSelection={onColorChangeInSelection}
       onParagraphAlignmentChange={onParagraphAlignmentChange}
       isOnChangeTextSet={onChangeText !== undefined}
+      onContextMenuItemPress={onContextMenuItemPress}
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }
@@ -169,6 +175,7 @@ export const EnrichedReanimatedTextInput = ({
       contentInsets={contentInsets}
       keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}
+      contextMenuItems={nativeContextMenuItems}
     />
   );
 };

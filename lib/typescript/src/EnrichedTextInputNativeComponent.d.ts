@@ -338,6 +338,19 @@ export interface OnKeyPressEvent {
         end: Int32;
     };
 }
+export interface ContextMenuItemConfig {
+    text: string;
+    key: string;
+    iOSIcon?: string;
+}
+export interface OnContextMenuItemPressEvent {
+    text: string;
+    key: string;
+    selection: {
+        start: Int32;
+        end: Int32;
+    };
+}
 export interface NativeProps extends ViewProps {
     autoFocus?: boolean;
     editable?: boolean;
@@ -355,6 +368,7 @@ export interface NativeProps extends ViewProps {
     iOSparagraphSpacingBefore?: Float;
     paragraphsLimit?: Int32;
     stylesConfig?: string[];
+    contextMenuItems?: Readonly<Array<ContextMenuItemConfig>>;
     onInputFocus?: DirectEventHandler<null>;
     onInputBlur?: DirectEventHandler<null>;
     onChangeText?: DirectEventHandler<OnChangeTextEvent>;
@@ -371,6 +385,7 @@ export interface NativeProps extends ViewProps {
     onCheckboxPress?: DirectEventHandler<CheckboxPressEvent>;
     onAnyContentChange?: DirectEventHandler<null>;
     onInputKeyPress?: DirectEventHandler<OnKeyPressEvent>;
+    onContextMenuItemPress?: DirectEventHandler<OnContextMenuItemPressEvent>;
     color?: ColorValue;
     fontSize?: Float;
     fontFamily?: string;
@@ -408,6 +423,7 @@ interface NativeCommands {
     toggleOrderedList: (viewRef: React.ElementRef<ComponentType>) => void;
     toggleUnorderedList: (viewRef: React.ElementRef<ComponentType>) => void;
     addLink: (viewRef: React.ElementRef<ComponentType>, start: Int32, end: Int32, text: string, url: string) => void;
+    removeLink: (viewRef: React.ElementRef<ComponentType>, start: Int32, end: Int32) => void;
     addImage: (viewRef: React.ElementRef<ComponentType>, uri: string, width: Float, height: Float) => void;
     startMention: (viewRef: React.ElementRef<ComponentType>, indicator: string) => void;
     addMention: (viewRef: React.ElementRef<ComponentType>, indicator: string, text: string, type: string, payload: string) => void;

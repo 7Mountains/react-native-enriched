@@ -64,6 +64,14 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   // no-op for links
 }
 
+- (void)removeStyle:(NSRange)range {
+  if (range.length >= 1) {
+    [self removeAttributes:range];
+  } else {
+    [self removeTypingAttributes];
+  }
+}
+
 - (void)addAttributesInAttributedString:
             (NSMutableAttributedString *)attributedString
                                   range:(NSRange)range

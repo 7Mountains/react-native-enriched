@@ -1,11 +1,9 @@
 package com.swmansion.enriched
 
-import android.content.Context
 import androidx.core.graphics.toColorInt
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
-import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.StateWrapper
@@ -16,8 +14,6 @@ import com.facebook.react.uimanager.ViewProps
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerDelegate
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerInterface
-import com.facebook.yoga.YogaMeasureMode
-import com.facebook.yoga.YogaMeasureOutput
 import com.swmansion.enriched.events.OnAlignmentChangeEvent
 import com.swmansion.enriched.events.OnAnyContentChangeEvent
 import com.swmansion.enriched.events.OnChangeHtmlEvent
@@ -26,6 +22,7 @@ import com.swmansion.enriched.events.OnChangeStateEvent
 import com.swmansion.enriched.events.OnChangeTextEvent
 import com.swmansion.enriched.events.OnCheckboxPressEvent
 import com.swmansion.enriched.events.OnColorChangeEvent
+import com.swmansion.enriched.events.OnContextMenuItemPressEvent
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnInputKeyPressEvent
@@ -88,7 +85,8 @@ class EnrichedTextInputViewManager :
     map.put(OnScrollEvent.TOP_EVENT_NAME, mapOf(REGISTRATION_NAME to OnScrollEvent.EVENT_NAME))
     map.put(OnCheckboxPressEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnCheckboxPressEvent.EVENT_NAME))
     map.put(OnAnyContentChangeEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnAnyContentChangeEvent.EVENT_NAME))
-    map.put(OnInputKeyPressEvent.EVENT_NAME, mapOf("registrationName" to OnInputKeyPressEvent.EVENT_NAME))
+    map.put(OnInputKeyPressEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnInputKeyPressEvent.EVENT_NAME))
+    map.put(OnContextMenuItemPressEvent.EVENT_NAME, mapOf(REGISTRATION_NAME to OnContextMenuItemPressEvent.EVENT_NAME))
 
     return map
   }
@@ -228,6 +226,13 @@ class EnrichedTextInputViewManager :
     value: Int,
   ) {
     view?.paragraphsLimit = value
+  }
+
+  override fun setContextMenuItems(
+    view: EnrichedTextInputView?,
+    value: ReadableArray?,
+  ) {
+    view?.setContextMenuItems(value)
   }
 
   override fun onAfterUpdateTransaction(view: EnrichedTextInputView) {
@@ -590,6 +595,15 @@ class EnrichedTextInputViewManager :
     at: Int,
   ) {
     view?.insertText(text, at)
+  }
+
+  override fun removeLink(
+    view: EnrichedTextInputView?,
+    start: Int,
+    end: Int,
+  ) {
+    view?.parametrizedStyles?.removeLinkSpan(start, end)
+    view?.selection?.validateStyles()
   }
 
   companion object {

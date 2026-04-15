@@ -17,13 +17,17 @@ import android.text.SpannableStringBuilder
 import android.util.AttributeSet
 import android.util.Log
 import android.util.TypedValue
+import android.view.ActionMode
 import android.view.Gravity
+import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.common.ReactConstants
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.StateWrapper
@@ -34,6 +38,7 @@ import com.facebook.react.views.text.ReactTypefaceUtils.parseFontStyle
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.events.MentionHandler
+import com.swmansion.enriched.events.OnContextMenuItemPressEvent
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
@@ -94,6 +99,7 @@ class EnrichedTextInputView : AppCompatEditText {
   private var fontWeight: Int = ReactConstants.UNSET
   private var defaultValue: CharSequence? = null
   private var defaultValueDirty: Boolean = false
+  private var contextMenuItems: List<EnrichedActionModeCallback.Companion.CallbackMenuItemData> = emptyList()
 
   private var inputMethodManager: InputMethodManager? = null
 
@@ -502,8 +508,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
   fun setCursorColor(colorInt: Int?) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      val cursorDrawable = textCursorDrawable
-      if (cursorDrawable == null) return
+      val cursorDrawable = textCursorDrawable ?: return
 
       if (colorInt != null) {
         cursorDrawable.colorFilter = BlendModeColorFilter(colorInt, BlendMode.SRC_IN)
@@ -513,6 +518,42 @@ class EnrichedTextInputView : AppCompatEditText {
 
       textCursorDrawable = cursorDrawable
     }
+  }
+
+  fun setContextMenuItems(items: ReadableArray?) {
+    if (items == null) {
+      contextMenuItems = emptyList()
+      return
+    }
+
+    val result = mutableListOf<EnrichedActionModeCallback.Companion.CallbackMenuItemData>()
+    for (i in 0 until items.size()) {
+      val item = items.getMap(i) ?: continue
+      val text = item.getString("text") ?: continue
+      val key = item.getString("key") ?: continue
+      result.add(EnrichedActionModeCallback.Companion.CallbackMenuItemData(key = key, text = text))
+    }
+
+    contextMenuItems = result
+  }
+
+  override fun startActionMode(
+    callback: ActionMode.Callback?,
+    type: Int,
+  ): ActionMode? {
+    val menuItems = contextMenuItems
+    if (menuItems.isEmpty()) {
+      return super.startActionMode(callback, type)
+    }
+
+    val wrappedCallback =
+      EnrichedActionModeCallback(
+        editText = this,
+        original = callback,
+        contextMenuItems = menuItems,
+      )
+
+    return super.startActionMode(wrappedCallback, type)
   }
 
   fun setColor(colorInt: Int?) {

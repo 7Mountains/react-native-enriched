@@ -181,6 +181,9 @@ const useCommands = (
       insertTextAt: (text: string, at: number) => {
         Commands.insertTextAt(nullthrows(typedRef), text, at);
       },
+      removeLink: (start: number, end: number) => {
+        Commands.removeLink(nullthrows(typedRef), start, end);
+      },
     };
   }, [
     mentionIndicators,
