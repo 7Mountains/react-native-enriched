@@ -54,16 +54,15 @@ class ParametrizedStyles(
 
     removeLinkSpan(start, end)
 
-    if (start == end) {
-      spannable.insert(start, text)
-    } else {
-      spannable.replace(start, end, text)
-    }
-
-    val spanEnd = start + text.length
+    val insertedSpannable = SpannableStringBuilder(text)
     val span = EnrichedLinkSpan(url, view.htmlStyle, true)
-    val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, spanEnd)
-    spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    insertedSpannable.setSpan(span, 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+    if (start == end) {
+      spannable.insert(start, insertedSpannable)
+    } else {
+      spannable.replace(start, end, insertedSpannable)
+    }
 
     view.selection?.validateStyles()
     isSettingLinkSpan = false
