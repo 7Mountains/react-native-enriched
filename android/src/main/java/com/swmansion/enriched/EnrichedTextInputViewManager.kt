@@ -367,7 +367,7 @@ class EnrichedTextInputViewManager :
     view: EnrichedTextInputView?,
     color: String,
   ) {
-    view?.setColor(color.toColorInt())
+    view?.styleManipulator?.setColor(color.toColorInt())
   }
 
   override fun removeColor(view: EnrichedTextInputView?) {
