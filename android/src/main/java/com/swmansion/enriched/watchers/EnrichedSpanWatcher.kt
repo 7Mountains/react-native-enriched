@@ -58,7 +58,7 @@ class EnrichedSpanWatcher(
     end: Int,
   ) {
     if (what is EnrichedOrderedListSpan) {
-      view.listStyles?.updateOrderedListIndexes(text, end)
+      view.styleManipulator?.listStyles?.updateOrderedListIndexes(text, end)
     }
   }
 

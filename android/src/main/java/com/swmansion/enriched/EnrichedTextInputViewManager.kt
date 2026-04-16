@@ -161,7 +161,7 @@ class EnrichedTextInputViewManager :
     }
 
     val indicatorsArray = indicatorsList.toTypedArray()
-    view?.parametrizedStyles?.mentionIndicators = indicatorsArray
+    view?.styleManipulator?.parametrizedStyles?.mentionIndicators = indicatorsArray
   }
 
   @ReactProp(name = "htmlStyle")
@@ -367,15 +367,15 @@ class EnrichedTextInputViewManager :
     view: EnrichedTextInputView?,
     color: String,
   ) {
-    view?.setColor(color.toColorInt())
+    view?.styleManipulator?.setColor(color.toColorInt())
   }
 
   override fun removeColor(view: EnrichedTextInputView?) {
-    view?.removeColor()
+    view?.styleManipulator?.removeColor()
   }
 
   override fun addDividerAtNewLine(view: EnrichedTextInputView?) {
-    view?.insertDivider()
+    view?.styleManipulator?.insertDivider()
   }
 
   override fun addLink(
@@ -385,7 +385,7 @@ class EnrichedTextInputViewManager :
     text: String,
     url: String,
   ) {
-    view?.addLink(start, end, text, url)
+    view?.styleManipulator?.addLink(start, end, text, url)
   }
 
   override fun addImage(
@@ -394,14 +394,14 @@ class EnrichedTextInputViewManager :
     width: Float,
     height: Float,
   ) {
-    view?.addImage(src, width, height)
+    view?.styleManipulator?.addImage(src, width, height)
   }
 
   override fun startMention(
     view: EnrichedTextInputView?,
     indicator: String,
   ) {
-    view?.startMention(indicator)
+    view?.styleManipulator?.startMention(indicator)
   }
 
   override fun addMention(
@@ -412,7 +412,7 @@ class EnrichedTextInputViewManager :
     payload: String,
   ) {
     val attributes = jsonStringToStringMap(payload)
-    view?.addMention(text, indicator, type, attributes)
+    view?.styleManipulator?.addMention(text, indicator, type, attributes)
   }
 
   override fun requestHTML(
@@ -431,7 +431,7 @@ class EnrichedTextInputViewManager :
     view: EnrichedTextInputView?,
     alignment: String,
   ) {
-    view?.setParagraphAlignmentSpan(alignment)
+    view?.styleManipulator?.setParagraphAlignment(alignment)
   }
 
   override fun setKeyboardDismissMode(
@@ -579,7 +579,7 @@ class EnrichedTextInputViewManager :
     attributes: String,
   ) {
     val attributesMap = jsonStringToStringMap(attributes)
-    view?.addContent(text, type, src, attributesMap)
+    view?.styleManipulator?.addContent(text, type, src, attributesMap)
   }
 
   override fun insertTextAtSelection(
@@ -602,8 +602,7 @@ class EnrichedTextInputViewManager :
     start: Int,
     end: Int,
   ) {
-    view?.parametrizedStyles?.removeLinkSpan(start, end)
-    view?.selection?.validateStyles()
+    view?.styleManipulator?.removeLink(start, end)
   }
 
   companion object {
