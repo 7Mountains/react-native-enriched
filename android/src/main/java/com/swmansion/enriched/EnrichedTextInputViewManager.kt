@@ -434,6 +434,10 @@ class EnrichedTextInputViewManager :
     view?.styleManipulator?.setParagraphAlignment(alignment)
   }
 
+  override fun hideContextMenu(view: EnrichedTextInputView?) {
+    view?.hideContextMenu()
+  }
+
   override fun setKeyboardDismissMode(
     view: EnrichedTextInputView?,
     value: String?,

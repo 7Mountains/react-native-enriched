@@ -435,6 +435,7 @@ export default function EditorScreen() {
             const end = performance.now();
             console.log('HTML:', result);
             setRequestHtmlTime(end - start);
+            ref.current?.hideContextMenu();
           }}
         />
         <View style={styles.editor}>

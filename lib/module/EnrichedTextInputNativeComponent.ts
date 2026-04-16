@@ -525,6 +525,7 @@ interface NativeCommands {
     text: string,
     at: Int32
   ) => void;
+  hideContextMenu: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -566,6 +567,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'setParagraphAlignment',
     'scrollTo',
     'addContent',
+    'hideContextMenu',
   ],
 });
 

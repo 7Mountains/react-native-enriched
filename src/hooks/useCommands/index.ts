@@ -184,6 +184,9 @@ const useCommands = (
       removeLink: (start: number, end: number) => {
         Commands.removeLink(nullthrows(typedRef), start, end);
       },
+      hideContextMenu: () => {
+        Commands.hideContextMenu(nullthrows(typedRef));
+      },
     };
   }, [
     mentionIndicators,
