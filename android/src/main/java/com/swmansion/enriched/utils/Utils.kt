@@ -69,6 +69,16 @@ data class MergeResult(
   val insertedCharactersAmount: Int,
 )
 
+fun SpannableStringBuilder.trimTrailingNewlines(): SpannableStringBuilder {
+  var len = this.length
+  while (len > 0 && this[len - 1] == Strings.NEWLINE) {
+    this.delete(len - 1, len)
+    len--
+  }
+
+  return this
+}
+
 fun Spannable.mergeSpannables(
   start: Int,
   end: Int,

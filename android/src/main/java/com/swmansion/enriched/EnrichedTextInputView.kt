@@ -1,7 +1,5 @@
 package com.swmansion.enriched
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.BlendMode
 import android.graphics.BlendModeColorFilter
@@ -20,6 +18,7 @@ import android.util.TypedValue
 import android.view.ActionMode
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
@@ -53,10 +52,6 @@ import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.spans.utils.ForceRedrawSpan
 import com.swmansion.enriched.styles.HtmlStyle
-import com.swmansion.enriched.styles.InlineStyles
-import com.swmansion.enriched.styles.ListStyles
-import com.swmansion.enriched.styles.ParagraphStyles
-import com.swmansion.enriched.styles.ParametrizedStyles
 import com.swmansion.enriched.textinput.utils.EnrichedEditableFactory
 import com.swmansion.enriched.utils.EnrichedSelection
 import com.swmansion.enriched.utils.EnrichedSpanState
@@ -70,42 +65,125 @@ class EnrichedTextInputView : AppCompatEditText {
   var stateWrapper: StateWrapper? = null
   val selection: EnrichedSelection? = EnrichedSelection(this)
   val spanState: EnrichedSpanState? = EnrichedSpanState(this)
-  val inlineStyles: InlineStyles? = InlineStyles(this)
-  val paragraphStyles: ParagraphStyles? = ParagraphStyles(this)
-  val listStyles: ListStyles? = ListStyles(this)
-  val parametrizedStyles: ParametrizedStyles? = ParametrizedStyles(this)
+  val styleManipulator: EnrichedStyleManipulator? = EnrichedStyleManipulator(this)
+
   var isDuringTransaction: Boolean = false
   var isRemovingMany: Boolean = false
-  var scrollEnabled: Boolean = true
-  private var detectScrollMovement: Boolean = false
-  private var scrollWatcher: EnrichedScrollWatcher? = null
-  var spanWatcher: EnrichedSpanWatcher? = null
   var blockTextEventEmitting: Boolean = false
-  var paragraphsLimit: Int = -1
+
   var availableStyles: Map<TextStyle, ISpanConfig> = EnrichedSpans.allSpans
+  var paragraphsLimit: Int = -1
+
   var shouldEmitHtml: Boolean = false
   var shouldEmitOnChangeText: Boolean = false
   var experimentalSynchronousEvents: Boolean = false
 
   var fontSize: Float? = null
-  private var autoFocus = false
-  private var typefaceDirty = false
-  private var didAttachToWindow = false
   private var fontFamily: String? = null
   private var fontStyle: Int = ReactConstants.UNSET
   private var fontWeight: Int = ReactConstants.UNSET
-  private var defaultValue: CharSequence? = null
-  private var defaultValueDirty: Boolean = false
-  private var contextMenuItems: List<EnrichedActionModeCallback.Companion.CallbackMenuItemData> = emptyList()
+
+  var htmlStyle: HtmlStyle = HtmlStyle(this, null)
+    set(value) {
+      if (field != value) {
+        val prev = field
+        field = value
+        reApplyHtmlStyleForSpans(prev, value)
+      }
+    }
+
+  var layoutManager = EnrichedTextInputViewLayoutManager(this)
+
+  var editorWidth: Int = getInitialWidth()
+    private set
+
+  private var typefaceDirty = false
 
   private var inputMethodManager: InputMethodManager? = null
+  private var autoFocus = false
+  private var didAttachToWindow = false
+
+  private var defaultValue: CharSequence? = null
+  private var defaultValueDirty = false
+
+  private val clipboardManager by lazy {
+    EnrichedClipboardManager(context, this)
+  }
+
+  private var contextMenuItems: List<EnrichedActionModeCallback.Companion.CallbackMenuItemData> = emptyList()
+
+  var scrollEnabled: Boolean = true
+  private var detectScrollMovement = false
+  private var scrollWatcher: EnrichedScrollWatcher? = null
+
+  val mentionHandler: MentionHandler? = MentionHandler(this)
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
   }
 
-  var editorWidth: Int = 0
-    private set
+  var spanWatcher: EnrichedSpanWatcher? = null
+
+  constructor(context: Context) : super(context) {
+    prepareComponent()
+  }
+
+  constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
+    prepareComponent()
+  }
+
+  constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(
+    context,
+    attrs,
+    defStyleAttr,
+  ) {
+    prepareComponent()
+  }
+
+  init {
+    inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    EnrichedImageLoader.init(context as ReactContext)
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
+    // Used to ensure that text is selectable inside of removeClippedSubviews
+    // See https://github.com/facebook/react-native/issues/6805 for original
+    // fix that was ported to here.
+    runAsATransaction {
+      blockTextEventEmitting = true
+      super.setTextIsSelectable(true)
+      blockTextEventEmitting = false
+    }
+
+    if (autoFocus && !didAttachToWindow) {
+      requestFocusProgrammatically()
+    }
+
+    didAttachToWindow = true
+  }
+
+  private fun prepareComponent() {
+    isSingleLine = false
+    isHorizontalScrollBarEnabled = false
+    isVerticalScrollBarEnabled = true
+    gravity = Gravity.TOP or Gravity.START
+    inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      breakStrategy = LineBreaker.BREAK_STRATEGY_HIGH_QUALITY
+    }
+
+    setPadding(0, 0, 0, 0)
+    setBackgroundColor(Color.TRANSPARENT)
+
+    val spanWatcher = EnrichedSpanWatcher(this)
+    this.spanWatcher = spanWatcher
+    setEditableFactory(EnrichedEditableFactory(spanWatcher))
+    addTextChangedListener(EnrichedTextWatcher(this))
+    filters = arrayOf(NonEditableParagraphFilter(), ParagraphLimitFilter(this))
+  }
 
   override fun onLayout(
     changed: Boolean,
@@ -126,17 +204,6 @@ class EnrichedTextInputView : AppCompatEditText {
     super.onDraw(canvas)
     layoutManager.invalidateLayoutIfNeeded()
   }
-
-  val mentionHandler: MentionHandler? = MentionHandler(this)
-  var htmlStyle: HtmlStyle = HtmlStyle(this, null)
-    set(value) {
-      if (field != value) {
-        val prev = field
-        field = value
-        reApplyHtmlStyleForSpans(prev, value)
-      }
-    }
-  var layoutManager: EnrichedTextInputViewLayoutManager = EnrichedTextInputViewLayoutManager(this)
 
   // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L295C1-L296C1
   override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -167,51 +234,23 @@ class EnrichedTextInputView : AppCompatEditText {
     return super.onTouchEvent(event)
   }
 
-  constructor(context: Context) : super(context) {
-    prepareComponent()
-  }
-
-  constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
-    prepareComponent()
-  }
-
-  constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(
-    context,
-    attrs,
-    defStyleAttr,
-  ) {
-    prepareComponent()
-  }
-
-  init {
-    inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-    EnrichedImageLoader.init(context as ReactContext)
-  }
-
-  private fun prepareComponent() {
-    isSingleLine = false
-    isHorizontalScrollBarEnabled = false
-    isVerticalScrollBarEnabled = true
-    gravity = Gravity.TOP or Gravity.START
-    inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      breakStrategy = LineBreaker.BREAK_STRATEGY_HIGH_QUALITY
-    }
-
-    setPadding(0, 0, 0, 0)
-    setBackgroundColor(Color.TRANSPARENT)
-
-    val spanWatcher = EnrichedSpanWatcher(this)
-    this.spanWatcher = spanWatcher
-    setEditableFactory(EnrichedEditableFactory(spanWatcher))
-    addTextChangedListener(EnrichedTextWatcher(this))
-    filters = arrayOf(NonEditableParagraphFilter(), ParagraphLimitFilter(this))
-  }
-
   override fun canScrollVertically(direction: Int): Boolean = scrollEnabled
 
   override fun canScrollHorizontally(direction: Int): Boolean = scrollEnabled
+
+  override fun onScrollChanged(
+    horiz: Int,
+    vert: Int,
+    oldHoriz: Int,
+    oldVert: Int,
+  ) {
+    super.onScrollChanged(horiz, vert, oldHoriz, oldVert)
+    scrollWatcher?.onScrollChanged(horiz, vert, oldHoriz, oldVert)
+  }
+
+  fun setScrollWatcher(scrollWatcher: EnrichedScrollWatcher?) {
+    this.scrollWatcher = scrollWatcher
+  }
 
   override fun onSelectionChanged(
     selStart: Int,
@@ -247,17 +286,17 @@ class EnrichedTextInputView : AppCompatEditText {
   override fun onTextContextMenuItem(id: Int): Boolean {
     when (id) {
       android.R.id.copy -> {
-        handleCustomCopy()
+        clipboardManager.copy()
         return true
       }
 
       android.R.id.paste -> {
-        handleCustomPaste()
+        clipboardManager.paste()
         return true
       }
 
       android.R.id.cut -> {
-        handleCustomCut()
+        clipboardManager.cut()
         return true
       }
     }
@@ -279,47 +318,7 @@ class EnrichedTextInputView : AppCompatEditText {
     return inputConnection
   }
 
-  private fun handleCustomCopy() {
-    val start = selectionStart
-    val end = selectionEnd
-    val spannable = text as Spannable
-
-    if (start < end) {
-      val selectedText = spannable.subSequence(start, end) as Spannable
-      val selectedHtml = EnrichedParser.toHtml(selectedText)
-
-      val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-      val clip = ClipData.newHtmlText(CLIPBOARD_TAG, selectedText, selectedHtml)
-      clipboard.setPrimaryClip(clip)
-    }
-
-    val cursor = end.coerceAtLeast(0)
-    setSelection(cursor, cursor)
-  }
-
-  private fun handleCustomCut() {
-    val start = selectionStart
-    val end = selectionEnd
-    val editable = text as? SpannableStringBuilder ?: return
-
-    if (start >= end) return
-
-    val selectedText = editable.subSequence(start, end) as Spannable
-    val selectedHtml = EnrichedParser.toHtml(selectedText)
-
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clip = ClipData.newHtmlText(CLIPBOARD_TAG, selectedText, selectedHtml)
-    clipboard.setPrimaryClip(clip)
-
-    runAsATransaction {
-      editable.replace(start, end, "")
-    }
-
-    val cursor = start.coerceAtLeast(0)
-    setSelection(cursor, cursor)
-  }
-
-  private fun insertSpannable(
+  fun insertSpannable(
     spannable: Spannable,
     at: Int? = null,
   ) {
@@ -355,26 +354,6 @@ class EnrichedTextInputView : AppCompatEditText {
     insertSpannable(spannable, at)
   }
 
-  private fun handleCustomPaste() {
-    val clipboard =
-      context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    if (!clipboard.hasPrimaryClip()) return
-
-    val clip = clipboard.primaryClip ?: return
-    val item = clip.getItemAt(0)
-
-    item.htmlText?.let { html ->
-      val parsed = parseText(html)
-      if (parsed is Spannable) {
-        insertSpannable(parsed)
-        return
-      }
-    }
-
-    val plainText = item.text?.toString() ?: return
-    insertSpannable(SpannableString(plainText))
-  }
-
   fun requestFocusProgrammatically(withSelection: Boolean = true) {
     requestFocus()
     inputMethodManager?.showSoftInput(this, 0)
@@ -388,9 +367,7 @@ class EnrichedTextInputView : AppCompatEditText {
     if (!EnrichedParser.isHtml(stringText)) return text
 
     try {
-      val parsed = EnrichedParser.fromHtml(stringText, htmlStyle, null, this)
-      val textWithoutLastNewLine = parsed.trimEnd(Strings.NEWLINE)
-      return textWithoutLastNewLine
+      return EnrichedParser.fromHtml(stringText, htmlStyle, null, this)
     } catch (e: Exception) {
       Log.e("EnrichedTextInputView", "Error parsing HTML: ${e.message}")
       return text
@@ -445,8 +422,10 @@ class EnrichedTextInputView : AppCompatEditText {
 
     val marker = ForceRedrawSpan()
 
-    text.setSpan(marker, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-    text.removeSpan(marker)
+    runAsATransaction {
+      text.setSpan(marker, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+      text.removeSpan(marker)
+    }
   }
 
   private fun getActualIndex(visibleIndex: Int): Int {
@@ -644,8 +623,6 @@ class EnrichedTextInputView : AppCompatEditText {
     defaultValueDirty = true
   }
 
-  private fun canApplyStyle(name: TextStyle): Boolean = EnrichedSpans.isStyleAvailable(name, availableStyles)
-
   private fun updateDefaultValue() {
     if (!defaultValueDirty) return
 
@@ -662,211 +639,14 @@ class EnrichedTextInputView : AppCompatEditText {
     paint.typeface = newTypeface
   }
 
-  private fun toggleStyle(name: TextStyle) {
-    runAsATransaction {
-      when (name) {
-        TextStyle.BOLD -> inlineStyles?.toggleStyle(TextStyle.BOLD)
-        TextStyle.ITALIC -> inlineStyles?.toggleStyle(TextStyle.ITALIC)
-        TextStyle.UNDERLINE -> inlineStyles?.toggleStyle(TextStyle.UNDERLINE)
-        TextStyle.STRIKETHROUGH -> inlineStyles?.toggleStyle(TextStyle.STRIKETHROUGH)
-        TextStyle.INLINE_CODE -> inlineStyles?.toggleStyle(TextStyle.INLINE_CODE)
-        TextStyle.H1 -> paragraphStyles?.toggleStyle(TextStyle.H1)
-        TextStyle.H2 -> paragraphStyles?.toggleStyle(TextStyle.H2)
-        TextStyle.H3 -> paragraphStyles?.toggleStyle(TextStyle.H3)
-        TextStyle.H4 -> paragraphStyles?.toggleStyle(TextStyle.H4)
-        TextStyle.H5 -> paragraphStyles?.toggleStyle(TextStyle.H5)
-        TextStyle.H6 -> paragraphStyles?.toggleStyle(TextStyle.H6)
-        TextStyle.CODE_BLOCK -> paragraphStyles?.toggleStyle(TextStyle.CODE_BLOCK)
-        TextStyle.BLOCK_QUOTE -> paragraphStyles?.toggleStyle(TextStyle.BLOCK_QUOTE)
-        TextStyle.ORDERED_LIST -> listStyles?.toggleStyle(TextStyle.ORDERED_LIST)
-        TextStyle.UNORDERED_LIST -> listStyles?.toggleStyle(TextStyle.UNORDERED_LIST)
-        TextStyle.CHECK_LIST -> listStyles?.toggleStyle(TextStyle.CHECK_LIST)
-        else -> Log.w("EnrichedTextInputView", "Unknown style: $name")
-      }
-    }
-  }
-
-  private fun removeStyle(
-    name: TextStyle,
-    start: Int,
-    end: Int,
-  ): Boolean {
-    val removed =
-      when (name) {
-        TextStyle.BOLD -> inlineStyles?.removeStyle(TextStyle.BOLD, start, end)
-        TextStyle.ITALIC -> inlineStyles?.removeStyle(TextStyle.ITALIC, start, end)
-        TextStyle.UNDERLINE -> inlineStyles?.removeStyle(TextStyle.UNDERLINE, start, end)
-        TextStyle.STRIKETHROUGH -> inlineStyles?.removeStyle(TextStyle.STRIKETHROUGH, start, end)
-        TextStyle.INLINE_CODE -> inlineStyles?.removeStyle(TextStyle.INLINE_CODE, start, end)
-        TextStyle.H1 -> paragraphStyles?.removeStyle(TextStyle.H1, start, end)
-        TextStyle.H2 -> paragraphStyles?.removeStyle(TextStyle.H2, start, end)
-        TextStyle.H3 -> paragraphStyles?.removeStyle(TextStyle.H3, start, end)
-        TextStyle.H4 -> paragraphStyles?.removeStyle(TextStyle.H4, start, end)
-        TextStyle.H5 -> paragraphStyles?.removeStyle(TextStyle.H5, start, end)
-        TextStyle.H6 -> paragraphStyles?.removeStyle(TextStyle.H6, start, end)
-        TextStyle.CODE_BLOCK -> paragraphStyles?.removeStyle(TextStyle.CODE_BLOCK, start, end)
-        TextStyle.BLOCK_QUOTE -> paragraphStyles?.removeStyle(TextStyle.BLOCK_QUOTE, start, end)
-        TextStyle.ORDERED_LIST -> listStyles?.removeStyle(TextStyle.ORDERED_LIST, start, end)
-        TextStyle.UNORDERED_LIST -> listStyles?.removeStyle(TextStyle.UNORDERED_LIST, start, end)
-        TextStyle.CHECK_LIST -> listStyles?.removeStyle(TextStyle.CHECK_LIST, start, end)
-        TextStyle.LINK -> parametrizedStyles?.removeStyle(TextStyle.LINK, start, end)
-        TextStyle.IMAGE -> parametrizedStyles?.removeStyle(TextStyle.IMAGE, start, end)
-        TextStyle.MENTION -> parametrizedStyles?.removeStyle(TextStyle.MENTION, start, end)
-        else -> false
-      }
-
-    return removed == true
-  }
-
-  private fun getTargetRange(name: TextStyle): Pair<Int, Int> {
-    val result =
-      when (name) {
-        TextStyle.BOLD -> inlineStyles?.getStyleRange()
-        TextStyle.ITALIC -> inlineStyles?.getStyleRange()
-        TextStyle.UNDERLINE -> inlineStyles?.getStyleRange()
-        TextStyle.STRIKETHROUGH -> inlineStyles?.getStyleRange()
-        TextStyle.INLINE_CODE -> inlineStyles?.getStyleRange()
-        TextStyle.H1 -> paragraphStyles?.getStyleRange()
-        TextStyle.H2 -> paragraphStyles?.getStyleRange()
-        TextStyle.H3 -> paragraphStyles?.getStyleRange()
-        TextStyle.H4 -> paragraphStyles?.getStyleRange()
-        TextStyle.H5 -> paragraphStyles?.getStyleRange()
-        TextStyle.H6 -> paragraphStyles?.getStyleRange()
-        TextStyle.DIVIDER -> paragraphStyles?.getStyleRange()
-        TextStyle.CODE_BLOCK -> paragraphStyles?.getStyleRange()
-        TextStyle.BLOCK_QUOTE -> paragraphStyles?.getStyleRange()
-        TextStyle.ORDERED_LIST -> listStyles?.getStyleRange()
-        TextStyle.UNORDERED_LIST -> listStyles?.getStyleRange()
-        TextStyle.CHECK_LIST -> listStyles?.getStyleRange()
-        TextStyle.LINK -> parametrizedStyles?.getStyleRange()
-        TextStyle.IMAGE -> parametrizedStyles?.getStyleRange()
-        TextStyle.MENTION -> parametrizedStyles?.getStyleRange()
-        else -> Pair(0, 0)
-      }
-
-    return result ?: Pair(0, 0)
-  }
-
-  fun verifyStyle(name: TextStyle): Boolean {
-    if (!canApplyStyle(name)) {
-      return false
-    }
-    val mergingConfig = EnrichedSpans.getMergingConfigForStyle(name, htmlStyle) ?: return true
-    val conflictingStyles = mergingConfig.conflictingStyles
-    val blockingStyles = mergingConfig.blockingStyles
-    val isEnabling = spanState?.getStart(name) == null
-    if (!isEnabling) return true
-
-    for (style in blockingStyles) {
-      if (spanState?.getStart(style) != null) {
-        spanState.setStart(name, null)
-        return false
-      }
-    }
-
-    for (style in conflictingStyles) {
-      val start = selection?.start ?: 0
-      val end = selection?.end ?: 0
-      val lengthBefore = text?.length ?: 0
-
-      runAsATransaction {
-        val targetRange = getTargetRange(name)
-        val removed = removeStyle(style, targetRange.first, targetRange.second)
-        if (removed) {
-          spanState?.setStart(style, null)
-        }
-      }
-
-      val lengthAfter = text?.length ?: 0
-      val charactersRemoved = lengthBefore - lengthAfter
-      val finalEnd =
-        if (charactersRemoved > 0) {
-          (end - charactersRemoved).coerceAtLeast(0)
-        } else {
-          end
-        }
-
-      val finalStart = start.coerceAtLeast(0).coerceAtMost(finalEnd)
-      selection?.onSelection(finalStart, finalEnd)
-    }
-
-    return true
-  }
-
   fun verifyAndToggleStyle(name: TextStyle) {
-    val isValid = verifyStyle(name)
+    val isValid = styleManipulator?.verifyStyle(name) ?: false
     if (!isValid) return
 
-    toggleStyle(name)
-  }
-
-  fun addLink(
-    start: Int,
-    end: Int,
-    text: String,
-    url: String,
-  ) {
-    val isValid = verifyStyle(TextStyle.LINK)
-    if (!isValid) return
-
-    parametrizedStyles?.setLinkSpan(start, end, text, url)
-  }
-
-  fun addImage(
-    src: String,
-    width: Float,
-    height: Float,
-  ) {
-    val isValid = verifyStyle(TextStyle.IMAGE)
-    if (!isValid) return
-
-    parametrizedStyles?.setImageSpan(src, width, height)
-  }
-
-  fun insertDivider() {
-    if (canApplyStyle(TextStyle.DIVIDER)) {
-      paragraphStyles?.insertDivider()
+    runAsATransaction {
+      styleManipulator.toggleStyle(name)
     }
   }
-
-  fun addContent(
-    text: String,
-    type: String,
-    src: String,
-    attributes: Map<String, String>?,
-  ) {
-    if (canApplyStyle(TextStyle.CONTENT)) {
-      paragraphStyles?.addContent(text, type, src, attributes)
-    }
-  }
-
-  fun startMention(indicator: String) {
-    val isValid = verifyStyle(TextStyle.MENTION)
-    if (!isValid) return
-
-    parametrizedStyles?.startMention(indicator)
-  }
-
-  fun addMention(
-    indicator: String,
-    text: String,
-    type: String,
-    attributes: Map<String, String>,
-  ) {
-    val isValid = verifyStyle(TextStyle.MENTION)
-    if (!isValid) return
-
-    parametrizedStyles?.setMentionSpan(text, indicator, type, attributes)
-  }
-
-  fun setColor(color: Int) {
-    val isValid = verifyStyle(TextStyle.COLOR)
-    if (!isValid) return
-
-    inlineStyles?.setColorStyle(color)
-  }
-
-  fun removeColor() = inlineStyles?.removeColorSpan()
 
   fun requestHTML(
     requestId: Int,
@@ -885,8 +665,6 @@ class EnrichedTextInputView : AppCompatEditText {
     dispatcher?.dispatchEvent(OnRequestHtmlResultEvent(surfaceId, id, requestId, html, experimentalSynchronousEvents))
   }
 
-  fun setParagraphAlignmentSpan(alignment: String) = paragraphStyles?.setParagraphAlignmentSpan(alignment)
-
   // Sometimes setting up style triggers many changes in sequence
   // Eg. removing conflicting styles -> changing text -> applying spans
   // In such scenario we want to prevent from handling side effects (eg. onTextChanged)
@@ -897,6 +675,13 @@ class EnrichedTextInputView : AppCompatEditText {
     } finally {
       isDuringTransaction = false
     }
+  }
+
+  fun <T : Event<T>> dispatchTextRelatedEvent(event: T) {
+    if (blockTextEventEmitting) return
+    val reactContext = context as ReactContext
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, id)
+    dispatcher?.dispatchEvent(event)
   }
 
   private fun forceScrollToSelection() {
@@ -954,7 +739,7 @@ class EnrichedTextInputView : AppCompatEditText {
         if ((span is EnrichedH1Span && shouldRemoveBoldSpanFromH1Span) || (span is EnrichedH2Span && shouldRemoveBoldSpanFromH2Span) ||
           (span is EnrichedH3Span && shouldRemoveBoldSpanFromH3Span)
         ) {
-          val isRemoved = removeStyle(TextStyle.BOLD, start, end)
+          val isRemoved = styleManipulator?.removeStyle(TextStyle.BOLD, start, end) ?: false
           if (isRemoved) shouldEmitStateChange = true
         }
 
@@ -971,44 +756,10 @@ class EnrichedTextInputView : AppCompatEditText {
     blockTextEventEmitting = false
   }
 
-  fun <T : Event<T>> dispatchTextRelatedEvent(event: T) {
-    if (blockTextEventEmitting) return
-    val reactContext = context as ReactContext
-    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, id)
-    dispatcher?.dispatchEvent(event)
-  }
+  private fun getInitialWidth(): Int {
+    val parentWidth = (parent as? View)?.width ?: 0
 
-  override fun onScrollChanged(
-    horiz: Int,
-    vert: Int,
-    oldHoriz: Int,
-    oldVert: Int,
-  ) {
-    super.onScrollChanged(horiz, vert, oldHoriz, oldVert)
-    scrollWatcher?.onScrollChanged(horiz, vert, oldHoriz, oldVert)
-  }
-
-  fun setScrollWatcher(scrollWatcher: EnrichedScrollWatcher?) {
-    this.scrollWatcher = scrollWatcher
-  }
-
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
-
-    // Used to ensure that text is selectable inside of removeClippedSubviews
-    // See https://github.com/facebook/react-native/issues/6805 for original
-    // fix that was ported to here.
-    runAsATransaction {
-      blockTextEventEmitting = true
-      super.setTextIsSelectable(true)
-      blockTextEventEmitting = false
-    }
-
-    if (autoFocus && !didAttachToWindow) {
-      requestFocusProgrammatically()
-    }
-
-    didAttachToWindow = true
+    return if (parentWidth > 0) return parentWidth - paddingLeft - paddingRight else 0
   }
 
   companion object {

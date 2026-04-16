@@ -46,11 +46,12 @@ class EnrichedTextWatcher(
 
   private fun applyStyles(s: Editable) {
     view.blockTextEventEmitting = true
-    view.inlineStyles?.afterTextChanged(s, endCursorPosition)
-    view.parametrizedStyles?.afterTextChanged(s, startCursorPosition, endCursorPosition)
+    val styleManipulator = view.styleManipulator
+    styleManipulator?.inlineStyles?.afterTextChanged(s, endCursorPosition)
+    styleManipulator?.parametrizedStyles?.afterTextChanged(s, startCursorPosition, endCursorPosition)
     ParagraphSpanNormalizer.normalize(s, endCursorPosition)
-    view.listStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
-    view.paragraphStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
+    styleManipulator?.listStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
+    styleManipulator?.paragraphStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
     ZWSNormalizer.normalizeNonEmptyParagraphs(s)
     view.blockTextEventEmitting = false
   }

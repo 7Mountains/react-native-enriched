@@ -244,12 +244,6 @@ class ParagraphStyles(
   }
 
   fun setParagraphAlignmentSpan(alignment: String) {
-    val canApply = view.verifyStyle(TextStyle.ALIGNMENT)
-
-    if (!canApply) {
-      return
-    }
-
     val selection = view.selection ?: return
     val spanState = view.spanState ?: return
     val spannable = view.text as Spannable

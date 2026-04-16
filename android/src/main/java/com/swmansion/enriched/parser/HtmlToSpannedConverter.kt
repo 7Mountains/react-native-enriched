@@ -37,6 +37,7 @@ import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
+import com.swmansion.enriched.utils.trimTrailingNewlines
 import org.xml.sax.Attributes
 import org.xml.sax.ContentHandler
 import org.xml.sax.InputSource
@@ -71,6 +72,9 @@ class HtmlToSpannedConverter(
       // TagSoup doesn't throw parse exceptions.
       throw RuntimeException(e)
     }
+
+    mSpannableStringBuilder.trimTrailingNewlines()
+
     return mSpannableStringBuilder
   }
 
