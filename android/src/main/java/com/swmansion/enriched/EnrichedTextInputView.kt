@@ -338,7 +338,9 @@ class EnrichedTextInputView : AppCompatEditText {
 
     currentText.replace(start, end, spannable)
 
-    val cursor = (start + result.insertedCharactersAmount).coerceIn(0, result.text.length)
+    val lengthAfter = currentText.length
+
+    val cursor = (start + result.insertedCharactersAmount).coerceIn(0, lengthAfter)
     setSelection(cursor, cursor)
   }
 
@@ -398,6 +400,21 @@ class EnrichedTextInputView : AppCompatEditText {
       }
       blockTextEventEmitting = false
     }
+  }
+
+  override fun setSelection(
+    start: Int,
+    stop: Int,
+  ) {
+    val textLength = text?.length ?: 0
+    val safeStart = start.coerceIn(0, textLength)
+    val safeEnd = stop.coerceIn(0, textLength)
+    super.setSelection(safeStart, safeEnd)
+  }
+
+  override fun setSelection(index: Int) {
+    val safeIndex = index.coerceIn(0, text?.length ?: 0)
+    super.setSelection(safeIndex)
   }
 
   fun setCustomSelection(

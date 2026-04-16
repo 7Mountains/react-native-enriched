@@ -102,6 +102,6 @@ class EnrichedClipboardManager(
 
   private fun moveCursorTo(position: Int) {
     val cursor = position.coerceAtLeast(0)
-    view.setSelection(cursor, cursor)
+    view.setSelection(cursor)
   }
 }
