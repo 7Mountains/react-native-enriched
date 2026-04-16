@@ -34,6 +34,7 @@ import com.facebook.react.views.text.ReactTypefaceUtils.applyStyles
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontStyle
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
 import com.swmansion.enriched.constants.Strings
+import com.swmansion.enriched.contextmenu.EnrichedContextMenuController
 import com.swmansion.enriched.events.MentionHandler
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
@@ -110,7 +111,9 @@ class EnrichedTextInputView : AppCompatEditText {
     EnrichedClipboardManager(context, this)
   }
 
-  private var contextMenuItems: List<EnrichedActionModeCallback.Companion.CallbackMenuItemData> = emptyList()
+  private val contextMenuController by lazy {
+    EnrichedContextMenuController(this, clipboardManager)
+  }
 
   var scrollEnabled: Boolean = true
   private var detectScrollMovement = false
@@ -283,25 +286,12 @@ class EnrichedTextInputView : AppCompatEditText {
     }
   }
 
-  override fun onTextContextMenuItem(id: Int): Boolean {
-    when (id) {
-      android.R.id.copy -> {
-        clipboardManager.copy()
-        return true
-      }
-
-      android.R.id.paste -> {
-        clipboardManager.paste()
-        return true
-      }
-
-      android.R.id.cut -> {
-        clipboardManager.cut()
-        return true
-      }
+  override fun onTextContextMenuItem(id: Int): Boolean =
+    if (contextMenuController.onTextContextMenuItem(id)) {
+      true
+    } else {
+      super.onTextContextMenuItem(id)
     }
-    return super.onTextContextMenuItem(id)
-  }
 
   override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
     var inputConnection = super.onCreateInputConnection(outAttrs)
@@ -514,39 +504,25 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   fun setContextMenuItems(items: ReadableArray?) {
-    if (items == null) {
-      contextMenuItems = emptyList()
-      return
-    }
-
-    val result = mutableListOf<EnrichedActionModeCallback.Companion.CallbackMenuItemData>()
-    for (i in 0 until items.size()) {
-      val item = items.getMap(i) ?: continue
-      val text = item.getString("text") ?: continue
-      val key = item.getString("key") ?: continue
-      result.add(EnrichedActionModeCallback.Companion.CallbackMenuItemData(key = key, text = text))
-    }
-
-    contextMenuItems = result
+    contextMenuController.setContextMenuItems(items)
   }
 
   override fun startActionMode(
     callback: ActionMode.Callback?,
     type: Int,
   ): ActionMode? {
-    val menuItems = contextMenuItems
-    if (menuItems.isEmpty()) {
-      return super.startActionMode(callback, type)
-    }
-
-    val wrappedCallback =
-      EnrichedActionModeCallback(
-        editText = this,
-        original = callback,
-        contextMenuItems = menuItems,
+    val actionMode =
+      super.startActionMode(
+        contextMenuController.wrapActionModeCallback(callback),
+        type,
       )
+    contextMenuController.onActionModeStarted(actionMode)
 
-    return super.startActionMode(wrappedCallback, type)
+    return actionMode
+  }
+
+  fun hideContextMenu() {
+    contextMenuController.hideContextMenu()
   }
 
   fun setColor(colorInt: Int?) {

@@ -80,6 +80,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     src: string,
     attributes: string
   ) => void;
+  hideContextMenu: () => void;
 }
 
 export interface OnChangeMentionEvent {

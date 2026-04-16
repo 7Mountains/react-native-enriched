@@ -37,6 +37,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     addDividerAtNewLine: () => void;
     setParagraphAlignment: (alignment: string) => void;
     addContent: (text: string, type: string, src: string, attributes: string) => void;
+    hideContextMenu: () => void;
 }
 export interface OnChangeMentionEvent {
     indicator: string;

@@ -1,4 +1,4 @@
-package com.swmansion.enriched
+package com.swmansion.enriched.contextmenu
 
 import android.graphics.Rect
 import android.view.ActionMode
@@ -7,12 +7,14 @@ import android.view.MenuItem
 import android.view.View
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
+import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnContextMenuItemPressEvent
 
 class EnrichedActionModeCallback(
   private val editText: EnrichedTextInputView,
   private val original: ActionMode.Callback?,
   private val contextMenuItems: List<CallbackMenuItemData>,
+  private val controller: EnrichedContextMenuController,
 ) : ActionMode.Callback2() {
   override fun onCreateActionMode(
     mode: ActionMode,
@@ -54,6 +56,7 @@ class EnrichedActionModeCallback(
 
   override fun onDestroyActionMode(mode: ActionMode) {
     original?.onDestroyActionMode(mode)
+    controller.onActionModeDestroyed()
   }
 
   override fun onGetContentRect(

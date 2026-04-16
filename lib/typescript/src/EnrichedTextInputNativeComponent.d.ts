@@ -437,6 +437,7 @@ interface NativeCommands {
     addContent: (viewRef: React.ElementRef<ComponentType>, text: string, type: string, src: string, attributes: string) => void;
     insertTextAtSelection: (viewRef: React.ElementRef<ComponentType>, text: string) => void;
     insertTextAt: (viewRef: React.ElementRef<ComponentType>, text: string, at: Int32) => void;
+    hideContextMenu: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 export declare const Commands: NativeCommands;
 declare const _default: HostComponent<NativeProps>;
