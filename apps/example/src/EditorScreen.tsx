@@ -453,6 +453,34 @@ export default function EditorScreen() {
             // onChangeHtml={(e) => handleChangeHtml(e.nativeEvent)}
             onChangeState={(e) => handleChangeState(e.nativeEvent)}
             defaultValue={initialHugeHtml}
+            contextMenuItems={[
+              {
+                text: 'Edit link',
+                key: 'test',
+                iOSIcon: 'paperclip',
+                visible: stylesState.link.isActive,
+              },
+              {
+                text: 'Open',
+                key: 'test-2',
+                visible: stylesState.link.isActive,
+              },
+              {
+                text: 'Remove link',
+                key: 'remove-link',
+                visible: stylesState.link.isActive,
+              },
+            ]}
+            onContextMenuItemPress={(e) => {
+              if (e.nativeEvent.key === 'test') {
+                openLinkModal();
+              } else if (e.nativeEvent.key === 'remove-link') {
+                ref.current?.removeLink(
+                  e.nativeEvent.selection.start,
+                  e.nativeEvent.selection.end
+                );
+              }
+            }}
             onColorChangeInSelection={(e) => {
               handleSelectionColorChange(e.nativeEvent);
             }}

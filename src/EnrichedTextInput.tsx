@@ -8,6 +8,7 @@ import type {
 } from './types';
 import { useCommands } from './hooks/useCommands';
 import { useHandlers } from './hooks/useHandlers';
+import useContextMenuItems from './hooks/useContextMenuItems';
 
 const DEFAULT_INSETS = {
   top: 0,
@@ -48,9 +49,11 @@ export const EnrichedTextInput = ({
   onParagraphAlignmentChange,
   onScroll,
   onKeyPress,
+  onContextMenuItemPress,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
   keyboardDismissMode = 'none',
+  contextMenuItems,
   ...rest
 }: EnrichedTextInputProps) => {
   const nativeRef = useRef<ComponentType | null>(null);
@@ -95,6 +98,8 @@ export const EnrichedTextInput = ({
     pendingHtmlRequests,
   });
 
+  const nativeContextMenuItems = useContextMenuItems(contextMenuItems);
+
   return (
     <EnrichedTextInputNativeComponent
       ref={nativeRef as RefObject<ComponentType | null>}
@@ -132,11 +137,13 @@ export const EnrichedTextInput = ({
       isOnScrollSet={onScroll !== undefined}
       onInputScroll={onScroll}
       onInputKeyPress={onKeyPress}
+      onContextMenuItemPress={onContextMenuItemPress}
       androidExperimentalSynchronousEvents={
         androidExperimentalSynchronousEvents
       }
       keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}
+      contextMenuItems={nativeContextMenuItems}
       {...rest}
     />
   );

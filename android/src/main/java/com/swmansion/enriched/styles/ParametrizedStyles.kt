@@ -50,12 +50,9 @@ class ParametrizedStyles(
     url: String,
   ) {
     isSettingLinkSpan = true
-
     val spannable = view.text as SpannableStringBuilder
-    val spans = spannable.getSpans(start, end, EnrichedLinkSpan::class.java)
-    for (span in spans) {
-      spannable.removeSpan(span)
-    }
+
+    removeLinkSpan(start, end)
 
     if (start == end) {
       spannable.insert(start, text)
@@ -70,6 +67,17 @@ class ParametrizedStyles(
 
     view.selection?.validateStyles()
     isSettingLinkSpan = false
+  }
+
+  fun removeLinkSpan(
+    start: Int,
+    end: Int,
+  ) {
+    val spannable = view.text as SpannableStringBuilder
+    val spans = spannable.getSpans(start, end, EnrichedLinkSpan::class.java)
+    for (span in spans) {
+      spannable.removeSpan(span)
+    }
   }
 
   // After editing text we want to automatically detect links in the affected range

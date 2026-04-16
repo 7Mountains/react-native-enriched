@@ -1,5 +1,5 @@
 import type { ColorValue, ImageRequireSource, NativeMethods, NativeSyntheticEvent, ReactNativeElement, TextStyle, ViewProps, ViewStyle } from 'react-native';
-import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent, CheckboxPressEvent, OnKeyPressEvent, HtmlStyleInternal } from './EnrichedTextInputNativeComponent';
+import type { ContentStyleProperties, Insets, Cookie, MentionStyleProperties, NativeProps, OnChangeColorEvent, OnChangeHtmlEvent, OnChangeSelectionEvent, OnChangeStateEvent, OnChangeTextEvent, OnLinkDetected, OnMentionDetected, OnParagraphAlignmentChangeEvent, OnScrollEvent, CheckboxPressEvent, OnKeyPressEvent, HtmlStyleInternal, ContextMenuItemConfig, OnContextMenuItemPressEvent } from './EnrichedTextInputNativeComponent';
 import type { Component, RefObject } from 'react';
 import type { EnrichedStyles } from './enums';
 export interface EnrichedTextInputInstance extends NativeMethods {
@@ -27,6 +27,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
     toggleOrderedList: () => void;
     toggleUnorderedList: () => void;
     setLink: (start: number, end: number, text: string, url: string) => void;
+    removeLink: (start: number, end: number) => void;
     setImage: (src: string, width: number, height: number) => void;
     startMention: (indicator: string) => void;
     setMention: (indicator: string, text: string, type: string, attributes?: Record<string, string>) => void;
@@ -105,6 +106,9 @@ export interface HtmlStyle {
     };
     mdf?: HtmlStyleInternal['mdf'];
 }
+export interface ContextMenuItem extends ContextMenuItemConfig {
+    visible?: boolean;
+}
 export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     ref?: RefObject<EnrichedTextInputInstance | null>;
     autoFocus?: boolean;
@@ -142,6 +146,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     onCheckboxPress?: (e: NativeSyntheticEvent<CheckboxPressEvent>) => void;
     onAnyContentChange?: () => void;
     onKeyPress?: (e: NativeSyntheticEvent<OnKeyPressEvent>) => void;
+    onContextMenuItemPress?: (e: NativeSyntheticEvent<OnContextMenuItemPressEvent>) => void;
     /**
      * If true, Android will use experimental synchronous events.
      * This will prevent from input flickering when updating component size.
@@ -154,6 +159,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     scrollIndicatorInsets?: Insets;
     onScroll?: (event: NativeSyntheticEvent<OnScrollEvent>) => void;
     loaderCookies?: Cookie[];
+    contextMenuItems?: ContextMenuItem[];
 }
 export type ComponentType = ((Component<NativeProps, {}, any> & NativeMethods) & ReactNativeElement) | null;
 export type HtmlRequest = {

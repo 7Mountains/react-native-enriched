@@ -163,6 +163,17 @@ static inline void RunOnMainThread(void (^block)(void)) {
     NSInteger at = [args[1] integerValue];
     NSRange range = NSMakeRange(at, 0);
     [_input insertTextAt:text range:range];
+  } else if ([commandName isEqualToString:@"removeLink"]) {
+    NSInteger start = [args[0] integerValue];
+    NSInteger end = [args[1] integerValue];
+    LinkStyle *linkStyle =
+        (LinkStyle *_Nullable)_input->stylesDict[@([LinkStyle getStyleType])];
+
+    if (linkStyle) {
+      NSRange removalRange = NSMakeRange(start, end - start);
+      [linkStyle removeStyle:removalRange];
+      [_input anyTextMayHaveBeenModified];
+    }
   }
 }
 

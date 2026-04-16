@@ -286,8 +286,6 @@ export interface HtmlStyleInternal {
   checkbox?: {
     imageWidth?: Float;
     imageHeight?: Float;
-    checkedImage?: string;
-    uncheckedImage?: string;
     marginLeft?: Float;
     gapWidth?: Float;
     checkedTextColor?: ColorValue;
@@ -354,6 +352,21 @@ export interface OnKeyPressEvent {
   };
 }
 
+export interface ContextMenuItemConfig {
+  text: string;
+  key: string;
+  iOSIcon?: string;
+}
+
+export interface OnContextMenuItemPressEvent {
+  text: string;
+  key: string;
+  selection: {
+    start: Int32;
+    end: Int32;
+  };
+}
+
 export interface NativeProps extends ViewProps {
   // base props
   autoFocus?: boolean;
@@ -372,6 +385,7 @@ export interface NativeProps extends ViewProps {
   iOSparagraphSpacingBefore?: Float;
   paragraphsLimit?: Int32;
   stylesConfig?: string[];
+  contextMenuItems?: Readonly<Array<ContextMenuItemConfig>>;
 
   // event callbacks
   onInputFocus?: DirectEventHandler<null>;
@@ -391,6 +405,7 @@ export interface NativeProps extends ViewProps {
   // This is a special event that is emitted on text/style change
   onAnyContentChange?: DirectEventHandler<null>;
   onInputKeyPress?: DirectEventHandler<OnKeyPressEvent>;
+  onContextMenuItemPress?: DirectEventHandler<OnContextMenuItemPressEvent>;
 
   // Style related props - used for generating proper setters in component's manager
   // These should not be passed as regular props
@@ -452,6 +467,11 @@ interface NativeCommands {
     end: Int32,
     text: string,
     url: string
+  ) => void;
+  removeLink: (
+    viewRef: React.ElementRef<ComponentType>,
+    start: Int32,
+    end: Int32
   ) => void;
   addImage: (
     viewRef: React.ElementRef<ComponentType>,
@@ -534,6 +554,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'toggleOrderedList',
     'toggleUnorderedList',
     'addLink',
+    'removeLink',
     'addImage',
     'startMention',
     'addMention',

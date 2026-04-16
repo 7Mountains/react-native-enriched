@@ -43,6 +43,7 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
             range:(NSRange)range
            manual:(BOOL)manual
     withSelection:(BOOL)withSelection;
+- (void)removeStyle:(NSRange)range;
 - (LinkData *)getLinkDataAt:(NSUInteger)location;
 - (NSRange)getFullLinkRangeAt:(NSUInteger)location;
 - (void)manageLinkTypingAttributes;

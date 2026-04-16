@@ -12,6 +12,7 @@
 #import "EnrichedSelectionEventPayloadBuilder.h"
 #import "EnrichedTextClipboardHandler.h"
 #import "EnrichedTextConfigBuilder.h"
+#import "EnrichedTextInputViewContextMenuItemsStructOperators.h"
 #import "EnrichedTextStyleFactory.h"
 #import "EnrichedTextViewClipboardDelegate.h"
 #import "EnrichedTextViewLayoutDelegate.h"
@@ -82,6 +83,7 @@ using namespace facebook::react;
   UIEdgeInsets _layoutInsets;
   int _paragraphsLimit;
   NSDictionary<NSNumber *, id<BaseStyleProtocol>> *_allStyles;
+  NSArray<UIMenuElement *> *_contextMenuItems;
 }
 
 // MARK: - Component utils
@@ -371,6 +373,26 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     stylesDict = [EnrichedTextStyleFactory filterStyles:_allStyles
                                                   names:styleNames];
     [self tryUpdatingActiveStyles];
+  }
+
+  if (newViewProps.contextMenuItems != oldViewProps.contextMenuItems) {
+    NSMutableArray<UIMenuElement *> *customActions = [[NSMutableArray alloc]
+        initWithCapacity:newViewProps.contextMenuItems.size()];
+    __weak EnrichedTextInputView *weakSelf = self;
+    for (const auto &contextMenuItem : newViewProps.contextMenuItems) {
+      NSString *key = [NSString fromCppString:contextMenuItem.key];
+      NSString *text = [NSString fromCppString:contextMenuItem.text];
+      NSString *iconName = [NSString fromCppString:contextMenuItem.iOSIcon];
+      UIAction *action = [UIAction
+          actionWithTitle:text
+                    image:[UIImage systemImageNamed:iconName]
+               identifier:nil
+                  handler:^(__kindof UIAction *_Nonnull action) {
+                    [weakSelf emitOnContextMenuItemPress:key text:text];
+                  }];
+      [customActions addObject:action];
+    }
+    _contextMenuItems = [customActions copy];
   }
 
   // isOnChangeHtmlSet
@@ -858,6 +880,20 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     emitter->onInputKeyPress([EnrichedKeyPressEventPayloadBuilder
         buildFromTextView:textView
                       key:key]);
+  }
+}
+
+- (void)emitOnContextMenuItemPress:(NSString *)key text:(NSString *)text {
+  auto emitter = [self getEventEmitter];
+  if (emitter != nullptr) {
+    NSRange range = textView.selectedRange;
+    emitter->onContextMenuItemPress(
+        {.text = text.toCppString,
+         .key = key.toCppString,
+         .selection = {
+             .start = static_cast<int>(range.location),
+             .end = static_cast<int>(range.location + range.length),
+         }});
   }
 }
 
@@ -1390,6 +1426,19 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 // in anyTextMayHaveBeenModified
 - (void)textViewDidChange:(UITextView *)textView {
   [self anyTextMayHaveBeenModified];
+}
+
+- (UIMenu *)textView:(UITextView *)tv
+    editMenuForTextInRange:(NSRange)range
+          suggestedActions:(NSArray<UIMenuElement *> *)suggestedActions
+    API_AVAILABLE(ios(16.0)) {
+  if (_contextMenuItems == nil || _contextMenuItems.count == 0) {
+    return [UIMenu menuWithChildren:suggestedActions];
+  }
+
+  NSMutableArray<UIMenuElement *> *actions = [suggestedActions mutableCopy];
+  [actions addObjectsFromArray:_contextMenuItems];
+  return [UIMenu menuWithChildren:actions];
 }
 
 // MARK: - Clipboard delegate methods
