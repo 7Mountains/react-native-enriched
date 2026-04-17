@@ -182,17 +182,17 @@ class HtmlToSpannedConverter(
       }
 
       HtmlTags.HORIZONTAL_RULE -> {
-        addHr(mSpannableStringBuilder, htmlStyle, isEmptyTag)
+        addHr(mSpannableStringBuilder, htmlStyle)
         return
       }
 
       HtmlTags.CONTENT -> {
-        addContent(mSpannableStringBuilder, attributes, htmlStyle, isEmptyTag)
+        addContent(mSpannableStringBuilder, attributes, htmlStyle)
         return
       }
 
       HtmlTags.MDF -> {
-        addMDF(mSpannableStringBuilder, attributes, htmlStyle, isEmptyTag)
+        addMDF(mSpannableStringBuilder, attributes, htmlStyle)
         return
       }
 
@@ -538,7 +538,6 @@ class HtmlToSpannedConverter(
     editable: Editable,
     attributes: Attributes?,
     htmlStyle: HtmlStyle,
-    isEmptyTag: Boolean,
   ) {
     if (attributes == null) {
       return
@@ -552,9 +551,6 @@ class HtmlToSpannedConverter(
     val src = attributes.getValue("", HtmlAttributeNames.CONTENT_SRC)
 
     val attributesMap = extractAttributes(attributes, CONTENT_EXCLUDED)
-    if (isEmptyTag) {
-      editable.append(Strings.NEWLINE)
-    }
     val builder = SpannableStringBuilder()
     builder.append(Strings.MAGIC_CHAR)
     val span =
@@ -578,7 +574,6 @@ class HtmlToSpannedConverter(
     editable: Editable,
     attributes: Attributes?,
     htmlStyle: HtmlStyle,
-    isEmptyTag: Boolean,
   ) {
     if (attributes == null) {
       return
@@ -588,9 +583,6 @@ class HtmlToSpannedConverter(
     val tintColorString = attributes.getValue("", HtmlAttributeNames.MDF_TINT_COLOR)
     val attributesMap = extractAttributes(attributes, MDF_EXCLUDED)
 
-    if (isEmptyTag) {
-      editable.append(Strings.NEWLINE)
-    }
     val builder = SpannableStringBuilder()
     builder.append(Strings.MAGIC_CHAR)
     val span =
@@ -740,11 +732,7 @@ class HtmlToSpannedConverter(
     private fun addHr(
       text: Editable,
       htmlStyle: HtmlStyle,
-      isEmptyTag: Boolean,
     ) {
-      if (isEmptyTag) {
-        text.append(Strings.NEWLINE)
-      }
       val builder = SpannableStringBuilder(Strings.MAGIC_STRING)
       builder.setSpan(
         EnrichedHorizontalRuleSpan(htmlStyle),
