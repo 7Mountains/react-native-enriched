@@ -190,7 +190,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   } else {
     textView.text = string;
   }
-  textView.selectedRange = NSRange(textView.textStorage.string.length, 0);
 }
 
 // MARK: - Props
@@ -508,17 +507,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 // MARK: - Active styles
 
-- (void)resetActiveStylesState {
-  [_activeStyles removeAllObjects];
-  [_blockedStyles removeAllObjects];
-
-  _recentlyActiveLinkData = nullptr;
-  _recentlyActiveLinkRange = NSMakeRange(0, 0);
-
-  _recentlyActiveMentionParams = nullptr;
-  _recentlyActiveMentionRange = NSMakeRange(0, 0);
-}
-
 - (void)tryUpdatingActiveStyles {
   BOOL updateNeeded = NO;
 
@@ -643,7 +631,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     auto emitter = [self getEventEmitter];
 
     if (emitter != nullptr) {
-
       _activeStyles = newActiveStyles;
       _blockedStyles = newBlockedStyles;
 
@@ -730,6 +717,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   // set recentlyChangedRange and check for changes
   recentlyChangedRange = NSMakeRange(0, textView.textStorage.string.length);
+  textView.selectedRange = NSMakeRange(textView.textStorage.string.length, 0);
   [self anyTextMayHaveBeenModified];
 }
 
@@ -775,8 +763,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     auto emitter = [self getEventEmitter];
     if (emitter != nullptr) {
       emitter->onColorChangeInSelection({.color = [hexColor toCppString]});
+      _recentlyEmittedColor = hexColor;
     }
-    _recentlyEmittedColor = hexColor;
   }
 }
 
