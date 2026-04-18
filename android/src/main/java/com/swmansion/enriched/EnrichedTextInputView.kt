@@ -71,6 +71,7 @@ class EnrichedTextInputView : AppCompatEditText {
   var isDuringTransaction: Boolean = false
   var isRemovingMany: Boolean = false
   var blockTextEventEmitting: Boolean = false
+  var ignoreSpanWatcher: Boolean = false
 
   var availableStyles: Map<TextStyle, ISpanConfig> = EnrichedSpans.allSpans
   var paragraphsLimit: Int = -1
@@ -312,6 +313,7 @@ class EnrichedTextInputView : AppCompatEditText {
     spannable: Spannable,
     at: Int? = null,
   ) {
+    ignoreSpanWatcher = true
     val currentText = (text as? SpannableStringBuilder) ?: return
     val length = currentText.length
 
@@ -332,6 +334,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
     val cursor = (start + result.insertedCharactersAmount).coerceIn(0, lengthAfter)
     setSelection(cursor, cursor)
+    ignoreSpanWatcher = false
   }
 
   fun insertText(
@@ -372,13 +375,14 @@ class EnrichedTextInputView : AppCompatEditText {
   ) {
     if (value == null) return
     runAsATransaction {
+      ignoreSpanWatcher = true
       blockTextEventEmitting = true
       val newText = parseText(value)
 
       val spannable = text as SpannableStringBuilder?
 
       if (spannable == null) {
-        setText(newText)
+        text = spannable
       } else {
         spannable.replace(0, spannable.length, newText)
       }
@@ -389,6 +393,7 @@ class EnrichedTextInputView : AppCompatEditText {
         setSelection(text?.length ?: 0, text?.length ?: 0)
       }
       blockTextEventEmitting = false
+      ignoreSpanWatcher = false
     }
   }
 
@@ -428,11 +433,14 @@ class EnrichedTextInputView : AppCompatEditText {
     if (start == -1 || end == -1) return
 
     val marker = ForceRedrawSpan()
-
+    ignoreSpanWatcher = true
+    blockTextEventEmitting = true
     runAsATransaction {
       text.setSpan(marker, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
       text.removeSpan(marker)
     }
+    blockTextEventEmitting = true
+    ignoreSpanWatcher = false
   }
 
   private fun getActualIndex(visibleIndex: Int): Int {
