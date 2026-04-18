@@ -25,6 +25,9 @@ class EnrichedSpanWatcher(
     start: Int,
     end: Int,
   ) {
+    if (view.ignoreSpanWatcher) {
+      return
+    }
     updateNextLineLayout(what, text, end)
     updateOrderedListItems(what, text, end)
     emitEvents(text, what)
@@ -36,6 +39,9 @@ class EnrichedSpanWatcher(
     start: Int,
     end: Int,
   ) {
+    if (view.ignoreSpanWatcher) {
+      return
+    }
     updateNextLineLayout(what, text, end)
     updateOrderedListItems(what, text, end)
     emitEvents(text, what)
@@ -110,7 +116,7 @@ class EnrichedSpanWatcher(
     what: Any?,
   ) {
     // Emit event only if we change one of ours spans
-    if (what != null && what !is EnrichedSpan) return
+    if (what !is EnrichedSpan) return
 
     val context = view.context as ReactContext
     val surfaceId = UIManagerHelper.getSurfaceId(context)

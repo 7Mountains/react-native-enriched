@@ -54,12 +54,20 @@ class HtmlToSpannedConverter(
   private val parser: XMLReader,
   private val textInputView: EnrichedTextInputView,
 ) : ContentHandler {
-  private val mSpannableStringBuilder: SpannableStringBuilder = SpannableStringBuilder()
+  private val spannableStringBuilder: SpannableStringBuilder = SpannableStringBuilder()
   private var currentListItemIndex = 0
   private var isInOrderedList = false
   private var isEmptyTag = false
   private val tagsStack = ArrayDeque<TagContext>()
   private val textBuffer = StringBuilder()
+  private val pendingSpans = mutableListOf<PendingSpan>()
+
+  private data class PendingSpan(
+    val span: Any,
+    val start: Int,
+    val end: Int,
+    val flags: Int,
+  )
 
   fun convert(): Spanned {
     parser.contentHandler = this
@@ -73,9 +81,18 @@ class HtmlToSpannedConverter(
       throw RuntimeException(e)
     }
 
-    mSpannableStringBuilder.trimTrailingNewlines()
+    spannableStringBuilder.trimTrailingNewlines()
 
-    return mSpannableStringBuilder
+    pendingSpans.forEach {
+      spannableStringBuilder.setSpan(
+        it.span,
+        it.start,
+        it.end,
+        it.flags,
+      )
+    }
+
+    return spannableStringBuilder
   }
 
   private fun pushTag(
@@ -85,7 +102,7 @@ class HtmlToSpannedConverter(
     tagsStack.addLast(
       TagContext(
         tag = tag,
-        start = mSpannableStringBuilder.length,
+        start = spannableStringBuilder.length,
         attributes = attributes,
       ),
     )
@@ -107,13 +124,15 @@ class HtmlToSpannedConverter(
     ctx: TagContext,
     createSpan: (Attributes?) -> EnrichedInlineSpan,
   ) {
-    val end = mSpannableStringBuilder.length
+    val end = spannableStringBuilder.length
     if (ctx.start != end) {
-      mSpannableStringBuilder.setSpan(
-        createSpan(ctx.attributes),
-        ctx.start,
-        end,
-        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      pendingSpans.add(
+        PendingSpan(
+          createSpan(ctx.attributes),
+          ctx.start,
+          end,
+          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        ),
       )
     }
   }
@@ -156,13 +175,13 @@ class HtmlToSpannedConverter(
         isInOrderedList = tag == HtmlTags.ORDERED_LIST
         currentListItemIndex = 0
         isEmptyTag = true
-        startParagraph(mSpannableStringBuilder, tag, attributes)
+        startParagraph(spannableStringBuilder, tag, attributes)
         return
       }
 
       HtmlTags.LIST_ITEM -> {
         isEmptyTag = true
-        startListItem(mSpannableStringBuilder, tag, attributes)
+        startListItem(spannableStringBuilder, tag, attributes)
         return
       }
 
@@ -172,7 +191,7 @@ class HtmlToSpannedConverter(
       }
 
       HtmlTags.IMAGE -> {
-        startImg(mSpannableStringBuilder, attributes, mImageGetter)
+        startImg(spannableStringBuilder, attributes, mImageGetter)
         return
       }
 
@@ -182,17 +201,17 @@ class HtmlToSpannedConverter(
       }
 
       HtmlTags.HORIZONTAL_RULE -> {
-        addHr(mSpannableStringBuilder, htmlStyle)
+        addHr(spannableStringBuilder, htmlStyle)
         return
       }
 
       HtmlTags.CONTENT -> {
-        addContent(mSpannableStringBuilder, attributes, htmlStyle)
+        addContent(spannableStringBuilder, attributes, htmlStyle)
         return
       }
 
       HtmlTags.MDF -> {
-        addMDF(mSpannableStringBuilder, attributes, htmlStyle)
+        addMDF(spannableStringBuilder, attributes, htmlStyle)
         return
       }
 
@@ -211,29 +230,29 @@ class HtmlToSpannedConverter(
   private fun handleEndTag(tag: String?) {
     when (tag) {
       HtmlTags.BREAK_LINE -> {
-        handleBr(mSpannableStringBuilder)
+        handleBr(spannableStringBuilder)
         return
       }
 
       HtmlTags.PARAGRAPH -> {
-        endParagraphTag(mSpannableStringBuilder, tag, isEmptyTag)
+        endParagraphTag(spannableStringBuilder, tag, isEmptyTag)
         return
       }
 
       HtmlTags.UNORDERED_LIST, HtmlTags.ORDERED_LIST -> {
         val ctx = popTag(tag) ?: return
 
-        var end = mSpannableStringBuilder.length
+        var end = spannableStringBuilder.length
 
-        if (end > ctx.start && mSpannableStringBuilder[end - 1] == Strings.NEWLINE) {
+        if (end > ctx.start && spannableStringBuilder[end - 1] == Strings.NEWLINE) {
           end--
         }
-        addAlignmentSpanIfNeeded(mSpannableStringBuilder, ctx.start, end, ctx.attributes)
+        addAlignmentSpanIfNeeded(ctx.start, end, ctx.attributes)
         return
       }
 
       HtmlTags.LIST_ITEM -> {
-        endListItem(mSpannableStringBuilder)
+        endListItem(spannableStringBuilder)
         return
       }
 
@@ -269,7 +288,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.BLOCK_QUOTE -> {
         endParagraphTag(
-          mSpannableStringBuilder,
+          spannableStringBuilder,
           tag,
           EnrichedBlockQuoteSpan(mStyle),
           isEmptyTag,
@@ -279,7 +298,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.CODE_BLOCK -> {
         endParagraphTag(
-          mSpannableStringBuilder,
+          spannableStringBuilder,
           tag,
           EnrichedCodeBlockSpan(mStyle),
           isEmptyTag,
@@ -299,7 +318,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.H1 -> {
         endParagraphTag(
-          mSpannableStringBuilder,
+          spannableStringBuilder,
           tag,
           EnrichedH1Span(mStyle),
           isEmptyTag,
@@ -308,7 +327,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.H2 -> {
         endParagraphTag(
-          mSpannableStringBuilder,
+          spannableStringBuilder,
           tag,
           EnrichedH2Span(mStyle),
           isEmptyTag,
@@ -317,7 +336,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.H3 -> {
         endParagraphTag(
-          mSpannableStringBuilder,
+          spannableStringBuilder,
           tag,
           EnrichedH3Span(mStyle),
           isEmptyTag,
@@ -326,7 +345,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.H4 -> {
         endParagraphTag(
-          mSpannableStringBuilder,
+          spannableStringBuilder,
           tag,
           EnrichedH4Span(mStyle),
           isEmptyTag,
@@ -335,7 +354,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.H5 -> {
         endParagraphTag(
-          mSpannableStringBuilder,
+          spannableStringBuilder,
           tag,
           EnrichedH5Span(mStyle),
           isEmptyTag,
@@ -344,7 +363,7 @@ class HtmlToSpannedConverter(
 
       HtmlTags.H6 -> {
         endParagraphTag(
-          mSpannableStringBuilder,
+          spannableStringBuilder,
           tag,
           EnrichedH6Span(mStyle),
           isEmptyTag,
@@ -369,7 +388,7 @@ class HtmlToSpannedConverter(
       }
 
       HtmlTags.CHECKLIST -> {
-        endChecklist(mSpannableStringBuilder, isEmptyTag)
+        endChecklist(spannableStringBuilder, isEmptyTag)
         return
       }
 
@@ -418,9 +437,17 @@ class HtmlToSpannedConverter(
       end--
     }
 
-    val span = if (isInOrderedList) EnrichedOrderedListSpan(currentListItemIndex, mStyle) else EnrichedUnorderedListSpan(mStyle)
+    val span =
+      if (isInOrderedList) {
+        EnrichedOrderedListSpan(currentListItemIndex, mStyle)
+      } else {
+        EnrichedUnorderedListSpan(mStyle)
+      }
 
-    text.setSpan(span, ctx.start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    pendingSpans.add(
+      PendingSpan(span, ctx.start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE),
+    )
+
     appendNewlines(text, 1)
   }
 
@@ -449,7 +476,7 @@ class HtmlToSpannedConverter(
     if (end > ctx.start && text[end - 1] == Strings.NEWLINE) {
       end--
     }
-    addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
+    addAlignmentSpanIfNeeded(ctx.start, end, ctx.attributes)
     appendNewlines(text, 1)
   }
 
@@ -476,10 +503,17 @@ class HtmlToSpannedConverter(
     val isSimpleParagraph = ctx.tag == HtmlTags.PARAGRAPH
 
     if (isSimpleParagraph) {
-      addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
+      addAlignmentSpanIfNeeded(ctx.start, end, ctx.attributes)
     } else {
-      addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
-      text.setSpan(EnrichedChecklistSpan(mStyle, isChecked), ctx.start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      addAlignmentSpanIfNeeded(ctx.start, end, ctx.attributes)
+      pendingSpans.add(
+        PendingSpan(
+          EnrichedChecklistSpan(mStyle, isChecked),
+          ctx.start,
+          end,
+          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        ),
+      )
     }
 
     appendNewlines(text, 1)
@@ -506,31 +540,40 @@ class HtmlToSpannedConverter(
     val isSimpleParagraph = ctx.tag == HtmlTags.PARAGRAPH
 
     if (isSimpleParagraph) {
-      addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
+      addAlignmentSpanIfNeeded(ctx.start, end, ctx.attributes)
     } else {
-      addAlignmentSpanIfNeeded(text, ctx.start, end, ctx.attributes)
-      text.setSpan(span, ctx.start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      addAlignmentSpanIfNeeded(ctx.start, end, ctx.attributes)
+      pendingSpans.add(
+        PendingSpan(
+          span,
+          ctx.start,
+          end,
+          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        ),
+      )
     }
 
     appendNewlines(text, 1)
   }
 
   private fun addAlignmentSpanIfNeeded(
-    text: Editable,
     start: Int,
     end: Int,
     attributes: Attributes?,
   ) {
     if (attributes == null) return
 
-    val alignmentString = attributes.getValue("", HtmlAttributeNames.ALIGNMENT)
-    if (alignmentString == null) return
+    val alignmentString =
+      attributes.getValue("", HtmlAttributeNames.ALIGNMENT)
+        ?: return
 
-    text.setSpan(
-      EnrichedAlignmentSpan(alignmentString),
-      start,
-      end,
-      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+    pendingSpans.add(
+      PendingSpan(
+        EnrichedAlignmentSpan(alignmentString),
+        start,
+        end,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      ),
     )
   }
 
@@ -551,8 +594,6 @@ class HtmlToSpannedConverter(
     val src = attributes.getValue("", HtmlAttributeNames.CONTENT_SRC)
 
     val attributesMap = extractAttributes(attributes, CONTENT_EXCLUDED)
-    val builder = SpannableStringBuilder()
-    builder.append(Strings.MAGIC_CHAR)
     val span =
       EnrichedContentSpan.Companion.createEnrichedContentSpan(
         title,
@@ -564,9 +605,15 @@ class HtmlToSpannedConverter(
         attributesMap,
         htmlStyle,
       )
+    val start = editable.length
+    editable.append(Strings.MAGIC_CHAR)
+
     span.attachTo(textInputView)
-    builder.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    editable.append(builder)
+
+    pendingSpans.add(
+      PendingSpan(span, start, start + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE),
+    )
+
     editable.append(Strings.NEWLINE)
   }
 
@@ -583,8 +630,9 @@ class HtmlToSpannedConverter(
     val tintColorString = attributes.getValue("", HtmlAttributeNames.MDF_TINT_COLOR)
     val attributesMap = extractAttributes(attributes, MDF_EXCLUDED)
 
-    val builder = SpannableStringBuilder()
-    builder.append(Strings.MAGIC_CHAR)
+    val start = editable.length
+    editable.append(Strings.MAGIC_CHAR)
+
     val span =
       EnrichedMDFSpan.Companion.createMDFSpan(
         label,
@@ -593,8 +641,10 @@ class HtmlToSpannedConverter(
         htmlStyle,
       )
     span.attachTo(textInputView)
-    builder.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    editable.append(builder)
+
+    pendingSpans.add(
+      PendingSpan(span, start, start + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE),
+    )
     editable.append(Strings.NEWLINE)
   }
 
@@ -647,12 +697,12 @@ class HtmlToSpannedConverter(
         val prev: Char
         var len = textBuffer.length
         if (len == 0) {
-          len = mSpannableStringBuilder.length
+          len = spannableStringBuilder.length
           prev =
             if (len == 0) {
               Strings.NEWLINE
             } else {
-              mSpannableStringBuilder[len - 1]
+              spannableStringBuilder[len - 1]
             }
         } else {
           prev = textBuffer[len - 1]
@@ -664,7 +714,26 @@ class HtmlToSpannedConverter(
         textBuffer.append(c)
       }
     }
-    mSpannableStringBuilder.append(textBuffer)
+    spannableStringBuilder.append(textBuffer)
+  }
+
+  private fun addHr(
+    text: Editable,
+    htmlStyle: HtmlStyle,
+  ) {
+    val start = text.length
+    text.append(Strings.MAGIC_CHAR)
+
+    pendingSpans.add(
+      PendingSpan(
+        EnrichedHorizontalRuleSpan(htmlStyle),
+        start,
+        start + 1,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      ),
+    )
+
+    text.append(Strings.NEWLINE)
   }
 
   override fun ignorableWhitespace(
@@ -687,6 +756,32 @@ class HtmlToSpannedConverter(
   )
 
   override fun skippedEntity(name: String?) {}
+
+  private fun startImg(
+    text: Editable,
+    attributes: Attributes?,
+    img: EnrichedParser.ImageGetter?,
+  ) {
+    if (attributes == null) return
+
+    val src = attributes.getValue("", HtmlAttributeNames.CONTENT_SRC)
+    val width = attributes.getValue("", "width")?.toIntOrNull() ?: 0
+    val height = attributes.getValue("", "height")?.toIntOrNull() ?: 0
+
+    val span = createEnrichedImageSpan(src, width, height)
+
+    val start = text.length
+    text.append(Strings.MAGIC_CHAR)
+
+    pendingSpans.add(
+      PendingSpan(
+        span = span,
+        start = start,
+        end = start + 1,
+        flags = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      ),
+    )
+  }
 
   companion object {
     private val CONTENT_EXCLUDED =
@@ -727,44 +822,6 @@ class HtmlToSpannedConverter(
 
     private fun handleBr(text: Editable) {
       text.append(Strings.NEWLINE)
-    }
-
-    private fun addHr(
-      text: Editable,
-      htmlStyle: HtmlStyle,
-    ) {
-      val builder = SpannableStringBuilder(Strings.MAGIC_STRING)
-      builder.setSpan(
-        EnrichedHorizontalRuleSpan(htmlStyle),
-        0,
-        1,
-        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-      )
-      text.append(builder)
-      text.append(Strings.NEWLINE)
-    }
-
-    private fun startImg(
-      text: Editable,
-      attributes: Attributes?,
-      img: EnrichedParser.ImageGetter?,
-    ) {
-      if (attributes == null) {
-        return
-      }
-      val src = attributes.getValue("", HtmlAttributeNames.CONTENT_SRC)
-      val width = attributes.getValue("", "width")
-      val height = attributes.getValue("", "height")
-
-      val len = text.length
-      val span =
-        createEnrichedImageSpan(
-          src,
-          width.toInt(),
-          height.toInt(),
-        )
-      text.append(Strings.MAGIC_CHAR)
-      text.setSpan(span, len, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
     private fun extractAttributes(
