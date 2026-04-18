@@ -43,21 +43,12 @@ class EnrichedTextInputViewManager :
   EnrichedTextInputViewManagerInterface<EnrichedTextInputView> {
   private val mDelegate: ViewManagerDelegate<EnrichedTextInputView> =
     EnrichedTextInputViewManagerDelegate(this)
-  private var view: EnrichedTextInputView? = null
 
   override fun getDelegate(): ViewManagerDelegate<EnrichedTextInputView>? = mDelegate
 
   override fun getName(): String = NAME
 
-  public override fun createViewInstance(context: ThemedReactContext): EnrichedTextInputView {
-    val viewInstance = EnrichedTextInputView(context)
-    view = viewInstance
-    return viewInstance
-  }
-
-  override fun onDropViewInstance(view: EnrichedTextInputView) {
-    super.onDropViewInstance(view)
-  }
+  public override fun createViewInstance(context: ThemedReactContext): EnrichedTextInputView = EnrichedTextInputView(context)
 
   override fun updateState(
     view: EnrichedTextInputView,
