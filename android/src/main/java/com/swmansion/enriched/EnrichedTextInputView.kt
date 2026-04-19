@@ -156,9 +156,11 @@ class EnrichedTextInputView : AppCompatEditText {
     // See https://github.com/facebook/react-native/issues/6805 for original
     // fix that was ported to here.
     runAsATransaction {
+      ignoreSpanWatcher = true
       blockTextEventEmitting = true
       super.setTextIsSelectable(true)
       blockTextEventEmitting = false
+      ignoreSpanWatcher = false
     }
 
     if (autoFocus && !didAttachToWindow) {
@@ -261,6 +263,9 @@ class EnrichedTextInputView : AppCompatEditText {
     selEnd: Int,
   ) {
     super.onSelectionChanged(selStart, selEnd)
+    if (!didAttachToWindow) {
+      return
+    }
     selection?.onSelection(selStart, selEnd)
   }
 
@@ -382,7 +387,7 @@ class EnrichedTextInputView : AppCompatEditText {
       val spannable = text as SpannableStringBuilder?
 
       if (spannable == null) {
-        text = spannable
+        setText(spannable)
       } else {
         spannable.replace(0, spannable.length, newText)
       }
