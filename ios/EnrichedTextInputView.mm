@@ -1153,10 +1153,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       (LinkStyle *)[stylesDict objectForKey:@([LinkStyle getStyleType])];
 
   if (linkStyle != nullptr) {
+    [textView.textStorage beginEditing];
     // manual links need to be handled first because they can block automatic
     // links after being refreshed
     [linkStyle handleManualLinks:word inRange:range];
     [linkStyle handleAutomaticLinks:word inRange:range];
+    [textView.textStorage endEditing];
   }
 }
 
@@ -1207,7 +1209,14 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   auto emitter = [self getEventEmitter];
 
-  if (![textView.textStorage.string isEqualToString:_recentInputString]) {
+  BOOL isTextChanged =
+      ![textView.textStorage.string isEqualToString:_recentInputString];
+
+  if (isTextChanged) {
+    _recentInputString = [textView.textStorage.string copy];
+  }
+
+  if (isTextChanged) {
     // modified words handling
     NSArray *modifiedWords =
         [WordsUtils getAffectedWordsFromText:textView.textStorage.string
@@ -1228,9 +1237,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
     // emit onChangeText event
     if (emitter != nullptr && _emitChangeText) {
-      // set the recent input string only if the emitter is defined
-      _recentInputString = [textView.textStorage.string copy];
-
       // emit string without zero width spaces
       NSString *stringToBeEmitted = [[textView.textStorage.string
           stringByReplacingOccurrencesOfString:ZWS

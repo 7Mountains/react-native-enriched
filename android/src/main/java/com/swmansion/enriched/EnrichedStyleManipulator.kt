@@ -20,33 +20,29 @@ class EnrichedStyleManipulator(
     name: TextStyle,
     start: Int,
     end: Int,
-  ): Boolean {
-    val removed =
-      when (name) {
-        TextStyle.BOLD -> inlineStyles.removeStyle(TextStyle.BOLD, start, end)
-        TextStyle.ITALIC -> inlineStyles.removeStyle(TextStyle.ITALIC, start, end)
-        TextStyle.UNDERLINE -> inlineStyles.removeStyle(TextStyle.UNDERLINE, start, end)
-        TextStyle.STRIKETHROUGH -> inlineStyles.removeStyle(TextStyle.STRIKETHROUGH, start, end)
-        TextStyle.INLINE_CODE -> inlineStyles.removeStyle(TextStyle.INLINE_CODE, start, end)
-        TextStyle.H1 -> paragraphStyles.removeStyle(TextStyle.H1, start, end)
-        TextStyle.H2 -> paragraphStyles.removeStyle(TextStyle.H2, start, end)
-        TextStyle.H3 -> paragraphStyles.removeStyle(TextStyle.H3, start, end)
-        TextStyle.H4 -> paragraphStyles.removeStyle(TextStyle.H4, start, end)
-        TextStyle.H5 -> paragraphStyles.removeStyle(TextStyle.H5, start, end)
-        TextStyle.H6 -> paragraphStyles.removeStyle(TextStyle.H6, start, end)
-        TextStyle.CODE_BLOCK -> paragraphStyles.removeStyle(TextStyle.CODE_BLOCK, start, end)
-        TextStyle.BLOCK_QUOTE -> paragraphStyles.removeStyle(TextStyle.BLOCK_QUOTE, start, end)
-        TextStyle.ORDERED_LIST -> listStyles.removeStyle(TextStyle.ORDERED_LIST, start, end)
-        TextStyle.UNORDERED_LIST -> listStyles.removeStyle(TextStyle.UNORDERED_LIST, start, end)
-        TextStyle.CHECK_LIST -> listStyles.removeStyle(TextStyle.CHECK_LIST, start, end)
-        TextStyle.LINK -> parametrizedStyles.removeStyle(TextStyle.LINK, start, end)
-        TextStyle.IMAGE -> parametrizedStyles.removeStyle(TextStyle.IMAGE, start, end)
-        TextStyle.MENTION -> parametrizedStyles.removeStyle(TextStyle.MENTION, start, end)
-        else -> false
-      }
-
-    return removed == true
-  }
+  ): Boolean =
+    when (name) {
+      TextStyle.BOLD -> inlineStyles.removeStyle(TextStyle.BOLD, start, end)
+      TextStyle.ITALIC -> inlineStyles.removeStyle(TextStyle.ITALIC, start, end)
+      TextStyle.UNDERLINE -> inlineStyles.removeStyle(TextStyle.UNDERLINE, start, end)
+      TextStyle.STRIKETHROUGH -> inlineStyles.removeStyle(TextStyle.STRIKETHROUGH, start, end)
+      TextStyle.INLINE_CODE -> inlineStyles.removeStyle(TextStyle.INLINE_CODE, start, end)
+      TextStyle.H1 -> paragraphStyles.removeStyle(TextStyle.H1, start, end)
+      TextStyle.H2 -> paragraphStyles.removeStyle(TextStyle.H2, start, end)
+      TextStyle.H3 -> paragraphStyles.removeStyle(TextStyle.H3, start, end)
+      TextStyle.H4 -> paragraphStyles.removeStyle(TextStyle.H4, start, end)
+      TextStyle.H5 -> paragraphStyles.removeStyle(TextStyle.H5, start, end)
+      TextStyle.H6 -> paragraphStyles.removeStyle(TextStyle.H6, start, end)
+      TextStyle.CODE_BLOCK -> paragraphStyles.removeStyle(TextStyle.CODE_BLOCK, start, end)
+      TextStyle.BLOCK_QUOTE -> paragraphStyles.removeStyle(TextStyle.BLOCK_QUOTE, start, end)
+      TextStyle.ORDERED_LIST -> listStyles.removeStyle(TextStyle.ORDERED_LIST, start, end)
+      TextStyle.UNORDERED_LIST -> listStyles.removeStyle(TextStyle.UNORDERED_LIST, start, end)
+      TextStyle.CHECK_LIST -> listStyles.removeStyle(TextStyle.CHECK_LIST, start, end)
+      TextStyle.LINK -> parametrizedStyles.removeStyle(TextStyle.LINK, start, end)
+      TextStyle.IMAGE -> parametrizedStyles.removeStyle(TextStyle.IMAGE, start, end)
+      TextStyle.MENTION -> parametrizedStyles.removeStyle(TextStyle.MENTION, start, end)
+      else -> false
+    }
 
   internal fun toggleStyle(name: TextStyle) {
     when (name) {
@@ -70,34 +66,30 @@ class EnrichedStyleManipulator(
     }
   }
 
-  internal fun getTargetRange(name: TextStyle): Pair<Int, Int> {
-    val result =
-      when (name) {
-        TextStyle.BOLD -> inlineStyles.getStyleRange()
-        TextStyle.ITALIC -> inlineStyles.getStyleRange()
-        TextStyle.UNDERLINE -> inlineStyles.getStyleRange()
-        TextStyle.STRIKETHROUGH -> inlineStyles.getStyleRange()
-        TextStyle.INLINE_CODE -> inlineStyles.getStyleRange()
-        TextStyle.H1 -> paragraphStyles.getStyleRange()
-        TextStyle.H2 -> paragraphStyles.getStyleRange()
-        TextStyle.H3 -> paragraphStyles.getStyleRange()
-        TextStyle.H4 -> paragraphStyles.getStyleRange()
-        TextStyle.H5 -> paragraphStyles.getStyleRange()
-        TextStyle.H6 -> paragraphStyles.getStyleRange()
-        TextStyle.DIVIDER -> paragraphStyles.getStyleRange()
-        TextStyle.CODE_BLOCK -> paragraphStyles.getStyleRange()
-        TextStyle.BLOCK_QUOTE -> paragraphStyles.getStyleRange()
-        TextStyle.ORDERED_LIST -> listStyles.getStyleRange()
-        TextStyle.UNORDERED_LIST -> listStyles.getStyleRange()
-        TextStyle.CHECK_LIST -> listStyles.getStyleRange()
-        TextStyle.LINK -> parametrizedStyles.getStyleRange()
-        TextStyle.IMAGE -> parametrizedStyles.getStyleRange()
-        TextStyle.MENTION -> parametrizedStyles.getStyleRange()
-        else -> Pair(0, 0)
-      }
-
-    return result
-  }
+  internal fun getTargetRange(name: TextStyle): Pair<Int, Int> =
+    when (name) {
+      TextStyle.BOLD -> inlineStyles.getStyleRange()
+      TextStyle.ITALIC -> inlineStyles.getStyleRange()
+      TextStyle.UNDERLINE -> inlineStyles.getStyleRange()
+      TextStyle.STRIKETHROUGH -> inlineStyles.getStyleRange()
+      TextStyle.INLINE_CODE -> inlineStyles.getStyleRange()
+      TextStyle.H1 -> paragraphStyles.getStyleRange()
+      TextStyle.H2 -> paragraphStyles.getStyleRange()
+      TextStyle.H3 -> paragraphStyles.getStyleRange()
+      TextStyle.H4 -> paragraphStyles.getStyleRange()
+      TextStyle.H5 -> paragraphStyles.getStyleRange()
+      TextStyle.H6 -> paragraphStyles.getStyleRange()
+      TextStyle.DIVIDER -> paragraphStyles.getStyleRange()
+      TextStyle.CODE_BLOCK -> paragraphStyles.getStyleRange()
+      TextStyle.BLOCK_QUOTE -> paragraphStyles.getStyleRange()
+      TextStyle.ORDERED_LIST -> listStyles.getStyleRange()
+      TextStyle.UNORDERED_LIST -> listStyles.getStyleRange()
+      TextStyle.CHECK_LIST -> listStyles.getStyleRange()
+      TextStyle.LINK -> parametrizedStyles.getStyleRange()
+      TextStyle.IMAGE -> parametrizedStyles.getStyleRange()
+      TextStyle.MENTION -> parametrizedStyles.getStyleRange()
+      else -> Pair(0, 0)
+    }
 
   private fun canApplyStyle(name: TextStyle): Boolean = EnrichedSpans.isStyleAvailable(name, view.availableStyles)
 

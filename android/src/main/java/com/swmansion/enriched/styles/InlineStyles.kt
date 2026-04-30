@@ -2,6 +2,7 @@ package com.swmansion.enriched.styles
 
 import android.text.Editable
 import android.text.Spannable
+import android.text.Spanned
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.spans.EnrichedBoldSpan
 import com.swmansion.enriched.spans.EnrichedColoredSpan
@@ -266,8 +267,9 @@ class InlineStyles(
     editable: Editable,
     endCursorPosition: Int,
   ) {
+    val spanState = view.spanState ?: return
     for ((style, config) in EnrichedSpans.inlineSpans) {
-      val start = view.spanState?.getStart(style) ?: continue
+      val start = spanState.getStart(style) ?: continue
       var end = endCursorPosition
       if (style == TextStyle.COLOR) {
         applyTypingColorIfActive(editable, end)
@@ -328,8 +330,8 @@ class InlineStyles(
 
       spannable.removeSpan(span)
 
-      spannable.setSpan(span.copy(), spanStart, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-      spannable.setSpan(span.copy(), end, spanEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+      spannable.setSpan(span.copy(), spanStart, start, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      spannable.setSpan(span.copy(), end, spanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
   }
 
@@ -344,9 +346,8 @@ class InlineStyles(
     // We either start or end current span
     if (start == end) {
       val styleStart = spanState.getStart(name)
-
+      splitSpan(spannable, start, end, type)
       if (styleStart != null) {
-        splitSpan(spannable, start, end, type)
         spanState.setStartWithStateChangeEmitting(name, null)
       } else {
         spanState.setStartWithStateChangeEmitting(name, start)
