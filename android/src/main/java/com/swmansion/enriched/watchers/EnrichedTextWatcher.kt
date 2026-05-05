@@ -16,6 +16,7 @@ class EnrichedTextWatcher(
   private var endCursorPosition: Int = 0
   private var previousTextLength: Int = 0
   private var startCursorPosition: Int = 0
+  private var prevText: String? = view.text?.toString() ?: ""
 
   private val inlineSpanPreserver = InlineSpanPreserver()
 
@@ -47,42 +48,42 @@ class EnrichedTextWatcher(
   ) {
     endCursorPosition = start + count
     view.isRemovingMany = !view.isDuringTransaction && before > count + 1
-    view.ignoreSpanWatcher = true
     inlineSpanPreserver.onTextChanged(
       text = s,
       isDisabled = view.isDuringTransaction,
     )
-    view.ignoreSpanWatcher = false
   }
 
   override fun afterTextChanged(s: Editable?) {
+    emitEvents(s)
     if (s == null) return
 
-    inlineSpanPreserver.afterTextChanged()
+    val block = {
+      view.transactionManager.runWithBlockedTextEvents {
+        view.transactionManager.runWithIgnoredSpanWatcher {
+          inlineSpanPreserver.afterTextChanged()
 
-    emitEvents(s)
-
-    if (view.isDuringTransaction) return
-    applyStyles(s)
+          if (!view.isDuringTransaction) {
+            inlineSpanPreserver.afterTextChanged()
+            applyStyles(s)
+          }
+        }
+      }
+    }
+    block()
   }
 
   private fun applyStyles(s: Editable) {
-    view.blockTextEventEmitting = true
-
-    try {
-      val styleManipulator = view.styleManipulator
-      styleManipulator?.inlineStyles?.afterTextChanged(s, endCursorPosition)
-      styleManipulator?.parametrizedStyles?.afterTextChanged(s, startCursorPosition, endCursorPosition)
-      ParagraphSpanNormalizer.normalize(s, endCursorPosition)
-      styleManipulator?.listStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
-      styleManipulator?.paragraphStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
-      ZWSNormalizer.normalizeNonEmptyParagraphs(s)
-    } finally {
-      view.blockTextEventEmitting = false
-    }
+    val styleManipulator = view.styleManipulator
+    styleManipulator?.inlineStyles?.afterTextChanged(s, endCursorPosition)
+    styleManipulator?.parametrizedStyles?.afterTextChanged(s, startCursorPosition, endCursorPosition)
+    ParagraphSpanNormalizer.normalize(s, endCursorPosition)
+    styleManipulator?.listStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
+    styleManipulator?.paragraphStyles?.afterTextChanged(s, endCursorPosition, previousTextLength)
+    ZWSNormalizer.normalizeNonEmptyParagraphs(s)
   }
 
-  private fun emitChangeText(editable: Editable) {
+  private fun emitChangeText(text: String?) {
     if (!view.shouldEmitOnChangeText) {
       return
     }
@@ -92,14 +93,18 @@ class EnrichedTextWatcher(
       OnChangeTextEvent(
         surfaceId,
         view.id,
-        editable,
+        text,
         view.experimentalSynchronousEvents,
       ),
     )
   }
 
-  private fun emitEvents(s: Editable) {
-    emitChangeText(s)
-    view.spanWatcher?.emitEvents(s, null)
+  private fun emitEvents(s: Editable?) {
+    val nextText = s?.toString() ?: ""
+    if (prevText != nextText) {
+      prevText = nextText
+      emitChangeText(nextText)
+      view.emitOnAnyContentChangeEvent()
+    }
   }
 }

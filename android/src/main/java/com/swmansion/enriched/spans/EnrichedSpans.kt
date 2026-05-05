@@ -7,6 +7,13 @@ interface ISpanConfig {
   val clazz: Class<out EnrichedSpan>
 }
 
+enum class TextStyleGroup {
+  INLINE,
+  PARAGRAPH,
+  LIST,
+  PARAMETRIZED,
+}
+
 enum class TextStyle(
   val key: String,
 ) {
@@ -120,6 +127,27 @@ object EnrichedSpans {
       TextStyle.IMAGE to BaseSpanConfig(EnrichedImageSpan::class.java),
       TextStyle.MENTION to BaseSpanConfig(EnrichedMentionSpan::class.java),
     )
+
+  val styleGroups: Map<TextStyle, TextStyleGroup> =
+    buildMap {
+      inlineSpans.keys.forEach { style ->
+        put(style, TextStyleGroup.INLINE)
+      }
+
+      paragraphSpans.keys.forEach { style ->
+        put(style, TextStyleGroup.PARAGRAPH)
+      }
+
+      listSpans.keys.forEach { style ->
+        put(style, TextStyleGroup.LIST)
+      }
+
+      parametrizedStyles.keys.forEach { style ->
+        put(style, TextStyleGroup.PARAMETRIZED)
+      }
+    }
+
+  fun getStyleGroup(style: TextStyle): TextStyleGroup? = styleGroups[style]
 
   val allSpans: Map<TextStyle, ISpanConfig> =
     buildMap {
