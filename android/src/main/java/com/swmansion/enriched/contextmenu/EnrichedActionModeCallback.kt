@@ -40,18 +40,22 @@ class EnrichedActionModeCallback(
   ): Boolean {
     val itemId = menuItem.itemId
 
-    if (itemId < CONTEXT_MENU_ITEM_ID) {
-      return original?.onActionItemClicked(mode, menuItem) ?: false
+    val customStart = CONTEXT_MENU_ITEM_ID
+    val customEnd = CONTEXT_MENU_ITEM_ID + contextMenuItems.size
+
+    if (itemId in customStart until customEnd) {
+      val index = itemId - CONTEXT_MENU_ITEM_ID
+      val item = contextMenuItems.getOrNull(index) ?: return false
+
+      emitContextMenuItemPressEvent(item)
+
+      mode.finish()
+
+      return true
     }
 
-    val index = itemId - CONTEXT_MENU_ITEM_ID
-    val item = contextMenuItems.getOrNull(index) ?: return false
-
-    emitContextMenuItemPressEvent(item)
-
-    mode.finish()
-
-    return true
+    return original?.onActionItemClicked(mode, menuItem)
+      ?: controller.onTextContextMenuItem(itemId)
   }
 
   override fun onDestroyActionMode(mode: ActionMode) {
