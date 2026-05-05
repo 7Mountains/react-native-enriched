@@ -6,7 +6,6 @@ import android.text.style.ParagraphStyle
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
-import com.swmansion.enriched.events.OnAnyContentChangeEvent
 import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.EnrichedHeadingSpan
@@ -84,17 +83,11 @@ class EnrichedSpanWatcher(
     }
   }
 
-  private fun emitOnChangeHtmlEvent(
-    s: Spannable,
-    what: Any?,
-  ) {
+  private fun emitOnChangeHtmlEvent(spannable: Spannable) {
     // Do not parse spannable and emit event if onChangeHtml is not provided
     if (!view.shouldEmitHtml) return
 
-    // Emit event only if we change one of ours spans
-    if (what != null && what !is EnrichedSpan) return
-
-    val html = EnrichedParser.toHtml(s)
+    val html = EnrichedParser.toHtml(spannable)
     if (html == previousHtml || html == null) return
 
     previousHtml = html
@@ -111,30 +104,14 @@ class EnrichedSpanWatcher(
     )
   }
 
-  private fun emitOnAnyContentChangeEvent(
-    spannable: Spannable,
-    what: Any?,
-  ) {
-    // Emit event only if we change one of ours spans
-    if (what !is EnrichedSpan) return
-
-    val context = view.context as ReactContext
-    val surfaceId = UIManagerHelper.getSurfaceId(context)
-    view.dispatchTextRelatedEvent(
-      OnAnyContentChangeEvent(
-        surfaceId,
-        view.id,
-        view.experimentalSynchronousEvents,
-      ),
-    )
-  }
-
   fun emitEvents(
     spannable: Spannable,
     what: Any?,
   ) {
-    emitOnChangeHtmlEvent(spannable, what)
-    emitOnAnyContentChangeEvent(spannable, what)
+    // Emit event only if we change one of ours spans
+    if (what !is EnrichedSpan && what != null) return
+    emitOnChangeHtmlEvent(spannable)
+    view.emitOnAnyContentChangeEvent()
   }
 
   companion object {

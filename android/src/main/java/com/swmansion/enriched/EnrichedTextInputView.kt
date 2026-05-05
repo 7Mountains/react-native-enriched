@@ -19,7 +19,6 @@ import android.view.ActionMode
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
-import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
@@ -37,12 +36,14 @@ import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.contextmenu.EnrichedContextMenuController
 import com.swmansion.enriched.events.MentionHandler
+import com.swmansion.enriched.events.OnAnyContentChangeEvent
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.inputFilters.NonEditableParagraphFilter
 import com.swmansion.enriched.inputFilters.ParagraphLimitFilter
 import com.swmansion.enriched.loaders.EnrichedImageLoader
+import com.swmansion.enriched.managers.EnrichedTransactionManager
 import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
@@ -69,10 +70,18 @@ class EnrichedTextInputView : AppCompatEditText {
   val spanState: EnrichedSpanState? = EnrichedSpanState(this)
   val styleManipulator: EnrichedStyleManipulator? = EnrichedStyleManipulator(this)
 
-  var isDuringTransaction: Boolean = false
+  val transactionManager = EnrichedTransactionManager()
+
+  val isDuringTransaction: Boolean
+    get() = transactionManager.isDuringTransaction
+
   var isRemovingMany: Boolean = false
-  var blockTextEventEmitting: Boolean = false
-  var ignoreSpanWatcher: Boolean = false
+
+  val blockTextEventEmitting: Boolean
+    get() = transactionManager.blockTextEventEmitting
+
+  val ignoreSpanWatcher: Boolean
+    get() = transactionManager.ignoreSpanWatcher
 
   var availableStyles: Map<TextStyle, ISpanConfig> = EnrichedSpans.allSpans
   var paragraphsLimit: Int = -1
@@ -153,15 +162,11 @@ class EnrichedTextInputView : AppCompatEditText {
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
 
-    // Used to ensure that text is selectable inside of removeClippedSubviews
-    // See https://github.com/facebook/react-native/issues/6805 for original
-    // fix that was ported to here.
-    runAsATransaction {
-      ignoreSpanWatcher = true
-      blockTextEventEmitting = true
+    transactionManager.runSilently {
+      // Used to ensure that text is selectable inside of removeClippedSubviews
+      // See https://github.com/facebook/react-native/issues/6805 for original
+      // fix that was ported to here.
       super.setTextIsSelectable(true)
-      blockTextEventEmitting = false
-      ignoreSpanWatcher = false
     }
 
     if (autoFocus && !didAttachToWindow) {
@@ -319,28 +324,28 @@ class EnrichedTextInputView : AppCompatEditText {
     spannable: Spannable,
     at: Int? = null,
   ) {
-    ignoreSpanWatcher = true
-    val currentText = (text as? SpannableStringBuilder) ?: return
-    val length = currentText.length
+    transactionManager.runWithIgnoredSpanWatcher {
+      val currentText = (text as? SpannableStringBuilder) ?: return@runWithIgnoredSpanWatcher
+      val length = currentText.length
 
-    val insertionStart = selection?.start ?: 0
-    val insertionEnd = selection?.end ?: 0
+      val insertionStart = selection?.start ?: 0
+      val insertionEnd = selection?.end ?: 0
 
-    val rawStart = at ?: minOf(insertionStart, insertionEnd)
-    val rawEnd = at ?: maxOf(insertionStart, insertionEnd)
+      val rawStart = at ?: minOf(insertionStart, insertionEnd)
+      val rawEnd = at ?: maxOf(insertionStart, insertionEnd)
 
-    val start = rawStart.coerceIn(0, length)
-    val end = rawEnd.coerceIn(start, length)
+      val start = rawStart.coerceIn(0, length)
+      val end = rawEnd.coerceIn(start, length)
 
-    val result = currentText.mergeSpannables(start, end, spannable)
+      val result = currentText.mergeSpannables(start, end, spannable)
 
-    currentText.replace(start, end, spannable)
+      currentText.replace(start, end, spannable)
 
-    val lengthAfter = currentText.length
+      val lengthAfter = currentText.length
 
-    val cursor = (start + result.insertedCharactersAmount).coerceIn(0, lengthAfter)
-    setSelection(cursor, cursor)
-    ignoreSpanWatcher = false
+      val cursor = (start + result.insertedCharactersAmount).coerceIn(0, lengthAfter)
+      setSelection(cursor, cursor)
+    }
   }
 
   fun insertText(
@@ -380,9 +385,7 @@ class EnrichedTextInputView : AppCompatEditText {
     withSelection: Boolean = false,
   ) {
     if (value == null) return
-    runAsATransaction {
-      ignoreSpanWatcher = true
-      blockTextEventEmitting = true
+    transactionManager.runSilently {
       val newText = parseText(value)
 
       val spannable = text as SpannableStringBuilder?
@@ -398,8 +401,6 @@ class EnrichedTextInputView : AppCompatEditText {
         // Scroll to the last line of text
         setSelection(text?.length ?: 0, text?.length ?: 0)
       }
-      blockTextEventEmitting = false
-      ignoreSpanWatcher = false
     }
   }
 
@@ -439,14 +440,10 @@ class EnrichedTextInputView : AppCompatEditText {
     if (start == -1 || end == -1) return
 
     val marker = ForceRedrawSpan()
-    ignoreSpanWatcher = true
-    blockTextEventEmitting = true
-    runAsATransaction {
+    transactionManager.runSilently {
       text.setSpan(marker, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
       text.removeSpan(marker)
     }
-    blockTextEventEmitting = true
-    ignoreSpanWatcher = false
   }
 
   private fun getActualIndex(visibleIndex: Int): Int {
@@ -650,7 +647,7 @@ class EnrichedTextInputView : AppCompatEditText {
     val isValid = styleManipulator?.verifyStyle(name) ?: false
     if (!isValid) return
 
-    runAsATransaction {
+    transactionManager.runTransaction {
       styleManipulator.toggleStyle(name)
     }
   }
@@ -672,16 +669,16 @@ class EnrichedTextInputView : AppCompatEditText {
     dispatcher?.dispatchEvent(OnRequestHtmlResultEvent(surfaceId, id, requestId, html, experimentalSynchronousEvents))
   }
 
-  // Sometimes setting up style triggers many changes in sequence
-  // Eg. removing conflicting styles -> changing text -> applying spans
-  // In such scenario we want to prevent from handling side effects (eg. onTextChanged)
-  fun runAsATransaction(block: () -> Unit) {
-    try {
-      isDuringTransaction = true
-      block()
-    } finally {
-      isDuringTransaction = false
-    }
+  internal fun emitOnAnyContentChangeEvent() {
+    val context = context as ReactContext
+    val surfaceId = UIManagerHelper.getSurfaceId(context)
+    dispatchTextRelatedEvent(
+      OnAnyContentChangeEvent(
+        surfaceId,
+        id,
+        experimentalSynchronousEvents,
+      ),
+    )
   }
 
   fun <T : Event<T>> dispatchTextRelatedEvent(event: T) {
@@ -722,7 +719,6 @@ class EnrichedTextInputView : AppCompatEditText {
     previousHtmlStyle: HtmlStyle,
     nextHtmlStyle: HtmlStyle,
   ) {
-    blockTextEventEmitting = true
     val shouldRemoveBoldSpanFromH1Span = !previousHtmlStyle.h1Bold && nextHtmlStyle.h1Bold
     val shouldRemoveBoldSpanFromH2Span = !previousHtmlStyle.h2Bold && nextHtmlStyle.h2Bold
     val shouldRemoveBoldSpanFromH3Span = !previousHtmlStyle.h3Bold && nextHtmlStyle.h3Bold
@@ -732,7 +728,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
     var shouldEmitStateChange = false
 
-    runAsATransaction {
+    transactionManager.runSilently {
       val spans = spannable.getSpans(0, spannable.length, EnrichedSpan::class.java)
       for (span in spans) {
         if (!span.dependsOnHtmlStyle) continue
@@ -760,7 +756,6 @@ class EnrichedTextInputView : AppCompatEditText {
       }
     }
     forceScrollToSelection()
-    blockTextEventEmitting = false
   }
 
   private fun getInitialWidth(): Int {

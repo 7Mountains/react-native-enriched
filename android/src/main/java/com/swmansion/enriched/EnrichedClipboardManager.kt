@@ -58,7 +58,7 @@ class EnrichedClipboardManager(
 
     clipboard.setPrimaryClip(clip)
 
-    view.runAsATransaction {
+    view.transactionManager.runTransaction {
       editable.replace(start, end, "")
     }
 

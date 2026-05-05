@@ -412,7 +412,7 @@ class ParametrizedStyles(
     selectionEnd: Int,
     text: String,
   ) {
-    view.runAsATransaction {
+    view.transactionManager.runTransaction {
       spannable.replace(start, selectionEnd, text)
 
       val spanEnd = start + text.length
