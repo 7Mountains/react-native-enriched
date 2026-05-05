@@ -14,12 +14,14 @@ import com.swmansion.enriched.spans.EnrichedUnderlineSpan
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
+import com.swmansion.enriched.utils.areInlineSpansTouchingOrOverlapping
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
+import com.swmansion.enriched.utils.isTheSameInlineSpan
 
 class InlineStyles(
   private val view: EnrichedTextInputView,
 ) {
-  private fun <T> setSpan(
+  private fun <T : EnrichedSpan> setSpan(
     spannable: Spannable,
     type: Class<T>,
     start: Int,
@@ -55,7 +57,7 @@ class InlineStyles(
     spannable.setSpan(span, safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
-  private fun <T> setAndMergeSpans(
+  private fun <T : EnrichedSpan> setAndMergeSpans(
     spannable: Spannable,
     type: Class<T>,
     start: Int,
@@ -284,6 +286,76 @@ class InlineStyles(
 
       setSpan(editable, config.clazz, start, end, style)
     }
+    mergeAdjacentInlineSpansAt(editable, endCursorPosition)
+  }
+
+  private fun mergeAdjacentInlineSpansAt(
+    editable: Editable,
+    position: Int,
+  ) {
+    if (editable.isEmpty()) return
+
+    val safePosition = position.coerceIn(0, editable.length)
+
+    val inlineSpans =
+      editable
+        .getSpans(safePosition, safePosition, EnrichedInlineSpan::class.java)
+        .filter { span ->
+          val start = editable.getSpanStart(span)
+          val end = editable.getSpanEnd(span)
+
+          start >= 0 && end >= 0 && start < end
+        }.sortedWith(
+          compareBy<EnrichedInlineSpan> { it::class.java.name }
+            .thenBy { editable.getSpanStart(it) }
+            .thenBy { editable.getSpanEnd(it) },
+        )
+
+    if (inlineSpans.size < 2) return
+
+    var index = 0
+    while (index < inlineSpans.size - 1) {
+      val current = inlineSpans[index]
+      val next = inlineSpans[index + 1]
+
+      if (isTheSameInlineSpan(current, next) && editable.areInlineSpansTouchingOrOverlapping(current, next)) {
+        mergeInlineSpans(editable, current, next)
+        return mergeAdjacentInlineSpansAt(editable, safePosition)
+      }
+
+      index++
+    }
+  }
+
+  private fun mergeInlineSpans(
+    editable: Editable,
+    first: EnrichedInlineSpan,
+    second: EnrichedInlineSpan,
+  ) {
+    val firstStart = editable.getSpanStart(first)
+    val firstEnd = editable.getSpanEnd(first)
+    val secondStart = editable.getSpanStart(second)
+    val secondEnd = editable.getSpanEnd(second)
+
+    if (firstStart < 0 || firstEnd < 0 || secondStart < 0 || secondEnd < 0) {
+      return
+    }
+
+    val mergedStart = minOf(firstStart, secondStart)
+    val mergedEnd = maxOf(firstEnd, secondEnd)
+    val flags = editable.getSpanFlags(first)
+
+    editable.removeSpan(first)
+    editable.removeSpan(second)
+
+    val mergedSpan = first.copy()
+
+    editable.setSpan(
+      mergedSpan,
+      mergedStart,
+      mergedEnd,
+      flags,
+    )
   }
 
   private fun applyTypingColorIfActive(
