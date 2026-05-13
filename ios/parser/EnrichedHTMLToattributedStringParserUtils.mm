@@ -78,6 +78,11 @@ bool isParagraphTag(const char *tagName) {
          (tagName[0] == 'p' || tagName[0] == 'P');
 }
 
+bool isListItemTag(const char *tagName) {
+  return tagName && (tagName[0] == 'l' || tagName[0] == 'L') &&
+         (tagName[1] == 'i' || tagName[1] == 'I') && tagName[2] == '\0';
+}
+
 bool isBlockTag(const char *tag) {
   if (!tag)
     return false;
