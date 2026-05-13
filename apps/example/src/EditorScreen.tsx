@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     width: '100%',
     lineHeight: 24,
-    minHeight: 300,
+    maxHeight: 300,
     backgroundColor: 'gainsboro',
     fontSize: 16,
     fontFamily: 'Nunito-Regular',
