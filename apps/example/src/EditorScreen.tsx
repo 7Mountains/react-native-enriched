@@ -647,7 +647,8 @@ const styles = StyleSheet.create({
   editorInput: {
     marginTop: 24,
     width: '100%',
-    maxHeight: 300,
+    lineHeight: 24,
+    minHeight: 300,
     backgroundColor: 'gainsboro',
     fontSize: 16,
     fontFamily: 'Nunito-Regular',

@@ -76,6 +76,11 @@
     stylePropChanged = YES;
   }
 
+  if (newViewProps.lineHeight != oldViewProps.lineHeight) {
+    [newConfig setPrimaryLineHeight:newViewProps.lineHeight];
+    stylePropChanged = YES;
+  }
+
   // rich text style
 
   if (newViewProps.htmlStyle.h1.fontSize !=

@@ -1069,8 +1069,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   NSAttributedString *insertedText =
       [parser isHtmlString:text]
           ? [parser attributedFromHtml:text
-                                styles:self->stylesDict
-                     defaultAttributes:self->defaultTypingAttributes]
+                                styles:stylesDict
+                     defaultAttributes:defaultTypingAttributes]
           : [[NSAttributedString alloc] initWithString:text
                                             attributes:defaultTypingAttributes];
 

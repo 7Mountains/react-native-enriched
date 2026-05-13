@@ -1,5 +1,7 @@
 package com.swmansion.enriched
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.graphics.toColorInt
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
@@ -217,6 +219,14 @@ class EnrichedTextInputViewManager :
     value: Int,
   ) {
     view?.paragraphsLimit = value
+  }
+
+  @ReactProp(name = "lineHeight")
+  override fun setLineHeight(
+    view: EnrichedTextInputView?,
+    value: Float,
+  ) {
+    view?.setLineHeight(value.toInt())
   }
 
   override fun setContextMenuItems(

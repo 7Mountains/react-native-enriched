@@ -19,6 +19,8 @@
 - (void)setPrimaryFontFamily:(NSString *)newValue;
 - (UIFont *)primaryFont;
 - (UIFont *)monospacedFont;
+- (void)setPrimaryLineHeight:(CGFloat)newValue;
+- (CGFloat)primaryLineHeight;
 - (NSSet<NSNumber *> *)mentionIndicators;
 - (void)setMentionIndicators:(NSSet<NSNumber *> *)newValue;
 - (CGFloat)h1FontSize;

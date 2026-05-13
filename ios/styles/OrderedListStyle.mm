@@ -63,6 +63,7 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
   pStyle.textLists = TextLists;
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
+  pStyle.minimumLineHeight = 0;
   pStyle.tailIndent = DefaultListTailIndent;
   pStyle.paragraphSpacing = 0;
   pStyle.paragraphSpacingBefore = 0;
