@@ -647,6 +647,7 @@ const styles = StyleSheet.create({
   editorInput: {
     marginTop: 24,
     width: '100%',
+    lineHeight: 24,
     maxHeight: 300,
     backgroundColor: 'gainsboro',
     fontSize: 16,

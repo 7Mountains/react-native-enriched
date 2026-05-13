@@ -25,6 +25,7 @@
   paragraphStyle.paragraphSpacingBefore = props.iOSparagraphSpacingBefore;
   paragraphStyle.alignment = NSTextAlignmentNatural;
   paragraphStyle.headingLevel = EnrichedHeadingNone;
+  paragraphStyle.minimumLineHeight = config.primaryLineHeight;
 
   attributes[NSParagraphStyleAttributeName] = paragraphStyle;
 

@@ -45,6 +45,7 @@ import com.swmansion.enriched.inputFilters.ParagraphLimitFilter
 import com.swmansion.enriched.loaders.EnrichedImageLoader
 import com.swmansion.enriched.managers.EnrichedTransactionManager
 import com.swmansion.enriched.parser.EnrichedParser
+import com.swmansion.enriched.spans.CustomLineHeightSpan
 import com.swmansion.enriched.spans.EnrichedH1Span
 import com.swmansion.enriched.spans.EnrichedH2Span
 import com.swmansion.enriched.spans.EnrichedH3Span
@@ -210,6 +211,27 @@ class EnrichedTextInputView : AppCompatEditText {
       editorWidth = textLayoutWidth
       htmlStyle.invalidateStyles()
     }
+  }
+
+  override fun setLineHeight(lineHeight: Int) {
+    transactionManager.runSilently {
+      editableText.apply {
+        getSpans(0, length, CustomLineHeightSpan::class.java)
+          .forEach(::removeSpan)
+
+        if (lineHeight > 0) {
+          val heightPx = PixelUtil.toPixelFromDIP(lineHeight.toDouble()).toInt()
+          setSpan(
+            CustomLineHeightSpan(heightPx),
+            0,
+            length,
+            Spannable.SPAN_INCLUSIVE_INCLUSIVE,
+          )
+        }
+      }
+    }
+
+    setText(editableText)
   }
 
   override fun onDraw(canvas: Canvas) {

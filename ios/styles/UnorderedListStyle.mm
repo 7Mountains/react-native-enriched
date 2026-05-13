@@ -81,6 +81,7 @@ static NSArray<NSTextList *> *const TextLists = @[ bullet ];
   pStyle.tailIndent = DefaultListTailIndent;
   pStyle.paragraphSpacing = 0;
   pStyle.paragraphSpacingBefore = 0;
+  pStyle.minimumLineHeight = 0;
   _cachedAttributes = pStyle;
   return _cachedAttributes;
 }

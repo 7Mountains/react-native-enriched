@@ -159,6 +159,11 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   NSString *text = input->textView.textStorage.string;
   NSUInteger textLength = text.length;
   CGFloat gap = input->config.blockquoteGapWidth;
+  UIFont *font = input->config.primaryFont;
+  CGFloat naturalTextHeight = ceil(font.ascender - font.descender);
+
+  NSDictionary *drawAttrs =
+      @{NSForegroundColorAttributeName : input->config.blockquoteBorderColor};
 
   [text
       enumerateSubstringsInRange:visibleCharRange
@@ -171,8 +176,10 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                         NSDictionary *attrs = [input->textView.textStorage
                             attributesAtIndex:safeRange.location
                                effectiveRange:nil];
+
                         NSParagraphStyle *paragraphStyle =
                             attrs[NSParagraphStyleAttributeName];
+
                         id value = attrs[[BlockQuoteStyle attributeKey]];
                         if (![style styleCondition:value
                                              range:NSMakeRange(
@@ -182,11 +189,6 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                         NSRange glyphRange =
                             [self glyphRangeForCharacterRange:safeRange
                                          actualCharacterRange:nil];
-
-                        NSDictionary *drawAttrs = @{
-                          NSForegroundColorAttributeName :
-                              input->config.blockquoteBorderColor
-                        };
 
                         __block BOOL isFirstLine = YES;
 
@@ -199,28 +201,38 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                                              *container,
                                                          NSRange lineGlyphRange,
                                                          BOOL *stop) {
-                                                       CGFloat y =
-                                                           origin.y +
-                                                           rect.origin.y +
-                                                           paragraphStyle
-                                                               .paragraphSpacingBefore;
                                                        CGFloat textLeft =
                                                            origin.x +
                                                            rect.origin.x +
                                                            usedRect.origin.x;
+
                                                        CGFloat textRight =
                                                            textLeft +
                                                            usedRect.size.width;
 
                                                        if (isFirstLine) {
-                                                         [@"“" drawAtPoint:
-                                                                   CGPointMake(
-                                                                       textLeft -
-                                                                           gap *
-                                                                               2,
-                                                                       y)
+                                                         NSString *openQuote =
+                                                             @"“";
+
+                                                         CGFloat quoteY =
+                                                             origin.y +
+                                                             CGRectGetMidY(
+                                                                 rect) -
+                                                             naturalTextHeight /
+                                                                 2.0 +
+                                                             paragraphStyle
+                                                                 .paragraphSpacingBefore;
+
+                                                         [openQuote
+                                                                drawAtPoint:
+                                                                    CGPointMake(
+                                                                        textLeft -
+                                                                            gap *
+                                                                                2,
+                                                                        quoteY)
                                                              withAttributes:
                                                                  drawAttrs];
+
                                                          isFirstLine = NO;
                                                        }
 
@@ -228,11 +240,23 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                                                lineGlyphRange) >=
                                                            NSMaxRange(
                                                                glyphRange)) {
-                                                         [@"”" drawAtPoint:
-                                                                   CGPointMake(
-                                                                       textRight +
-                                                                           gap,
-                                                                       y)
+                                                         NSString *closeQuote =
+                                                             @"”";
+                                                         CGFloat quoteY =
+                                                             origin.y +
+                                                             CGRectGetMidY(
+                                                                 rect) -
+                                                             naturalTextHeight /
+                                                                 2.0 +
+                                                             paragraphStyle
+                                                                 .paragraphSpacingBefore;
+
+                                                         [closeQuote
+                                                                drawAtPoint:
+                                                                    CGPointMake(
+                                                                        textRight +
+                                                                            gap,
+                                                                        quoteY)
                                                              withAttributes:
                                                                  drawAttrs];
                                                        }
@@ -260,6 +284,13 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 
   NSTextStorage *textStorage = input->textView.textStorage;
   NSUInteger textLength = textStorage.length;
+
+  NSDictionary *markerAttributes = @{
+    NSFontAttributeName : [input->config orderedListMarkerFont],
+    NSForegroundColorAttributeName : [input->config orderedListMarkerColor]
+  };
+
+  CGFloat bulletSize = [input->config unorderedListBulletSize];
 
   for (StylePair *pair in pairs) {
     NSArray<NSValue *> *paragraphs = [ParagraphsUtils
@@ -313,10 +344,6 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                              isEqualToString:
                                                  NSTextListMarkerDisc]) {
 
-                                       CGFloat bulletSize =
-                                           [input->config
-                                                   unorderedListBulletSize];
-
                                        CGFloat bulletX =
                                            baseX + indentWidth / 2.0;
 
@@ -343,15 +370,6 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                                            lineGlyphRange
                                                                .location]
                                                    input:input];
-
-                                       NSDictionary *markerAttributes = @{
-                                         NSFontAttributeName :
-                                             [input->config
-                                                     orderedListMarkerFont],
-                                         NSForegroundColorAttributeName :
-                                             [input->config
-                                                     orderedListMarkerColor]
-                                       };
 
                                        CGFloat markerWidth =
                                            [marker sizeWithAttributes:
