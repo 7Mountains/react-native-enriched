@@ -414,6 +414,7 @@ export interface NativeProps extends ViewProps {
   fontFamily?: string;
   fontWeight?: string;
   fontStyle?: string;
+  lineHeight?: Float;
 
   // Used for onChangeHtml event performance optimization
   isOnChangeHtmlSet: boolean;
