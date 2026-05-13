@@ -214,32 +214,24 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   override fun setLineHeight(lineHeight: Int) {
-    if (lineHeight == 0) {
-      transactionManager.runSilently {
-        editableText
-          .getSpans(
-            0,
-            editableText.length,
-            CustomLineHeightSpan::class.java,
-          ).forEach {
-            editableText.removeSpan(it)
-          }
-      }
-      return
-    }
     transactionManager.runSilently {
-      editableText
-        .getSpans(
-          0,
-          editableText.length,
-          CustomLineHeightSpan::class.java,
-        ).forEach {
-          editableText.removeSpan(it)
+      editableText.apply {
+        getSpans(0, length, CustomLineHeightSpan::class.java)
+          .forEach(::removeSpan)
+
+        if (lineHeight > 0) {
+          val heightPx = PixelUtil.toPixelFromDIP(lineHeight.toDouble()).toInt()
+          setSpan(
+            CustomLineHeightSpan(heightPx),
+            0,
+            length,
+            Spannable.SPAN_INCLUSIVE_INCLUSIVE,
+          )
         }
-      val heightPX = PixelUtil.toPixelFromDIP(lineHeight.toDouble()).toInt()
-      editableText.setSpan(CustomLineHeightSpan(heightPX), 0, editableText.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
-      setText(editableText)
+      }
     }
+
+    setText(editableText)
   }
 
   override fun onDraw(canvas: Canvas) {
