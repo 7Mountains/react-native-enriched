@@ -12,6 +12,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class EnrichedTextInputView;
+
 static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 
 @interface BoldStyle : NSObject <BaseStyleProtocol>
@@ -101,16 +103,25 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 @interface H6Style : HeadingStyleBase
 @end
 
-@interface UnorderedListStyle : NSObject <BaseStyleProtocol>
+@interface ListStyleBase : NSObject <BaseStyleProtocol> {
+@protected
+  __weak EnrichedTextInputView *_input;
+  NSParagraphStyle *_cachedAttributes;
+  CGFloat _cachedHeadIntent;
+}
++ (NSArray<NSTextList *> *)textLists;
++ (NSString *)shortcut;
++ (unichar)shortcutPrefix;
+- (CGFloat)getHeadIndent;
 - (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)tryHandlingListShorcutInRange:(NSRange)range
                       replacementText:(NSString *)text;
 @end
 
-@interface OrderedListStyle : NSObject <BaseStyleProtocol>
-- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
-- (BOOL)tryHandlingListShorcutInRange:(NSRange)range
-                      replacementText:(NSString *)text;
+@interface UnorderedListStyle : ListStyleBase
+@end
+
+@interface OrderedListStyle : ListStyleBase
 @end
 
 @interface BlockQuoteStyle : NSObject <BaseStyleProtocol>
