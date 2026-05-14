@@ -391,6 +391,7 @@ export interface NativeProps extends ViewProps {
     fontFamily?: string;
     fontWeight?: string;
     fontStyle?: string;
+    lineHeight?: Float;
     isOnChangeHtmlSet: boolean;
     isOnChangeTextSet: boolean;
     isOnScrollSet: boolean;
