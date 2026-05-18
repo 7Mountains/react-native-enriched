@@ -606,7 +606,7 @@ class HtmlToSpannedConverter(
         htmlStyle,
       )
     val start = editable.length
-    editable.append(Strings.MAGIC_CHAR)
+    editable.append(Strings.OBJECT_REPLACEMENT_CHAR)
 
     span.attachTo(textInputView)
 
@@ -631,7 +631,7 @@ class HtmlToSpannedConverter(
     val attributesMap = extractAttributes(attributes, MDF_EXCLUDED)
 
     val start = editable.length
-    editable.append(Strings.MAGIC_CHAR)
+    editable.append(Strings.OBJECT_REPLACEMENT_CHAR)
 
     val span =
       EnrichedMDFSpan.Companion.createMDFSpan(
@@ -722,7 +722,7 @@ class HtmlToSpannedConverter(
     htmlStyle: HtmlStyle,
   ) {
     val start = text.length
-    text.append(Strings.MAGIC_CHAR)
+    text.append(Strings.OBJECT_REPLACEMENT_CHAR)
 
     pendingSpans.add(
       PendingSpan(
@@ -771,7 +771,7 @@ class HtmlToSpannedConverter(
     val span = createEnrichedImageSpan(src, width, height)
 
     val start = text.length
-    text.append(Strings.MAGIC_CHAR)
+    text.append(Strings.OBJECT_REPLACEMENT_CHAR)
 
     pendingSpans.add(
       PendingSpan(

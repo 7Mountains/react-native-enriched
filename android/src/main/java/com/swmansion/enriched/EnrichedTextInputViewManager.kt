@@ -1,7 +1,5 @@
 package com.swmansion.enriched
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.graphics.toColorInt
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap

@@ -3,12 +3,14 @@ package com.swmansion.enriched.watchers
 import android.text.SpanWatcher
 import android.text.Spannable
 import android.text.style.ParagraphStyle
+import android.util.Log
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.events.OnChangeHtmlEvent
 import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.EnrichedHeadingSpan
+import com.swmansion.enriched.spans.EnrichedHorizontalRuleSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries

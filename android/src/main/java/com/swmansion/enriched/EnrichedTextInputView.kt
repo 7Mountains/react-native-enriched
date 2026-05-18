@@ -67,8 +67,8 @@ import kotlin.math.ceil
 
 class EnrichedTextInputView : AppCompatEditText {
   var stateWrapper: StateWrapper? = null
-  val selection: EnrichedSelection? = EnrichedSelection(this)
-  val spanState: EnrichedSpanState? = EnrichedSpanState(this)
+  val selection: EnrichedSelection = EnrichedSelection(this)
+  val spanState: EnrichedSpanState = EnrichedSpanState(this)
   val styleManipulator: EnrichedStyleManipulator? = EnrichedStyleManipulator(this)
 
   val transactionManager = EnrichedTransactionManager()
@@ -350,8 +350,8 @@ class EnrichedTextInputView : AppCompatEditText {
       val currentText = (text as? SpannableStringBuilder) ?: return@runWithIgnoredSpanWatcher
       val length = currentText.length
 
-      val insertionStart = selection?.start ?: 0
-      val insertionEnd = selection?.end ?: 0
+      val insertionStart = selection.start ?: 0
+      val insertionEnd = selection.end ?: 0
 
       val rawStart = at ?: minOf(insertionStart, insertionEnd)
       val rawEnd = at ?: maxOf(insertionStart, insertionEnd)
@@ -386,7 +386,7 @@ class EnrichedTextInputView : AppCompatEditText {
     requestFocus()
     inputMethodManager?.showSoftInput(this, 0)
     if (withSelection) {
-      setSelection(selection?.start ?: text?.length ?: 0)
+      setSelection(selection.start ?: text?.length ?: 0)
     }
   }
 
@@ -774,7 +774,7 @@ class EnrichedTextInputView : AppCompatEditText {
       }
 
       if (shouldEmitStateChange) {
-        selection?.validateStyles()
+        selection.validateStyles()
       }
     }
     forceScrollToSelection()

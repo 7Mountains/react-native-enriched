@@ -175,8 +175,8 @@ class ListStyles(
   fun toggleStyle(name: TextStyle) {
     val config = EnrichedSpans.listSpans[name] ?: return
     val spannable = view.text as SpannableStringBuilder
-    val selection = view.selection ?: return
-    val spanState = view.spanState ?: return
+    val selection = view.selection
+    val spanState = view.spanState
     val (start, end) = selection.getParagraphSelection()
     val styleStart = spanState.getStart(name)
 
@@ -277,7 +277,7 @@ class ListStyles(
         )
       }
 
-      view.selection?.validateStyles()
+      view.selection.validateStyles()
       return
     }
   }
@@ -292,7 +292,7 @@ class ListStyles(
     }
   }
 
-  fun getStyleRange(): Pair<Int, Int> = view.selection?.getParagraphSelection() ?: Pair(0, 0)
+  fun getStyleRange(): Pair<Int, Int> = view.selection.getParagraphSelection() ?: Pair(0, 0)
 
   fun removeStyle(
     name: TextStyle,

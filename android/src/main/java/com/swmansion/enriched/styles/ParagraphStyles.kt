@@ -103,7 +103,7 @@ class ParagraphStyles(
     var endCursorPosition = endPosition
     val isBackspace = s.length < previousTextLength
     val isNewLine = endCursorPosition == 0 || (endCursorPosition > 0 && s[endCursorPosition - 1] == Strings.NEWLINE)
-    val spanState = view.spanState ?: return
+    val spanState = view.spanState
     var hasAppliedZWS = false
     for ((style, config) in EnrichedSpans.paragraphSpans) {
       if (style == TextStyle.DIVIDER || style == TextStyle.CONTENT) continue
@@ -168,14 +168,14 @@ class ParagraphStyles(
   }
 
   fun toggleStyle(name: TextStyle) {
-    val selection = view.selection ?: return
+    val selection = view.selection
     val ssb = view.text?.asBuilder() ?: return
     val (start, end) = selection.getParagraphSelection()
 
     val config = EnrichedSpans.paragraphSpans[name] ?: return
     val type = config.clazz
 
-    val activeStart = view.spanState?.getStart(name)
+    val activeStart = view.spanState.getStart(name)
 
     if (activeStart != null) {
       view.spanState.setStart(name, null)
@@ -206,15 +206,15 @@ class ParagraphStyles(
     view.selection.validateStyles()
   }
 
-  fun getStyleRange(): Pair<Int, Int> = view.selection?.getParagraphSelection() ?: Pair(0, 0)
+  fun getStyleRange(): Pair<Int, Int> = view.selection.getParagraphSelection()
 
   fun insertDivider() {
-    view.spanState?.setStart(TextStyle.DIVIDER, null)
+    view.spanState.setStart(TextStyle.DIVIDER, null)
 
     insertEscapingParagraph(
       EnrichedHorizontalRuleSpan(view.htmlStyle),
     )
-    view.selection?.validateStyles()
+    view.selection.validateStyles()
   }
 
   fun addContent(
@@ -223,14 +223,14 @@ class ParagraphStyles(
     src: String,
     attributes: Map<String, String>?,
   ) {
-    view.spanState?.setStart(TextStyle.CONTENT, null)
+    view.spanState.setStart(TextStyle.CONTENT, null)
     val span = EnrichedContentSpan.createEnrichedContentSpan(text, null, null, null, type, src, attributes, view.htmlStyle)
     span.attachTo(view)
     insertEscapingParagraph(
       span,
     )
 
-    view.selection?.validateStyles()
+    view.selection.validateStyles()
   }
 
   fun removeStyle(
@@ -244,8 +244,8 @@ class ParagraphStyles(
   }
 
   fun setParagraphAlignmentSpan(alignment: String) {
-    val selection = view.selection ?: return
-    val spanState = view.spanState ?: return
+    val selection = view.selection
+    val spanState = view.spanState
     val spannable = view.text as Spannable
     val (start) = selection.getParagraphSelection()
     val spannableStringBuilder = spannable.asBuilder()
@@ -364,8 +364,8 @@ class ParagraphStyles(
     }
 
   private fun insertEscapingParagraph(span: EnrichedSpan?) {
-    val editable = view.editableText as Editable
-    val index = view.selection?.end ?: return
+    val editable = view.editableText
+    val index = view.selection.end
 
     val text = editable.toString()
 
@@ -385,7 +385,7 @@ class ParagraphStyles(
 
     val builder =
       SpannableStringBuilder().apply {
-        append(Strings.MAGIC_CHAR)
+        append(Strings.OBJECT_REPLACEMENT_CHAR)
         if (span != null) {
           setSpan(span, 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }

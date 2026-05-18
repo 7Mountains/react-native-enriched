@@ -28,11 +28,20 @@ class NonEditableParagraphFilter : InputFilter {
         dend,
         EnrichedNonEditableParagraphSpan::class.java,
       )
+
+    if (replacingSpans.size == 1) {
+      val spanEnd = dest.getSpanEnd(replacingSpans.first())
+
+      if (spanEnd == dstart) {
+        return Strings.NEWLINE_STRING + source
+      }
+    }
+
     if (replacingSpans.isNotEmpty()) {
       return ""
     }
 
-    // Block insert BEFORE divider
+    // Block insert BEFORE non-editable block
     if (dstart > 0) {
       val before =
         dest.getSpans(

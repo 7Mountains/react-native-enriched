@@ -64,7 +64,7 @@ class EnrichedStyleManipulator(
   private fun canApplyStyle(name: TextStyle): Boolean = EnrichedSpans.isStyleAvailable(name, view.availableStyles)
 
   fun verifyStyle(name: TextStyle): Boolean {
-    val spanState = view.spanState ?: return false
+    val spanState = view.spanState
     val selection = view.selection
 
     if (!canApplyStyle(name)) {
@@ -86,8 +86,8 @@ class EnrichedStyleManipulator(
     }
 
     for (style in conflictingStyles) {
-      val start = selection?.start ?: 0
-      val end = selection?.end ?: 0
+      val start = selection.start
+      val end = selection.end
       val lengthBefore = view.text?.length ?: 0
 
       runWithIgnoredSpanWatcherTransaction {
@@ -108,7 +108,7 @@ class EnrichedStyleManipulator(
         }
 
       val finalStart = start.coerceAtLeast(0).coerceAtMost(finalEnd)
-      selection?.onSelection(finalStart, finalEnd)
+      selection.onSelection(finalStart, finalEnd)
     }
 
     return true
@@ -205,6 +205,6 @@ class EnrichedStyleManipulator(
     end: Int,
   ) {
     parametrizedStyles.removeLinkSpan(start, end)
-    view.selection?.validateStyles()
+    view.selection.validateStyles()
   }
 }

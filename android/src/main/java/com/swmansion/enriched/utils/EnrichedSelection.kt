@@ -96,7 +96,7 @@ class EnrichedSelection(
   }
 
   fun validateStyles() {
-    val state = view.spanState ?: return
+    val state = view.spanState
 
     // We don't validate inline styles when removing many characters at once
     // We don't want to remove styles on auto-correction
@@ -124,7 +124,7 @@ class EnrichedSelection(
   }
 
   private fun handleInlineStyleState() {
-    val spanState = view.spanState ?: return
+    val spanState = view.spanState
     val (start, end) = getInlineSelection()
     val spannable = view.text as? Spannable ?: return
 
@@ -189,7 +189,7 @@ class EnrichedSelection(
   }
 
   private fun handleParagraphStyleState() {
-    val spanState = view.spanState ?: return
+    val spanState = view.spanState
     val (start, end) = getParagraphSelection()
     val spannable = view.text as? Spannable ?: return
 
