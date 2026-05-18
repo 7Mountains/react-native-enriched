@@ -64,7 +64,7 @@ class ParametrizedStyles(
       spannable.replace(start, end, insertedSpannable)
     }
 
-    view.selection?.validateStyles()
+    view.selection.validateStyles()
     isSettingLinkSpan = false
   }
 
@@ -163,11 +163,11 @@ class ParametrizedStyles(
     val blockingStyles = mergingConfig.blockingStyles
 
     for (style in blockingStyles) {
-      if (view.spanState?.getStart(style) != null) return false
+      if (view.spanState.getStart(style) != null) return false
     }
 
     for (style in conflictingStyles) {
-      if (view.spanState?.getStart(style) != null) return false
+      if (view.spanState.getStart(style) != null) return false
     }
 
     return true
@@ -332,7 +332,6 @@ class ParametrizedStyles(
     width: Float,
     height: Float,
   ) {
-    if (view.selection == null) return
     val spannable = view.text as SpannableStringBuilder
     val (start, originalEnd) = view.selection.getInlineSelection()
 
@@ -355,7 +354,7 @@ class ParametrizedStyles(
   }
 
   fun startMention(indicator: String) {
-    val selection = view.selection ?: return
+    val selection = view.selection
 
     val spannable = view.text as SpannableStringBuilder
     val (start, end) = selection.getInlineSelection()
@@ -400,7 +399,7 @@ class ParametrizedStyles(
     spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
     view.setSelection(spanEnd + 1)
-    view.selection?.validateStyles()
+    view.selection.validateStyles()
     view.mentionHandler?.reset()
     mentionStart = null
   }
@@ -438,7 +437,7 @@ class ParametrizedStyles(
     type: String,
     attributes: Map<String, String>,
   ) {
-    val selection = view.selection ?: return
+    val selection = view.selection
     val spannable = view.text as SpannableStringBuilder
     val (selectionStart, selectionEnd) = selection.getInlineSelection()
 
@@ -455,7 +454,7 @@ class ParametrizedStyles(
     replaceMentionFromStart(spannable, span, start, selectionEnd, text)
   }
 
-  fun getStyleRange(): Pair<Int, Int> = view.selection?.getInlineSelection() ?: Pair(0, 0)
+  fun getStyleRange(): Pair<Int, Int> = view.selection.getInlineSelection()
 
   fun removeStyle(
     name: TextStyle,

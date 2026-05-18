@@ -205,23 +205,23 @@ class InlineStyles(
   }
 
   fun setColorStyle(color: Int) {
-    val (start, end) = view.selection?.getInlineSelection() ?: return
+    val (start, end) = view.selection.getInlineSelection()
     val spannable = view.text as Spannable
 
     if (start == end) {
       val spanState = view.spanState
       splitSpan(spannable, start, end, EnrichedColoredSpan::class.java)
-      if (spanState?.getStart(TextStyle.COLOR) != null && color == spanState.typingColor) {
+      if (spanState.getStart(TextStyle.COLOR) != null && color == spanState.typingColor) {
         view.spanState.setColorStartWithEventEmitting(null, null)
       } else {
-        view.spanState?.setColorStartWithEventEmitting(start, color)
+        view.spanState.setColorStartWithEventEmitting(start, color)
       }
       return
     }
 
     if (isFullyColoredWith(spannable, start, end, color)) {
       removeColorRange(start, end)
-      view.spanState?.setColorStart(null, null)
+      view.spanState.setColorStart(null, null)
       view.selection.validateStyles()
       return
     }
@@ -234,7 +234,7 @@ class InlineStyles(
 
     mergeAdjacentColors(spannable)
 
-    view.spanState?.setColorStart(null, null)
+    view.spanState.setColorStart(null, null)
     view.selection.validateStyles()
   }
 
@@ -251,9 +251,9 @@ class InlineStyles(
   }
 
   fun removeColorSpan() {
-    val (start, end) = view.selection?.getInlineSelection() ?: return
+    val (start, end) = view.selection.getInlineSelection()
 
-    view.spanState?.setColorStart(null, null)
+    view.spanState.setColorStart(null, null)
 
     if (start == end) {
       val spannable = view.text as Spannable
@@ -269,7 +269,7 @@ class InlineStyles(
     editable: Editable,
     endCursorPosition: Int,
   ) {
-    val spanState = view.spanState ?: return
+    val spanState = view.spanState
     for ((style, config) in EnrichedSpans.inlineSpans) {
       val start = spanState.getStart(style) ?: continue
       var end = endCursorPosition
@@ -362,7 +362,7 @@ class InlineStyles(
     spannable: Spannable,
     cursor: Int,
   ) {
-    val state = view.spanState ?: return
+    val state = view.spanState
     val colorStart = state.getStart(TextStyle.COLOR) ?: return
     val color = state.typingColor ?: return
 
@@ -408,8 +408,7 @@ class InlineStyles(
   }
 
   fun toggleStyle(name: TextStyle) {
-    if (view.selection == null) return
-    val spanState = view.spanState ?: return
+    val spanState = view.spanState
     val (start, end) = view.selection.getInlineSelection()
     val config = EnrichedSpans.inlineSpans[name] ?: return
     val type = config.clazz
@@ -444,12 +443,12 @@ class InlineStyles(
 
     spans.forEach { it -> spannable.removeSpan(it) }
 
-    view.spanState?.setStart(name, null)
+    view.spanState.setStart(name, null)
 
     return true
   }
 
-  fun getStyleRange(): Pair<Int, Int> = view.selection?.getInlineSelection() ?: Pair(0, 0)
+  fun getStyleRange(): Pair<Int, Int> = view.selection.getInlineSelection()
 
   private fun createSpan(name: TextStyle): EnrichedInlineSpan? =
     when (name) {
@@ -470,7 +469,7 @@ class InlineStyles(
       }
 
       TextStyle.COLOR -> {
-        val color = view.spanState?.typingColor ?: 0
+        val color = view.spanState.typingColor ?: 0
         EnrichedColoredSpan(color)
       }
 
