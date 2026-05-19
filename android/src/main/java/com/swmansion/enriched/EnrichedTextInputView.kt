@@ -294,6 +294,8 @@ class EnrichedTextInputView : AppCompatEditText {
     if (!didAttachToWindow) {
       return
     }
+    // This is important to keep nullability check here because the first time onSelectionChanged is triggered in
+    // parent class, however children class fields are not initialized yet
     selection?.onSelection(selStart, selEnd)
   }
 
