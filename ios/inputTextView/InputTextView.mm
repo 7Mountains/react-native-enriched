@@ -164,4 +164,14 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   [self setNeedsLayout];
 }
 
+- (void)scrollSelectionToVisibleWithInsets:(UIEdgeInsets)insets {
+  CGRect caretRect = [self caretRectForPosition:self.selectedTextRange.end];
+
+  caretRect = UIEdgeInsetsInsetRect(
+      caretRect, UIEdgeInsetsMake(-insets.top, -insets.left, -insets.bottom,
+                                  -insets.right));
+
+  [self scrollRectToVisible:caretRect animated:YES];
+}
+
 @end

@@ -352,8 +352,8 @@ class EnrichedTextInputView : AppCompatEditText {
       val currentText = (text as? SpannableStringBuilder) ?: return@runWithIgnoredSpanWatcher
       val length = currentText.length
 
-      val insertionStart = selection.start ?: 0
-      val insertionEnd = selection.end ?: 0
+      val insertionStart = selection.start
+      val insertionEnd = selection.end
 
       val rawStart = at ?: minOf(insertionStart, insertionEnd)
       val rawEnd = at ?: maxOf(insertionStart, insertionEnd)
@@ -388,7 +388,7 @@ class EnrichedTextInputView : AppCompatEditText {
     requestFocus()
     inputMethodManager?.showSoftInput(this, 0)
     if (withSelection) {
-      setSelection(selection.start ?: text?.length ?: 0)
+      setSelection(selection.start)
     }
   }
 

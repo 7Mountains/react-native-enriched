@@ -73,14 +73,30 @@ const char *const kBlockTags[] = {
     "p",  "ul", "ol", "li",        "blockquote", "h1", "h2",   "h3",
     "h4", "h5", "h6", "checklist", "codeblock",  "hr", nullptr};
 
+inline bool charEqualsIgnoreCase(char actual, char expected) {
+  return actual == expected ||
+         actual == static_cast<char>(expected - 'a' + 'A');
+}
+
 bool isParagraphTag(const char *tagName) {
-  return tagName && tagName[1] == '\0' &&
-         (tagName[0] == 'p' || tagName[0] == 'P');
+  return tagName && tagName[1] == '\0' && charEqualsIgnoreCase(tagName[0], 'p');
 }
 
 bool isListItemTag(const char *tagName) {
-  return tagName && (tagName[0] == 'l' || tagName[0] == 'L') &&
-         (tagName[1] == 'i' || tagName[1] == 'I') && tagName[2] == '\0';
+  return tagName && charEqualsIgnoreCase(tagName[0], 'l') &&
+         charEqualsIgnoreCase(tagName[1], 'i') && tagName[2] == '\0';
+}
+
+bool isCheckListTag(const char *tagName) {
+  return tagName && charEqualsIgnoreCase(tagName[0], 'c') &&
+         charEqualsIgnoreCase(tagName[1], 'h') &&
+         charEqualsIgnoreCase(tagName[2], 'e') &&
+         charEqualsIgnoreCase(tagName[3], 'c') &&
+         charEqualsIgnoreCase(tagName[4], 'k') &&
+         charEqualsIgnoreCase(tagName[5], 'l') &&
+         charEqualsIgnoreCase(tagName[6], 'i') &&
+         charEqualsIgnoreCase(tagName[7], 's') &&
+         charEqualsIgnoreCase(tagName[8], 't') && tagName[9] == '\0';
 }
 
 bool isBlockTag(const char *tag) {
