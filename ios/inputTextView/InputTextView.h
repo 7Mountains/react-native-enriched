@@ -10,4 +10,5 @@
 @property(nonatomic, copy, nullable) NSString *placeholderText;
 @property(nonatomic, strong, nullable) UIColor *placeholderColor;
 - (void)updatePlaceholderVisibility;
+- (void)scrollSelectionToVisibleWithInsets:(UIEdgeInsets)insets;
 @end

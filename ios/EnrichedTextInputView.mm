@@ -1078,8 +1078,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                              iserted:insertedText
                        selectedRange:range];
 
-  textView.selectedRange = NSMakeRange(range.location + insertedText.length, 0);
+  NSRange newSelection = NSMakeRange(range.location + insertedText.length, 0);
+  textView.selectedRange = newSelection;
   [self anyTextMayHaveBeenModified];
+  [textView scrollSelectionToVisibleWithInsets:_customContentInsets];
 }
 
 - (NSArray<NSNumber *> *)getPresentStyleTypesFrom:(NSArray<NSNumber *> *)types
@@ -1456,6 +1458,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   blockEmitting = YES;
   [_clipboardHandler paste];
   blockEmitting = NO;
+  [self->textView scrollSelectionToVisibleWithInsets:_customContentInsets];
   [self anyTextMayHaveBeenModified];
 }
 
