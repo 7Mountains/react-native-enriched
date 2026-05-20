@@ -39,4 +39,6 @@ bool isParagraphTag(const char *tagName);
 
 bool isListItemTag(const char *tagName);
 
+bool isCheckListTag(const char *tagName);
+
 NS_ASSUME_NONNULL_END

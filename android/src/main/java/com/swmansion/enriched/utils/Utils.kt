@@ -79,6 +79,21 @@ fun SpannableStringBuilder.trimTrailingNewlines(): SpannableStringBuilder {
   return this
 }
 
+private fun Spannable.removeZWSFromFirstParagraphIfNeeded(targetParagraphBounds: Pair<Int, Int>) {
+  val (targetStart, targetEnd) = targetParagraphBounds
+  val targetHasText = targetStart < targetEnd
+
+  if (!targetHasText) return
+
+  val (insertedPStart, insertedPEnd) = getParagraphBounds(0, 0)
+
+  for (i in insertedPEnd - 1 downTo insertedPStart) {
+    if (this[i] == Strings.ZERO_WIDTH_SPACE_CHAR) {
+      (this as SpannableStringBuilder).delete(i, i + 1)
+    }
+  }
+}
+
 fun Spannable.mergeSpannables(
   start: Int,
   end: Int,
@@ -125,6 +140,8 @@ fun Spannable.mergeSpannables(
     targetParagraphSpans,
     inserted,
   )
+
+  inserted.removeZWSFromFirstParagraphIfNeeded(paragraphBounds)
 
   var addedCharacters = 0
 
