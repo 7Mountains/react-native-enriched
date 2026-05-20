@@ -369,7 +369,6 @@ class EnrichedTextInputView : AppCompatEditText {
 
       val cursor = (start + result.insertedCharactersAmount).coerceIn(0, lengthAfter)
       setSelection(cursor, cursor)
-      forceScrollToSelection()
     }
   }
 
@@ -389,7 +388,7 @@ class EnrichedTextInputView : AppCompatEditText {
     requestFocus()
     inputMethodManager?.showSoftInput(this, 0)
     if (withSelection) {
-      setSelection(selection.start ?: text?.length ?: 0)
+      setSelection(selection.start)
     }
   }
 
