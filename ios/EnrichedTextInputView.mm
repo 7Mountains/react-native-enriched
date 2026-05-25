@@ -1058,10 +1058,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 - (void)insertTextAtSelection:(NSString *)text {
   NSRange selectedRange = textView.selectedRange;
-  [self insertTextAt:text range:selectedRange];
+  [self insertTextAtRange:text range:selectedRange];
 }
 
-- (void)insertTextAt:(NSString *)text range:(NSRange)range {
+- (void)insertTextAtRange:(NSString *)text range:(NSRange)range {
   if (text.length == 0) {
     return;
   }
@@ -1073,11 +1073,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                      defaultAttributes:defaultTypingAttributes]
           : [[NSAttributedString alloc] initWithString:text
                                             attributes:defaultTypingAttributes];
-
   [_clipboardHandler handleInsertion:textView.textStorage
-                             iserted:insertedText
+                            inserted:insertedText
                        selectedRange:range];
-
   NSRange newSelection = NSMakeRange(range.location + insertedText.length, 0);
   textView.selectedRange = newSelection;
   [self anyTextMayHaveBeenModified];
@@ -1455,9 +1453,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       return;
     }
   }
-  blockEmitting = YES;
   [_clipboardHandler paste];
-  blockEmitting = NO;
   [self->textView scrollSelectionToVisibleWithInsets:_customContentInsets];
   [self anyTextMayHaveBeenModified];
 }
@@ -1466,9 +1462,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   if (textView.selectedRange.length == 0) {
     return;
   }
-  blockEmitting = YES;
   [_clipboardHandler cut];
-  blockEmitting = NO;
   [self anyTextMayHaveBeenModified];
 }
 

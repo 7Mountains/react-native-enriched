@@ -592,12 +592,13 @@ class EnrichedTextInputViewManager :
     view?.insertText(text)
   }
 
-  override fun insertTextAt(
+  override fun insertText(
     view: EnrichedTextInputView?,
     text: String,
-    at: Int,
+    start: Int,
+    end: Int,
   ) {
-    view?.insertText(text, at)
+    view?.insertText(text, start, end)
   }
 
   override fun removeLink(

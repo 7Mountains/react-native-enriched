@@ -10,7 +10,7 @@
 - (void)paste;
 - (void)cut;
 - (void)handleInsertion:(NSMutableAttributedString *)current
-                iserted:(NSAttributedString *)inserted
+               inserted:(NSAttributedString *)inserted
           selectedRange:(NSRange)selectedRange;
 
 @end

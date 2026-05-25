@@ -178,8 +178,13 @@ const useCommands = (
       insertTextAtSelection: (text: string) => {
         Commands.insertTextAtSelection(nullthrows(typedRef), text);
       },
-      insertTextAt: (text: string, at: number) => {
-        Commands.insertTextAt(nullthrows(typedRef), text, at);
+      insertText: (
+        text: string,
+        start: number | null = null,
+        end: number | null = null
+      ) => {
+        console.log('Inserting text:', { text, start, end });
+        Commands.insertText(nullthrows(typedRef), text, start, end);
       },
       removeLink: (start: number, end: number) => {
         Commands.removeLink(nullthrows(typedRef), start, end);

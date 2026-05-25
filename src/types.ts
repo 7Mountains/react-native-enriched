@@ -41,7 +41,7 @@ export interface EnrichedTextInputInstance extends NativeMethods {
   getHTML: (prettify?: boolean) => Promise<string>;
   scrollTo: (x: number, y: number, animated?: boolean) => void;
   insertTextAtSelection: (text: string) => void;
-  insertTextAt: (text: string, at: number) => void;
+  insertText: (text: string, start?: number, end?: number) => void;
 
   // Text formatting commands
   toggleBold: () => void;

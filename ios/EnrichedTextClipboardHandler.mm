@@ -71,25 +71,7 @@
     textView.selectedRange = NSMakeRange(inserted.length, 0);
     return;
   }
-
-  if (selectedRange.length > 0) {
-
-    NSUInteger insertionLocation = selectedRange.location;
-
-    [current beginEditing];
-    [current deleteCharactersInRange:selectedRange];
-    [current endEditing];
-
-    NSRange collapsedRange = NSMakeRange(insertionLocation, 0);
-
-    [self handleInsertion:current
-                  iserted:inserted
-            selectedRange:collapsedRange];
-
-    return;
-  }
-
-  [self handleInsertion:current iserted:inserted selectedRange:selectedRange];
+  [self handleInsertion:current inserted:inserted selectedRange:selectedRange];
 }
 
 - (NSArray<id<BaseStyleProtocol>> *)paragraphStylesForFirstParagraphInString:
@@ -236,6 +218,8 @@
         return [obj.class isParagraphStyle];
       }]];
 
+  [mutableInserted beginEditing];
+
   for (id<BaseStyleProtocol> style in paragraphStyles) {
     [style removeAttributesFromAttributedString:mutableInserted
                                           range:firstParagraphRange];
@@ -247,16 +231,16 @@
                                 attributes:nil];
   }
 
+  [mutableInserted endEditing];
+
   return mutableInserted;
 }
 
 - (void)handleInsertion:(NSMutableAttributedString *)current
-                iserted:(NSAttributedString *)inserted
+               inserted:(NSAttributedString *)inserted
           selectedRange:(NSRange)selectedRange {
   NSUInteger start = selectedRange.location;
 
-  BOOL targetIsReadOnly = [ParagraphsUtils isReadOnlyParagraphAtLocation:current
-                                                                location:start];
   BOOL insertedIsReadOnly =
       [ParagraphsUtils isReadOnlyParagraphAtLocation:inserted location:0];
 
@@ -269,22 +253,35 @@
       [current.string paragraphRangeForRange:NSMakeRange(start, 0)];
 
   if (targetParagraphRange.length == 0) {
-    [current insertAttributedString:inserted
-                            atIndex:targetParagraphRange.location];
-    _input->textView.selectedRange =
-        NSMakeRange(current.length + inserted.length, 0);
+    [current beginEditing];
+    [current replaceCharactersInRange:selectedRange
+                 withAttributedString:inserted];
+    [current endEditing];
+
+    _input->textView.selectedRange = NSMakeRange(start + inserted.length, 0);
     return;
   }
 
+  BOOL targetIsReadOnly = [ParagraphsUtils isReadOnlyParagraphAtLocation:current
+                                                                location:start];
+
   if ((targetIsReadOnly || insertedIsReadOnly) && selectedRange.length == 0) {
-    NSInteger paragraphEnd =
+    NSUInteger paragraphEnd =
         targetParagraphRange.location + targetParagraphRange.length;
+
+    NSMutableAttributedString *replacement =
+        [[NSMutableAttributedString alloc] init];
+
+    [replacement appendAttributedString:attributedNewLine];
+    [replacement appendAttributedString:inserted];
+
     [current beginEditing];
-    [current insertAttributedString:attributedNewLine atIndex:paragraphEnd];
-    [current insertAttributedString:inserted atIndex:paragraphEnd + 1];
+    [current replaceCharactersInRange:NSMakeRange(paragraphEnd, 0)
+                 withAttributedString:replacement];
     [current endEditing];
+
     _input->textView.selectedRange =
-        NSMakeRange(paragraphEnd + inserted.length + 1, 0);
+        NSMakeRange(paragraphEnd + replacement.length, 0);
     return;
   }
 
@@ -298,10 +295,12 @@
                targetParagraphStyles:targetParagraphStyles];
 
   [current beginEditing];
-  [current insertAttributedString:normalizedInsertString
-                          atIndex:selectedRange.location];
+  [current replaceCharactersInRange:selectedRange
+               withAttributedString:normalizedInsertString];
   [current endEditing];
-  _input->textView.selectedRange = NSMakeRange(start + inserted.length, 0);
+
+  _input->textView.selectedRange =
+      NSMakeRange(start + normalizedInsertString.length, 0);
 }
 
 @end

@@ -437,7 +437,7 @@ interface NativeCommands {
     scrollTo: (viewRef: React.ElementRef<ComponentType>, x: Float, y: Float, animated: boolean) => void;
     addContent: (viewRef: React.ElementRef<ComponentType>, text: string, type: string, src: string, attributes: string) => void;
     insertTextAtSelection: (viewRef: React.ElementRef<ComponentType>, text: string) => void;
-    insertTextAt: (viewRef: React.ElementRef<ComponentType>, text: string, at: Int32) => void;
+    insertText: (viewRef: React.ElementRef<ComponentType>, text: string, start: Int32 | null, end: Int32 | null) => void;
     hideContextMenu: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 export declare const Commands: NativeCommands;

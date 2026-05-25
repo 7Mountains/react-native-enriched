@@ -158,11 +158,31 @@ static inline void RunOnMainThread(void (^block)(void)) {
   } else if ([commandName isEqualToString:@"insertTextAtSelection"]) {
     NSString *text = args[0];
     [_input insertTextAtSelection:text];
-  } else if ([commandName isEqualToString:@"insertTextAt"]) {
+  } else if ([commandName isEqualToString:@"insertText"]) {
     NSString *text = args[0];
-    NSInteger at = [args[1] integerValue];
-    NSRange range = NSMakeRange(at, 0);
-    [_input insertTextAt:text range:range];
+    NSRange selectedRange = _input->textView.selectedRange;
+    NSUInteger textLength = _input->textView.text.length;
+
+    NSInteger start = args[1] == nil || [[args[1] class] isEqual:NSNull.class]
+                          ? (NSInteger)selectedRange.location
+                          : [args[1] integerValue];
+
+    NSInteger end = args[2] == nil || [[args[2] class] isEqual:NSNull.class]
+                        ? start + (NSInteger)selectedRange.length
+                        : [args[2] integerValue];
+
+    if (end < start) {
+      NSInteger tmp = start;
+      start = end;
+      end = tmp;
+    }
+
+    start = MAX(0, MIN(start, (NSInteger)textLength));
+    end = MAX(0, MIN(end, (NSInteger)textLength));
+
+    NSRange range = NSMakeRange((NSUInteger)start, (NSUInteger)(end - start));
+
+    [_input insertTextAtRange:text range:range];
   } else if ([commandName isEqualToString:@"removeLink"]) {
     NSInteger start = [args[0] integerValue];
     NSInteger end = [args[1] integerValue];
