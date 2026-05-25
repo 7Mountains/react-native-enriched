@@ -63,6 +63,11 @@ import com.swmansion.enriched.utils.mergeSpannables
 import com.swmansion.enriched.watchers.EnrichedScrollWatcher
 import com.swmansion.enriched.watchers.EnrichedSpanWatcher
 import com.swmansion.enriched.watchers.EnrichedTextWatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.ceil
 
 class EnrichedTextInputView : AppCompatEditText {
@@ -90,6 +95,8 @@ class EnrichedTextInputView : AppCompatEditText {
   var shouldEmitHtml: Boolean = false
   var shouldEmitOnChangeText: Boolean = false
   var experimentalSynchronousEvents: Boolean = false
+
+  private val viewScope = MainScope()
 
   var fontSize: Float? = null
   private var fontFamily: String? = null
@@ -175,6 +182,11 @@ class EnrichedTextInputView : AppCompatEditText {
     }
 
     didAttachToWindow = true
+  }
+
+  override fun onDetachedFromWindow() {
+    viewScope.cancel()
+    super.onDetachedFromWindow()
   }
 
   private fun prepareComponent() {
@@ -680,17 +692,31 @@ class EnrichedTextInputView : AppCompatEditText {
     requestId: Int,
     prettify: Boolean,
   ) {
-    val html =
-      try {
-        EnrichedParser.toHtmlWithDefault(text, prettify)
-      } catch (_: Exception) {
-        null
-      }
+    val textSnapshot = SpannableStringBuilder(text)
+    viewScope.launch {
+      val html =
+        withContext(Dispatchers.Default) {
+          try {
+            EnrichedParser.toHtmlWithDefault(textSnapshot, prettify)
+          } catch (_: Exception) {
+            null
+          }
+        }
 
-    val reactContext = context as ReactContext
-    val surfaceId = UIManagerHelper.getSurfaceId(reactContext)
-    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, id)
-    dispatcher?.dispatchEvent(OnRequestHtmlResultEvent(surfaceId, id, requestId, html, experimentalSynchronousEvents))
+      val reactContext = context as ReactContext
+      val surfaceId = UIManagerHelper.getSurfaceId(reactContext)
+      val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, id)
+
+      dispatcher?.dispatchEvent(
+        OnRequestHtmlResultEvent(
+          surfaceId,
+          id,
+          requestId,
+          html,
+          experimentalSynchronousEvents,
+        ),
+      )
+    }
   }
 
   internal fun emitOnAnyContentChangeEvent() {
