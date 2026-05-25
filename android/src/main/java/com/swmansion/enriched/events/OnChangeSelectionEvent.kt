@@ -10,6 +10,8 @@ class OnChangeSelectionEvent(
   private val text: String,
   private val start: Int,
   private val end: Int,
+  private val paragraphStart: Int,
+  private val paragraphEnd: Int,
   private val experimentalSynchronousEvents: Boolean,
 ) : Event<OnChangeSelectionEvent>(surfaceId, viewId) {
   override fun getEventName(): String = EVENT_NAME
@@ -19,6 +21,8 @@ class OnChangeSelectionEvent(
     eventData.putString("text", text)
     eventData.putInt("start", start)
     eventData.putInt("end", end)
+    eventData.putInt("paragraphStart", paragraphStart)
+    eventData.putInt("paragraphEnd", paragraphEnd)
     return eventData
   }
 

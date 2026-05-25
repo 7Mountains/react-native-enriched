@@ -71,7 +71,8 @@ class EnrichedSelection(
     end = finalEnd
     prevText = stringText
     validateStyles()
-    emitSelectionChangeEvent(view.text, finalStart, finalEnd)
+    val (paragraphStart, paragraphEnd) = getParagraphSelection()
+    emitSelectionChangeEvent(view.text, finalStart, finalEnd, paragraphStart, paragraphEnd)
   }
 
   private fun isZeroWidthSelection(
@@ -258,6 +259,8 @@ class EnrichedSelection(
     editable: Editable?,
     start: Int,
     end: Int,
+    paragraphStart: Int,
+    paragraphEnd: Int,
   ) {
     if (editable == null) return
 
@@ -273,6 +276,8 @@ class EnrichedSelection(
         text,
         start,
         end,
+        paragraphStart,
+        paragraphEnd,
         view.experimentalSynchronousEvents,
       ),
     )
