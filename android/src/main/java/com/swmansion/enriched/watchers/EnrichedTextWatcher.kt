@@ -58,19 +58,14 @@ class EnrichedTextWatcher(
     emitEvents(s)
     if (s == null) return
 
-    val block = {
-      view.transactionManager.runWithBlockedTextEvents {
-        view.transactionManager.runWithIgnoredSpanWatcher {
-          inlineSpanPreserver.afterTextChanged()
-
-          if (!view.isDuringTransaction) {
-            inlineSpanPreserver.afterTextChanged()
-            applyStyles(s)
-          }
+    view.transactionManager.runWithBlockedTextEvents {
+      view.transactionManager.runWithIgnoredSpanWatcher {
+        inlineSpanPreserver.afterTextChanged()
+        if (!view.isDuringTransaction) {
+          applyStyles(s)
         }
       }
     }
-    block()
   }
 
   private fun applyStyles(s: Editable) {
