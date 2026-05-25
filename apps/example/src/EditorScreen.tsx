@@ -33,12 +33,6 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 type CurrentLinkState = OnLinkDetected;
 
-interface Selection {
-  start: number;
-  end: number;
-  text: string;
-}
-
 const PRIMARY_COLOR = '#000000';
 
 const DEFAULT_STATE = {
@@ -187,7 +181,14 @@ export default function EditorScreen() {
     useState<string>('default');
   const [requestHtmlTime, setRequestHtmlTime] = useState<number | null>(null);
 
-  const [selection, setSelection] = useState<Selection>();
+  const [selection, setSelection] = useState<OnChangeSelectionEvent>();
+  const selectionRef = useRef<OnChangeSelectionEvent>({
+    start: 0,
+    end: 0,
+    text: '',
+    paragraphEnd: 0,
+    paragraphStart: 0,
+  });
   const [stylesState, setStylesState] =
     useState<OnChangeStateEvent>(DEFAULT_STYLE);
   const [currentLink, setCurrentLink] =
@@ -372,6 +373,11 @@ export default function EditorScreen() {
     ref.current?.insertText('Start: ', 0, 0);
   };
 
+  const insertTextAtSelection = () => {
+    const sel = selectionRef.current;
+    ref.current?.insertText('Inserted text ', sel.start, sel.end);
+  };
+
   const handleFocusEvent = () => {
     console.log('Input focused');
   };
@@ -387,6 +393,7 @@ export default function EditorScreen() {
 
   const handleSelectionChangeEvent = (sel: OnChangeSelectionEvent) => {
     setSelection(sel);
+    selectionRef.current = sel;
   };
 
   const handleSelectionColorChange = (e: OnChangeColorEvent) => {
@@ -567,6 +574,10 @@ export default function EditorScreen() {
           onPress={insertEmojiAtSelection}
         />
         <Button title="Insert text at start" onPress={insertTextAtStart} />
+        <Button
+          title="Insert text at selection"
+          onPress={insertTextAtSelection}
+        />
         <Text>is Check list {stylesState.checkList.isActive}</Text>
         <HtmlSection currentHtml={currentHtml} />
         {DEBUG_SCROLLABLE && <View style={styles.scrollPlaceholder} />}
