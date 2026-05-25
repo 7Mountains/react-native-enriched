@@ -9,11 +9,17 @@ using namespace facebook::react;
     (UITextView *)textView {
   NSRange range = textView.selectedRange;
 
-  NSString *text = [textView.textStorage.string substringWithRange:range];
+  NSString *string = textView.textStorage.string;
+
+  NSString *selectedText = [string substringWithRange:range];
+  NSRange paragraphRange = [string paragraphRangeForRange:range];
 
   return {.start = (int)range.location,
           .end = (int)(range.location + range.length),
-          .text = [text toCppString]};
+          .text = [selectedText toCppString],
+          .paragraphStart = (int)paragraphRange.location,
+          .paragraphEnd =
+              (int)(paragraphRange.location + paragraphRange.length)};
 }
 
 @end
