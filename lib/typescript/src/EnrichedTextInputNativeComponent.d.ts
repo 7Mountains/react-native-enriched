@@ -151,6 +151,8 @@ export interface OnChangeSelectionEvent {
     start: Int32;
     end: Int32;
     text: string;
+    paragraphStart: Int32;
+    paragraphEnd: Int32;
 }
 export interface OnRequestHtmlResultEvent {
     requestId: Int32;
