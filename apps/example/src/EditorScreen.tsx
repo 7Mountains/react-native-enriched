@@ -369,7 +369,7 @@ export default function EditorScreen() {
   };
 
   const insertTextAtStart = () => {
-    ref.current?.insertTextAt('Start: ', 0);
+    ref.current?.insertText('Start: ', 0, 0);
   };
 
   const handleFocusEvent = () => {

@@ -523,10 +523,11 @@ interface NativeCommands {
     viewRef: React.ElementRef<ComponentType>,
     text: string
   ) => void;
-  insertTextAt: (
+  insertText: (
     viewRef: React.ElementRef<ComponentType>,
     text: string,
-    at: Int32
+    start: Int32 | null,
+    end: Int32 | null
   ) => void;
   hideContextMenu: (viewRef: React.ElementRef<ComponentType>) => void;
 }
@@ -539,7 +540,7 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'setValue',
     'setSelection',
     'insertTextAtSelection',
-    'insertTextAt',
+    'insertText',
 
     // Text formatting commands
     'toggleBold',

@@ -346,7 +346,8 @@ class EnrichedTextInputView : AppCompatEditText {
 
   fun insertSpannable(
     spannable: Spannable,
-    at: Int? = null,
+    start: Int? = null,
+    end: Int? = null,
   ) {
     transactionManager.runWithIgnoredSpanWatcher {
       val currentText = (text as? SpannableStringBuilder) ?: return@runWithIgnoredSpanWatcher
@@ -355,8 +356,8 @@ class EnrichedTextInputView : AppCompatEditText {
       val insertionStart = selection.start
       val insertionEnd = selection.end
 
-      val rawStart = at ?: minOf(insertionStart, insertionEnd)
-      val rawEnd = at ?: maxOf(insertionStart, insertionEnd)
+      val rawStart = start ?: minOf(insertionStart, insertionEnd)
+      val rawEnd = end ?: maxOf(insertionStart, insertionEnd)
 
       val start = rawStart.coerceIn(0, length)
       val end = rawEnd.coerceIn(start, length)
@@ -374,14 +375,15 @@ class EnrichedTextInputView : AppCompatEditText {
 
   fun insertText(
     insertedText: String,
-    at: Int? = null,
+    start: Int? = null,
+    end: Int? = null,
   ) {
     val parsedText = parseText(insertedText)
 
     val spannable =
       parsedText as? Spannable ?: SpannableString(parsedText)
 
-    insertSpannable(spannable, at)
+    insertSpannable(spannable, start, end)
   }
 
   fun requestFocusProgrammatically(withSelection: Boolean = true) {
