@@ -1,3 +1,4 @@
+#import "AffectedWord.h"
 #import "ColorExtension.h"
 #import "EnrichedTextInputView.h"
 #import "HtmlAttributeNames.h"
@@ -402,52 +403,62 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   _input->textView.selectedRange = newSelect;
 }
 
+- (BOOL)mentionTouchesAnotherMention:(NSRange)range {
+  NSTextStorage *storage = _input->textView.textStorage;
+
+  if (range.location > 0) {
+    id before = [storage attribute:MentionAttributeName
+                           atIndex:range.location - 1
+                    effectiveRange:nil];
+    if (before)
+      return YES;
+  }
+
+  NSUInteger after = NSMaxRange(range);
+  if (after < storage.length) {
+    id afterValue = [storage attribute:MentionAttributeName
+                               atIndex:after
+                        effectiveRange:nil];
+    if (afterValue)
+      return YES;
+  }
+
+  return NO;
+}
+
+- (BOOL)isMentionStillValid:(StylePair *)mention {
+  NSRange range = [mention.rangeValue rangeValue];
+  MentionParams *params = (MentionParams *)mention.styleValue;
+
+  NSString *existingText =
+      [_input->textView.textStorage.string substringWithRange:range];
+
+  return [existingText isEqualToString:params.text];
+}
+
 // handles removing no longer valid mentions
-- (void)handleExistingMentions {
-  // unfortunately whole text needs to be checked for them
-  // checking the modified words doesn't work because mention's text can have
-  // any number of spaces, which makes one mention any number of words long
+- (void)handleExistingMentionsInRange:(NSRange)changedRange {
+  NSTextStorage *storage = _input->textView.textStorage;
 
-  NSRange wholeText =
-      NSMakeRange(0, _input->textView.textStorage.string.length);
-  // get menntions in ascending range.location order
-  NSArray<StylePair *> *mentions = [[self findAllOccurences:wholeText]
-      sortedArrayUsingComparator:^NSComparisonResult(id _Nonnull obj1,
-                                                     id _Nonnull obj2) {
-        NSRange range1 = [((StylePair *)obj1).rangeValue rangeValue];
-        NSRange range2 = [((StylePair *)obj2).rangeValue rangeValue];
-        if (range1.location < range2.location) {
-          return NSOrderedAscending;
-        } else {
-          return NSOrderedDescending;
-        }
-      }];
+  if (storage.length == 0) {
+    return;
+  }
 
-  // set of ranges to have their mentions removed - aren't valid anymore
-  NSMutableSet<NSValue *> *rangesToRemove = [[NSMutableSet alloc] init];
+  NSUInteger start = changedRange.location > 0 ? changedRange.location - 1 : 0;
+  NSUInteger end = MIN(NSMaxRange(changedRange) + 1, storage.length);
 
-  for (NSInteger i = 0; i < mentions.count; i++) {
-    StylePair *mention = mentions[i];
-    NSRange currentRange = [mention.rangeValue rangeValue];
-    NSString *currentText = ((MentionParams *)mention.styleValue).text;
-    // check locations with the previous mention if it exists - if they got
-    // merged they need to be removed
-    if (i > 0) {
-      NSRange prevRange =
-          [((StylePair *)mentions[i - 1]).rangeValue rangeValue];
-      // mentions merged - both need to go out
-      if (prevRange.location + prevRange.length == currentRange.location) {
-        [rangesToRemove addObject:[NSValue valueWithRange:prevRange]];
-        [rangesToRemove addObject:[NSValue valueWithRange:currentRange]];
-        continue;
-      }
-    }
+  NSRange affectedRange = NSMakeRange(start, end - start);
 
-    // check for text, any modifications to it makes mention invalid
-    NSString *existingText =
-        [_input->textView.textStorage.string substringWithRange:currentRange];
-    if (![existingText isEqualToString:currentText]) {
-      [rangesToRemove addObject:[NSValue valueWithRange:currentRange]];
+  NSArray<StylePair *> *mentions = [self findAllOccurences:affectedRange];
+
+  NSMutableArray<NSValue *> *rangesToRemove = [NSMutableArray array];
+
+  for (StylePair *mention in mentions) {
+    NSRange range = [mention.rangeValue rangeValue];
+
+    if (![self isMentionStillValid:mention] ||
+        [self mentionTouchesAnotherMention:range]) {
+      [rangesToRemove addObject:[NSValue valueWithRange:range]];
     }
   }
 
@@ -638,17 +649,17 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 // mentions since we allow for a single space inside an edited mention, we have
 // take both current and the previous word into account
 - (NSArray *)getMentionCandidate {
-  NSDictionary *currentWord, *previousWord;
+  AffectedWord *currentWord, *previousWord;
   NSString *currentWordText, *previousWordText, *finalText;
-  NSValue *currentWordRange, *previousWordRange;
+  NSRange currentWordRange, previousWordRange;
   NSRange finalRange;
 
   // word at the current selection
   currentWord = [WordsUtils getCurrentWord:_input->textView.textStorage.string
                                      range:_input->textView.selectedRange];
   if (currentWord != nullptr) {
-    currentWordText = (NSString *)[currentWord objectForKey:@"word"];
-    currentWordRange = (NSValue *)[currentWord objectForKey:@"range"];
+    currentWordText = currentWord.text;
+    currentWordRange = currentWord.range;
   }
 
   if (currentWord != nullptr) {
@@ -660,13 +671,12 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
       // current word exists and has a mention indicator; no need to check for
       // the previous word
       finalText = currentWordText;
-      finalRange = [currentWordRange rangeValue];
+      finalRange = currentWord.range;
     } else {
       // current word exists but no traces of mention indicator; get the
       // previous word
 
-      NSInteger previousWordSearchLocation =
-          [currentWordRange rangeValue].location - 1;
+      NSInteger previousWordSearchLocation = currentWord.range.location - 1;
       if (previousWordSearchLocation < 0) {
         // previous word can't exist
         return nullptr;
@@ -687,8 +697,8 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 
       if (previousWord != nullptr) {
         // previous word exists; get its properties
-        previousWordText = (NSString *)[previousWord objectForKey:@"word"];
-        previousWordRange = (NSValue *)[previousWord objectForKey:@"range"];
+        previousWordText = previousWord.text;
+        previousWordRange = previousWord.range;
 
         // check for the mention indicators in the previous word
         unichar previousFirstChar = [previousWordText characterAtIndex:0];
@@ -700,10 +710,9 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
           finalText = [NSString
               stringWithFormat:@"%@ %@", previousWordText, currentWordText];
           // range length is both words' lengths + 1 for a space between them
-          finalRange =
-              NSMakeRange([previousWordRange rangeValue].location,
-                          [previousWordRange rangeValue].length +
-                              [currentWordRange rangeValue].length + 1);
+          finalRange = NSMakeRange(previousWord.range.location,
+                                   previousWord.range.length +
+                                       currentWord.range.length + 1);
         } else {
           // neither current nor previous words have a mention indicator
           return nullptr;
@@ -739,8 +748,8 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 
     if (previousWord != nullptr) {
       // previous word exists; get its properties
-      previousWordText = (NSString *)[previousWord objectForKey:@"word"];
-      previousWordRange = (NSValue *)[previousWord objectForKey:@"range"];
+      previousWordText = previousWord.text;
+      previousWordRange = previousWord.range;
 
       // check for the mention indicators in the previous word
       unichar previousFirstChar = [previousWordText characterAtIndex:0];
@@ -751,8 +760,8 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
         // space as a editable mention
         finalText = [NSString stringWithFormat:@"%@ ", previousWordText];
         // the range length is previous word length + 1 for a space
-        finalRange = NSMakeRange([previousWordRange rangeValue].location,
-                                 [previousWordRange rangeValue].length + 1);
+        finalRange = NSMakeRange(previousWord.range.location,
+                                 previousWord.range.length + 1);
       } else {
         // no current word, previous has no mention indicators
         return nullptr;

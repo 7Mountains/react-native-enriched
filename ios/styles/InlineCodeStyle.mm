@@ -6,6 +6,8 @@
 #import "Strings.h"
 #import "StyleHeaders.h"
 
+NSAttributedStringKey const InlineCodeAttributeName = @"EnrichedInlineCode";
+
 @implementation InlineCodeStyle {
   __weak EnrichedTextInputView *_input;
 }
@@ -27,7 +29,7 @@
 }
 
 + (NSAttributedStringKey)attributeKey {
-  return NSBackgroundColorAttributeName;
+  return InlineCodeAttributeName;
 }
 
 + (BOOL)isSelfClosing {
@@ -54,6 +56,9 @@
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
+  [attributedString addAttribute:InlineCodeAttributeName
+                           value:@YES
+                           range:range];
   [attributedString addAttribute:NSBackgroundColorAttributeName
                            value:[[_input->config inlineCodeBgColor]
                                      colorWithAlphaIfNotTransparent:0.4]
@@ -89,6 +94,7 @@
 - (void)addTypingAttributes {
   NSMutableDictionary *newTypingAttrs =
       [_input->textView.typingAttributes mutableCopy];
+  newTypingAttrs[InlineCodeAttributeName] = @YES;
   newTypingAttrs[NSBackgroundColorAttributeName] =
       [[_input->config inlineCodeBgColor] colorWithAlphaIfNotTransparent:0.4];
   newTypingAttrs[NSForegroundColorAttributeName] =
@@ -109,6 +115,7 @@
                                        range:(NSRange)range {
   InputConfig *config = _input->config;
   UIColor *primaryColor = [config primaryColor];
+  [string removeAttribute:InlineCodeAttributeName range:range];
   [string removeAttribute:NSBackgroundColorAttributeName range:range];
   [string addAttribute:NSForegroundColorAttributeName
                  value:primaryColor
@@ -145,6 +152,7 @@
 - (void)removeTypingAttributes {
   NSMutableDictionary *newTypingAttrs =
       [_input->textView.typingAttributes mutableCopy];
+  [newTypingAttrs removeObjectForKey:InlineCodeAttributeName];
   [newTypingAttrs removeObjectForKey:NSBackgroundColorAttributeName];
   newTypingAttrs[NSForegroundColorAttributeName] =
       [_input->config primaryColor];
@@ -180,11 +188,11 @@
 
     NSRange newlineRange = NSMakeRange(i, 1);
 
-    UIColor *bgColor = [storage attribute:NSBackgroundColorAttributeName
-                                  atIndex:i
-                           effectiveRange:nil];
+    NSNumber *isInlineCode = [storage attribute:InlineCodeAttributeName
+                                        atIndex:i
+                                 effectiveRange:nil];
 
-    if (bgColor != nil && [self styleCondition:bgColor range:newlineRange]) {
+    if ([isInlineCode boolValue]) {
       [self removeAttributes:newlineRange];
     }
   }
@@ -192,29 +200,18 @@
 
 - (BOOL)styleConditionWithAttributes:(NSDictionary *)attrs
                                range:(NSRange)range {
-  UIColor *bgColor = attrs[NSBackgroundColorAttributeName];
-  if (!bgColor) {
-    return NO;
-  }
-
-  MentionStyle *mStyle =
-      (MentionStyle *)_input->stylesDict[@([MentionStyle getStyleType])];
-  id mentionAttribute = attrs [[mStyle.class attributeKey]];
-  return ![mStyle styleCondition:mentionAttribute range:range];
+  NSNumber *isInlineCode = attrs[InlineCodeAttributeName];
+  return isInlineCode != nil && [isInlineCode boolValue];
 }
 
-// emojis don't retain monospace font attribute so we check for the background
-// color if there is no mention
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
-  UIColor *bgColor = (UIColor *)value;
-
-  if (!bgColor) {
+  if (![(NSNumber *)value boolValue]) {
     return NO;
   }
 
   MentionStyle *mStyle =
       (MentionStyle *)_input->stylesDict[@([MentionStyle getStyleType])];
-  return mStyle != nullptr && ![mStyle detectStyle:range];
+  return mStyle == nullptr || ![mStyle detectStyle:range];
 }
 
 - (BOOL)detectStyle:(NSRange)range {
@@ -229,7 +226,7 @@
     for (NSValue *value in nonNewlineRanges) {
       NSRange currentRange = [value rangeValue];
       BOOL currentDetected =
-          [OccurenceUtils detect:NSBackgroundColorAttributeName
+          [OccurenceUtils detect:InlineCodeAttributeName
                        withInput:_input
                          inRange:currentRange
                    withCondition:^BOOL(id _Nullable value, NSRange range) {
@@ -240,7 +237,7 @@
 
     return detected;
   } else {
-    return [OccurenceUtils detect:NSBackgroundColorAttributeName
+    return [OccurenceUtils detect:InlineCodeAttributeName
                         withInput:_input
                           atIndex:range.location
                     checkPrevious:NO
@@ -251,7 +248,7 @@
 }
 
 - (BOOL)anyOccurence:(NSRange)range {
-  return [OccurenceUtils any:NSBackgroundColorAttributeName
+  return [OccurenceUtils any:InlineCodeAttributeName
                    withInput:_input
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
@@ -260,7 +257,7 @@
 }
 
 - (NSArray<StylePair *> *_Nullable)findAllOccurences:(NSRange)range {
-  return [OccurenceUtils all:NSBackgroundColorAttributeName
+  return [OccurenceUtils all:InlineCodeAttributeName
                    withInput:_input
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {

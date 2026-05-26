@@ -1,3 +1,4 @@
+#import "AffectedWord.h"
 #import "EnrichedTextInputView.h"
 #import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
@@ -285,16 +286,15 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   }
 
   // mandatory connected links check
-  NSDictionary *currentWord =
+  AffectedWord *currentWord =
       [WordsUtils getCurrentWord:textStorage.string
                            range:textView.selectedRange];
   if (currentWord != nullptr) {
     // get word properties
-    NSString *wordText = (NSString *)[currentWord objectForKey:@"word"];
-    NSValue *wordRangeValue = (NSValue *)[currentWord objectForKey:@"range"];
-    if (wordText != nullptr && wordRangeValue != nullptr) {
-      [self removeConnectedLinksIfNeeded:wordText
-                                   range:[wordRangeValue rangeValue]];
+    NSString *wordText = currentWord.text;
+    NSRange range = currentWord.range;
+    if (wordText != nullptr) {
+      [self removeConnectedLinksIfNeeded:wordText range:range];
     }
   }
 
@@ -417,7 +417,10 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 }
 
 // Handles detecting and removing automatic links
-- (void)handleAutomaticLinks:(NSString *)word inRange:(NSRange)range {
+- (void)handleAutomaticLinks:(AffectedWord *)affectedWord {
+  NSString *word = affectedWord.text;
+  NSRange range = affectedWord.range;
+
   if (word.length == 0) {
     return;
   }
@@ -571,7 +574,7 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 }
 
 // handles refreshing manual links
-- (void)handleManualLinks:(NSString *)word inRange:(NSRange)wordRange {
+- (void)handleManualLinks:(AffectedWord *)affectedWord {
   // look for manual links within the word
   __block NSString *manualLinkMinValue = @"";
   __block NSString *manualLinkMaxValue = @"";
@@ -580,7 +583,7 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 
   [_input->textView.textStorage
       enumerateAttribute:ManualLinkAttributeName
-                 inRange:wordRange
+                 inRange:affectedWord.range
                  options:0
               usingBlock:^(id value, NSRange range, BOOL *stop) {
                 NSString *urlValue = (NSString *)value;

@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class EnrichedTextInputView;
+@class EnrichedTextInputView, AffectedWord;
 
 static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 
@@ -49,8 +49,8 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 - (LinkData *)getLinkDataAt:(NSUInteger)location;
 - (NSRange)getFullLinkRangeAt:(NSUInteger)location;
 - (void)manageLinkTypingAttributes;
-- (void)handleAutomaticLinks:(NSString *)word inRange:(NSRange)wordRange;
-- (void)handleManualLinks:(NSString *)word inRange:(NSRange)wordRange;
+- (void)handleAutomaticLinks:(AffectedWord *)affectedWord;
+- (void)handleManualLinks:(AffectedWord *)affectedWord;
 - (BOOL)handleLeadingLinkReplacement:(NSRange)range
                      replacementText:(NSString *)text;
 @end
@@ -63,7 +63,7 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
         attributes:(NSDictionary<NSString *, id> *)attributes;
 - (void)addMentionAtRange:(NSRange)range params:(MentionParams *)params;
 - (void)startMentionWithIndicator:(NSString *)indicator;
-- (void)handleExistingMentions;
+- (void)handleExistingMentionsInRange:(NSRange)range;
 - (void)manageMentionEditing;
 - (void)manageMentionTypingAttributes;
 - (BOOL)handleLeadingMentionReplacement:(NSRange)range

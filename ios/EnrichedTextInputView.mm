@@ -1,4 +1,5 @@
 #import "EnrichedTextInputView.h"
+#import "AffectedWord.h"
 #import "AlignmentConverter.h"
 #import "AttachmentInvalidationBatcher.h"
 #import "ColorExtension.h"
@@ -1147,8 +1148,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   [self tryUpdatingActiveStyles];
 }
 
-- (void)handleWordModificationBasedChanges:(NSString *)word
-                                   inRange:(NSRange)range {
+- (void)handleWordModificationBasedChanges:(AffectedWord *)affectedWord {
   // manual links refreshing and automatic links detection handling
   LinkStyle *linkStyle =
       (LinkStyle *)[stylesDict objectForKey:@([LinkStyle getStyleType])];
@@ -1157,8 +1157,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [textView.textStorage beginEditing];
     // manual links need to be handled first because they can block automatic
     // links after being refreshed
-    [linkStyle handleManualLinks:word inRange:range];
-    [linkStyle handleAutomaticLinks:word inRange:range];
+    [linkStyle handleManualLinks:affectedWord];
+    [linkStyle handleAutomaticLinks:affectedWord];
     [textView.textStorage endEditing];
   }
 }
@@ -1201,7 +1201,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   MentionStyle *mentionStyleClass =
       (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
   if (mentionStyleClass != nullptr) {
-    [mentionStyleClass handleExistingMentions];
+    [mentionStyleClass handleExistingMentionsInRange:recentlyChangedRange];
     [mentionStyleClass manageMentionEditing];
   }
 
@@ -1223,16 +1223,8 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
         [WordsUtils getAffectedWordsFromText:textView.textStorage.string
                            modificationRange:recentlyChangedRange];
     if (modifiedWords != nullptr) {
-      for (NSDictionary *wordDict in modifiedWords) {
-        NSString *wordText = (NSString *)[wordDict objectForKey:@"word"];
-        NSValue *wordRange = (NSValue *)[wordDict objectForKey:@"range"];
-
-        if (wordText == nullptr || wordRange == nullptr) {
-          continue;
-        }
-
-        [self handleWordModificationBasedChanges:wordText
-                                         inRange:[wordRange rangeValue]];
+      for (AffectedWord *word in modifiedWords) {
+        [self handleWordModificationBasedChanges:word];
       }
     }
 
