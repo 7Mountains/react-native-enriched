@@ -183,7 +183,6 @@ const useCommands = (
         start: number | null = null,
         end: number | null = null
       ) => {
-        console.log('Inserting text:', { text, start, end });
         Commands.insertText(nullthrows(typedRef), text, start, end);
       },
       removeLink: (start: number, end: number) => {
