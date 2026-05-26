@@ -1,8 +1,9 @@
 #import "WordsUtils.h"
+#import "AffectedWord.h"
 
 @implementation WordsUtils
 
-+ (NSArray<NSDictionary *> *)getAffectedWordsFromText:(NSString *)text
++ (NSArray<AffectedWord *> *)getAffectedWordsFromText:(NSString *)text
                                     modificationRange:(NSRange)range {
   if (text.length == 0) {
     return [[NSArray alloc] init];
@@ -42,8 +43,8 @@
     return [[NSArray alloc] init];
   }
 
-  NSMutableArray<NSDictionary *> *separatedWords =
-      [[NSMutableArray<NSDictionary *> alloc] init];
+  NSMutableArray<AffectedWord *> *separatedWords =
+      [[NSMutableArray<AffectedWord *> alloc] init];
   NSMutableString *currentWord = [[NSMutableString alloc] init];
   NSInteger currentRangeStart = leftIt;
   NSInteger currentIdx = leftIt;
@@ -53,11 +54,11 @@
     if ([[NSCharacterSet whitespaceAndNewlineCharacterSet]
             characterIsMember:charAtIndex]) {
       if (currentWord.length > 0) {
-        [separatedWords addObject:@{
-          @"word" : [currentWord copy],
-          @"range" : [NSValue
-              valueWithRange:NSMakeRange(currentRangeStart, currentWord.length)]
-        }];
+
+        AffectedWord *affectedWord = [[AffectedWord alloc]
+            initWithText:[currentWord copy]
+                   range:NSMakeRange(currentRangeStart, currentWord.length)];
+        [separatedWords addObject:affectedWord];
         [currentWord setString:@""];
       }
       currentRangeStart = currentIdx + 1;
@@ -68,24 +69,23 @@
   }
 
   if (currentWord.length > 0) {
-    [separatedWords addObject:@{
-      @"word" : [currentWord copy],
-      @"range" :
-          [NSValue valueWithRange:NSMakeRange(currentRangeStart,
-                                              rightIt - currentRangeStart + 1)]
-    }];
+    AffectedWord *affectedWord = [[AffectedWord alloc]
+        initWithText:[currentWord copy]
+               range:NSMakeRange(currentRangeStart,
+                                 rightIt - currentRangeStart + 1)];
+    [separatedWords addObject:affectedWord];
   }
 
   return separatedWords;
 }
 
-+ (NSDictionary *)getCurrentWord:(NSString *)text range:(NSRange)range {
++ (AffectedWord *)getCurrentWord:(NSString *)text range:(NSRange)range {
   // we just get current word at the cursor
   if (range.length > 0) {
     return nullptr;
   }
 
-  NSArray<NSDictionary *> *words = [WordsUtils getAffectedWordsFromText:text
+  NSArray<AffectedWord *> *words = [WordsUtils getAffectedWordsFromText:text
                                                       modificationRange:range];
   if (words != nullptr && [words count] == 1 &&
       [words firstObject] != nullptr) {
