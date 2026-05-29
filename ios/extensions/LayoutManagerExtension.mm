@@ -48,11 +48,32 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
     Method originalMethod = class_getInstanceMethod(myClass, originalSelector);
     Method swizzledMethod = class_getInstanceMethod(myClass, swizzledSelector);
 
+    SEL originalGlyphs = @selector(drawGlyphsForGlyphRange:atPoint:);
+    SEL swizzledGlyphs = @selector(my_drawGlyphsForGlyphRange:atPoint:);
+
+    Method originalGlyphsMethod =
+        class_getInstanceMethod(myClass, originalGlyphs);
+    Method swizzledGlyphsMethod =
+        class_getInstanceMethod(myClass, swizzledGlyphs);
+
+    method_exchangeImplementations(originalGlyphsMethod, swizzledGlyphsMethod);
     method_exchangeImplementations(originalMethod, swizzledMethod);
   });
 }
 
 #pragma mark - Entry point
+
+- (void)my_drawGlyphsForGlyphRange:(NSRange)glyphsToShow
+                           atPoint:(CGPoint)origin {
+  EnrichedTextInputView *input = (EnrichedTextInputView *)self.input;
+
+  if (!input) {
+    [self my_drawGlyphsForGlyphRange:glyphsToShow atPoint:origin];
+    return;
+  }
+
+  [self drawCheckboxGlyps:input glyphsToShow:glyphsToShow origin:origin];
+}
 
 - (void)my_drawBackgroundForGlyphRange:(NSRange)glyphRange
                                atPoint:(CGPoint)origin {
@@ -501,6 +522,143 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                      }];
     }
   }
+}
+
+- (void)drawCheckboxGlyps:(EnrichedTextInputView *)input
+             glyphsToShow:(NSRange)glyphsToShow
+                   origin:(CGPoint)origin {
+  CGContextRef ctx = UIGraphicsGetCurrentContext();
+
+  if (!ctx || !input) {
+    [self my_drawGlyphsForGlyphRange:glyphsToShow atPoint:origin];
+    return;
+  }
+
+  CheckBoxStyle *style =
+      (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
+
+  if (!style) {
+    [self my_drawGlyphsForGlyphRange:glyphsToShow atPoint:origin];
+    return;
+  }
+
+  UITextView *textView = input->textView;
+  NSTextStorage *textStorage = textView.textStorage;
+  NSString *text = textStorage.string;
+  UIColor *fallbackColor = textView.textColor ?: input->config.primaryColor;
+  UIFont *font = input->config.primaryFont;
+  CGFloat scale = UIScreen.mainScreen.scale;
+
+  static NSCharacterSet *newlineSet;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    newlineSet = [NSCharacterSet newlineCharacterSet];
+  });
+
+  [self
+      enumerateLineFragmentsForGlyphRange:glyphsToShow
+                               usingBlock:^(CGRect rect,
+                                            CGRect __unused usedRect,
+                                            NSTextContainer *container,
+                                            NSRange lineGlyphRange,
+                                            BOOL __unused *stop) {
+                                 NSRange drawGlyphRange = NSIntersectionRange(
+                                     lineGlyphRange, glyphsToShow);
+                                 if (drawGlyphRange.length == 0) {
+                                   return;
+                                 }
+
+                                 NSRange charRange = [self
+                                     characterRangeForGlyphRange:lineGlyphRange
+                                                actualGlyphRange:nil];
+
+                                 NSRange paragraph =
+                                     [text paragraphRangeForRange:charRange];
+                                 BOOL checked =
+                                     [style isCheckedAt:paragraph.location];
+
+                                 if (!checked) {
+                                   [self
+                                       my_drawGlyphsForGlyphRange:lineGlyphRange
+                                                          atPoint:origin];
+                                   return;
+                                 }
+
+                                 CGContextSaveGState(ctx);
+                                 CGContextSetAlpha(ctx, 0.6);
+
+                                 [self my_drawGlyphsForGlyphRange:lineGlyphRange
+                                                          atPoint:origin];
+
+                                 NSRange strikeCharRange = charRange;
+                                 while (strikeCharRange.length > 0) {
+                                   unichar lastChar = [text
+                                       characterAtIndex:NSMaxRange(
+                                                            strikeCharRange) -
+                                                        1];
+
+                                   if (![newlineSet
+                                           characterIsMember:lastChar]) {
+                                     break;
+                                   }
+
+                                   strikeCharRange.length -= 1;
+                                 }
+
+                                 if (strikeCharRange.length > 0) {
+                                   CGContextSetLineCap(ctx, kCGLineCapButt);
+                                   CGContextSetLineWidth(ctx, 1.0);
+                                   [textStorage
+                                       enumerateAttribute:
+                                           NSForegroundColorAttributeName
+                                                  inRange:strikeCharRange
+                                                  options:0
+                                               usingBlock:^(id attribute,
+                                                            NSRange glyphRange,
+                                                            BOOL *stop) {
+                                                 UIColor *color =
+                                                     ([attribute
+                                                          isKindOfClass:
+                                                              UIColor.class]
+                                                          ? (UIColor *)attribute
+                                                          : fallbackColor);
+
+                                                 CGRect glyphRect = [self
+                                                     boundingRectForGlyphRange:
+                                                         glyphRange
+                                                               inTextContainer:
+                                                                   container];
+
+                                                 CGPoint glyphLocation = [self
+                                                     locationForGlyphAtIndex:
+                                                         glyphRange.location];
+
+                                                 CGFloat strikeY =
+                                                     origin.y + rect.origin.y +
+                                                     glyphLocation.y -
+                                                     font.xHeight / 2.0;
+                                                 strikeY =
+                                                     round(strikeY * scale) /
+                                                     scale;
+
+                                                 CGContextSetStrokeColorWithColor(
+                                                     ctx, color.CGColor);
+                                                 CGContextMoveToPoint(
+                                                     ctx,
+                                                     origin.x +
+                                                         glyphRect.origin.x,
+                                                     strikeY);
+                                                 CGContextAddLineToPoint(
+                                                     ctx,
+                                                     origin.x + CGRectGetMaxX(
+                                                                    glyphRect),
+                                                     strikeY);
+                                                 CGContextStrokePath(ctx);
+                                               }];
+                                 }
+
+                                 CGContextRestoreGState(ctx);
+                               }];
 }
 
 #pragma mark - Merge helpers
