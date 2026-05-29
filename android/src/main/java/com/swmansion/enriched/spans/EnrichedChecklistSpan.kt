@@ -1,23 +1,35 @@
 package com.swmansion.enriched.spans
 
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.text.Layout
 import android.text.Spanned
+import android.text.TextPaint
+import android.text.style.CharacterStyle
 import android.text.style.LeadingMarginSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
+import kotlin.math.roundToInt
 
 class EnrichedChecklistSpan(
   private val htmlStyle: HtmlStyle,
-) : LeadingMarginSpan,
+) : CharacterStyle(),
+  LeadingMarginSpan,
   EnrichedListSpan {
   var isChecked = false
   override val dependsOnHtmlStyle: Boolean = true
 
   constructor(htmlStyle: HtmlStyle, isChecked: Boolean) : this(htmlStyle = htmlStyle) {
     this.isChecked = isChecked
+  }
+
+  override fun updateDrawState(tp: TextPaint) {
+    if (!isChecked) return
+
+    tp.isStrikeThruText = true
+    tp.alpha = (tp.alpha * 0.6f).roundToInt()
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedChecklistSpan = EnrichedChecklistSpan(htmlStyle, isChecked)
