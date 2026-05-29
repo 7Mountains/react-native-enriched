@@ -2,6 +2,7 @@
 #import "ColorExtension.h"
 #import "EnrichedTextInputView.h"
 #import "ParagraphsUtils.h"
+#import "Strings.h"
 #import "StyleHeaders.h"
 #import "WeakBox.h"
 #import <objc/runtime.h>
@@ -603,6 +604,13 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                    }
 
                                    strikeCharRange.length -= 1;
+                                 }
+
+                                 if (strikeCharRange.length == 1 &&
+                                     [text characterAtIndex:strikeCharRange
+                                                                .location] ==
+                                         ZWSChar) {
+                                   return;
                                  }
 
                                  if (strikeCharRange.length > 0) {
