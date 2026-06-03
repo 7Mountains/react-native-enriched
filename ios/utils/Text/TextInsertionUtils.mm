@@ -1,6 +1,8 @@
 #import "TextInsertionUtils.h"
 #import "EnrichedTextInputView.h"
+#import "ParagraphsUtils.h"
 #import "Strings.h"
+#import "StyleHeaders.h"
 #import "UIView+React.h"
 
 @implementation TextInsertionUtils
@@ -63,6 +65,81 @@
     textView.selectedRange = NSMakeRange(range.location + text.length, 0);
   }
   typedInput->recentlyChangedRange = NSMakeRange(range.location, text.length);
+}
+
++ (BOOL)tryInsertText:(NSString *)text
+    afterReadOnlyParagraphInRange:(NSRange)range
+                            input:(id)input
+                  paragraphsLimit:(NSInteger)paragraphsLimit {
+  EnrichedTextInputView *typedInput = (EnrichedTextInputView *)input;
+  if (typedInput == nullptr || text.length == 0 || range.length != 0) {
+    return NO;
+  }
+
+  UITextView *textView = typedInput->textView;
+  NSTextStorage *storage = textView.textStorage;
+  if (![ParagraphsUtils isAtEndOfReadOnlyParagraph:storage
+                                          location:range.location]) {
+    return NO;
+  }
+
+  NSString *replacementText = [NewLine stringByAppendingString:text];
+  if (paragraphsLimit > 0) {
+    NSInteger existing = [ParagraphsUtils paragraphsCountInTextView:textView];
+    NSInteger incoming =
+        [ParagraphsUtils incomingParagraphsCountFromString:replacementText];
+
+    if (existing + incoming - 1 > paragraphsLimit) {
+      return NO;
+    }
+  }
+
+  NSAttributedString *replacement = [[NSAttributedString alloc]
+      initWithString:replacementText
+          attributes:typedInput->defaultTypingAttributes];
+  NSRange replacementRange = NSMakeRange(range.location, replacement.length);
+
+  [storage beginEditing];
+  [storage replaceCharactersInRange:range withAttributedString:replacement];
+  [storage removeAttribute:ReadOnlyParagraphKey range:replacementRange];
+  [storage endEditing];
+
+  textView.selectedRange = NSMakeRange(NSMaxRange(replacementRange), 0);
+  typedInput->recentlyChangedRange = replacementRange;
+
+  return YES;
+}
+
++ (BOOL)tryDeleteReadOnlyParagraphBeforeRange:(NSRange)range input:(id)input {
+  EnrichedTextInputView *typedInput = (EnrichedTextInputView *)input;
+  if (typedInput == nullptr || range.length != 1 || range.location == 0) {
+    return NO;
+  }
+
+  UITextView *textView = typedInput->textView;
+  NSTextStorage *storage = textView.textStorage;
+  NSRange readOnlyRange = NSMakeRange(0, 0);
+  id readOnly = [storage attribute:ReadOnlyParagraphKey
+                           atIndex:range.location - 1
+                    effectiveRange:&readOnlyRange];
+
+  if (readOnly == nil || NSMaxRange(readOnlyRange) < range.location) {
+    return NO;
+  }
+
+  NSRange deletionRange =
+      NSMakeRange(readOnlyRange.location,
+                  MAX(NSMaxRange(readOnlyRange), NSMaxRange(range)) -
+                      readOnlyRange.location);
+
+  [storage beginEditing];
+  [storage deleteCharactersInRange:deletionRange];
+  [storage endEditing];
+
+  textView.selectedRange = NSMakeRange(deletionRange.location, 0);
+  typedInput->recentlyChangedRange = deletionRange;
+
+  return YES;
 }
 
 + (void)insertEscapingParagraphsAtIndex:(NSUInteger)index

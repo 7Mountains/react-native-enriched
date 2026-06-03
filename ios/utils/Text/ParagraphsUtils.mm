@@ -80,6 +80,20 @@
   return NO;
 }
 
++ (BOOL)isAtEndOfReadOnlyParagraph:(NSAttributedString *)attributedString
+                          location:(NSUInteger)location {
+  if (location == 0 || location > attributedString.length) {
+    return NO;
+  }
+
+  NSRange effectiveRange = NSMakeRange(0, 0);
+  id readOnly = [attributedString attribute:ReadOnlyParagraphKey
+                                    atIndex:location - 1
+                             effectiveRange:&effectiveRange];
+
+  return readOnly != nil && NSMaxRange(effectiveRange) == location;
+}
+
 + (NSArray<NSValue *> *)separateParagraphRangesInString:(NSString *)string
                                                   range:(NSRange)range {
   NSRange fullRange = [string paragraphRangeForRange:range];

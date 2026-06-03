@@ -31,6 +31,7 @@
 #import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextBlockTapGestureRecognizer.h"
+#import "TextInsertionUtils.h"
 #import "UIScrollViewKeyboardDismissMode+Parsing.h"
 #import "UIView+React.h"
 #import "WordsUtils.h"
@@ -1320,8 +1321,22 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   if (!isNewLine &&
       [ParagraphsUtils isReadOnlyParagraphAtLocation:textView.textStorage
                                             location:range.location]) {
-    if (text.length == 0)
+    if (text.length == 0) {
+      if ([TextInsertionUtils tryDeleteReadOnlyParagraphBeforeRange:range
+                                                              input:self]) {
+        [self anyTextMayHaveBeenModified];
+        return NO;
+      }
       return YES;
+    }
+
+    if ([TextInsertionUtils tryInsertText:text
+            afterReadOnlyParagraphInRange:range
+                                    input:self
+                          paragraphsLimit:_paragraphsLimit]) {
+      [self anyTextMayHaveBeenModified];
+    }
+
     return NO;
   }
   recentlyChangedRange = NSMakeRange(range.location, text.length);
