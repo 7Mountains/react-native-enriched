@@ -11,11 +11,14 @@
 
   NSInteger leftIt = range.location - 1;
   leftIt = MIN(leftIt, NSInteger(text.length - 1));
+
+  NSCharacterSet *whiteSpaceAndNewLineSet =
+      [NSCharacterSet whitespaceAndNewlineCharacterSet];
+
   if (leftIt > 0) {
     while (leftIt >= 0) {
       unichar charAtIndex = [text characterAtIndex:leftIt];
-      if ([[NSCharacterSet whitespaceAndNewlineCharacterSet]
-              characterIsMember:charAtIndex]) {
+      if ([newlineSet characterIsMember:charAtIndex]) {
         leftIt += 1;
         break;
       }
@@ -29,8 +32,7 @@
   if (rightIt < text.length - 1) {
     while (rightIt <= text.length - 1) {
       unichar charAtIndex = [text characterAtIndex:rightIt];
-      if ([[NSCharacterSet whitespaceAndNewlineCharacterSet]
-              characterIsMember:charAtIndex]) {
+      if ([newlineSet characterIsMember:charAtIndex]) {
         rightIt -= 1;
         break;
       }
@@ -51,8 +53,7 @@
 
   while (currentIdx <= rightIt) {
     unichar charAtIndex = [text characterAtIndex:currentIdx];
-    if ([[NSCharacterSet whitespaceAndNewlineCharacterSet]
-            characterIsMember:charAtIndex]) {
+    if ([newlineSet characterIsMember:charAtIndex]) {
       if (currentWord.length > 0) {
 
         AffectedWord *affectedWord = [[AffectedWord alloc]

@@ -5,6 +5,17 @@
 #import "TextInsertionUtils.h"
 #import "UIView+React.h"
 
+@implementation ZWSAdjustedRange
+- (instancetype)initWithRange:(NSRange)range
+                  offsetDelta:(NSInteger)offsetDelta {
+  if (self = [super init]) {
+    _range = range;
+    _offsetDelta = offsetDelta;
+  }
+  return self;
+}
+@end
+
 @implementation ZeroWidthSpaceUtils
 + (void)handleZeroWidthSpacesInInput:(id)input {
   EnrichedTextInputView *typedInput = (EnrichedTextInputView *)input;
@@ -14,6 +25,18 @@
 
   [self removeSpacesIfNeededinInput:typedInput];
   [self addSpacesIfNeededinInput:typedInput];
+}
+
++ (NSString *)stringByRemovingZWS:(NSString *)string {
+  return [string stringByReplacingOccurrencesOfString:ZWS withString:@""];
+}
+
++ (void)removeZWSFromAttributedString:(NSMutableAttributedString *)string {
+  [string.mutableString
+      replaceOccurrencesOfString:ZWS
+                      withString:@""
+                         options:0
+                           range:NSMakeRange(0, string.length)];
 }
 
 + (NSArray<id<BaseStyleProtocol>> *)ZWSStylesForInput:
@@ -67,6 +90,35 @@
     }
   }
   return NO;
+}
+
++ (ZWSAdjustedRange *)rangeByEnsuringEmptyParagraphHasZWS:(NSRange)range
+                                                    input:(id)input {
+  EnrichedTextInputView *typedInput = (EnrichedTextInputView *)input;
+  if (typedInput == nullptr) {
+    return [[ZWSAdjustedRange alloc] initWithRange:range offsetDelta:0];
+  }
+
+  NSString *string = typedInput->textView.textStorage.string;
+  BOOL isEmptyParagraph =
+      range.length == 0 ||
+      (range.length == 1 && range.location < string.length &&
+       [[NSCharacterSet newlineCharacterSet]
+           characterIsMember:[string characterAtIndex:range.location]]);
+
+  if (!isEmptyParagraph) {
+    return [[ZWSAdjustedRange alloc] initWithRange:range offsetDelta:0];
+  }
+
+  [TextInsertionUtils insertText:ZWS
+                              at:range.location
+            additionalAttributes:nullptr
+                           input:typedInput
+                   withSelection:NO];
+
+  return [[ZWSAdjustedRange alloc]
+      initWithRange:NSMakeRange(range.location, range.length + 1)
+        offsetDelta:1];
 }
 
 + (void)removeSpacesIfNeededinInput:(EnrichedTextInputView *)input {

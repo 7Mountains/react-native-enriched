@@ -8,6 +8,7 @@
 #import "StyleConstants.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
+#import "ZeroWidthSpaceUtils.h"
 
 @implementation BlockQuoteStyle {
   __weak EnrichedTextInputView *_input;
@@ -114,21 +115,11 @@
     NSRange pRange = NSMakeRange([value rangeValue].location + offset,
                                  [value rangeValue].length);
 
-    // length 0 with first line, length 1 and newline with some empty lines in
-    // the middle
-    if (pRange.length == 0 ||
-        (pRange.length == 1 &&
-         [[NSCharacterSet newlineCharacterSet]
-             characterIsMember:[_input->textView.textStorage.string
-                                   characterAtIndex:pRange.location]])) {
-      [TextInsertionUtils insertText:ZWS
-                                  at:pRange.location
-                additionalAttributes:nullptr
-                               input:_input
-                       withSelection:NO];
-      pRange = NSMakeRange(pRange.location, pRange.length + 1);
-      offset += 1;
-    }
+    ZWSAdjustedRange *adjusted =
+        [ZeroWidthSpaceUtils rangeByEnsuringEmptyParagraphHasZWS:pRange
+                                                           input:_input];
+    pRange = adjusted.range;
+    offset += adjusted.offsetDelta;
 
     [_input->textView.textStorage
         enumerateAttribute:NSParagraphStyleAttributeName

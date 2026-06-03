@@ -359,11 +359,13 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   BOOL addSpaceBefore = NO;
   BOOL addSpaceAfter = NO;
 
+  NSCharacterSet *whiteSpaceAndNewLineSet =
+      [NSCharacterSet whitespaceAndNewlineCharacterSet];
+
   if (currentRange.location > 0) {
     unichar charBefore = [_input->textView.textStorage.string
         characterAtIndex:(currentRange.location - 1)];
-    if (![[NSCharacterSet whitespaceAndNewlineCharacterSet]
-            characterIsMember:charBefore]) {
+    if (![whiteSpaceAndNewLineSet characterIsMember:charBefore]) {
       addSpaceBefore = YES;
     }
   }
@@ -372,8 +374,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
       _input->textView.textStorage.string.length) {
     unichar charAfter = [_input->textView.textStorage.string
         characterAtIndex:(currentRange.location + currentRange.length)];
-    if (![[NSCharacterSet whitespaceAndNewlineCharacterSet]
-            characterIsMember:charAfter]) {
+    if (![whiteSpaceAndNewLineSet characterIsMember:charAfter]) {
       addSpaceAfter = YES;
     }
   }
