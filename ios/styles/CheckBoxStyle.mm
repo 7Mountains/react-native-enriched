@@ -8,6 +8,7 @@
 #import "StyleConstants.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
+#import "ZeroWidthSpaceUtils.h"
 
 static NSString *const CheckedValueString = @"true";
 static NSString *const UnckedValueString = @"false";
@@ -440,23 +441,11 @@ static NSArray<NSTextList *> *const UncheckedLists =
     NSRange fixed = NSMakeRange(paragraph.rangeValue.location + offset,
                                 paragraph.rangeValue.length);
 
-    BOOL shouldInsert =
-        (fixed.length == 0) ||
-        (fixed.length == 1 &&
-         [[NSCharacterSet newlineCharacterSet]
-             characterIsMember:[_input->textView.textStorage.string
-                                   characterAtIndex:fixed.location]]);
-
-    if (shouldInsert) {
-      [TextInsertionUtils insertText:ZWS
-                                  at:fixed.location
-                additionalAttributes:nullptr
-                               input:_input
-                       withSelection:NO];
-
-      fixed.length += 1;
-      offset += 1;
-    }
+    ZWSAdjustedRange *adjusted =
+        [ZeroWidthSpaceUtils rangeByEnsuringEmptyParagraphHasZWS:fixed
+                                                           input:_input];
+    fixed = adjusted.range;
+    offset += adjusted.offsetDelta;
 
     [self applyCheckboxStyleToStorage:@[ [NSValue valueWithRange:fixed] ]
                              withList:list];

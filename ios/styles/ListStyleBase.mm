@@ -11,6 +11,7 @@
 #import "StyleConstants.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
+#import "ZeroWidthSpaceUtils.h"
 
 @implementation ListStyleBase
 
@@ -129,23 +130,11 @@
     NSRange fixedRange =
         NSMakeRange(rangeValue.location + offset, rangeValue.length);
 
-    BOOL isEmptyParagraph =
-        fixedRange.length == 0 ||
-        (fixedRange.length == 1 &&
-         [[NSCharacterSet newlineCharacterSet]
-             characterIsMember:[textView.textStorage.string
-                                   characterAtIndex:fixedRange.location]]);
-
-    if (isEmptyParagraph) {
-      [TextInsertionUtils insertText:ZWS
-                                  at:fixedRange.location
-                additionalAttributes:nullptr
-                               input:_input
-                       withSelection:NO];
-
-      fixedRange = NSMakeRange(fixedRange.location, fixedRange.length + 1);
-      offset += 1;
-    }
+    ZWSAdjustedRange *adjusted =
+        [ZeroWidthSpaceUtils rangeByEnsuringEmptyParagraphHasZWS:fixedRange
+                                                           input:_input];
+    fixedRange = adjusted.range;
+    offset += adjusted.offsetDelta;
 
     [textView.textStorage
         enumerateAttribute:NSParagraphStyleAttributeName

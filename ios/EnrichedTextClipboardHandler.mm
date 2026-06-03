@@ -3,6 +3,7 @@
 #import "ParagraphsUtils.h"
 #import "Strings.h"
 #import "TextInsertionUtils.h"
+#import "ZeroWidthSpaceUtils.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @implementation EnrichedTextClipboardHandler {
@@ -24,9 +25,8 @@
     return;
   }
 
-  NSString *plain = [[storage.string substringWithRange:range]
-      stringByReplacingOccurrencesOfString:ZWS
-                                withString:@""];
+  NSString *plain = [ZeroWidthSpaceUtils
+      stringByRemovingZWS:[storage.string substringWithRange:range]];
 
   NSAttributedString *substring =
       [_input->textView.textStorage attributedSubstringFromRange:range];
@@ -37,10 +37,7 @@
   NSMutableAttributedString *attr =
       [[storage attributedSubstringFromRange:range] mutableCopy];
 
-  [attr.mutableString replaceOccurrencesOfString:ZWS
-                                      withString:@""
-                                         options:0
-                                           range:NSMakeRange(0, attr.length)];
+  [ZeroWidthSpaceUtils removeZWSFromAttributedString:attr];
 
   NSData *rtf = [attr dataFromRange:NSMakeRange(0, attr.length)
                  documentAttributes:@{
