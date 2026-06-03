@@ -12,7 +12,8 @@
   NSInteger leftIt = range.location - 1;
   leftIt = MIN(leftIt, NSInteger(text.length - 1));
 
-  NSCharacterSet *newlineSet = [NSCharacterSet newlineCharacterSet];
+  NSCharacterSet *whiteSpaceAndNewLineSet =
+      [NSCharacterSet whitespaceAndNewlineCharacterSet];
 
   if (leftIt > 0) {
     while (leftIt >= 0) {
