@@ -41,6 +41,13 @@ class NonEditableParagraphFilter : InputFilter {
       return ""
     }
 
+    if (dstart == dend) {
+      val spanBeforeCursor = getNonEditableSpanBeforeCursor(dest, dstart)
+      if (spanBeforeCursor != null && dest.getSpanEnd(spanBeforeCursor) == dstart) {
+        return Strings.NEWLINE_STRING + source
+      }
+    }
+
     // Block insert BEFORE non-editable block
     if (dstart > 0) {
       val before =
@@ -68,5 +75,19 @@ class NonEditableParagraphFilter : InputFilter {
     }
 
     return null
+  }
+
+  private fun getNonEditableSpanBeforeCursor(
+    dest: Spanned,
+    cursorPosition: Int,
+  ): EnrichedNonEditableParagraphSpan? {
+    if (cursorPosition <= 0) return null
+
+    return dest
+      .getSpans(
+        cursorPosition - 1,
+        cursorPosition,
+        EnrichedNonEditableParagraphSpan::class.java,
+      ).firstOrNull()
   }
 }

@@ -15,6 +15,12 @@
                    input:(id)input
            withSelection:(BOOL)withSelection;
 ;
++ (BOOL)tryInsertText:(NSString *)text
+    afterReadOnlyParagraphInRange:(NSRange)range
+                            input:(id)input
+                  paragraphsLimit:(NSInteger)paragraphsLimit;
++ (BOOL)tryDeleteReadOnlyParagraphBeforeRange:(NSRange)range input:(id)input;
+
 + (void)insertEscapingParagraphsAtIndex:(NSUInteger)index
                                    text:(NSString *)text
                              attributes:
