@@ -10,7 +10,7 @@ import com.swmansion.enriched.styles.ParagraphStyles
 import com.swmansion.enriched.styles.ParametrizedStyles
 
 class EnrichedStyleManipulator(
-  val view: EnrichedTextInputView,
+  private val view: EnrichedTextInputView,
 ) {
   val inlineStyles: InlineStyles = InlineStyles(view)
   val paragraphStyles: ParagraphStyles = ParagraphStyles(view)
@@ -29,26 +29,53 @@ class EnrichedStyleManipulator(
     name: TextStyle,
     start: Int,
     end: Int,
-  ): Boolean =
-    when (EnrichedSpans.getStyleGroup(name)) {
-      TextStyleGroup.INLINE -> inlineStyles.removeStyle(name, start, end)
-      TextStyleGroup.PARAGRAPH -> paragraphStyles.removeStyle(name, start, end)
-      TextStyleGroup.LIST -> listStyles.removeStyle(name, start, end)
-      TextStyleGroup.PARAMETRIZED -> parametrizedStyles.removeStyle(name, start, end)
-      null -> false
+  ): Boolean {
+    return when (EnrichedSpans.getStyleGroup(name)) {
+      TextStyleGroup.INLINE -> {
+        inlineStyles.removeStyle(name, start, end)
+      }
+
+      TextStyleGroup.PARAGRAPH -> {
+        val removed = paragraphStyles.removeStyle(name, start, end)
+        view.correctScrollPositionIfNeeded()
+
+        return removed
+      }
+
+      TextStyleGroup.LIST -> {
+        listStyles.removeStyle(name, start, end)
+      }
+
+      TextStyleGroup.PARAMETRIZED -> {
+        parametrizedStyles.removeStyle(name, start, end)
+      }
+
+      null -> {
+        false
+      }
     }
+  }
 
   internal fun toggleStyle(name: TextStyle) {
     when (EnrichedSpans.getStyleGroup(name)) {
-      TextStyleGroup.INLINE -> inlineStyles.toggleStyle(name)
+      TextStyleGroup.INLINE -> {
+        inlineStyles.toggleStyle(name)
+      }
 
-      TextStyleGroup.PARAGRAPH -> paragraphStyles.toggleStyle(name)
+      TextStyleGroup.PARAGRAPH -> {
+        paragraphStyles.toggleStyle(name)
+        view.correctScrollPositionIfNeeded()
+      }
 
-      TextStyleGroup.LIST -> listStyles.toggleStyle(name)
+      TextStyleGroup.LIST -> {
+        listStyles.toggleStyle(name)
+      }
 
       TextStyleGroup.PARAMETRIZED,
       null,
-      -> Log.w("EnrichedTextInputView", "Unknown style: $name")
+      -> {
+        Log.w("EnrichedTextInputView", "Unknown style: $name")
+      }
     }
   }
 
