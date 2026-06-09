@@ -70,6 +70,7 @@ class EnrichedTextWatcher(
         }
       }
     }
+    view.correctScrollPositionIfNeeded()
   }
 
   private fun applyStyles(s: Editable) {
