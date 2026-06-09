@@ -4,6 +4,9 @@ import androidx.core.graphics.toColorInt
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.uimanager.BackgroundStyleApplicator
+import com.facebook.react.uimanager.LengthPercentage
+import com.facebook.react.uimanager.LengthPercentageType
 import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.StateWrapper
@@ -12,6 +15,9 @@ import com.facebook.react.uimanager.ViewDefaults
 import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.ViewProps
 import com.facebook.react.uimanager.annotations.ReactProp
+import com.facebook.react.uimanager.style.BorderRadiusProp
+import com.facebook.react.uimanager.style.BorderStyle
+import com.facebook.react.uimanager.style.LogicalEdge
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerDelegate
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerInterface
 import com.swmansion.enriched.events.OnAlignmentChangeEvent
@@ -171,6 +177,284 @@ class EnrichedTextInputViewManager :
     view?.setColor(color)
   }
 
+  @ReactProp(name = ViewProps.BORDER_WIDTH)
+  override fun setBorderWidth(
+    view: EnrichedTextInputView?,
+    width: Float,
+  ) {
+    setBorderWidth(view, LogicalEdge.ALL, width)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_LEFT_WIDTH)
+  override fun setBorderLeftWidth(
+    view: EnrichedTextInputView?,
+    width: Float,
+  ) {
+    setBorderWidth(view, LogicalEdge.LEFT, width)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_RIGHT_WIDTH)
+  override fun setBorderRightWidth(
+    view: EnrichedTextInputView?,
+    width: Float,
+  ) {
+    setBorderWidth(view, LogicalEdge.RIGHT, width)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_TOP_WIDTH)
+  override fun setBorderTopWidth(
+    view: EnrichedTextInputView?,
+    width: Float,
+  ) {
+    setBorderWidth(view, LogicalEdge.TOP, width)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BOTTOM_WIDTH)
+  override fun setBorderBottomWidth(
+    view: EnrichedTextInputView?,
+    width: Float,
+  ) {
+    setBorderWidth(view, LogicalEdge.BOTTOM, width)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_START_WIDTH)
+  override fun setBorderStartWidth(
+    view: EnrichedTextInputView?,
+    width: Float,
+  ) {
+    setBorderWidth(view, LogicalEdge.START, width)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_END_WIDTH)
+  override fun setBorderEndWidth(
+    view: EnrichedTextInputView?,
+    width: Float,
+  ) {
+    setBorderWidth(view, LogicalEdge.END, width)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_COLOR, customType = "Color")
+  override fun setBorderColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.ALL, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_LEFT_COLOR, customType = "Color")
+  override fun setBorderLeftColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.LEFT, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_RIGHT_COLOR, customType = "Color")
+  override fun setBorderRightColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.RIGHT, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_TOP_COLOR, customType = "Color")
+  override fun setBorderTopColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.TOP, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BOTTOM_COLOR, customType = "Color")
+  override fun setBorderBottomColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.BOTTOM, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_START_COLOR, customType = "Color")
+  override fun setBorderStartColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.START, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_END_COLOR, customType = "Color")
+  override fun setBorderEndColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.END, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BLOCK_COLOR, customType = "Color")
+  override fun setBorderBlockColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.BLOCK, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BLOCK_START_COLOR, customType = "Color")
+  override fun setBorderBlockStartColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.BLOCK_START, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BLOCK_END_COLOR, customType = "Color")
+  override fun setBorderBlockEndColor(
+    view: EnrichedTextInputView?,
+    color: Int?,
+  ) {
+    setBorderColor(view, LogicalEdge.BLOCK_END, color)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_RADIUS)
+  override fun setBorderRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_TOP_LEFT_RADIUS)
+  override fun setBorderTopLeftRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_TOP_LEFT_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_TOP_RIGHT_RADIUS)
+  override fun setBorderTopRightRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_TOP_RIGHT_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BOTTOM_LEFT_RADIUS)
+  override fun setBorderBottomLeftRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_BOTTOM_LEFT_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BOTTOM_RIGHT_RADIUS)
+  override fun setBorderBottomRightRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_BOTTOM_RIGHT_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_TOP_START_RADIUS)
+  override fun setBorderTopStartRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_TOP_START_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_TOP_END_RADIUS)
+  override fun setBorderTopEndRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_TOP_END_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BOTTOM_START_RADIUS)
+  override fun setBorderBottomStartRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_BOTTOM_START_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BOTTOM_END_RADIUS)
+  override fun setBorderBottomEndRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_BOTTOM_END_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_START_START_RADIUS)
+  override fun setBorderStartStartRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_START_START_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_START_END_RADIUS)
+  override fun setBorderStartEndRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_START_END_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_END_START_RADIUS)
+  override fun setBorderEndStartRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_END_START_RADIUS, radius)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_END_END_RADIUS)
+  override fun setBorderEndEndRadius(
+    view: EnrichedTextInputView?,
+    radius: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_END_END_RADIUS, radius)
+  }
+
+  @ReactProp(name = "borderStyle")
+  override fun setBorderStyle(
+    view: EnrichedTextInputView?,
+    style: String?,
+  ) {
+    view ?: return
+    BackgroundStyleApplicator.setBorderStyle(view, style?.let { BorderStyle.fromString(it) })
+  }
+
+  private fun setBorderWidth(
+    view: EnrichedTextInputView?,
+    edge: LogicalEdge,
+    width: Float,
+  ) {
+    view ?: return
+    BackgroundStyleApplicator.setBorderWidth(view, edge, width)
+  }
+
+  private fun setBorderColor(
+    view: EnrichedTextInputView?,
+    edge: LogicalEdge,
+    color: Int?,
+  ) {
+    view ?: return
+    BackgroundStyleApplicator.setBorderColor(view, edge, color)
+  }
+
+  private fun setBorderRadius(
+    view: EnrichedTextInputView?,
+    property: BorderRadiusProp,
+    radius: Float,
+  ) {
+    view ?: return
+    val borderRadius =
+      LengthPercentage(radius, LengthPercentageType.POINT)
+    BackgroundStyleApplicator.setBorderRadius(view, property, borderRadius)
+  }
+
   @ReactProp(name = "fontSize", defaultFloat = ViewDefaults.FONT_SIZE_SP)
   override fun setFontSize(
     view: EnrichedTextInputView?,
@@ -246,8 +530,6 @@ class EnrichedTextInputViewManager :
     right: Int,
     bottom: Int,
   ) {
-    super.setPadding(view, left, top, right, bottom)
-
     view?.setPadding(left, top, right, bottom)
   }
 

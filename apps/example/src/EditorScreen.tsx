@@ -666,6 +666,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     color: 'black',
+    borderWidth: 1,
+    borderColor: 'rgb(0, 26, 114)',
+    borderRadius: 8,
   },
   scrollPlaceholder: {
     marginTop: 24,
