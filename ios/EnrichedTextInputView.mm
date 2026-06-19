@@ -718,7 +718,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self replaceWholeWithString:value];
   }
 
-  // set recentlyChangedRange and check for changes
+  // Set recently changed range and check for changes
   [self setRecentlyChangedRange:NSMakeRange(
                                     0, textView.textStorage.string.length)];
   textView.selectedRange = NSMakeRange(textView.textStorage.string.length, 0);
