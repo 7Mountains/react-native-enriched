@@ -17,8 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 @public
   InputTextView *textView;
 @public
-  NSRange recentlyChangedRange;
-@public
   InputConfig *config;
 @public
   InputParser *parser;
@@ -36,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
                           range:(NSRange)range;
 - (void)emitOnMentionEvent:(NSString *)indicator text:(nullable NSString *)text;
 - (void)anyTextMayHaveBeenModified;
+- (void)setRecentlyChangedRange:(NSRange)range;
 - (BOOL)handleStyleBlocksAndConflicts:(StyleType)type range:(NSRange)range;
 - (NSArray<NSNumber *> *)getPresentStyleTypesFrom:(NSArray<NSNumber *> *)types
                                             range:(NSRange)range;

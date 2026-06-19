@@ -35,7 +35,7 @@
     }
     textView.selectedRange = NSMakeRange(index + text.length, 0);
   }
-  typedInput->recentlyChangedRange = NSMakeRange(index, text.length);
+  [typedInput setRecentlyChangedRange:NSMakeRange(index, text.length)];
 }
 
 + (void)replaceText:(NSString *)text
@@ -64,7 +64,7 @@
     }
     textView.selectedRange = NSMakeRange(range.location + text.length, 0);
   }
-  typedInput->recentlyChangedRange = NSMakeRange(range.location, text.length);
+  [typedInput setRecentlyChangedRange:NSMakeRange(range.location, text.length)];
 }
 
 + (BOOL)tryInsertText:(NSString *)text
@@ -105,7 +105,7 @@
   [storage endEditing];
 
   textView.selectedRange = NSMakeRange(NSMaxRange(replacementRange), 0);
-  typedInput->recentlyChangedRange = replacementRange;
+  [typedInput setRecentlyChangedRange:replacementRange];
 
   return YES;
 }
@@ -137,7 +137,7 @@
   [storage endEditing];
 
   textView.selectedRange = NSMakeRange(deletionRange.location, 0);
-  typedInput->recentlyChangedRange = deletionRange;
+  [typedInput setRecentlyChangedRange:deletionRange];
 
   return YES;
 }

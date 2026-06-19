@@ -68,6 +68,7 @@ using namespace facebook::react;
   NSString *_recentInputString;
   MentionParams *_recentlyActiveMentionParams;
   NSRange _recentlyActiveMentionRange;
+  NSRange _recentlyChangedRange;
   NSString *_recentlyEmittedHtml;
   BOOL _emitHtml;
   NSString *_recentlyEmittedColor;
@@ -124,7 +125,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _blockedStyles = [[NSMutableSet alloc] initWithCapacity:stylesDict.count];
   _recentlyActiveLinkRange = NSMakeRange(0, 0);
   _recentlyActiveMentionRange = NSMakeRange(0, 0);
-  recentlyChangedRange = NSMakeRange(0, 0);
+  _recentlyChangedRange = NSMakeRange(0, 0);
   _recentInputString = @"";
   _recentlyEmittedHtml = @"<html>\n<p></p>\n</html>";
   _emitHtml = NO;
@@ -717,8 +718,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [self replaceWholeWithString:value];
   }
 
-  // set recentlyChangedRange and check for changes
-  recentlyChangedRange = NSMakeRange(0, textView.textStorage.string.length);
+  // Set recently changed range and check for changes
+  [self setRecentlyChangedRange:NSMakeRange(
+                                    0, textView.textStorage.string.length)];
   textView.selectedRange = NSMakeRange(textView.textStorage.string.length, 0);
   [self anyTextMayHaveBeenModified];
 }
@@ -1164,6 +1166,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   }
 }
 
+- (void)setRecentlyChangedRange:(NSRange)range {
+  NSUInteger storageLength = textView.textStorage.length;
+
+  if (range.location == NSNotFound) {
+    _recentlyChangedRange = NSMakeRange(0, 0);
+    return;
+  }
+
+  NSUInteger location = MIN(range.location, storageLength);
+  NSUInteger length = 0;
+  if (location < storageLength) {
+    length = MIN(range.length, storageLength - location);
+  }
+
+  _recentlyChangedRange = NSMakeRange(location, length);
+}
+
 - (void)anyTextMayHaveBeenModified {
   // we don't do no text changes when working with iOS marked text
   if (textView.markedTextRange != nullptr) {
@@ -1198,11 +1217,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [codeBlockStyle manageCodeBlockFontAndColor];
   }
 
+  [self setRecentlyChangedRange:_recentlyChangedRange];
+
   // mentions management: removal and editing
   MentionStyle *mentionStyleClass =
       (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
   if (mentionStyleClass != nullptr) {
-    [mentionStyleClass handleExistingMentionsInRange:recentlyChangedRange];
+    [mentionStyleClass handleExistingMentionsInRange:_recentlyChangedRange];
     [mentionStyleClass manageMentionEditing];
   }
 
@@ -1222,7 +1243,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     // modified words handling
     NSArray *modifiedWords =
         [WordsUtils getAffectedWordsFromText:textView.textStorage.string
-                           modificationRange:recentlyChangedRange];
+                           modificationRange:_recentlyChangedRange];
     if (modifiedWords != nullptr) {
       for (AffectedWord *word in modifiedWords) {
         [self handleWordModificationBasedChanges:word];
@@ -1339,7 +1360,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
     return NO;
   }
-  recentlyChangedRange = NSMakeRange(range.location, text.length);
+  [self setRecentlyChangedRange:NSMakeRange(range.location, text.length)];
   UnorderedListStyle *uStyle = stylesDict[@([UnorderedListStyle getStyleType])];
   OrderedListStyle *oStyle = stylesDict[@([OrderedListStyle getStyleType])];
   BlockQuoteStyle *bqStyle = stylesDict[@([BlockQuoteStyle getStyleType])];

@@ -417,6 +417,37 @@ export interface NativeProps extends ViewProps {
   fontWeight?: string;
   fontStyle?: string;
   lineHeight?: Float;
+  borderLeftWidth?: Float;
+  borderRightWidth?: Float;
+  borderTopWidth?: Float;
+  borderBottomWidth?: Float;
+  borderStartWidth?: Float;
+  borderEndWidth?: Float;
+  borderColor?: ColorValue;
+  borderLeftColor?: ColorValue;
+  borderRightColor?: ColorValue;
+  borderTopColor?: ColorValue;
+  borderBottomColor?: ColorValue;
+  borderStartColor?: ColorValue;
+  borderEndColor?: ColorValue;
+  borderBlockColor?: ColorValue;
+  borderBlockStartColor?: ColorValue;
+  borderBlockEndColor?: ColorValue;
+  borderRadius?: Float;
+  borderTopLeftRadius?: Float;
+  borderTopRightRadius?: Float;
+  borderBottomLeftRadius?: Float;
+  borderBottomRightRadius?: Float;
+  borderTopStartRadius?: Float;
+  borderTopEndRadius?: Float;
+  borderBottomStartRadius?: Float;
+  borderBottomEndRadius?: Float;
+  borderStartStartRadius?: Float;
+  borderStartEndRadius?: Float;
+  borderEndStartRadius?: Float;
+  borderEndEndRadius?: Float;
+  borderStyle?: string;
+  borderWidth?: Float;
 
   // Used for onChangeHtml event performance optimization
   isOnChangeHtmlSet: boolean;
