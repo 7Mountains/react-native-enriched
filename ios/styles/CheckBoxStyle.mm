@@ -34,6 +34,10 @@ static NSArray<NSTextList *> *const UncheckedLists =
   return YES;
 }
 
++ (BOOL)needsZeroWidthSpace {
+  return YES;
+}
+
 + (const char *)tagName {
   return "checklist";
 }
@@ -267,26 +271,6 @@ static NSArray<NSTextList *> *const UncheckedLists =
 
 - (void)removeTypingAttributes {
   [self removeAttributes:_input->textView.selectedRange];
-}
-
-#pragma mark - Backspace Handling
-
-- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text {
-
-  if ([self detectStyle:_input->textView.selectedRange] && text.length == 0) {
-    NSRange pRange = [_input->textView.textStorage.string
-        paragraphRangeForRange:_input->textView.selectedRange];
-
-    BOOL isFirst =
-        NSEqualRanges(_input->textView.selectedRange, NSMakeRange(0, 0));
-    BOOL isBeforeParagraph = (range.location == pRange.location - 1);
-
-    if (isFirst || isBeforeParagraph) {
-      [self removeAttributes:pRange];
-      return YES;
-    }
-  }
-  return NO;
 }
 
 #pragma mark - Newlines

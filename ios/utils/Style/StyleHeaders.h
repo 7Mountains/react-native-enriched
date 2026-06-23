@@ -113,7 +113,6 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 + (NSString *)shortcut;
 + (unichar)shortcutPrefix;
 - (CGFloat)getHeadIndent;
-- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)tryHandlingListShorcutInRange:(NSRange)range
                       replacementText:(NSString *)text;
 @end
@@ -125,14 +124,12 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 @end
 
 @interface BlockQuoteStyle : NSObject <BaseStyleProtocol>
-- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (void)manageBlockquoteColor;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 @end
 
 @interface CodeBlockStyle : NSObject <BaseStyleProtocol>
 - (void)manageCodeBlockFontAndColor;
-- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 @end
 
 @interface ImageStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
@@ -145,7 +142,6 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 
 @interface CheckBoxStyle
     : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
-- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)isCheckedAt:(NSUInteger)location;
 - (void)toggleCheckedAt:(NSUInteger)location;
