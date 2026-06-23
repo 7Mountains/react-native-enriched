@@ -39,14 +39,25 @@
                            range:NSMakeRange(0, string.length)];
 }
 
++ (BOOL)styleNeedsZWS:(id<BaseStyleProtocol>)style {
+  Class cls = [style class];
+  SEL selector = @selector(needsZeroWidthSpace);
+  if (![cls respondsToSelector:selector]) {
+    return NO;
+  }
+
+  BOOL (*impl)(id, SEL) = (BOOL(*)(id, SEL))[cls methodForSelector:selector];
+  return impl(cls, selector);
+}
+
 + (NSArray<id<BaseStyleProtocol>> *)ZWSStylesForInput:
     (EnrichedTextInputView *)input {
 
   NSMutableArray *result = [NSMutableArray array];
 
-  for (NSNumber *type in [self ZWSStyleTypes]) {
+  for (NSNumber *type in input->stylesDict) {
     id<BaseStyleProtocol> style = input->stylesDict[type];
-    if (style) {
+    if (style && [self styleNeedsZWS:style]) {
       [result addObject:style];
     }
   }
@@ -54,17 +65,28 @@
   return result;
 }
 
-+ (NSArray<NSNumber *> *)ZWSStyleTypes {
-  static NSArray<NSNumber *> *types;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    types = @[
-      @([UnorderedListStyle getStyleType]), @([OrderedListStyle getStyleType]),
-      @([BlockQuoteStyle getStyleType]), @([CodeBlockStyle getStyleType]),
-      @([CheckBoxStyle getStyleType])
-    ];
-  });
-  return types;
++ (BOOL)handleParagraphBoundaryBackspaceInRange:(NSRange)range
+                                          input:(EnrichedTextInputView *)input {
+  NSRange selectedRange = input->textView.selectedRange;
+  NSString *string = input->textView.textStorage.string;
+  NSRange paragraphRange = [string paragraphRangeForRange:selectedRange];
+
+  BOOL isFirst = NSEqualRanges(selectedRange, NSMakeRange(0, 0));
+  BOOL isBeforeParagraph = paragraphRange.location > 0 &&
+                           range.location == paragraphRange.location - 1;
+
+  if (!isFirst && !isBeforeParagraph) {
+    return NO;
+  }
+
+  for (id<BaseStyleProtocol> style in [self ZWSStylesForInput:input]) {
+    if ([style detectStyle:selectedRange]) {
+      [style removeAttributes:paragraphRange];
+      return YES;
+    }
+  }
+
+  return NO;
 }
 
 + (BOOL)findAnyZWSStylesInInput:(EnrichedTextInputView *)input
@@ -168,14 +190,22 @@
     }
   }
 
+  NSMutableParagraphStyle *defaultParagraphStyle =
+      [input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+          mutableCopy];
+
+  NSMutableDictionary *mutableTypingAttributes =
+      [input->textView.typingAttributes mutableCopy];
+  mutableTypingAttributes[NSParagraphStyleAttributeName] =
+      defaultParagraphStyle;
+
   // do the removing
   [indexesToRemove
       enumerateIndexesWithOptions:NSEnumerationReverse
                        usingBlock:^(NSUInteger idx, BOOL *stop) {
                          [TextInsertionUtils replaceText:@""
                                                       at:NSMakeRange(idx, 1)
-                                    additionalAttributes:input->textView
-                                                             .typingAttributes
+                                    additionalAttributes:mutableTypingAttributes
                                                    input:input
                                            withSelection:NO];
                        }];
@@ -272,11 +302,20 @@
 + (BOOL)handleBackspaceInRange:(NSRange)range
                replacementText:(NSString *)text
                          input:(id)input {
-  if (range.length != 1 || ![text isEqualToString:@""]) {
-    return NO;
-  }
   EnrichedTextInputView *typedInput = (EnrichedTextInputView *)input;
   if (typedInput == nullptr) {
+    return NO;
+  }
+
+  if (text.length != 0) {
+    return NO;
+  }
+
+  if ([self handleParagraphBoundaryBackspaceInRange:range input:typedInput]) {
+    return YES;
+  }
+
+  if (range.length != 1) {
     return NO;
   }
 
@@ -303,54 +342,15 @@
       styleRemovalRange = NSMakeRange(paragraphRange.location, 1);
     }
 
-    // and then remove associated styling
-
-    UnorderedListStyle *ulStyle =
-        typedInput->stylesDict[@([UnorderedListStyle getStyleType])];
-    OrderedListStyle *olStyle =
-        typedInput->stylesDict[@([OrderedListStyle getStyleType])];
-    BlockQuoteStyle *bqStyle =
-        (BlockQuoteStyle *)
-            typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
-    CodeBlockStyle *cbStyle =
-        (CodeBlockStyle *)
-            typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
-    CheckBoxStyle *checkBoxStyle =
-        (CheckBoxStyle *)
-            typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
-
-    if ([cbStyle detectStyle:removalRange]) {
-      // code blocks are being handled differently; we want to remove previous
-      // newline if there is a one
-      if (range.location > 0) {
-        removalRange =
-            NSMakeRange(removalRange.location - 1, removalRange.length + 1);
+    BOOL removed = NO;
+    for (id<BaseStyleProtocol> style in [self ZWSStylesForInput:typedInput]) {
+      if ([style detectStyle:styleRemovalRange]) {
+        removed = YES;
+        [style removeAttributes:styleRemovalRange];
       }
-      [TextInsertionUtils replaceText:@""
-                                   at:removalRange
-                 additionalAttributes:nullptr
-                                input:typedInput
-                        withSelection:YES];
-      return YES;
     }
 
-    [TextInsertionUtils replaceText:@""
-                                 at:removalRange
-               additionalAttributes:typedInput->textView.typingAttributes
-                              input:typedInput
-                      withSelection:YES];
-
-    if ([ulStyle detectStyle:styleRemovalRange]) {
-      [ulStyle removeAttributes:styleRemovalRange];
-    } else if ([olStyle detectStyle:styleRemovalRange]) {
-      [olStyle removeAttributes:styleRemovalRange];
-    } else if ([bqStyle detectStyle:styleRemovalRange]) {
-      [bqStyle removeAttributes:styleRemovalRange];
-    } else if ([checkBoxStyle detectStyle:styleRemovalRange]) {
-      [checkBoxStyle removeAttributes:styleRemovalRange];
-    }
-
-    return YES;
+    return NO;
   }
   return NO;
 }

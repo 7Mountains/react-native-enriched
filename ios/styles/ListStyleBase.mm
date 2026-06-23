@@ -24,6 +24,10 @@
   return YES;
 }
 
++ (BOOL)needsZeroWidthSpace {
+  return YES;
+}
+
 + (const char *)tagName {
   NSAssert(NO, @"Subclasses must override tagName");
   return "";
@@ -251,27 +255,6 @@
 
 - (void)removeTypingAttributes {
   [self removeAttributes:_input->textView.selectedRange];
-}
-
-- (BOOL)handleBackspaceInRange:(NSRange)range replacementText:(NSString *)text {
-  UITextView *textView = _input->textView;
-
-  if ([self detectStyle:textView.selectedRange] && text.length == 0) {
-    NSRange paragraphRange = [textView.textStorage.string
-        paragraphRangeForRange:textView.selectedRange];
-
-    if (NSEqualRanges(textView.selectedRange, NSMakeRange(0, 0))) {
-      [self removeAttributes:paragraphRange];
-      return YES;
-    }
-
-    if (range.location == paragraphRange.location - 1) {
-      [self removeAttributes:paragraphRange];
-      return YES;
-    }
-  }
-
-  return NO;
 }
 
 - (BOOL)tryHandlingListShorcutInRange:(NSRange)range

@@ -1364,7 +1364,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   UnorderedListStyle *uStyle = stylesDict[@([UnorderedListStyle getStyleType])];
   OrderedListStyle *oStyle = stylesDict[@([OrderedListStyle getStyleType])];
   BlockQuoteStyle *bqStyle = stylesDict[@([BlockQuoteStyle getStyleType])];
-  CodeBlockStyle *cbStyle = stylesDict[@([CodeBlockStyle getStyleType])];
   LinkStyle *linkStyle = (LinkStyle *)stylesDict[@([LinkStyle getStyleType])];
   MentionStyle *mentionStyle =
       (MentionStyle *)stylesDict[@([MentionStyle getStyleType])];
@@ -1381,15 +1380,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   // cause a crash so here I rely on short circuiting evaluation of the logical
   // expression either way it's not possible to have two of them come off at the
   // same time
-  if ([uStyle handleBackspaceInRange:range replacementText:text] ||
+  if ([ZeroWidthSpaceUtils handleBackspaceInRange:range
+                                  replacementText:text
+                                            input:self] ||
       [uStyle tryHandlingListShorcutInRange:range replacementText:text] ||
-      [oStyle handleBackspaceInRange:range replacementText:text] ||
       [oStyle tryHandlingListShorcutInRange:range replacementText:text] ||
-      [checkBoxStyle handleBackspaceInRange:range replacementText:text] ||
       [checkBoxStyle handleNewlinesInRange:range replacementText:text] ||
-      [bqStyle handleBackspaceInRange:range replacementText:text] ||
       [bqStyle handleNewlinesInRange:range replacementText:text] ||
-      [cbStyle handleBackspaceInRange:range replacementText:text] ||
       [linkStyle handleLeadingLinkReplacement:range replacementText:text] ||
       [mentionStyle handleLeadingMentionReplacement:range
                                     replacementText:text] ||
@@ -1405,9 +1402,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       [h4Style handleBackspaceInRange:range replacementText:text] ||
       [h5Style handleBackspaceInRange:range replacementText:text] ||
       [h6Style handleBackspaceInRange:range replacementText:text] ||
-      [ZeroWidthSpaceUtils handleBackspaceInRange:range
-                                  replacementText:text
-                                            input:self] ||
       [ParagraphAttributesUtils handleBackspaceInRange:range
                                        replacementText:text
                                                  input:self] ||
