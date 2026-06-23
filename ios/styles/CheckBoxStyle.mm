@@ -280,8 +280,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
   if ([self detectStyle:_input->textView.selectedRange] && text.length > 0 &&
       [[NSCharacterSet newlineCharacterSet]
           characterIsMember:[text characterAtIndex:text.length - 1]]) {
-
-    [TextInsertionUtils replaceText:text
+    [TextInsertionUtils replaceText:NewLineWithZWS
                                  at:range
                additionalAttributes:nullptr
                               input:_input

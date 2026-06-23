@@ -1376,6 +1376,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   CheckBoxStyle *checkBoxStyle =
       (CheckBoxStyle *)stylesDict[@([CheckBoxStyle getStyleType])];
 
+  // handle newlines in checkboxes first because they can be checked and
+  // unchecked with newlines and this should be prioritized over other styles
+  if ([checkBoxStyle handleNewlinesInRange:range replacementText:text]) {
+    return NO;
+  }
+
   // some of the changes these checks do could interfere with later checks and
   // cause a crash so here I rely on short circuiting evaluation of the logical
   // expression either way it's not possible to have two of them come off at the
@@ -1385,7 +1391,6 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                                             input:self] ||
       [uStyle tryHandlingListShorcutInRange:range replacementText:text] ||
       [oStyle tryHandlingListShorcutInRange:range replacementText:text] ||
-      [checkBoxStyle handleNewlinesInRange:range replacementText:text] ||
       [bqStyle handleNewlinesInRange:range replacementText:text] ||
       [linkStyle handleLeadingLinkReplacement:range replacementText:text] ||
       [mentionStyle handleLeadingMentionReplacement:range

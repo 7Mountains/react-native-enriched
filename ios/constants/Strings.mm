@@ -5,6 +5,7 @@ NSString *const NewLine = @"\n";
 NSString *const Tab = @"\t";
 NSString *const ZWSWithNewLine = @"\u200B\n";
 NSString *const ORC = @"\uFFFC";
+NSString *const NewLineWithZWS = @"\n\u200B";
 
 unichar const ZWSChar = 0x200B;
 const char *NewLineChar = "\n";

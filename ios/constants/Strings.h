@@ -6,6 +6,7 @@ FOUNDATION_EXPORT NSString *const NewLine;
 FOUNDATION_EXPORT NSString *const Tab;
 FOUNDATION_EXPORT NSString *const ZWSWithNewLine;
 FOUNDATION_EXPORT NSString *const ORC;
+FOUNDATION_EXPORT NSString *const NewLineWithZWS;
 
 FOUNDATION_EXPORT unichar const ZWSChar;
 FOUNDATION_EXPORT const char *NewLineChar;
