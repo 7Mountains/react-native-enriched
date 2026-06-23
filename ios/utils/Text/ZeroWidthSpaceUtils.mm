@@ -190,22 +190,14 @@
     }
   }
 
-  NSMutableParagraphStyle *defaultParagraphStyle =
-      [input->defaultTypingAttributes[NSParagraphStyleAttributeName]
-          mutableCopy];
-
-  NSMutableDictionary *mutableTypingAttributes =
-      [input->textView.typingAttributes mutableCopy];
-  mutableTypingAttributes[NSParagraphStyleAttributeName] =
-      defaultParagraphStyle;
-
   // do the removing
   [indexesToRemove
       enumerateIndexesWithOptions:NSEnumerationReverse
                        usingBlock:^(NSUInteger idx, BOOL *stop) {
                          [TextInsertionUtils replaceText:@""
                                                       at:NSMakeRange(idx, 1)
-                                    additionalAttributes:mutableTypingAttributes
+                                    additionalAttributes:input->textView
+                                                             .typingAttributes
                                                    input:input
                                            withSelection:NO];
                        }];
@@ -342,10 +334,8 @@
       styleRemovalRange = NSMakeRange(paragraphRange.location, 1);
     }
 
-    BOOL removed = NO;
     for (id<BaseStyleProtocol> style in [self ZWSStylesForInput:typedInput]) {
       if ([style detectStyle:styleRemovalRange]) {
-        removed = YES;
         [style removeAttributes:styleRemovalRange];
       }
     }
