@@ -1,5 +1,6 @@
 #import "EnrichedTextClipboardHandler.h"
 #import "EnrichedTextInputView.h"
+#import "ParagraphAttributesUtils.h"
 #import "ParagraphsUtils.h"
 #import "Strings.h"
 #import "TextInsertionUtils.h"
@@ -69,65 +70,6 @@
     return;
   }
   [self handleInsertion:current inserted:inserted selectedRange:selectedRange];
-}
-
-- (NSArray<id<BaseStyleProtocol>> *)paragraphStylesForFirstParagraphInString:
-    (NSAttributedString *)string {
-
-  if (string.length == 0)
-    return @[];
-
-  NSRange firstParagraphRange =
-      [string.string paragraphRangeForRange:NSMakeRange(0, 0)];
-
-  return [self
-      findParagraphStylesInAttributedStringAtLocation:string
-                                             location:(int)firstParagraphRange
-                                                          .location];
-}
-
-- (NSArray<id<BaseStyleProtocol>> *)
-    findParagraphStylesInAttributedStringAtLocation:
-        (NSAttributedString *)attributedString
-                                           location:(int)location {
-
-  if (!attributedString || attributedString.length == 0) {
-    return @[];
-  }
-
-  NSArray<id<BaseStyleProtocol>> *paragraphStyles =
-      [_input->stylesDict.allValues
-          filteredArrayUsingPredicate:[NSPredicate
-                                          predicateWithBlock:^BOOL(
-                                              id<BaseStyleProtocol> obj,
-                                              NSDictionary *_) {
-                                            return [obj.class isParagraphStyle];
-                                          }]];
-
-  NSRange paragraphRange =
-      [attributedString.string paragraphRangeForRange:NSMakeRange(location, 0)];
-
-  if (paragraphRange.length == 0) {
-    return @[];
-  }
-
-  NSMutableArray *result = [NSMutableArray array];
-
-  for (id<BaseStyleProtocol> style in paragraphStyles) {
-
-    NSAttributedStringKey key = [style.class attributeKey];
-
-    id attributes = [attributedString attribute:key
-                                        atIndex:paragraphRange.location
-                          longestEffectiveRange:nil
-                                        inRange:paragraphRange];
-
-    if ([style styleCondition:attributes range:paragraphRange]) {
-      [result addObject:style];
-    }
-  }
-
-  return result.copy;
 }
 
 - (void)cut {
@@ -208,12 +150,8 @@
 
   NSMutableAttributedString *mutableInserted = inserted.mutableCopy;
 
-  NSArray *paragraphStyles = [_input->stylesDict.allValues
-      filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(
-                                                   id<BaseStyleProtocol> obj,
-                                                   NSDictionary *_) {
-        return [obj.class isParagraphStyle];
-      }]];
+  NSArray<id<BaseStyleProtocol>> *paragraphStyles =
+      [ParagraphAttributesUtils paragraphStylesForInput:_input];
 
   [mutableInserted beginEditing];
 
@@ -282,10 +220,11 @@
     return;
   }
 
-  NSArray<id<BaseStyleProtocol>> *targetParagraphStyles = [self
-      findParagraphStylesInAttributedStringAtLocation:current
-                                             location:(int)targetParagraphRange
-                                                          .location];
+  NSArray<id<BaseStyleProtocol>> *targetParagraphStyles =
+      [ParagraphAttributesUtils
+          paragraphStylesForInput:_input
+                 attributedString:current
+                         location:targetParagraphRange.location];
 
   NSAttributedString *normalizedInsertString =
       [self normalizedInsertedString:inserted
