@@ -1,6 +1,9 @@
 #import <UIKit/UIKit.h>
 #pragma once
 
+@class EnrichedTextInputView;
+@protocol BaseStyleProtocol;
+
 @interface ZWSAdjustedRange : NSObject
 @property(nonatomic, assign, readonly) NSRange range;
 @property(nonatomic, assign, readonly) NSInteger offsetDelta;
@@ -18,4 +21,6 @@
                          input:(id)input;
 + (NSUInteger)actualIndexFromVisibleIndex:(NSInteger)visibleIndex
                                      text:(NSString *)text;
++ (NSArray<id<BaseStyleProtocol>> *)ZWSStylesForInput:
+    (EnrichedTextInputView *)input;
 @end

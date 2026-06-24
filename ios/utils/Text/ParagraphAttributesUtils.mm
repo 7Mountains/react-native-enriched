@@ -3,23 +3,80 @@
 #import "ParagraphsUtils.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
+#import "ZeroWidthSpaceUtils.h"
 
 @implementation ParagraphAttributesUtils
 
 + (NSArray<id<BaseStyleProtocol>> *)paragraphStylesForInput:
-                                        (EnrichedTextInputView *)input
-                                                      range:(NSRange)range {
+    (EnrichedTextInputView *)input {
   NSMutableArray<id<BaseStyleProtocol>> *paragraphStyles =
       [NSMutableArray array];
 
-  for (NSNumber *key in input->stylesDict) {
-    id<BaseStyleProtocol> style = input->stylesDict[key];
-    if ([[style class] isParagraphStyle] && [style detectStyle:range]) {
+  for (id<BaseStyleProtocol> style in input->stylesDict.allValues) {
+    if ([[style class] isParagraphStyle]) {
       [paragraphStyles addObject:style];
     }
   }
 
   return paragraphStyles.copy;
+}
+
++ (NSArray<id<BaseStyleProtocol>> *)paragraphStylesForInput:
+                                        (EnrichedTextInputView *)input
+                                                      range:(NSRange)range {
+  return [self paragraphStylesForInput:input
+                      attributedString:input->textView.textStorage
+                                 range:range];
+}
+
++ (NSArray<id<BaseStyleProtocol>> *)
+    paragraphStylesForInput:(EnrichedTextInputView *)input
+           attributedString:(NSAttributedString *)string
+                   location:(NSUInteger)location {
+  if (!string || string.length == 0 || location >= string.length) {
+    return @[];
+  }
+
+  NSRange paragraphRange =
+      [string.string paragraphRangeForRange:NSMakeRange(location, 0)];
+
+  return [self paragraphStylesForInput:input
+                      attributedString:string
+                                 range:paragraphRange];
+}
+
++ (NSArray<id<BaseStyleProtocol>> *)
+    paragraphStylesForInput:(EnrichedTextInputView *)input
+           attributedString:(NSAttributedString *)string
+                      range:(NSRange)range {
+  if (!string || string.length == 0 || range.length == 0 ||
+      range.location >= string.length) {
+    return @[];
+  }
+
+  NSRange validRange =
+      NSIntersectionRange(range, NSMakeRange(0, string.length));
+  if (validRange.length == 0) {
+    return @[];
+  }
+
+  NSUInteger index = validRange.location;
+  NSMutableArray<id<BaseStyleProtocol>> *result = [NSMutableArray array];
+
+  for (id<BaseStyleProtocol> style in [self paragraphStylesForInput:input]) {
+    NSAttributedStringKey key = [style.class attributeKey];
+
+    id attributes = [string attribute:key
+                              atIndex:index
+                longestEffectiveRange:nil
+                              inRange:validRange];
+
+    if ([style styleCondition:attributes range:validRange]) {
+      [result addObject:style];
+    }
+  }
+
+  return result.copy;
 }
 
 + (NSDictionary *)attributesForStyle:(id<BaseStyleProtocol>)style
@@ -87,17 +144,6 @@
     return NO;
   }
 
-  UnorderedListStyle *ulStyle =
-      typedInput->stylesDict[@([UnorderedListStyle getStyleType])];
-  OrderedListStyle *olStyle =
-      typedInput->stylesDict[@([OrderedListStyle getStyleType])];
-  BlockQuoteStyle *bqStyle =
-      typedInput->stylesDict[@([BlockQuoteStyle getStyleType])];
-  CodeBlockStyle *cbStyle =
-      typedInput->stylesDict[@([CodeBlockStyle getStyleType])];
-  CheckBoxStyle *checkBoxStyle =
-      (CheckBoxStyle *)typedInput->stylesDict[@([CheckBoxStyle getStyleType])];
-
   // we make sure it was a backspace (text with 0 length) and it deleted
   // something (range longer than 0)
   if (text.length > 0 || range.length == 0) {
@@ -127,24 +173,8 @@
     // applied
     // - reapply the paragraph style that was present so that a zero width space
     // appears here
-    NSMutableArray<id<BaseStyleProtocol>> *handledStyles =
-        [NSMutableArray array];
-
-    if (ulStyle != nil) {
-      [handledStyles addObject:ulStyle];
-    }
-    if (olStyle != nil) {
-      [handledStyles addObject:olStyle];
-    }
-    if (bqStyle != nil) {
-      [handledStyles addObject:bqStyle];
-    }
-    if (cbStyle != nil) {
-      [handledStyles addObject:cbStyle];
-    }
-    if (checkBoxStyle != nil) {
-      [handledStyles addObject:checkBoxStyle];
-    }
+    NSArray<id<BaseStyleProtocol>> *handledStyles =
+        [ZeroWidthSpaceUtils ZWSStylesForInput:typedInput];
     for (id<BaseStyleProtocol> style in handledStyles) {
       if ([style detectStyle:nonNewlineRange]) {
         [TextInsertionUtils replaceText:text
@@ -247,11 +277,9 @@
 
   [textStorage beginEditing];
 
-  for (NSNumber *key in typedInput->stylesDict) {
-    id<BaseStyleProtocol> style = typedInput->stylesDict[key];
-    if ([[style class] isParagraphStyle]) {
-      [style removeAttributesFromAttributedString:textStorage range:rightRange];
-    }
+  for (id<BaseStyleProtocol> style in
+       [self paragraphStylesForInput:typedInput]) {
+    [style removeAttributesFromAttributedString:textStorage range:rightRange];
   }
   [self resetParagraphAlignmentInAttributedString:textStorage range:rightRange];
 
