@@ -6,6 +6,74 @@
 
 @implementation ParagraphAttributesUtils
 
++ (NSArray<id<BaseStyleProtocol>> *)paragraphStylesForInput:
+                                        (EnrichedTextInputView *)input
+                                                      range:(NSRange)range {
+  NSMutableArray<id<BaseStyleProtocol>> *paragraphStyles =
+      [NSMutableArray array];
+
+  for (NSNumber *key in input->stylesDict) {
+    id<BaseStyleProtocol> style = input->stylesDict[key];
+    if ([[style class] isParagraphStyle] && [style detectStyle:range]) {
+      [paragraphStyles addObject:style];
+    }
+  }
+
+  return paragraphStyles.copy;
+}
+
++ (NSDictionary *)attributesForStyle:(id<BaseStyleProtocol>)style
+                         textStorage:(NSTextStorage *)textStorage
+                               range:(NSRange)range {
+  if (range.length == 0 || range.location >= textStorage.length) {
+    return nil;
+  }
+
+  Class styleClass = [style class];
+  NSAttributedStringKey key = [styleClass attributeKey];
+  id value = [textStorage attribute:key
+                            atIndex:range.location
+              longestEffectiveRange:nil
+                            inRange:range];
+
+  if ([styleClass conformsToProtocol:@protocol(ParameterizedStyleProtocol)]) {
+    return [(Class<ParameterizedStyleProtocol>)styleClass
+        getParametersFromValue:value];
+  }
+
+  if ([styleClass conformsToProtocol:@protocol(ParagraphModifierStyle)]) {
+    return [(Class<ParagraphModifierStyle>)styleClass
+        containerAttributesFromValue:value];
+  }
+
+  return nil;
+}
+
++ (void)resetParagraphAlignmentInAttributedString:
+            (NSMutableAttributedString *)string
+                                            range:(NSRange)range {
+  [string enumerateAttribute:NSParagraphStyleAttributeName
+                     inRange:range
+                     options:0
+                  usingBlock:^(id _Nullable value, NSRange effectiveRange,
+                               BOOL *_Nonnull stop) {
+                    if (![value isKindOfClass:[NSParagraphStyle class]]) {
+                      return;
+                    }
+
+                    NSMutableParagraphStyle *paragraphStyle =
+                        [value mutableCopy];
+                    if (paragraphStyle.alignment == NSTextAlignmentNatural) {
+                      return;
+                    }
+
+                    paragraphStyle.alignment = NSTextAlignmentNatural;
+                    [string addAttribute:NSParagraphStyleAttributeName
+                                   value:paragraphStyle
+                                   range:effectiveRange];
+                  }];
+}
+
 // if the user backspaces the last character in a line, the iOS applies typing
 // attributes from the previous line in the case of some paragraph styles it
 // works especially bad when a list point just appears this method handles that
@@ -111,21 +179,17 @@
  *
  * THE PROBLEM:
  * When merging a bottom paragraph (Source) into a top paragraph (Destination),
- * the bottom paragraph normally brings all its attributes with it. If the top
- * paragraph is a restrictive style (like a CodeBlock), and the bottom paragraph
- * contains a conflicting style (like an H1 Header), a standard merge would
- * create an invalid state (e.g., a CodeBlock that is also a Header).
+ * the bottom paragraph normally brings its paragraph attributes with it. If the
+ * top paragraph already has paragraph styles, the merged paragraph should keep
+ * those destination styles instead of preserving the source paragraph styles.
  *
  * THE SOLUTION:
- * 1. Identifies the dominant style of the paragraph ABOVE the deleted newline
- * (`leftParagraphStyle`).
- * 2. Checks the paragraph BELOW the newline (`rightRange`) for any styles that
- * conflict with or are blocked by the top style.
- * 3. Explicitly removes those forbidden styles from the bottom paragraph
- * *before* the merge occurs.
- * 4. Performs the merge (deletes the newline).
+ * 1. Finds the paragraph styles of the paragraph ABOVE the deleted newline.
+ * 2. Removes paragraph styles from the paragraph BELOW the newline.
+ * 3. Applies the left paragraph styles to the right paragraph.
+ * 4. Performs the merge by deleting the newline.
  *
- * @return YES if the newline backspace was handled and sanitized; NO otherwise.
+ * @return YES if the newline backspace was handled; NO otherwise.
  */
 + (BOOL)handleParagraphStylesMergeOnBackspace:(NSRange)range
                               replacementText:(NSString *)text
@@ -152,15 +216,10 @@
   NSRange leftRange = [typedInput->textView.textStorage.string
       paragraphRangeForRange:NSMakeRange(range.location, 0)];
 
-  id<BaseStyleProtocol> leftParagraphStyle = nullptr;
-  for (NSNumber *key in typedInput->stylesDict) {
-    id<BaseStyleProtocol> style = typedInput->stylesDict[key];
-    if ([[style class] isParagraphStyle] && [style detectStyle:leftRange]) {
-      leftParagraphStyle = style;
-    }
-  }
+  NSArray<id<BaseStyleProtocol>> *leftParagraphStyles =
+      [self paragraphStylesForInput:typedInput range:leftRange];
 
-  if (leftParagraphStyle == nullptr) {
+  if (leftParagraphStyles.count == 0) {
     return NO;
   }
 
@@ -173,28 +232,38 @@
   NSRange rightRange = [typedInput->textView.textStorage.string
       paragraphRangeForRange:NSMakeRange(rightRangeStart, 1)];
 
-  StyleType type = [[leftParagraphStyle class] getStyleType];
+  NSMutableDictionary<NSNumber *, NSDictionary *> *leftStyleAttributes =
+      [NSMutableDictionary dictionary];
+  NSTextStorage *textStorage = typedInput->textView.textStorage;
 
-  NSArray *conflictingStyles = [typedInput
-      getPresentStyleTypesFrom:typedInput->conflictingStyles[@(type)]
-                         range:rightRange];
-  NSArray *blockingStyles =
-      [typedInput getPresentStyleTypesFrom:typedInput->blockingStyles[@(type)]
-                                     range:rightRange];
-  NSArray *allToBeRemoved =
-      [conflictingStyles arrayByAddingObjectsFromArray:blockingStyles];
-
-  for (NSNumber *style in allToBeRemoved) {
-    id<BaseStyleProtocol> styleClass = typedInput->stylesDict[style];
-
-    // for ranges, we need to remove each occurence
-    NSArray<StylePair *> *allOccurences =
-        [styleClass findAllOccurences:rightRange];
-
-    for (StylePair *pair in allOccurences) {
-      [styleClass removeAttributes:[pair.rangeValue rangeValue]];
+  for (id<BaseStyleProtocol> style in leftParagraphStyles) {
+    NSDictionary *attributes = [self attributesForStyle:style
+                                            textStorage:textStorage
+                                                  range:leftRange];
+    if (attributes != nil) {
+      leftStyleAttributes[@([[style class] getStyleType])] = attributes;
     }
   }
+
+  [textStorage beginEditing];
+
+  for (NSNumber *key in typedInput->stylesDict) {
+    id<BaseStyleProtocol> style = typedInput->stylesDict[key];
+    if ([[style class] isParagraphStyle]) {
+      [style removeAttributesFromAttributedString:textStorage range:rightRange];
+    }
+  }
+  [self resetParagraphAlignmentInAttributedString:textStorage range:rightRange];
+
+  for (id<BaseStyleProtocol> style in leftParagraphStyles) {
+    NSDictionary *attributes =
+        leftStyleAttributes[@([[style class] getStyleType])];
+    [style addAttributesInAttributedString:textStorage
+                                     range:rightRange
+                                attributes:attributes];
+  }
+
+  [textStorage endEditing];
 
   [TextInsertionUtils replaceText:text
                                at:range
