@@ -610,6 +610,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                      [text characterAtIndex:strikeCharRange
                                                                 .location] ==
                                          ZWSChar) {
+                                   CGContextRestoreGState(ctx);
                                    return;
                                  }
 
