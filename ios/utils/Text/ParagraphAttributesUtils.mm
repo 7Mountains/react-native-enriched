@@ -33,7 +33,7 @@
     paragraphStylesForInput:(EnrichedTextInputView *)input
            attributedString:(NSAttributedString *)string
                    location:(NSUInteger)location {
-  if (!string || string.length == 0 || location >= string.length) {
+  if (!string || string.length == 0 || location > string.length) {
     return @[];
   }
 
