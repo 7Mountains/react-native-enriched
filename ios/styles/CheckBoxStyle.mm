@@ -276,22 +276,27 @@ static NSArray<NSTextList *> *const UncheckedLists =
 #pragma mark - Newlines
 
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text {
-
-  if ([self detectStyle:_input->textView.selectedRange] && text.length > 0 &&
-      [[NSCharacterSet newlineCharacterSet]
-          characterIsMember:[text characterAtIndex:text.length - 1]]) {
-
-    [TextInsertionUtils replaceText:text
-                                 at:range
-               additionalAttributes:nullptr
-                              input:_input
-                      withSelection:YES];
-
-    [self addAttributes:_input->textView.selectedRange isChecked:NO];
-    return YES;
+  if (![self detectStyle:_input->textView.selectedRange] || text.length == 0) {
+    return NO;
   }
 
-  return NO;
+  NSUInteger lastCharacterIndex = text.length - 1;
+  if (![[NSCharacterSet newlineCharacterSet]
+          characterIsMember:[text characterAtIndex:lastCharacterIndex]]) {
+    return NO;
+  }
+
+  NSString *replacementText = [text
+      stringByReplacingCharactersInRange:NSMakeRange(lastCharacterIndex, 1)
+                              withString:NewLineWithZWS];
+
+  [TextInsertionUtils replaceText:replacementText
+                               at:range
+             additionalAttributes:nil
+                            input:_input
+                    withSelection:YES];
+  [self addAttributes:_input->textView.selectedRange isChecked:NO];
+  return YES;
 }
 
 #pragma mark - Detection
