@@ -1,7 +1,9 @@
 package com.swmansion.enriched.parser;
 
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
+import androidx.annotation.NonNull;
 import com.swmansion.enriched.constants.HtmlTags;
 import com.swmansion.enriched.constants.Strings;
 import com.swmansion.enriched.spans.EnrichedBoldSpan;
@@ -42,11 +44,24 @@ public class EnrichedSpannedToHtmlConverter {
     return Strings.HTML_OPEN + out + Strings.HTML_CLOSE;
   }
 
+  private Spanned normalizeLineSeparators(Spanned source) {
+    int firstLineSeparator = TextUtils.indexOf(source, Strings.LINE_SEPARATOR, 0, source.length());
+    if (firstLineSeparator < 0) return source;
+
+    SpannableStringBuilder normalized = new SpannableStringBuilder(source);
+    for (int i = firstLineSeparator; i < normalized.length(); i++) {
+      if (normalized.charAt(i) == Strings.LINE_SEPARATOR) {
+        normalized.replace(i, i + 1, Strings.NEWLINE_STRING);
+      }
+    }
+    return normalized;
+  }
+
   private void withinHtml(StringBuilder out, Spanned text) {
     withinBlock(out, text, 0, text.length());
   }
 
-  private TagsRegistry.TagInfo getBlockTagWithAttributes(EnrichedParagraphSpan[] spans) {
+  private TagsRegistry.TagInfo getBlockTagWithAttributes(@NonNull EnrichedParagraphSpan[] spans) {
     if (spans.length == 0) {
       return new TagsRegistry.TagInfo(HtmlTags.PARAGRAPH, false, null);
     }
@@ -178,7 +193,7 @@ public class EnrichedSpannedToHtmlConverter {
     appendOpenTag(out, tag, false);
   }
 
-  private void appendOpenTag(StringBuilder out, String tag, boolean withNewLine) {
+  private void appendOpenTag(@NonNull StringBuilder out, String tag, boolean withNewLine) {
     out.append(Strings.LT).append(tag).append(Strings.GT);
     if (withNewLine && prettify) out.append(Strings.NEWLINE);
   }
@@ -187,13 +202,13 @@ public class EnrichedSpannedToHtmlConverter {
     appendClosingTag(out, tag, false);
   }
 
-  private void appendClosingTag(StringBuilder out, String tag, boolean withNewLine) {
+  private void appendClosingTag(@NonNull StringBuilder out, String tag, boolean withNewLine) {
     out.append(Strings.LT_SLASH).append(tag).append(Strings.GT);
     if (withNewLine && prettify) out.append(Strings.NEWLINE);
   }
 
   private void appendOpenTagWithAttributes(
-      StringBuilder out, String tag, Map<String, String> attrs, boolean withNewLine) {
+      @NonNull StringBuilder out, String tag, Map<String, String> attrs, boolean withNewLine) {
 
     out.append(Strings.LT).append(tag);
     appendAttributes(out, attrs);
@@ -210,7 +225,8 @@ public class EnrichedSpannedToHtmlConverter {
     }
   }
 
-  private void appendSelfClosingTag(StringBuilder out, String tag, Map<String, String> attrs) {
+  private void appendSelfClosingTag(
+      @NonNull StringBuilder out, String tag, Map<String, String> attrs) {
 
     out.append(Strings.LT).append(tag);
     appendAttributes(out, attrs);
@@ -271,8 +287,7 @@ public class EnrichedSpannedToHtmlConverter {
 
           out.append(">");
         }
-        if (span instanceof EnrichedImageSpan) {
-          EnrichedImageSpan img = (EnrichedImageSpan) span;
+        if (span instanceof EnrichedImageSpan img) {
           out.append("<img src=\"")
               .append(img.getSource())
               .append("\" width=\"")

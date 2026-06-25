@@ -26,6 +26,9 @@ object Strings {
   const val NEWLINE = '\n'
   const val NEWLINE_STRING = "" + NEWLINE
 
+  const val LINE_SEPARATOR = '\u2028'
+  const val LINE_SEPARATOR_STRING = "" + LINE_SEPARATOR
+
   const val TAB = '\t'
   const val TAB_STRING = "" + TAB
 
