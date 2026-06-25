@@ -1,6 +1,5 @@
 package com.swmansion.enriched.parser;
 
-import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import androidx.annotation.NonNull;
@@ -42,19 +41,6 @@ public class EnrichedSpannedToHtmlConverter {
     withinHtml(out, text);
 
     return Strings.HTML_OPEN + out + Strings.HTML_CLOSE;
-  }
-
-  private Spanned normalizeLineSeparators(Spanned source) {
-    int firstLineSeparator = TextUtils.indexOf(source, Strings.LINE_SEPARATOR, 0, source.length());
-    if (firstLineSeparator < 0) return source;
-
-    SpannableStringBuilder normalized = new SpannableStringBuilder(source);
-    for (int i = firstLineSeparator; i < normalized.length(); i++) {
-      if (normalized.charAt(i) == Strings.LINE_SEPARATOR) {
-        normalized.replace(i, i + 1, Strings.NEWLINE_STRING);
-      }
-    }
-    return normalized;
   }
 
   private void withinHtml(StringBuilder out, Spanned text) {
