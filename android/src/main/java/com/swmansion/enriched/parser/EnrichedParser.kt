@@ -5,9 +5,6 @@ import android.text.Spanned
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.styles.HtmlStyle
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import org.ccil.cowan.tagsoup.HTMLSchema
 import org.ccil.cowan.tagsoup.Parser
 import org.xml.sax.SAXNotRecognizedException

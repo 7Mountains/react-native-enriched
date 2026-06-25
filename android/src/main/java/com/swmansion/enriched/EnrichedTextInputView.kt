@@ -59,6 +59,7 @@ import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.textinput.utils.EnrichedEditableFactory
 import com.swmansion.enriched.utils.EnrichedSelection
 import com.swmansion.enriched.utils.EnrichedSpanState
+import com.swmansion.enriched.utils.LineSeparatorTransformationMethod
 import com.swmansion.enriched.utils.mergeSpannables
 import com.swmansion.enriched.watchers.EnrichedScrollWatcher
 import com.swmansion.enriched.watchers.EnrichedSpanWatcher
@@ -206,6 +207,7 @@ class EnrichedTextInputView : AppCompatEditText {
     val spanWatcher = EnrichedSpanWatcher(this)
     this.spanWatcher = spanWatcher
     setEditableFactory(EnrichedEditableFactory(spanWatcher))
+    transformationMethod = LineSeparatorTransformationMethod()
     addTextChangedListener(EnrichedTextWatcher(this))
     filters = arrayOf(NonEditableParagraphFilter(), ParagraphLimitFilter(this))
   }
