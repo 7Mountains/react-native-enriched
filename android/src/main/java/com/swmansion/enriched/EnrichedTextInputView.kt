@@ -121,6 +121,7 @@ class EnrichedTextInputView : AppCompatEditText {
   private var typefaceDirty = false
 
   private var inputMethodManager: InputMethodManager? = null
+  private var enrichedTextClassifier: EnrichedTextClassifier? = null
   private var autoFocus = false
   private var didAttachToWindow = false
 
@@ -210,6 +211,12 @@ class EnrichedTextInputView : AppCompatEditText {
     transformationMethod = LineSeparatorTransformationMethod()
     addTextChangedListener(EnrichedTextWatcher(this))
     filters = arrayOf(NonEditableParagraphFilter(), ParagraphLimitFilter(this))
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      enrichedTextClassifier =
+        EnrichedTextClassifier(textClassifier).also {
+          setTextClassifier(it)
+        }
+    }
   }
 
   override fun onLayout(
@@ -824,6 +831,15 @@ class EnrichedTextInputView : AppCompatEditText {
     val parentWidth = (parent as? View)?.width ?: 0
 
     return if (parentWidth > 0) return parentWidth - paddingLeft - paddingRight else 0
+  }
+
+  private fun updateTextClassifierSnapshot(
+    selStart: Int = selectionStart,
+    selEnd: Int = selectionEnd,
+  ) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      enrichedTextClassifier?.updateText(text, selStart, selEnd)
+    }
   }
 
   companion object {
