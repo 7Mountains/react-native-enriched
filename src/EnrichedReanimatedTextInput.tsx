@@ -83,6 +83,7 @@ export const EnrichedReanimatedTextInput = ({
   keyboardDismissMode = 'none',
   onKeyPress,
   onScroll,
+  writingToolsBehavior = 'automatic',
   ...rest
 }: Props) => {
   const nativeRef = useAnimatedRef();
@@ -176,6 +177,7 @@ export const EnrichedReanimatedTextInput = ({
       keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}
       contextMenuItems={nativeContextMenuItems}
+      writingToolsBehavior={writingToolsBehavior}
     />
   );
 };
