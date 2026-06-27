@@ -211,7 +211,7 @@ class EnrichedTextInputView : AppCompatEditText {
     transformationMethod = LineSeparatorTransformationMethod()
     addTextChangedListener(EnrichedTextWatcher(this))
     filters = arrayOf(NonEditableParagraphFilter(), ParagraphLimitFilter(this))
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
       enrichedTextClassifier =
         EnrichedTextClassifier(textClassifier).also {
           setTextClassifier(it)

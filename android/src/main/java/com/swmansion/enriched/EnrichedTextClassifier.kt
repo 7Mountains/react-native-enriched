@@ -7,11 +7,10 @@ import android.view.textclassifier.TextSelection
 import androidx.annotation.RequiresApi
 import com.swmansion.enriched.constants.Strings
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.P)
 internal class EnrichedTextClassifier(
   private val delegate: TextClassifier,
 ) : TextClassifier {
-  @RequiresApi(Build.VERSION_CODES.P)
   override fun suggestSelection(request: TextSelection.Request): TextSelection =
     if (touchesReplacementBlock(request.text, request.startIndex, request.endIndex)) {
       TextSelection.Builder(request.startIndex, request.endIndex).build()
@@ -19,7 +18,6 @@ internal class EnrichedTextClassifier(
       delegate.suggestSelection(request)
     }
 
-  @RequiresApi(Build.VERSION_CODES.P)
   override fun classifyText(request: TextClassification.Request): TextClassification =
     if (touchesReplacementBlock(request.text, request.startIndex, request.endIndex)) {
       TextClassification.Builder().build()
