@@ -131,6 +131,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
     iOSparagraphSpacingBefore?: number;
     paragraphsLimit?: number;
     stylesConfig?: EnrichedStyles[];
+    writingToolsBehavior?: 'automatic' | 'complete' | 'disabled' | 'limited';
     onFocus?: () => void;
     onBlur?: () => void;
     onChangeText?: (e: NativeSyntheticEvent<OnChangeTextEvent>) => void;

@@ -54,6 +54,7 @@ export const EnrichedTextInput = ({
   scrollEnabled = true,
   keyboardDismissMode = 'none',
   contextMenuItems,
+  writingToolsBehavior = 'automatic',
   ...rest
 }: EnrichedTextInputProps) => {
   const nativeRef = useRef<ComponentType | null>(null);
@@ -144,6 +145,7 @@ export const EnrichedTextInput = ({
       keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}
       contextMenuItems={nativeContextMenuItems}
+      writingToolsBehavior={writingToolsBehavior}
       {...rest}
     />
   );

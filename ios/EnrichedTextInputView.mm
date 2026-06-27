@@ -24,6 +24,7 @@
 #import "NSDictionary+JSON.h"
 #import "NSString+Autocapitalization.h"
 #import "NSString+JSON.h"
+#import "NSString+WritingToolsBehavior.h"
 #import "ParagraphAttributesUtils.h"
 #import "ParagraphsUtils.h"
 #import "SelectionUtils.h"
@@ -396,6 +397,17 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
     _contextMenuItems = [customActions copy];
   }
+
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) &&                                \
+    __IPHONE_OS_VERSION_MAX_ALLOWED >= 180000
+  if (newViewProps.writingToolsBehavior != oldViewProps.writingToolsBehavior) {
+    if (@available(iOS 18.0, *)) {
+      NSString *behavior =
+          [NSString fromCppString:newViewProps.writingToolsBehavior];
+      textView.writingToolsBehavior = [behavior writingToolsBehavior];
+    }
+  }
+#endif
 
   // isOnChangeHtmlSet
   _emitHtml = newViewProps.isOnChangeHtmlSet;

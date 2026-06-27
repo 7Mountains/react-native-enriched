@@ -511,6 +511,14 @@ class EnrichedTextInputViewManager :
     view?.setLineHeight(value.toInt())
   }
 
+  @ReactProp(name = "writingToolsBehavior")
+  override fun setWritingToolsBehavior(
+    view: EnrichedTextInputView?,
+    value: String?,
+  ) {
+    // NO-OP iOS only prop
+  }
+
   override fun setContextMenuItems(
     view: EnrichedTextInputView?,
     value: ReadableArray?,

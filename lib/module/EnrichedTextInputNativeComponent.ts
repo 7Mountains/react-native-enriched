@@ -388,6 +388,7 @@ export interface NativeProps extends ViewProps {
   paragraphsLimit?: Int32;
   stylesConfig?: string[];
   contextMenuItems?: Readonly<Array<ContextMenuItemConfig>>;
+  writingToolsBehavior?: string;
 
   // event callbacks
   onInputFocus?: DirectEventHandler<null>;
