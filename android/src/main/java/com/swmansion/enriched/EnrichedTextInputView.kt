@@ -16,6 +16,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.util.TypedValue
 import android.view.ActionMode
+import android.view.DragEvent
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -143,6 +144,23 @@ class EnrichedTextInputView : AppCompatEditText {
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)
+  }
+
+  override fun onDragEvent(event: DragEvent?): Boolean {
+    if (event == null) return super.onDragEvent(event)
+
+    if (event.action != DragEvent.ACTION_DROP || event.localState != null) {
+      return super.onDragEvent(event)
+    }
+
+    val clip = event.clipData ?: return super.onDragEvent(event)
+    val dropOffset = getOffsetForPosition(event.x, event.y)
+
+    return if (clipboardManager.insertClipData(clip, dropOffset, dropOffset)) {
+      true
+    } else {
+      super.onDragEvent(event)
+    }
   }
 
   var spanWatcher: EnrichedSpanWatcher? = null
