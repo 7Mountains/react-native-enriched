@@ -833,15 +833,6 @@ class EnrichedTextInputView : AppCompatEditText {
     return if (parentWidth > 0) return parentWidth - paddingLeft - paddingRight else 0
   }
 
-  private fun updateTextClassifierSnapshot(
-    selStart: Int = selectionStart,
-    selEnd: Int = selectionEnd,
-  ) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      enrichedTextClassifier?.updateText(text, selStart, selEnd)
-    }
-  }
-
   companion object {
     const val CLIPBOARD_TAG = "react-native-enriched-clipboard"
   }
