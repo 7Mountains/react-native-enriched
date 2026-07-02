@@ -19,12 +19,17 @@
 @implementation ZeroWidthSpaceUtils
 + (void)handleZeroWidthSpacesInInput:(id)input {
   EnrichedTextInputView *typedInput = (EnrichedTextInputView *)input;
-  if (typedInput == nullptr) {
+  if (typedInput == nil) {
     return;
   }
 
-  [self removeSpacesIfNeededinInput:typedInput];
-  [self addSpacesIfNeededinInput:typedInput];
+  NSArray<id<BaseStyleProtocol>> *zwsStyles =
+      [self ZWSStylesForInput:typedInput];
+
+  typedInput->blockEmitting = YES;
+  [self removeSpacesIfNeededinInput:typedInput zwsStyles:zwsStyles];
+  [self addSpacesIfNeededinInput:typedInput zwsStyles:zwsStyles];
+  typedInput->blockEmitting = NO;
 }
 
 + (NSString *)stringByRemovingZWS:(NSString *)string {
@@ -101,12 +106,36 @@
   if (attributeIndex == NSNotFound)
     return NO;
 
-  for (id<BaseStyleProtocol> style in [self ZWSStylesForInput:input]) {
-    NSAttributedStringKey key = [[style class] attributeKey];
-    id value = [storage attribute:key
-                          atIndex:attributeIndex
-                   effectiveRange:nil];
+  id value = [storage attribute:NSParagraphStyleAttributeName
+                        atIndex:attributeIndex
+                 effectiveRange:nil];
 
+  for (id<BaseStyleProtocol> style in [self ZWSStylesForInput:input]) {
+    if ([style styleCondition:value range:range]) {
+      return YES;
+    }
+  }
+  return NO;
+}
+
++ (BOOL)findAnyZWSStylesInInput:(EnrichedTextInputView *)input
+                          range:(NSRange)range
+                      zwsStyles:(NSArray<id<BaseStyleProtocol>> *)zwsStyles {
+  NSTextStorage *storage = input->textView.textStorage;
+  NSUInteger length = storage.length;
+
+  NSUInteger attributeIndex = (range.location < length)
+                                  ? range.location
+                                  : (length > 0 ? length - 1 : NSNotFound);
+
+  id value = [storage attribute:NSParagraphStyleAttributeName
+                        atIndex:attributeIndex
+                 effectiveRange:nil];
+
+  if (attributeIndex == NSNotFound)
+    return NO;
+
+  for (id<BaseStyleProtocol> style in zwsStyles) {
     if ([style styleCondition:value range:range]) {
       return YES;
     }
@@ -143,7 +172,9 @@
         offsetDelta:1];
 }
 
-+ (void)removeSpacesIfNeededinInput:(EnrichedTextInputView *)input {
++ (void)removeSpacesIfNeededinInput:(EnrichedTextInputView *)input
+                          zwsStyles:
+                              (NSArray<id<BaseStyleProtocol>> *)zwsStyles {
   NSTextStorage *storage = input->textView.textStorage;
   NSString *string = storage.string;
   NSUInteger length = string.length;
@@ -180,7 +211,9 @@
     }
 
     if (!removeSpace) {
-      if (![self findAnyZWSStylesInInput:input range:range]) {
+      if (![self findAnyZWSStylesInInput:input
+                                   range:range
+                               zwsStyles:zwsStyles]) {
         removeSpace = YES;
       }
     }
@@ -189,7 +222,8 @@
       [indexesToRemove addIndex:i];
     }
   }
-
+  NSTextStorage *textStorage = input->textView.textStorage;
+  [textStorage beginEditing];
   // do the removing
   [indexesToRemove
       enumerateIndexesWithOptions:NSEnumerationReverse
@@ -201,6 +235,7 @@
                                                    input:input
                                            withSelection:NO];
                        }];
+  [textStorage endEditing];
 
   // fix the selection if needed
   if ([input->textView isFirstResponder]) {
@@ -216,7 +251,8 @@
   }
 }
 
-+ (void)addSpacesIfNeededinInput:(EnrichedTextInputView *)input {
++ (void)addSpacesIfNeededinInput:(EnrichedTextInputView *)input
+                       zwsStyles:(NSArray<id<BaseStyleProtocol>> *)zwsStyles {
   NSTextStorage *storage = input->textView.textStorage;
   NSString *string = storage.string;
   NSUInteger length = string.length;
@@ -247,7 +283,9 @@
 
     if (isEmptyParagraph) {
       NSRange checkRange = NSMakeRange(paragraphStart, 1);
-      BOOL found = [self findAnyZWSStylesInInput:input range:checkRange];
+      BOOL found = [self findAnyZWSStylesInInput:input
+                                           range:checkRange
+                                       zwsStyles:zwsStyles];
       if (found) {
         [indexesToInsert addIndex:paragraphStart];
       }
@@ -255,6 +293,8 @@
 
     paragraphStart = i + 1;
   }
+  NSTextStorage *textStorage = input->textView.textStorage;
+  [textStorage beginEditing];
 
   [indexesToInsert
       enumerateIndexesWithOptions:NSEnumerationReverse
@@ -276,6 +316,7 @@
                                              withSelection:NO];
                          }
                        }];
+  [textStorage endEditing];
 
   // fix selection
   if ([input->textView isFirstResponder]) {
