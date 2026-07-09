@@ -439,7 +439,7 @@ class HtmlToSpannedConverter(
 
     val span =
       if (isInOrderedList) {
-        EnrichedOrderedListSpan(currentListItemIndex, mStyle)
+        EnrichedOrderedListSpan(mStyle)
       } else {
         EnrichedUnorderedListSpan(mStyle)
       }

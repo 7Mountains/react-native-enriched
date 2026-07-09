@@ -36,7 +36,7 @@ class ListStyles(
       }
 
       TextStyle.ORDERED_LIST -> {
-        val span = EnrichedOrderedListSpan(1, view.htmlStyle)
+        val span = EnrichedOrderedListSpan(view.htmlStyle)
         spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
 

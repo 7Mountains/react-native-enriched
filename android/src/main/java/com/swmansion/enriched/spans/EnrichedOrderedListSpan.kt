@@ -12,7 +12,6 @@ import com.swmansion.enriched.utils.ParagraphUtils
 import com.swmansion.enriched.utils.getParagraphBounds
 
 class EnrichedOrderedListSpan(
-  private var index: Int,
   private val htmlStyle: HtmlStyle,
 ) : LeadingMarginSpan,
   EnrichedListSpan {
@@ -57,7 +56,7 @@ class EnrichedOrderedListSpan(
     text: CharSequence?,
     lineStart: Int,
   ): Int {
-    val spanned = text as? Spanned ?: return index
+    val spanned = text as? Spanned ?: return 1
     val (paragraphStart, paragraphEnd) = spanned.getParagraphBounds(lineStart)
     val alignment = ParagraphUtils.findParagraphAlignment(spanned, paragraphStart, paragraphEnd)
 
@@ -118,13 +117,7 @@ class EnrichedOrderedListSpan(
       }
     }
 
-  fun getIndex(): Int = index
+  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedOrderedListSpan = EnrichedOrderedListSpan(htmlStyle)
 
-  fun setIndex(i: Int) {
-    index = i
-  }
-
-  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedOrderedListSpan = EnrichedOrderedListSpan(index, htmlStyle)
-
-  override fun copy(): EnrichedOrderedListSpan = EnrichedOrderedListSpan(index = index, htmlStyle = htmlStyle)
+  override fun copy(): EnrichedOrderedListSpan = EnrichedOrderedListSpan(htmlStyle = htmlStyle)
 }
