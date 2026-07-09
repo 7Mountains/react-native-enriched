@@ -15,71 +15,12 @@ import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.ParagraphUtils
 import com.swmansion.enriched.utils.getParagraphBounds
-import com.swmansion.enriched.utils.getPreviousParagraphSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
 
 class ListStyles(
   private val view: EnrichedTextInputView,
 ) {
-  private fun findOrderedListBounds(
-    text: Spannable,
-    position: Int,
-  ): Pair<Int, Int>? {
-    val spans = text.getSpans(position, position, EnrichedOrderedListSpan::class.java)
-    if (spans.isEmpty()) return null
-
-    val currentSpan = spans.first()
-    var start = text.getSpanStart(currentSpan)
-    var end = text.getSpanEnd(currentSpan)
-
-    var cursor = start - 1
-    while (cursor >= 0) {
-      val (pStart, pEnd) = text.getParagraphBounds(cursor)
-      val prev = text.getSpans(pStart, pEnd, EnrichedOrderedListSpan::class.java)
-      if (prev.isEmpty()) break
-      start = pStart
-      cursor = pStart - 1
-    }
-
-    cursor = end + 1
-    while (cursor < text.length) {
-      val (pStart, pEnd) = text.getParagraphBounds(cursor)
-      val next = text.getSpans(pStart, pEnd, EnrichedOrderedListSpan::class.java)
-      if (next.isEmpty()) break
-      end = pEnd
-      cursor = pEnd + 1
-    }
-
-    return start to end
-  }
-
-  fun updateOrderedListIndexes(
-    text: Spannable,
-    position: Int,
-  ) {
-    val bounds = findOrderedListBounds(text, position) ?: return
-    val (start, end) = bounds
-
-    val spans =
-      text
-        .getSpans(start, end, EnrichedOrderedListSpan::class.java)
-        .sortedBy { text.getSpanStart(it) }
-
-    spans.forEachIndexed { index, span ->
-      span.setIndex(index + 1)
-    }
-  }
-
-  private fun getOrderedListIndex(
-    spannable: Spannable,
-    s: Int,
-  ): Int {
-    val span = spannable.getPreviousParagraphSpan(s, EnrichedOrderedListSpan::class.java)
-    val index = span?.getIndex() ?: 0
-    return index + 1
-  }
-
   private fun setSpan(
     spannable: Spannable,
     name: TextStyle,
@@ -95,8 +36,7 @@ class ListStyles(
       }
 
       TextStyle.ORDERED_LIST -> {
-        val index = getOrderedListIndex(spannable, safeStart)
-        val span = EnrichedOrderedListSpan(index, view.htmlStyle)
+        val span = EnrichedOrderedListSpan(1, view.htmlStyle)
         spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
 
@@ -214,8 +154,6 @@ class ListStyles(
       currentStart = currentEnd + 1
     }
 
-    updateOrderedListIndexes(spannable, start)
-
     spanState.setStartWithStateChangeEmitting(name, currentStart)
   }
 
@@ -231,10 +169,6 @@ class ListStyles(
 
     val isBackspace = previousTextLength > s.length
     val isNewLine = cursorPosition > 0 && s[cursorPosition - 1] == Strings.NEWLINE
-
-    if (name == TextStyle.ORDERED_LIST) {
-      updateOrderedListIndexes(s, start)
-    }
 
     if (!isBackspace && isNewLine) {
       val (currentStart, currentEnd) = s.getParagraphBounds(cursorPosition)
@@ -292,7 +226,7 @@ class ListStyles(
     }
   }
 
-  fun getStyleRange(): Pair<Int, Int> = view.selection.getParagraphSelection() ?: Pair(0, 0)
+  fun getStyleRange(): Pair<Int, Int> = view.selection.getParagraphSelection()
 
   fun removeStyle(
     name: TextStyle,

@@ -6,9 +6,7 @@ import android.content.Context
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
-import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.parser.EnrichedParser
-import com.swmansion.enriched.utils.trimTrailingNewlines
 
 class EnrichedClipboardManager(
   context: Context,

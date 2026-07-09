@@ -4,9 +4,12 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.text.Layout
+import android.text.Spanned
 import android.text.style.LeadingMarginSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.styles.HtmlStyle
+import com.swmansion.enriched.utils.ParagraphUtils
+import com.swmansion.enriched.utils.getParagraphBounds
 
 class EnrichedOrderedListSpan(
   private var index: Int,
@@ -25,14 +28,14 @@ class EnrichedOrderedListSpan(
     top: Int,
     baseline: Int,
     bottom: Int,
-    t: CharSequence?,
+    chars: CharSequence?,
     start: Int,
     end: Int,
     first: Boolean,
     layout: Layout?,
   ) {
     if (first) {
-      val text = "$index."
+      val text = "${resolveIndex(chars, start)}."
       val width = paint.measureText(text)
 
       val yPosition = baseline.toFloat()
@@ -48,6 +51,54 @@ class EnrichedOrderedListSpan(
       paint.color = originalColor
       paint.typeface = originalTypeface
     }
+  }
+
+  private fun resolveIndex(
+    text: CharSequence?,
+    lineStart: Int,
+  ): Int {
+    val spanned = text as? Spanned ?: return index
+    val (paragraphStart, paragraphEnd) = spanned.getParagraphBounds(lineStart)
+    val alignment = ParagraphUtils.findParagraphAlignment(spanned, paragraphStart, paragraphEnd)
+
+    if (ParagraphUtils.findOrderedListSpan(spanned, paragraphStart, paragraphEnd) == null) {
+      return 1
+    }
+
+    var resolvedIndex = 1
+    var previousParagraphCursor = paragraphStart - 1
+
+    while (previousParagraphCursor >= 0) {
+      val (previousParagraphStart, previousParagraphEnd) =
+        spanned.getParagraphBounds(previousParagraphCursor)
+
+      val previousOrderedListSpan =
+        ParagraphUtils.findOrderedListSpan(
+          spanned,
+          previousParagraphStart,
+          previousParagraphEnd,
+        )
+
+      if (previousOrderedListSpan == null) {
+        break
+      }
+
+      val previousAlignment =
+        ParagraphUtils.findParagraphAlignment(
+          spanned,
+          previousParagraphStart,
+          previousParagraphEnd,
+        )
+
+      if (previousAlignment != alignment) {
+        break
+      }
+
+      resolvedIndex++
+      previousParagraphCursor = previousParagraphStart - 1
+    }
+
+    return resolvedIndex
   }
 
   private fun getTypeface(
