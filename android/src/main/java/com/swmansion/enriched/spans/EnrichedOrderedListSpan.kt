@@ -56,15 +56,12 @@ class EnrichedOrderedListSpan(
     text: CharSequence?,
     lineStart: Int,
   ): Int {
-    val spanned = text as? Spanned ?: return 1
-    val (paragraphStart, paragraphEnd) = spanned.getParagraphBounds(lineStart)
+    var resolvedIndex = 1
+    val spanned = text as? Spanned ?: return resolvedIndex
+    val spanStart = spanned.getSpanStart(this).takeIf { it >= 0 } ?: lineStart
+    val (paragraphStart, paragraphEnd) = spanned.getParagraphBounds(spanStart)
     val alignment = ParagraphUtils.findParagraphAlignment(spanned, paragraphStart, paragraphEnd)
 
-    if (ParagraphUtils.findOrderedListSpan(spanned, paragraphStart, paragraphEnd) == null) {
-      return 1
-    }
-
-    var resolvedIndex = 1
     var previousParagraphCursor = paragraphStart - 1
 
     while (previousParagraphCursor >= 0) {

@@ -344,7 +344,7 @@ fun Spannable.getParagraphsBounds(
       pEnd++
     }
 
-    result.add(pStart until pEnd)
+    result.add(IntRange(pStart, pEnd))
 
     pos = pEnd + 1
   }

@@ -8,34 +8,24 @@ import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 
 object ParagraphUtils {
   fun copyPreviousAlignmentIfSameSpan(
-    s: Spannable,
+    spannable: Spannable,
     newPStart: Int,
     newPEnd: Int,
   ) {
-    val (prevStart, prevEnd) = s.getParagraphBounds(newPStart - 1)
+    val (prevStart, prevEnd) = spannable.getParagraphBounds(newPStart - 1)
 
     val prevAlignment =
-      s
+      spannable
         .getSpans(prevStart, prevEnd, EnrichedAlignmentSpan::class.java)
         .firstOrNull() ?: return
 
     val newAlign = EnrichedAlignmentSpan(prevAlignment.alignment)
-    s.setSpan(
+    spannable.setSpan(
       newAlign,
       newPStart,
       newPEnd,
       Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
     )
-  }
-
-  fun getParagraphAlignment(
-    spannable: Spannable,
-    position: Int,
-  ): Layout.Alignment? {
-    val (start, end) = spannable.getParagraphBounds(position)
-    val spans = spannable.getSpans(start, end, EnrichedAlignmentSpan::class.java)
-
-    return spans.lastOrNull()?.alignment
   }
 
   fun findOrderedListSpan(
