@@ -37,7 +37,7 @@ fun Spannable.getSafeSpanBoundaries(
   return Pair(safeStart, safeEnd)
 }
 
-fun Spannable.getParagraphBounds(
+fun CharSequence.getParagraphBounds(
   start: Int,
   end: Int,
 ): Pair<Int, Int> {
@@ -62,7 +62,7 @@ fun Spannable.getParagraphBounds(
   return Pair(startPosition, endPosition)
 }
 
-fun Spannable.getParagraphBounds(index: Int): Pair<Int, Int> = this.getParagraphBounds(index, index)
+fun CharSequence.getParagraphBounds(index: Int): Pair<Int, Int> = this.getParagraphBounds(index, index)
 
 data class MergeResult(
   val text: Spannable,
@@ -344,7 +344,7 @@ fun Spannable.getParagraphsBounds(
       pEnd++
     }
 
-    result.add(pStart until pEnd)
+    result.add(IntRange(pStart, pEnd))
 
     pos = pEnd + 1
   }

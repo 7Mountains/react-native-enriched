@@ -384,13 +384,13 @@ class ParagraphStyles(
     }
 
     val builder =
-      SpannableStringBuilder().apply {
-        append(Strings.OBJECT_REPLACEMENT_CHAR)
+      SpannableStringBuilder(Strings.OBJECT_REPLACEMENT_STRING).apply {
         if (span != null) {
           setSpan(span, 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
       }
 
+    val objectStart = insertIndex
     editable.insert(insertIndex, builder)
     insertIndex += builder.length
 
@@ -399,6 +399,59 @@ class ParagraphStyles(
       insertIndex += 1
     }
 
+    isolateNonEditableParagraph(editable, objectStart, span)
+
     view.setSelection(insertIndex)
+  }
+
+  private fun isolateNonEditableParagraph(
+    editable: Editable,
+    objectStart: Int,
+    objectSpan: EnrichedSpan?,
+  ) {
+    val objectEnd = objectStart + Strings.OBJECT_REPLACEMENT_STRING.length
+    val leftParagraphEnd =
+      if (objectStart > 0 && editable[objectStart - 1] == Strings.NEWLINE) {
+        objectStart - 1
+      } else {
+        objectStart
+      }
+    val rightParagraphStart =
+      if (objectEnd < editable.length && editable[objectEnd] == Strings.NEWLINE) {
+        objectEnd + 1
+      } else {
+        objectEnd
+      }
+
+    editable
+      .getSpans(objectStart, objectEnd, EnrichedParagraphSpan::class.java)
+      .filter {
+        it !== objectSpan &&
+          editable.getSpanStart(it) < objectEnd &&
+          editable.getSpanEnd(it) > objectStart
+      }.forEach { paragraphSpan ->
+        val spanStart = editable.getSpanStart(paragraphSpan)
+        val spanEnd = editable.getSpanEnd(paragraphSpan)
+
+        editable.removeSpan(paragraphSpan)
+
+        if (spanStart < leftParagraphEnd) {
+          editable.setSpan(
+            paragraphSpan.copy(),
+            spanStart,
+            leftParagraphEnd.coerceAtMost(spanEnd),
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+          )
+        }
+
+        if (spanEnd > rightParagraphStart) {
+          editable.setSpan(
+            paragraphSpan.copy(),
+            rightParagraphStart.coerceAtLeast(spanStart),
+            spanEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+          )
+        }
+      }
   }
 }

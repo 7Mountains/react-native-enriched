@@ -75,7 +75,7 @@ class EnrichedTextInputView : AppCompatEditText {
   var stateWrapper: StateWrapper? = null
   val selection: EnrichedSelection = EnrichedSelection(this)
   val spanState: EnrichedSpanState = EnrichedSpanState(this)
-  val styleManipulator: EnrichedStyleManipulator? = EnrichedStyleManipulator(this)
+  val styleManipulator: EnrichedStyleManipulator = EnrichedStyleManipulator(this)
 
   val transactionManager = EnrichedTransactionManager()
 
@@ -691,7 +691,7 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   fun verifyAndToggleStyle(name: TextStyle) {
-    val isValid = styleManipulator?.verifyStyle(name) ?: false
+    val isValid = styleManipulator.verifyStyle(name)
     if (!isValid) return
 
     transactionManager.runTransaction {
@@ -811,7 +811,7 @@ class EnrichedTextInputView : AppCompatEditText {
         if ((span is EnrichedH1Span && shouldRemoveBoldSpanFromH1Span) || (span is EnrichedH2Span && shouldRemoveBoldSpanFromH2Span) ||
           (span is EnrichedH3Span && shouldRemoveBoldSpanFromH3Span)
         ) {
-          val isRemoved = styleManipulator?.removeStyle(TextStyle.BOLD, start, end) ?: false
+          val isRemoved = styleManipulator.removeStyle(TextStyle.BOLD, start, end)
           if (isRemoved) shouldEmitStateChange = true
         }
 

@@ -4,12 +4,14 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.text.Layout
+import android.text.Spanned
 import android.text.style.LeadingMarginSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.styles.HtmlStyle
+import com.swmansion.enriched.utils.ParagraphUtils
+import com.swmansion.enriched.utils.getParagraphBounds
 
 class EnrichedOrderedListSpan(
-  private var index: Int,
   private val htmlStyle: HtmlStyle,
 ) : LeadingMarginSpan,
   EnrichedListSpan {
@@ -25,14 +27,14 @@ class EnrichedOrderedListSpan(
     top: Int,
     baseline: Int,
     bottom: Int,
-    t: CharSequence?,
+    chars: CharSequence?,
     start: Int,
     end: Int,
     first: Boolean,
     layout: Layout?,
   ) {
     if (first) {
-      val text = "$index."
+      val text = "${resolveIndex(chars, start)}."
       val width = paint.measureText(text)
 
       val yPosition = baseline.toFloat()
@@ -48,6 +50,51 @@ class EnrichedOrderedListSpan(
       paint.color = originalColor
       paint.typeface = originalTypeface
     }
+  }
+
+  private fun resolveIndex(
+    text: CharSequence?,
+    lineStart: Int,
+  ): Int {
+    var resolvedIndex = 1
+    val spanned = text as? Spanned ?: return resolvedIndex
+    val spanStart = spanned.getSpanStart(this).takeIf { it >= 0 } ?: lineStart
+    val (paragraphStart, paragraphEnd) = spanned.getParagraphBounds(spanStart)
+    val alignment = ParagraphUtils.findParagraphAlignment(spanned, paragraphStart, paragraphEnd)
+
+    var previousParagraphCursor = paragraphStart - 1
+
+    while (previousParagraphCursor >= 0) {
+      val (previousParagraphStart, previousParagraphEnd) =
+        spanned.getParagraphBounds(previousParagraphCursor)
+
+      val previousOrderedListSpan =
+        ParagraphUtils.findOrderedListSpan(
+          spanned,
+          previousParagraphStart,
+          previousParagraphEnd,
+        )
+
+      if (previousOrderedListSpan == null) {
+        break
+      }
+
+      val previousAlignment =
+        ParagraphUtils.findParagraphAlignment(
+          spanned,
+          previousParagraphStart,
+          previousParagraphEnd,
+        )
+
+      if (previousAlignment != alignment) {
+        break
+      }
+
+      resolvedIndex++
+      previousParagraphCursor = previousParagraphStart - 1
+    }
+
+    return resolvedIndex
   }
 
   private fun getTypeface(
@@ -67,13 +114,7 @@ class EnrichedOrderedListSpan(
       }
     }
 
-  fun getIndex(): Int = index
+  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedOrderedListSpan = EnrichedOrderedListSpan(htmlStyle)
 
-  fun setIndex(i: Int) {
-    index = i
-  }
-
-  override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedOrderedListSpan = EnrichedOrderedListSpan(index, htmlStyle)
-
-  override fun copy(): EnrichedOrderedListSpan = EnrichedOrderedListSpan(index = index, htmlStyle = htmlStyle)
+  override fun copy(): EnrichedOrderedListSpan = EnrichedOrderedListSpan(htmlStyle = htmlStyle)
 }
