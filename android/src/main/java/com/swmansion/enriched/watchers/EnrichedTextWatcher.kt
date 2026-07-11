@@ -19,6 +19,7 @@ class EnrichedTextWatcher(
   private var startCursorPosition: Int = 0
   private var prevText: String? = view.text?.toString() ?: ""
   private var nonEditableParagraphToRemove: EnrichedNonEditableParagraphSpan? = null
+  private var isApplyingInternalTextChange = false
 
   private val inlineSpanPreserver = InlineSpanPreserver()
 
@@ -28,6 +29,8 @@ class EnrichedTextWatcher(
     count: Int,
     after: Int,
   ) {
+    if (isApplyingInternalTextChange) return
+
     previousTextLength = s?.length ?: 0
     startCursorPosition = start
     nonEditableParagraphToRemove = getNonEditableParagraphBeforeDeletedRange(s, start, count, after)
@@ -49,6 +52,8 @@ class EnrichedTextWatcher(
     before: Int,
     count: Int,
   ) {
+    if (isApplyingInternalTextChange) return
+
     endCursorPosition = start + count
     view.isRemovingMany = !view.isDuringTransaction && before > count + 1
     inlineSpanPreserver.onTextChanged(
@@ -58,18 +63,28 @@ class EnrichedTextWatcher(
   }
 
   override fun afterTextChanged(s: Editable?) {
-    emitEvents(s)
-    if (s == null) return
+    view.textVersion += 1
+
+    if (isApplyingInternalTextChange) return
+
+    if (s == null) {
+      emitEvents(null)
+      return
+    }
 
     view.transactionManager.runWithBlockedTextEvents {
       view.transactionManager.runWithIgnoredSpanWatcher {
         inlineSpanPreserver.afterTextChanged()
         if (!view.isDuringTransaction) {
-          removePendingNonEditableParagraph(s)
-          applyStyles(s)
+          runWithInternalTextChange {
+            removePendingNonEditableParagraph(s)
+            applyStyles(s)
+          }
         }
       }
     }
+
+    emitEvents(s)
     view.correctScrollPositionIfNeeded()
   }
 
@@ -81,6 +96,15 @@ class EnrichedTextWatcher(
     styleManipulator.listStyles.afterTextChanged(s, endCursorPosition, previousTextLength)
     styleManipulator.paragraphStyles.afterTextChanged(s, endCursorPosition, previousTextLength)
     ZWSNormalizer.normalizeNonEmptyParagraphs(s)
+  }
+
+  private fun runWithInternalTextChange(block: () -> Unit) {
+    isApplyingInternalTextChange = true
+    try {
+      block()
+    } finally {
+      isApplyingInternalTextChange = false
+    }
   }
 
   private fun getNonEditableParagraphBeforeDeletedRange(
@@ -129,6 +153,11 @@ class EnrichedTextWatcher(
   }
 
   private fun emitEvents(s: Editable?) {
+    if (!view.shouldEmitOnChangeText) {
+      view.emitOnAnyContentChangeEvent()
+      return
+    }
+
     val nextText = s?.toString() ?: ""
     if (prevText != nextText) {
       prevText = nextText
