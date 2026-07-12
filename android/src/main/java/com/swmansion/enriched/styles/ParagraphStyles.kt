@@ -26,12 +26,14 @@ import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.EnrichedSelection
+import com.swmansion.enriched.utils.ParagraphUtils.getPreviousParagraphSpan
 import com.swmansion.enriched.utils.asBuilder
 import com.swmansion.enriched.utils.getListRange
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getParagraphsBounds
 import com.swmansion.enriched.utils.isTheSameParagraphInSelection
 import com.swmansion.enriched.utils.removeZWS
+import com.swmansion.enriched.watchers.TextChangedEvent
 
 class ParagraphStyles(
   private val view: EnrichedTextInputView,
@@ -95,14 +97,9 @@ class ParagraphStyles(
     spannable.setSpan(span, pStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
-  fun afterTextChanged(
-    s: Editable,
-    endPosition: Int,
-    previousTextLength: Int,
-  ) {
-    var endCursorPosition = endPosition
-    val isBackspace = s.length < previousTextLength
-    val isNewLine = endCursorPosition == 0 || (endCursorPosition > 0 && s[endCursorPosition - 1] == Strings.NEWLINE)
+  fun afterTextChanged(event: TextChangedEvent) {
+    val s = event.text
+    var endCursorPosition = event.endCursorPosition
     val spanState = view.spanState
     var hasAppliedZWS = false
     for ((style, config) in EnrichedSpans.paragraphSpans) {
@@ -111,31 +108,43 @@ class ParagraphStyles(
       val styleStart = spanState.getStart(style)
       if (styleStart == null) continue
 
-      if (isBackspace) {
+      if (event.isBackspace) {
         endCursorPosition -= 1
         spanState.setStart(style, null)
         continue
       }
 
-      if (isNewLine) {
+      if (event.isNewLine) {
         if (!config.isContinuous) {
           trimNonContinuousSpanAtNewLine(s, endCursorPosition, config.clazz)
           continue
         }
-        if (hasAppliedZWS) continue
-        val (prevPStart, prevPEnd) = s.getParagraphBounds(endCursorPosition - 1)
 
-        val prevSpan =
-          s
-            .getSpans(prevPStart, prevPEnd, config.clazz)
-            .firstOrNull() ?: continue
+        val (currentParagraphStart, currentParagraphEnd) = s.getParagraphBounds(endCursorPosition)
+        val (previousParagraphStart, previousParagraphEnd) = s.getParagraphBounds(endCursorPosition - 1)
 
-        val zeroWidthSpace = buildZWSWithSpan(prevSpan.copy())
+        val prevSpan = getPreviousParagraphSpan(s, currentParagraphStart, currentParagraphEnd, config.clazz) ?: continue
 
-        s.insert(endCursorPosition, zeroWidthSpace)
-        endCursorPosition += 1
+        s.removeSpan(prevSpan)
 
-        hasAppliedZWS = true
+        s.setSpan(
+          prevSpan.copy(),
+          previousParagraphStart,
+          previousParagraphEnd,
+          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+
+        if (currentParagraphStart == currentParagraphEnd) {
+          if (hasAppliedZWS) continue
+          val zeroWidthSpace = buildZWSWithSpan(prevSpan.copy())
+
+          s.insert(endCursorPosition, zeroWidthSpace)
+          endCursorPosition += 1
+
+          hasAppliedZWS = true
+        } else {
+          applyParagraphSpan(s, prevSpan.copy(), currentParagraphStart, currentParagraphEnd)
+        }
       }
     }
   }

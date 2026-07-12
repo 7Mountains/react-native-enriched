@@ -1,22 +1,23 @@
 package com.swmansion.enriched.styles
 
-import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
-import com.swmansion.enriched.spans.EnrichedAlignmentSpan
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
+import com.swmansion.enriched.spans.ListSpanConfig
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
-import com.swmansion.enriched.utils.ParagraphUtils
+import com.swmansion.enriched.utils.ParagraphUtils.findPreviousAlignmentSpan
+import com.swmansion.enriched.utils.ParagraphUtils.getPreviousParagraphSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
+import com.swmansion.enriched.watchers.TextChangedEvent
 
 class ListStyles(
   private val view: EnrichedTextInputView,
@@ -47,24 +48,6 @@ class ListStyles(
 
       else -> {}
     }
-  }
-
-  fun reapplyAlignment(
-    spannable: Spannable,
-    start: Int,
-    end: Int,
-  ) {
-    val spans = spannable.getSpans(start, end, EnrichedAlignmentSpan::class.java)
-    if (spans.isEmpty()) return
-
-    spans.forEach { spannable.removeSpan(it) }
-
-    spannable.setSpan(
-      spans.first().copy(),
-      start,
-      end,
-      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-    )
   }
 
   private fun removeSpansForRange(
@@ -133,7 +116,6 @@ class ListStyles(
       spanState.setStartWithStateChangeEmitting(name, start + 1)
       removeSpansForRange(spannable, start, end, config.clazz)
       setSpan(spannable, name, start, end + 1)
-      reapplyAlignment(spannable, start, end)
       return
     }
 
@@ -149,7 +131,6 @@ class ListStyles(
         currentEnd += 1
       }
       setSpan(spannable, name, currentStart, currentEnd)
-      reapplyAlignment(spannable, currentStart, currentEnd)
 
       currentStart = currentEnd + 1
     }
@@ -158,30 +139,20 @@ class ListStyles(
   }
 
   private fun handleAfterTextChanged(
-    s: Editable,
-    name: TextStyle,
-    endCursorPosition: Int,
-    previousTextLength: Int,
+    event: TextChangedEvent,
+    config: ListSpanConfig,
   ) {
-    val config = EnrichedSpans.listSpans[name] ?: return
-    val cursorPosition = endCursorPosition.coerceAtMost(s.length)
-    val (start, end) = s.getParagraphBounds(cursorPosition)
+    val s = event.text
+    val cursorPosition = event.cursorPosition
+    val (currentParagraphStart, currentParagraphEnd) = s.getParagraphBounds(cursorPosition)
 
-    val isBackspace = previousTextLength > s.length
-    val isNewLine = cursorPosition > 0 && s[cursorPosition - 1] == Strings.NEWLINE
-
-    if (!isBackspace && isNewLine) {
-      val (currentStart, currentEnd) = s.getParagraphBounds(cursorPosition)
-
-      val prevParagraphEnd = currentStart - 1
+    if (!event.isBackspace && event.isNewLine) {
+      val prevParagraphEnd = currentParagraphStart - 1
       if (prevParagraphEnd < 0) return
 
       val (prevStart, prevEnd) = s.getParagraphBounds(prevParagraphEnd)
 
-      val prevSpans = s.getSpans(prevStart, prevEnd, config.clazz)
-      if (prevSpans.isEmpty()) return
-
-      val prevSpan = prevSpans.first()
+      val prevSpan = getPreviousParagraphSpan(s, currentParagraphStart, currentParagraphEnd, config.clazz) ?: return
 
       s.removeSpan(prevSpan)
 
@@ -192,37 +163,32 @@ class ListStyles(
         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
       )
 
-      if (currentEnd == currentStart) {
-        s.insert(cursorPosition, Strings.ZERO_WIDTH_SPACE_STRING)
-        setSpan(s, name, start, end + 1)
-        ParagraphUtils.copyPreviousAlignmentIfSameSpan(s, start, end + 1)
+      if (currentParagraphStart == currentParagraphEnd) {
+        val zwsSpannable = SpannableStringBuilder(Strings.ZERO_WIDTH_SPACE_STRING)
+        zwsSpannable.setSpan(prevSpan.copy(), 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        val prevAlignmentSpan = findPreviousAlignmentSpan(s, s.getParagraphBounds(cursorPosition))
+        if (prevAlignmentSpan != null) {
+          zwsSpannable.setSpan(prevAlignmentSpan.copy(), 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        s.insert(cursorPosition, zwsSpannable)
       } else {
         s.setSpan(
           prevSpan.copyWithDefaults(),
-          currentStart,
-          currentEnd,
+          currentParagraphStart,
+          currentParagraphEnd,
           Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
-
-        ParagraphUtils.copyPreviousAlignmentIfSameSpan(
-          s,
-          currentStart,
-          currentEnd,
         )
       }
 
-      view.selection.validateStyles()
       return
     }
   }
 
-  fun afterTextChanged(
-    s: Editable,
-    endCursorPosition: Int,
-    previousTextLength: Int,
-  ) {
-    for ((style) in EnrichedSpans.listSpans) {
-      handleAfterTextChanged(s, style, endCursorPosition, previousTextLength)
+  fun afterTextChanged(event: TextChangedEvent) {
+    for ((style, config) in EnrichedSpans.listSpans) {
+      if (view.spanState.getStart(style) == null) continue
+
+      handleAfterTextChanged(event, config)
     }
   }
 

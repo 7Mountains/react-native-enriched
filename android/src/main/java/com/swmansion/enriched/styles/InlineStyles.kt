@@ -17,6 +17,7 @@ import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.areInlineSpansTouchingOrOverlapping
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.isTheSameInlineSpan
+import com.swmansion.enriched.watchers.TextChangedEvent
 
 class InlineStyles(
   private val view: EnrichedTextInputView,
@@ -265,14 +266,18 @@ class InlineStyles(
     view.selection.validateStyles()
   }
 
-  fun afterTextChanged(
-    editable: Editable,
-    endCursorPosition: Int,
-  ) {
+  fun afterTextChanged(event: TextChangedEvent) {
+    handleExtendingSpans(event)
+    mergeAdjacentInlineSpansAt(event.text, event.endCursorPosition)
+  }
+
+  private fun handleExtendingSpans(event: TextChangedEvent) {
+    if (event.isBackspace) return
+    val editable = event.text
     val spanState = view.spanState
     for ((style, config) in EnrichedSpans.inlineSpans) {
       val start = spanState.getStart(style) ?: continue
-      var end = endCursorPosition
+      var end = event.endCursorPosition
       if (style == TextStyle.COLOR) {
         applyTypingColorIfActive(editable, end)
         continue
@@ -286,7 +291,6 @@ class InlineStyles(
 
       setSpan(editable, config.clazz, start, end, style)
     }
-    mergeAdjacentInlineSpansAt(editable, endCursorPosition)
   }
 
   private fun mergeAdjacentInlineSpansAt(

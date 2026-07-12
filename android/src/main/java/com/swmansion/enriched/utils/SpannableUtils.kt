@@ -2,19 +2,7 @@ package com.swmansion.enriched.utils
 
 import android.text.Spannable
 import android.text.SpannableStringBuilder
-import android.util.Log
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
-
-fun <T> Spannable.getPreviousParagraphSpan(
-  paragraphStart: Int,
-  type: Class<T>,
-): T? {
-  if (paragraphStart <= 0) return null
-  val (pStart, pEnd) = getParagraphBounds(paragraphStart - 1)
-  val spans = getSpans(pStart, pEnd, type)
-  if (spans.size > 1) Log.w("SpanUtils", "Multiple spans in previous paragraph")
-  return spans.firstOrNull()
-}
 
 fun Spannable.getListRange(
   paragraphStart: Int,

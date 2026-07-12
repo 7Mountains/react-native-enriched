@@ -1,6 +1,5 @@
 package com.swmansion.enriched.styles
 
-import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -14,6 +13,7 @@ import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
+import com.swmansion.enriched.watchers.TextChangedEvent
 import kotlin.math.max
 
 class ParametrizedStyles(
@@ -318,13 +318,9 @@ class ParametrizedStyles(
     return spans.any { span -> spannable.getSpanEnd(span) == editStart }
   }
 
-  fun afterTextChanged(
-    s: Editable,
-    startCursorPosition: Int,
-    endCursorPosition: Int,
-  ) {
-    afterTextChangedLinks(startCursorPosition, endCursorPosition)
-    afterTextChangedMentions(s, startCursorPosition, endCursorPosition)
+  fun afterTextChanged(event: TextChangedEvent) {
+    afterTextChangedLinks(event.startCursorPosition, event.endCursorPosition)
+    afterTextChangedMentions(event.text, event.startCursorPosition, event.endCursorPosition)
   }
 
   fun setImageSpan(
