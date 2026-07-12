@@ -83,6 +83,15 @@ class EnrichedTextInputView : AppCompatEditText {
     get() = transactionManager.isDuringTransaction
 
   var isRemovingMany: Boolean = false
+  var textVersion = 0
+    set(value) {
+      field =
+        if (value >= 255) {
+          0
+        } else {
+          value
+        }
+    }
 
   val blockTextEventEmitting: Boolean
     get() = transactionManager.blockTextEventEmitting

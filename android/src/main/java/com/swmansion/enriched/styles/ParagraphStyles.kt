@@ -49,7 +49,7 @@ class ParagraphStyles(
     for (range in paragraphRanges) {
       val paragraphStart = range.first
       val paragraphEnd = range.last
-      spannableStringBuilder.removeZWS(paragraphStart, paragraphEnd + 1)
+      spannableStringBuilder.removeZWS(paragraphStart, paragraphEnd)
       val spans = spannableStringBuilder.getSpans(paragraphStart, paragraphEnd, clazz)
       if (spans.isEmpty()) continue
 
@@ -191,10 +191,14 @@ class ParagraphStyles(
     val span = createSpan(name) ?: return
 
     if (!hasRealText) {
-      // Insert ZWS with paragraph style
-      val zeroWidthSpace = buildZWSWithSpan(span)
+      val zwsIndex = (pStart until pEnd).firstOrNull { ssb[it] == Strings.ZERO_WIDTH_SPACE_CHAR }
 
-      ssb.replace(pStart, pEnd, zeroWidthSpace)
+      if (zwsIndex != null) {
+        applyParagraphSpan(ssb, span, zwsIndex, zwsIndex + 1)
+      } else {
+        val zeroWidthSpace = buildZWSWithSpan(span)
+        ssb.insert(pStart, zeroWidthSpace)
+      }
 
       view.setSelection(pStart + 1)
       view.selection.validateStyles()
@@ -366,7 +370,6 @@ class ParagraphStyles(
   private fun insertEscapingParagraph(span: EnrichedSpan?) {
     val editable = view.editableText
     val index = view.selection.end
-
     val text = editable.toString()
 
     val hasNewlineBefore = index > 0 && text[index - 1] == Strings.NEWLINE
@@ -376,32 +379,32 @@ class ParagraphStyles(
       (index == 0 || hasNewlineBefore) &&
         (index == text.length || hasNewlineAfter)
 
-    var insertIndex = index
+    val prefix = if (!isParagraphEmpty && !hasNewlineBefore) Strings.NEWLINE_STRING else ""
+    val suffix = if (!hasNewlineAfter) Strings.NEWLINE_STRING else ""
 
-    if (!isParagraphEmpty && !hasNewlineBefore) {
-      editable.insert(insertIndex, Strings.NEWLINE_STRING)
-      insertIndex += 1
+    val builder = SpannableStringBuilder()
+    builder.append(prefix)
+
+    val objectStartInBuilder = builder.length
+    builder.append(Strings.OBJECT_REPLACEMENT_STRING)
+
+    if (span != null) {
+      builder.setSpan(
+        span,
+        objectStartInBuilder,
+        objectStartInBuilder + Strings.OBJECT_REPLACEMENT_STRING.length,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+      )
     }
 
-    val builder =
-      SpannableStringBuilder(Strings.OBJECT_REPLACEMENT_STRING).apply {
-        if (span != null) {
-          setSpan(span, 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        }
-      }
+    builder.append(suffix)
 
-    val objectStart = insertIndex
-    editable.insert(insertIndex, builder)
-    insertIndex += builder.length
+    editable.insert(index, builder)
 
-    if (!hasNewlineAfter) {
-      editable.insert(insertIndex, Strings.NEWLINE_STRING)
-      insertIndex += 1
-    }
-
+    val objectStart = index + objectStartInBuilder
     isolateNonEditableParagraph(editable, objectStart, span)
 
-    view.setSelection(insertIndex)
+    view.setSelection(index + builder.length)
   }
 
   private fun isolateNonEditableParagraph(

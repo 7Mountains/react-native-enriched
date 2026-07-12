@@ -23,7 +23,7 @@ class EnrichedSelection(
 ) {
   var start: Int = 0
   var end: Int = 0
-  var prevText: String? = null
+  var prevTextVersion: Int? = null
 
   val inlineStylesList =
     EnrichedSpans.inlineSpans.map { (type, config) -> type to config } +
@@ -50,10 +50,9 @@ class EnrichedSelection(
       shouldValidateStyles = true
     }
 
-    val stringText = view.text.toString()
-
-    if (prevText != stringText) {
+    if (prevTextVersion != view.textVersion) {
       shouldValidateStyles = true
+      prevTextVersion = view.textVersion
     }
 
     val textLength = view.text?.length ?: 0
@@ -69,7 +68,6 @@ class EnrichedSelection(
 
     start = finalStart
     end = finalEnd
-    prevText = stringText
     validateStyles()
     val (paragraphStart, paragraphEnd) = getParagraphSelection()
     emitSelectionChangeEvent(view.text, finalStart, finalEnd, paragraphStart, paragraphEnd)
@@ -108,10 +106,12 @@ class EnrichedSelection(
       view.isRemovingMany = false
     }
 
-    handleParagraphStyleState()
+    val paragraphSelection = getParagraphSelection()
+
+    handleParagraphStyleState(paragraphSelection)
 
     for ((style, config) in EnrichedSpans.listSpans) {
-      state.setStart(style, getListStyleStart(config.clazz))
+      state.setStart(style, getListStyleStart(config.clazz, paragraphSelection))
     }
 
     state.emitStateChangeEvent()
@@ -189,15 +189,14 @@ class EnrichedSelection(
     return spannable.getParagraphBounds(currentStart, currentEnd)
   }
 
-  private fun handleParagraphStyleState() {
+  private fun handleParagraphStyleState(paragraphSelection: Pair<Int, Int>) {
     val spanState = view.spanState
-    val (start, end) = getParagraphSelection()
+    val (start, end) = paragraphSelection
     val spannable = view.text as? Spannable ?: return
 
     val spans =
       spannable
         .getSpans(start, end, EnrichedParagraphSpan::class.java)
-        .toList()
 
     if (spans.isEmpty()) {
       EnrichedSpans.paragraphSpans.keys.forEach {
@@ -226,8 +225,11 @@ class EnrichedSelection(
     }
   }
 
-  private fun <T> getListStyleStart(type: Class<T>): Int? {
-    val (start, end) = getParagraphSelection()
+  private fun <T> getListStyleStart(
+    type: Class<T>,
+    paragraphSelection: Pair<Int, Int>,
+  ): Int? {
+    val (start, end) = paragraphSelection
     val spannable = view.text as Spannable
     var styleStart: Int? = null
 
