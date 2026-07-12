@@ -8,6 +8,28 @@ import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 
 object ParagraphUtils {
+  fun applyParagraphSpan(
+    spannable: Spannable,
+    span: EnrichedSpan,
+    pStart: Int,
+    pEnd: Int,
+  ) {
+    val spans = spannable.getSpans(pStart, pEnd, span::class.java)
+    val hasMatchingSpan =
+      spans.size == 1 &&
+        spans.any {
+          spannable.getSpanStart(it) == pStart && spannable.getSpanEnd(it) == pEnd
+        }
+
+    if (hasMatchingSpan) return
+
+    spans.forEach {
+      spannable.removeSpan(it)
+    }
+
+    spannable.setSpan(span, pStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+  }
+
   fun findPreviousAlignmentSpan(
     spannable: Spannable,
     paragraphBounds: Pair<Int, Int>,

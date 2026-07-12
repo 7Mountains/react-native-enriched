@@ -12,6 +12,7 @@ import com.swmansion.enriched.spans.EnrichedUnorderedListSpan
 import com.swmansion.enriched.spans.ListSpanConfig
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
+import com.swmansion.enriched.utils.ParagraphUtils.applyParagraphSpan
 import com.swmansion.enriched.utils.ParagraphUtils.findPreviousAlignmentSpan
 import com.swmansion.enriched.utils.ParagraphUtils.getPreviousParagraphSpan
 import com.swmansion.enriched.utils.getParagraphBounds
@@ -163,24 +164,19 @@ class ListStyles(
         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
       )
 
+      val newSpan = prevSpan.copyWithDefaults()
+
       if (currentParagraphStart == currentParagraphEnd) {
         val zwsSpannable = SpannableStringBuilder(Strings.ZERO_WIDTH_SPACE_STRING)
-        zwsSpannable.setSpan(prevSpan.copy(), 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        zwsSpannable.setSpan(newSpan, 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         val prevAlignmentSpan = findPreviousAlignmentSpan(s, s.getParagraphBounds(cursorPosition))
         if (prevAlignmentSpan != null) {
           zwsSpannable.setSpan(prevAlignmentSpan.copy(), 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         s.insert(cursorPosition, zwsSpannable)
       } else {
-        s.setSpan(
-          prevSpan.copyWithDefaults(),
-          currentParagraphStart,
-          currentParagraphEnd,
-          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
+        applyParagraphSpan(s, newSpan, currentParagraphStart, currentParagraphEnd)
       }
-
-      return
     }
   }
 

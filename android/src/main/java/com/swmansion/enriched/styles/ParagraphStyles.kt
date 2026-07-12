@@ -26,6 +26,7 @@ import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.EnrichedSelection
+import com.swmansion.enriched.utils.ParagraphUtils.applyParagraphSpan
 import com.swmansion.enriched.utils.ParagraphUtils.getPreviousParagraphSpan
 import com.swmansion.enriched.utils.asBuilder
 import com.swmansion.enriched.utils.getListRange
@@ -83,19 +84,6 @@ class ParagraphStyles(
     SpannableStringBuilder(Strings.ZERO_WIDTH_SPACE_STRING).apply {
       setSpan(span, 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
-
-  private fun applyParagraphSpan(
-    spannable: Spannable,
-    span: EnrichedSpan,
-    pStart: Int,
-    pEnd: Int,
-  ) {
-    spannable.getSpans(pStart, pEnd, span::class.java).forEach {
-      spannable.removeSpan(it)
-    }
-
-    spannable.setSpan(span, pStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-  }
 
   fun afterTextChanged(event: TextChangedEvent) {
     val s = event.text

@@ -310,11 +310,15 @@ fun SpannableStringBuilder.removeZWS(
   start: Int,
   end: Int,
 ): Pair<Int, Int> {
+  val safeStart = minOf(start, end).coerceIn(0, length)
+  val safeEnd = maxOf(start, end).coerceIn(0, length)
+  if (safeStart >= safeEnd) return 0 to 0
+
   var removedLeft = 0
   var removedRight = 0
-  val mid = (start + end) / 2
+  val mid = safeStart + (safeEnd - safeStart) / 2
 
-  for (i in (end - 1) downTo start) {
+  for (i in (safeEnd - 1) downTo safeStart) {
     if (this[i] == Strings.ZERO_WIDTH_SPACE_CHAR) {
       if (i < mid) removedLeft++ else removedRight++
 
