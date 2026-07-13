@@ -44,6 +44,7 @@ class ParagraphStyles(
     start: Int,
     end: Int,
     clazz: Class<out EnrichedSpan>,
+    removeZWS: Boolean = true,
   ): Boolean {
     val spannableStringBuilder = spannable.asBuilder()
     val paragraphRanges = spannable.getParagraphsBounds(start, end)
@@ -52,7 +53,9 @@ class ParagraphStyles(
     for (range in paragraphRanges) {
       val paragraphStart = range.first
       val paragraphEnd = range.last
-      spannableStringBuilder.removeZWS(paragraphStart, paragraphEnd)
+      if (removeZWS) {
+        spannableStringBuilder.removeZWS(paragraphStart, paragraphEnd)
+      }
       val spans = spannableStringBuilder.getSpans(paragraphStart, paragraphEnd, clazz)
       if (spans.isEmpty()) continue
 
@@ -166,7 +169,7 @@ class ParagraphStyles(
 
   fun toggleStyle(name: TextStyle) {
     val selection = view.selection
-    val ssb = view.text?.asBuilder() ?: return
+    val ssb = view.editableText
     val (start, end) = selection.getParagraphSelection()
 
     val config = EnrichedSpans.paragraphSpans[name] ?: return
@@ -177,34 +180,27 @@ class ParagraphStyles(
     if (activeStart != null) {
       view.spanState.setStart(name, null)
       removeStyleForSelection(ssb, start, end, type)
-      view.selection.validateStyles()
+      selection.validateStyles()
       return
     }
 
-    val (pStart, pEnd) = ssb.getParagraphBounds(start)
+    var currentStart = start
+    val paragraphs = ssb.substring(start, end).split(Strings.NEWLINE_STRING)
+    removeStyleForSelection(ssb, start, end, config.clazz, false)
 
-    val hasRealText = ssb.substring(pStart, pEnd).any { it != Strings.ZERO_WIDTH_SPACE_CHAR && it != Strings.NEWLINE }
+    for (paragraph in paragraphs) {
+      val span = createSpan(name) ?: return
+      var currentEnd = currentStart + paragraph.length
 
-    val span = createSpan(name) ?: return
-
-    if (!hasRealText) {
-      val zwsIndex = (pStart until pEnd).firstOrNull { ssb[it] == Strings.ZERO_WIDTH_SPACE_CHAR }
-
-      if (zwsIndex != null) {
-        applyParagraphSpan(ssb, span, zwsIndex, zwsIndex + 1)
-      } else {
-        val zeroWidthSpace = buildZWSWithSpan(span)
-        ssb.insert(pStart, zeroWidthSpace)
+      if (paragraph.isEmpty()) {
+        ssb.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
+        currentEnd += 1
       }
-
-      view.setSelection(pStart + 1)
-      view.selection.validateStyles()
-      return
+      applyParagraphSpan(ssb, span, currentStart, currentEnd)
+      currentStart = currentEnd + 1
     }
 
-    applyParagraphSpan(ssb, span, pStart, pEnd)
-
-    view.selection.validateStyles()
+    selection.validateStyles()
   }
 
   fun getStyleRange(): Pair<Int, Int> = view.selection.getParagraphSelection()

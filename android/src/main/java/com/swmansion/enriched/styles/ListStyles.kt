@@ -5,6 +5,7 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
+import com.swmansion.enriched.spans.EnrichedAlignmentSpan
 import com.swmansion.enriched.spans.EnrichedChecklistSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
 import com.swmansion.enriched.spans.EnrichedSpans
@@ -116,7 +117,9 @@ class ListStyles(
       spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
       spanState.setStartWithStateChangeEmitting(name, start + 1)
       removeSpansForRange(spannable, start, end, config.clazz)
-      setSpan(spannable, name, start, end + 1)
+      val newEnd = end + 1
+      setSpan(spannable, name, start, newEnd)
+      reapplyAlignment(spannable, start, newEnd)
       return
     }
 
@@ -132,7 +135,7 @@ class ListStyles(
         currentEnd += 1
       }
       setSpan(spannable, name, currentStart, currentEnd)
-
+      reapplyAlignment(spannable, currentStart, currentEnd)
       currentStart = currentEnd + 1
     }
 
@@ -186,6 +189,24 @@ class ListStyles(
 
       handleAfterTextChanged(event, config)
     }
+  }
+
+  private fun reapplyAlignment(
+    spannable: Spannable,
+    start: Int,
+    end: Int,
+  ) {
+    val spans = spannable.getSpans(start, end, EnrichedAlignmentSpan::class.java)
+    if (spans.isEmpty()) return
+
+    spans.forEach { spannable.removeSpan(it) }
+
+    spannable.setSpan(
+      spans.first().copy(),
+      start,
+      end,
+      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+    )
   }
 
   fun getStyleRange(): Pair<Int, Int> = view.selection.getParagraphSelection()
