@@ -5,27 +5,65 @@ import android.text.Spannable
 import android.text.Spanned
 import com.swmansion.enriched.spans.EnrichedAlignmentSpan
 import com.swmansion.enriched.spans.EnrichedOrderedListSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 
 object ParagraphUtils {
-  fun copyPreviousAlignmentIfSameSpan(
+  fun applyParagraphSpan(
     spannable: Spannable,
-    newPStart: Int,
-    newPEnd: Int,
+    span: EnrichedSpan,
+    pStart: Int,
+    pEnd: Int,
   ) {
-    val (prevStart, prevEnd) = spannable.getParagraphBounds(newPStart - 1)
+    val spans = spannable.getSpans(pStart, pEnd, span::class.java)
+    val hasMatchingSpan =
+      spans.size == 1 &&
+        spans.any {
+          spannable.getSpanStart(it) == pStart && spannable.getSpanEnd(it) == pEnd
+        }
 
-    val prevAlignment =
-      spannable
-        .getSpans(prevStart, prevEnd, EnrichedAlignmentSpan::class.java)
-        .firstOrNull() ?: return
+    if (hasMatchingSpan) return
 
-    val newAlign = EnrichedAlignmentSpan(prevAlignment.alignment)
-    spannable.setSpan(
-      newAlign,
-      newPStart,
-      newPEnd,
-      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-    )
+    spans.forEach {
+      spannable.removeSpan(it)
+    }
+
+    spannable.setSpan(span, pStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+  }
+
+  fun findPreviousAlignmentSpan(
+    spannable: Spannable,
+    paragraphBounds: Pair<Int, Int>,
+  ): EnrichedAlignmentSpan? {
+    val (currentParagraphStart) = paragraphBounds
+    if (currentParagraphStart <= 0) return null
+    val (prevStart, prevEnd) = spannable.getParagraphBounds(currentParagraphStart - 1)
+
+    return spannable
+      .getSpans(prevStart, prevEnd, EnrichedAlignmentSpan::class.java)
+      .firstOrNull()
+  }
+
+  fun getPreviousParagraphSpan(
+    spannable: Spannable,
+    paragraphStart: Int,
+    paragraphEnd: Int,
+    clazz: Class<out EnrichedSpan>,
+  ): EnrichedSpan? {
+    if (paragraphStart <= 0) return null
+    val (prevStart, prevEnd) = spannable.getParagraphBounds(paragraphStart - 1)
+
+    return spannable
+      .getSpans(prevStart, prevEnd, clazz)
+      .firstOrNull { span ->
+        val spanStart = spannable.getSpanStart(span)
+        val spanEnd = spannable.getSpanEnd(span)
+
+        if (paragraphStart == paragraphEnd) {
+          spanStart < prevEnd && spanEnd >= prevEnd
+        } else {
+          spanStart < paragraphStart && spanEnd > paragraphStart
+        }
+      }
   }
 
   fun findOrderedListSpan(
@@ -51,7 +89,7 @@ object ParagraphUtils {
       }?.alignment
 
   private fun Spanned.hasSpanIntersection(
-    span: Any,
+    span: EnrichedSpan,
     paragraphStart: Int,
     paragraphEnd: Int,
   ): Boolean {

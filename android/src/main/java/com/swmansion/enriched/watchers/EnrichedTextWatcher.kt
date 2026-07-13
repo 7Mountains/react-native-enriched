@@ -88,14 +88,21 @@ class EnrichedTextWatcher(
     view.correctScrollPositionIfNeeded()
   }
 
-  private fun applyStyles(s: Editable) {
+  private fun applyStyles(editable: Editable) {
+    val event =
+      TextChangedEvent(
+        text = editable,
+        startCursorPosition = startCursorPosition,
+        endCursorPosition = endCursorPosition,
+        previousTextLength = previousTextLength,
+      )
     val styleManipulator = view.styleManipulator
-    styleManipulator.inlineStyles.afterTextChanged(s, endCursorPosition)
-    styleManipulator.parametrizedStyles.afterTextChanged(s, startCursorPosition, endCursorPosition)
-    ParagraphSpanNormalizer.normalize(s, endCursorPosition)
-    styleManipulator.listStyles.afterTextChanged(s, endCursorPosition, previousTextLength)
-    styleManipulator.paragraphStyles.afterTextChanged(s, endCursorPosition, previousTextLength)
-    ZWSNormalizer.normalizeNonEmptyParagraphs(s)
+    styleManipulator.inlineStyles.afterTextChanged(event)
+    styleManipulator.parametrizedStyles.afterTextChanged(event)
+    ParagraphSpanNormalizer.normalize(editable, event.endCursorPosition)
+    styleManipulator.listStyles.afterTextChanged(event)
+    styleManipulator.paragraphStyles.afterTextChanged(event)
+    ZWSNormalizer.normalizeNonEmptyParagraphs(editable)
   }
 
   private fun runWithInternalTextChange(block: () -> Unit) {

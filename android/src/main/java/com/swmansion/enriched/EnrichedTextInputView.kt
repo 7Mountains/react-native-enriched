@@ -444,13 +444,7 @@ class EnrichedTextInputView : AppCompatEditText {
     transactionManager.runSilently {
       val newText = parseText(value)
 
-      val spannable = text as SpannableStringBuilder?
-
-      if (spannable == null) {
-        setText(spannable)
-      } else {
-        spannable.replace(0, spannable.length, newText)
-      }
+      editableText.replace(0, editableText.length, newText)
 
       observeAsyncImages()
       if (withSelection) {
@@ -503,17 +497,16 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   private fun getActualIndex(visibleIndex: Int): Int {
-    val currentText = text as Spannable
     var currentVisibleCount = 0
     var actualIndex = 0
 
-    while (actualIndex < currentText.length) {
+    while (actualIndex < editableText.length) {
       if (currentVisibleCount == visibleIndex) {
         return actualIndex
       }
 
       // If the current char is not a hidden space, it counts towards our visible index
-      if (currentText[actualIndex] != Strings.ZERO_WIDTH_SPACE_CHAR) {
+      if (editableText[actualIndex] != Strings.ZERO_WIDTH_SPACE_CHAR) {
         currentVisibleCount++
       }
       actualIndex++

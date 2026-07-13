@@ -14,6 +14,7 @@ import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeZWS
+import com.swmansion.enriched.watchers.TextChangedEvent
 import kotlin.math.max
 
 class ParametrizedStyles(
@@ -25,19 +26,18 @@ class ParametrizedStyles(
   var mentionIndicators: Array<String> = emptyArray<String>()
 
   fun <T> removeSpansForRange(
-    spannable: Spannable,
+    editable: Editable,
     start: Int,
     end: Int,
     clazz: Class<T>,
   ): Boolean {
-    val ssb = spannable as SpannableStringBuilder
-    val spans = ssb.getSpans(start, end, clazz)
+    val spans = editable.getSpans(start, end, clazz)
     if (spans.isEmpty()) return false
 
-    ssb.removeZWS(start, end)
+    editable.removeZWS(start, end)
 
     for (span in spans) {
-      ssb.removeSpan(span)
+      editable.removeSpan(span)
     }
 
     return true
@@ -50,7 +50,7 @@ class ParametrizedStyles(
     url: String,
   ) {
     isSettingLinkSpan = true
-    val spannable = view.text as SpannableStringBuilder
+    val editable = view.editableText
 
     removeLinkSpan(start, end)
 
@@ -59,9 +59,9 @@ class ParametrizedStyles(
     insertedSpannable.setSpan(span, 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
     if (start == end) {
-      spannable.insert(start, insertedSpannable)
+      editable.insert(start, insertedSpannable)
     } else {
-      spannable.replace(start, end, insertedSpannable)
+      editable.replace(start, end, insertedSpannable)
     }
 
     view.selection.validateStyles()
@@ -72,10 +72,10 @@ class ParametrizedStyles(
     start: Int,
     end: Int,
   ) {
-    val spannable = view.text as SpannableStringBuilder
-    val spans = spannable.getSpans(start, end, EnrichedLinkSpan::class.java)
+    val editable = view.editableText
+    val spans = editable.getSpans(start, end, EnrichedLinkSpan::class.java)
     for (span in spans) {
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
     }
   }
 
@@ -103,18 +103,18 @@ class ParametrizedStyles(
   }
 
   fun detectAllLinks() {
-    val spannable = view.text as Spannable
-    val text = spannable.toString()
+    val editable = view.editableText
+    val text = editable.toString()
 
     // Remove existing link spans
     val existingSpans =
-      spannable.getSpans(
+      editable.getSpans(
         0,
-        spannable.length,
+        editable.length,
         EnrichedLinkSpan::class.java,
       )
     for (span in existingSpans) {
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
     }
 
     // Detect links using our URL_REGEX
@@ -124,9 +124,9 @@ class ParametrizedStyles(
 
       val url = match.value
       val span = EnrichedLinkSpan(url, view.htmlStyle)
-      val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, end)
+      val (safeStart, safeEnd) = editable.getSafeSpanBoundaries(start, end)
 
-      spannable.setSpan(
+      editable.setSpan(
         span,
         safeStart,
         safeEnd,
@@ -180,19 +180,19 @@ class ParametrizedStyles(
     // Do not detect link if it's applied manually
     if (isSettingLinkSpan || !canLinkBeApplied()) return
 
-    val spannable = view.text as? Spannable ?: return
+    val editable = view.editableText
     // If user inserted a newline right after a link, don't touch spans.
-    if (isNewlineInsertedAtEndOfSpan(spannable, editStart, editEnd, EnrichedLinkSpan::class.java)) return
+    if (isNewlineInsertedAtEndOfSpan(editable, editStart, editEnd, EnrichedLinkSpan::class.java)) return
 
-    val affectedRange = getLinksAffectedRange(spannable, editStart, editEnd)
+    val affectedRange = getLinksAffectedRange(editable, editStart, editEnd)
     val contextText =
-      spannable
+      editable
         .subSequence(affectedRange.first, affectedRange.last)
         .toString()
 
     // Remove existing link spans in affected range
     val spans =
-      spannable
+      editable
         .getSpans(
           affectedRange.first,
           affectedRange.last,
@@ -201,7 +201,7 @@ class ParametrizedStyles(
           !it.isManual
         }
     for (span in spans) {
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
     }
 
     // Split into words and detect links
@@ -225,9 +225,9 @@ class ParametrizedStyles(
 
         val span = EnrichedLinkSpan(match.value, view.htmlStyle)
         val (safeStart, safeEnd) =
-          spannable.getSafeSpanBoundaries(spanStart, spanEnd)
+          editable.getSafeSpanBoundaries(spanStart, spanEnd)
 
-        spannable.setSpan(
+        editable.setSpan(
           span,
           safeStart,
           safeEnd,
@@ -244,17 +244,17 @@ class ParametrizedStyles(
   ) {
     val mentionHandler = view.mentionHandler ?: return
 
-    val spannable = view.text as Spannable
-    if (isNewlineInsertedAtEndOfSpan(spannable, startCursorPosition, endCursorPosition, EnrichedMentionSpan::class.java)) return
+    val editable = view.editableText
+    if (isNewlineInsertedAtEndOfSpan(editable, startCursorPosition, endCursorPosition, EnrichedMentionSpan::class.java)) return
 
     val currentWord = getWordAtIndex(s, endCursorPosition) ?: return
     val indicatorsPattern = mentionIndicators.joinToString("|") { Regex.escape(it) }
     val mentionIndicatorRegex = Regex("^($indicatorsPattern)")
     val mentionRegex = Regex("^($indicatorsPattern)\\w*")
 
-    val spans = spannable.getSpans(currentWord.start, currentWord.end, EnrichedMentionSpan::class.java)
+    val spans = editable.getSpans(currentWord.start, currentWord.end, EnrichedMentionSpan::class.java)
     for (span in spans) {
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
     }
 
     var indicator: String
@@ -263,7 +263,7 @@ class ParametrizedStyles(
 
     // No mention in the current word, check previous one
     if (!mentionRegex.matches(currentWord.text)) {
-      val previousWord = getWordAtIndex(spannable, currentWord.start - 1)
+      val previousWord = getWordAtIndex(editable, currentWord.start - 1)
 
       // No previous word -> no mention to be detected
       if (previousWord == null) {
@@ -287,7 +287,7 @@ class ParametrizedStyles(
     }
 
     // Extract text without indicator
-    val text = spannable.subSequence(finalStart, finalEnd).toString().replaceFirst(indicator, "")
+    val text = editable.subSequence(finalStart, finalEnd).toString().replaceFirst(indicator, "")
 
     // Means we are starting mention
     if (text.isEmpty()) {
@@ -298,33 +298,29 @@ class ParametrizedStyles(
   }
 
   private fun <T : EnrichedSpan> isNewlineInsertedAtEndOfSpan(
-    spannable: Spannable,
+    editable: Editable,
     editStart: Int,
     editEnd: Int,
     clazz: Class<T>,
   ): Boolean {
     // insertion of exactly one char
     if (editEnd != editStart + 1) return false
-    if (editStart < 0 || editStart >= spannable.length) return false
+    if (editStart < 0 || editStart >= editable.length) return false
 
-    val insertedChar = spannable[editStart]
+    val insertedChar = editable[editStart]
     if (insertedChar != Strings.NEWLINE) return false
 
     // If there is any span span whose END is exactly at editStart, then newline was inserted
     // at the boundary right after the link -> do nothing.
     val lookupStart = max(0, editStart - 1)
-    val spans = spannable.getSpans(lookupStart, editStart, clazz)
+    val spans = editable.getSpans(lookupStart, editStart, clazz)
 
-    return spans.any { span -> spannable.getSpanEnd(span) == editStart }
+    return spans.any { span -> editable.getSpanEnd(span) == editStart }
   }
 
-  fun afterTextChanged(
-    s: Editable,
-    startCursorPosition: Int,
-    endCursorPosition: Int,
-  ) {
-    afterTextChangedLinks(startCursorPosition, endCursorPosition)
-    afterTextChangedMentions(s, startCursorPosition, endCursorPosition)
+  fun afterTextChanged(event: TextChangedEvent) {
+    afterTextChangedLinks(event.startCursorPosition, event.endCursorPosition)
+    afterTextChangedMentions(event.text, event.startCursorPosition, event.endCursorPosition)
   }
 
   fun setImageSpan(
@@ -332,52 +328,52 @@ class ParametrizedStyles(
     width: Float,
     height: Float,
   ) {
-    val spannable = view.text as SpannableStringBuilder
+    val editable = view.editableText
     val (start, originalEnd) = view.selection.getInlineSelection()
 
     if (start == originalEnd) {
-      spannable.insert(start, "\uFFFC")
+      editable.insert(start, "\uFFFC")
     } else {
-      val spans = spannable.getSpans(start, originalEnd, EnrichedImageSpan::class.java)
+      val spans = editable.getSpans(start, originalEnd, EnrichedImageSpan::class.java)
       for (s in spans) {
-        spannable.removeSpan(s)
+        editable.removeSpan(s)
       }
 
-      spannable.replace(start, originalEnd, "\uFFFC")
+      editable.replace(start, originalEnd, "\uFFFC")
     }
 
-    val (imageStart, imageEnd) = spannable.getSafeSpanBoundaries(start, start + 1)
+    val (imageStart, imageEnd) = editable.getSafeSpanBoundaries(start, start + 1)
     val span = EnrichedImageSpan.createEnrichedImageSpan(src, width.toInt(), height.toInt())
     span.observeAsyncDrawableLoaded(view.text)
 
-    spannable.setSpan(span, imageStart, imageEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    editable.setSpan(span, imageStart, imageEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
   fun startMention(indicator: String) {
     val selection = view.selection
 
-    val spannable = view.text as SpannableStringBuilder
+    val editable = view.editableText
     val (start, end) = selection.getInlineSelection()
 
     if (start == end) {
-      spannable.insert(start, indicator)
+      editable.insert(start, indicator)
     } else {
-      spannable.replace(start, end, indicator)
+      editable.replace(start, end, indicator)
     }
   }
 
   private fun removeMentionSpans(
-    spannable: SpannableStringBuilder,
+    editable: Editable,
     start: Int,
     end: Int,
   ) {
-    spannable
+    editable
       .getSpans(start, end, EnrichedMentionSpan::class.java)
-      .forEach(spannable::removeSpan)
+      .forEach(editable::removeSpan)
   }
 
   private fun insertMentionAtSelection(
-    spannable: SpannableStringBuilder,
+    editable: Editable,
     span: EnrichedMentionSpan,
     selectionStart: Int,
     selectionEnd: Int,
@@ -386,17 +382,17 @@ class ParametrizedStyles(
     val insertText = "$text "
 
     if (selectionStart == selectionEnd) {
-      spannable.insert(selectionStart, insertText)
+      editable.insert(selectionStart, insertText)
     } else {
-      spannable.replace(selectionStart, selectionEnd, insertText)
+      editable.replace(selectionStart, selectionEnd, insertText)
     }
 
     val spanStart = selectionStart
     val spanEnd = selectionStart + text.length
     val (safeStart, safeEnd) =
-      spannable.getSafeSpanBoundaries(spanStart, spanEnd)
+      editable.getSafeSpanBoundaries(spanStart, spanEnd)
 
-    spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
     view.setSelection(spanEnd + 1)
     view.selection.validateStyles()
@@ -405,29 +401,29 @@ class ParametrizedStyles(
   }
 
   private fun replaceMentionFromStart(
-    spannable: SpannableStringBuilder,
+    editable: Editable,
     span: EnrichedMentionSpan,
     start: Int,
     selectionEnd: Int,
     text: String,
   ) {
     view.transactionManager.runTransaction {
-      spannable.replace(start, selectionEnd, text)
+      editable.replace(start, selectionEnd, text)
 
       val spanEnd = start + text.length
       val (safeStart, safeEnd) =
-        spannable.getSafeSpanBoundaries(start, spanEnd)
+        editable.getSafeSpanBoundaries(start, spanEnd)
 
-      spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
-      val hasSpace = spannable.length > safeEnd && spannable[safeEnd] == ' '
+      val hasSpace = editable.length > safeEnd && editable[safeEnd] == ' '
       if (!hasSpace) {
-        spannable.insert(safeEnd, " ")
+        editable.insert(safeEnd, " ")
       }
     }
 
     view.mentionHandler?.reset()
-    view.selection?.validateStyles()
+    view.selection.validateStyles()
     mentionStart = null
   }
 
@@ -438,20 +434,20 @@ class ParametrizedStyles(
     attributes: Map<String, String>,
   ) {
     val selection = view.selection
-    val spannable = view.text as SpannableStringBuilder
+    val editable = view.editableText
     val (selectionStart, selectionEnd) = selection.getInlineSelection()
 
-    removeMentionSpans(spannable, selectionStart, selectionEnd)
+    removeMentionSpans(editable, selectionStart, selectionEnd)
 
     val span = EnrichedMentionSpan(text, indicator, type, attributes, view.htmlStyle)
     val start = mentionStart
 
     if (start == null) {
-      insertMentionAtSelection(spannable, span, selectionStart, selectionEnd, text)
+      insertMentionAtSelection(editable, span, selectionStart, selectionEnd, text)
       return
     }
 
-    replaceMentionFromStart(spannable, span, start, selectionEnd, text)
+    replaceMentionFromStart(editable, span, start, selectionEnd, text)
   }
 
   fun getStyleRange(): Pair<Int, Int> = view.selection.getInlineSelection()
@@ -462,8 +458,7 @@ class ParametrizedStyles(
     end: Int,
   ): Boolean {
     val config = EnrichedSpans.parametrizedStyles[name] ?: return false
-    val spannable = view.text as Spannable
-    return removeSpansForRange(spannable, start, end, config.clazz)
+    return removeSpansForRange(view.editableText, start, end, config.clazz)
   }
 
   companion object {
