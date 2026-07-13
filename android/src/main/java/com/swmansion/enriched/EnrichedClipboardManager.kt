@@ -108,6 +108,8 @@ class EnrichedClipboardManager(
     val safeStart = start.coerceIn(0, editableText.length)
     val safeEnd = end.coerceIn(safeStart, editableText.length)
 
-    return editableText.subSequence(safeStart, safeEnd) as? Spannable
+    if (safeStart >= safeEnd) return null
+
+    return SpannableString.valueOf(editableText.subSequence(safeStart, safeEnd))
   }
 }
