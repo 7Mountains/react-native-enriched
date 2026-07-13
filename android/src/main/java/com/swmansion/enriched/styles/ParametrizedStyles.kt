@@ -72,7 +72,7 @@ class ParametrizedStyles(
     end: Int,
   ) = view.editableText.removeSpans(start, end, EnrichedLinkSpan::class.java)
 
-  // Affected range is range + previous word + next word.
+  // Determines word ranges affected by an edit by expanding to surrounding word boundaries.
   private fun getAffectedWords(
     text: CharSequence,
     start: Int,
