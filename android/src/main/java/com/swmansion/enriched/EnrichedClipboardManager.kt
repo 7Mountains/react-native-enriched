@@ -105,7 +105,9 @@ class EnrichedClipboardManager(
     end: Int,
   ): Spannable? {
     val editableText = view.editableText
+    val safeStart = start.coerceIn(0, editableText.length)
+    val safeEnd = end.coerceIn(safeStart, editableText.length)
 
-    return editableText.subSequence(start, end) as Spannable?
+    return editableText.subSequence(safeStart, safeEnd) as? Spannable
   }
 }
