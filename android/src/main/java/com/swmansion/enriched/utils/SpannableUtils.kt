@@ -1,7 +1,6 @@
 package com.swmansion.enriched.utils
 
 import android.text.Spannable
-import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 
