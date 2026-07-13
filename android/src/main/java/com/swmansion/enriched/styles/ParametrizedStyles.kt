@@ -257,7 +257,7 @@ class ParametrizedStyles(
       // Detect links inside the word using URL_REGEX
       for (match in URL_REGEX.findAll(word)) {
         val linkStart = match.range.first
-        val linkEnd = match.range.last + 1 // inclusive range
+        val linkEnd = match.range.last + 1 // IntRange is inclusive; convert to exclusive end index
 
         val spanStart = wordStart + linkStart
         val spanEnd = wordStart + linkEnd
