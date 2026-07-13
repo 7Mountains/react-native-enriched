@@ -23,10 +23,7 @@ object ParagraphUtils {
 
     if (hasMatchingSpan) return
 
-    spans.forEach {
-      spannable.removeSpan(it)
-    }
-
+    spannable.removeSpans(spans)
     spannable.setSpan(span, pStart, pEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 

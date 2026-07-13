@@ -13,6 +13,7 @@ import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
+import com.swmansion.enriched.utils.removeSpans
 import com.swmansion.enriched.utils.removeZWS
 import com.swmansion.enriched.watchers.TextChangedEvent
 import kotlin.math.max
@@ -25,20 +26,18 @@ class ParametrizedStyles(
 
   var mentionIndicators: Array<String> = emptyArray<String>()
 
-  fun <T> removeSpansForRange(
+  fun removeSpansForRange(
     editable: Editable,
     start: Int,
     end: Int,
-    clazz: Class<T>,
+    clazz: Class<out EnrichedSpan>,
   ): Boolean {
     val spans = editable.getSpans(start, end, clazz)
     if (spans.isEmpty()) return false
 
     editable.removeZWS(start, end)
 
-    for (span in spans) {
-      editable.removeSpan(span)
-    }
+    editable.removeSpans(spans)
 
     return true
   }
@@ -71,13 +70,7 @@ class ParametrizedStyles(
   fun removeLinkSpan(
     start: Int,
     end: Int,
-  ) {
-    val editable = view.editableText
-    val spans = editable.getSpans(start, end, EnrichedLinkSpan::class.java)
-    for (span in spans) {
-      editable.removeSpan(span)
-    }
-  }
+  ) = view.editableText.removeSpans(start, end, EnrichedLinkSpan::class.java)
 
   // After editing text we want to automatically detect links in the affected range
   // Affected range is range + previous word + next word
@@ -107,15 +100,7 @@ class ParametrizedStyles(
     val text = editable.toString()
 
     // Remove existing link spans
-    val existingSpans =
-      editable.getSpans(
-        0,
-        editable.length,
-        EnrichedLinkSpan::class.java,
-      )
-    for (span in existingSpans) {
-      editable.removeSpan(span)
-    }
+    editable.removeSpans(0, editable.length, EnrichedLinkSpan::class.java)
 
     // Detect links using our URL_REGEX
     for (match in URL_REGEX.findAll(text)) {
@@ -200,9 +185,7 @@ class ParametrizedStyles(
         ).filter {
           !it.isManual
         }
-    for (span in spans) {
-      editable.removeSpan(span)
-    }
+    editable.removeSpans(spans)
 
     // Split into words and detect links
     for (wordMatch in wordsRegex.findAll(contextText)) {
@@ -252,10 +235,7 @@ class ParametrizedStyles(
     val mentionIndicatorRegex = Regex("^($indicatorsPattern)")
     val mentionRegex = Regex("^($indicatorsPattern)\\w*")
 
-    val spans = editable.getSpans(currentWord.start, currentWord.end, EnrichedMentionSpan::class.java)
-    for (span in spans) {
-      editable.removeSpan(span)
-    }
+    editable.removeSpans(currentWord.start, currentWord.end, EnrichedMentionSpan::class.java)
 
     var indicator: String
     var finalStart: Int
@@ -334,10 +314,7 @@ class ParametrizedStyles(
     if (start == originalEnd) {
       editable.insert(start, "\uFFFC")
     } else {
-      val spans = editable.getSpans(start, originalEnd, EnrichedImageSpan::class.java)
-      for (s in spans) {
-        editable.removeSpan(s)
-      }
+      editable.removeSpans(start, originalEnd, EnrichedImageSpan::class.java)
 
       editable.replace(start, originalEnd, "\uFFFC")
     }
@@ -367,9 +344,7 @@ class ParametrizedStyles(
     start: Int,
     end: Int,
   ) {
-    editable
-      .getSpans(start, end, EnrichedMentionSpan::class.java)
-      .forEach(editable::removeSpan)
+    editable.removeSpans(start, end, EnrichedMentionSpan::class.java)
   }
 
   private fun insertMentionAtSelection(

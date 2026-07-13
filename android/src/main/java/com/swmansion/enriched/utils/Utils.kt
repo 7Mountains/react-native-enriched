@@ -246,13 +246,8 @@ private fun cleanInsertedFromParagraphSpansIfNeeded(
 
   val (pStart, pEnd) = inserted.getParagraphBounds(0, 0)
 
-  inserted
-    .getSpans(pStart, pEnd, EnrichedParagraphSpan::class.java)
-    .forEach { inserted.removeSpan(it) }
-
-  inserted
-    .getSpans(pStart, pEnd, EnrichedBlockSpan::class.java)
-    .forEach { inserted.removeSpan(it) }
+  inserted.removeSpans(pStart, pEnd, EnrichedParagraphSpan::class.java)
+  inserted.removeSpans(pStart, pEnd, EnrichedBlockSpan::class.java)
 }
 
 private fun SpannableStringBuilder.maybeInsertNewLine(
@@ -293,8 +288,7 @@ private fun SpannableStringBuilder.applyParagraphSpans(
 ) {
   val (pStart, pEnd) = getParagraphBounds(at, at)
 
-  getSpans(pStart, pEnd, EnrichedParagraphSpan::class.java)
-    .forEach { removeSpan(it) }
+  removeSpans(pStart, pEnd, EnrichedParagraphSpan::class.java)
 
   spans.forEach { span ->
     setSpan(

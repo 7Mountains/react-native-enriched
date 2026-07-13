@@ -2,6 +2,7 @@ package com.swmansion.enriched.utils
 
 import android.text.Spannable
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 
 fun Spannable.getListRange(
   paragraphStart: Int,
@@ -56,3 +57,13 @@ fun Spannable.isTheSameParagraphInSelection(selection: EnrichedSelection): Boole
 
   return startParagraphBounds.first == endParagraphBounds.first
 }
+
+fun Spannable.removeSpans(
+  start: Int,
+  end: Int,
+  clazz: Class<out EnrichedSpan>,
+) = removeSpans(getSpans(start, end, clazz))
+
+fun Spannable.removeSpans(spans: Array<out EnrichedSpan>) = spans.forEach(::removeSpan)
+
+fun Spannable.removeSpans(spans: List<EnrichedSpan>) = spans.forEach(::removeSpan)
