@@ -149,7 +149,7 @@ class EnrichedTextInputView : AppCompatEditText {
   private var detectScrollMovement = false
   private var scrollWatcher: EnrichedScrollWatcher? = null
 
-  val mentionHandler: MentionHandler? = MentionHandler(this)
+  val mentionHandler: MentionHandler = MentionHandler(this)
 
   private val checkboxClickHandler by lazy {
     CheckListClickHandler(this)

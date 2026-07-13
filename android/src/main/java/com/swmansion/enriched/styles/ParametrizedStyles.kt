@@ -72,27 +72,75 @@ class ParametrizedStyles(
     end: Int,
   ) = view.editableText.removeSpans(start, end, EnrichedLinkSpan::class.java)
 
-  // After editing text we want to automatically detect links in the affected range
-  // Affected range is range + previous word + next word
-  private fun getLinksAffectedRange(
-    s: CharSequence,
+  // Affected range is range + previous word + next word.
+  private fun getAffectedWords(
+    text: CharSequence,
     start: Int,
     end: Int,
-  ): IntRange {
-    var actualStart = start
-    var actualEnd = end
+  ): List<TextRange> {
+    if (text.isEmpty()) {
+      return emptyList()
+    }
+
+    val safeStart = start.coerceIn(0, text.length)
+    val safeEnd = end.coerceIn(0, text.length)
+
+    var actualStart = minOf(safeStart, safeEnd)
+    var actualEndExclusive = maxOf(safeStart, safeEnd)
 
     // Expand backward to find the start of the first affected word
-    while (actualStart > 0 && !Character.isWhitespace(s[actualStart - 1])) {
+    while (
+      actualStart > 0 &&
+      !text[actualStart - 1].isWhitespace()
+    ) {
       actualStart--
     }
 
     // Expand forward to find the end of the last affected word
-    while (actualEnd < s.length && !Character.isWhitespace(s[actualEnd])) {
-      actualEnd++
+    while (
+      actualEndExclusive < text.length &&
+      !text[actualEndExclusive].isWhitespace()
+    ) {
+      actualEndExclusive++
     }
 
-    return actualStart..actualEnd
+    if (actualStart >= actualEndExclusive) {
+      return emptyList()
+    }
+
+    val affectedWords = mutableListOf<TextRange>()
+    var wordStart: Int? = null
+
+    for (index in actualStart until actualEndExclusive) {
+      if (text[index].isWhitespace()) {
+        val startIndex = wordStart
+        if (startIndex != null) {
+          affectedWords.add(
+            TextRange(
+              text.subSequence(startIndex, index).toString(),
+              startIndex,
+              index,
+            ),
+          )
+          wordStart = null
+        }
+      } else if (wordStart == null) {
+        wordStart = index
+      }
+    }
+
+    val startIndex = wordStart
+    if (startIndex != null) {
+      affectedWords.add(
+        TextRange(
+          text.subSequence(startIndex, actualEndExclusive).toString(),
+          startIndex,
+          actualEndExclusive,
+        ),
+      )
+    }
+
+    return affectedWords
   }
 
   fun detectAllLinks() {
@@ -121,25 +169,34 @@ class ParametrizedStyles(
   }
 
   private fun getWordAtIndex(
-    s: CharSequence,
+    text: CharSequence,
     index: Int,
+    affectedWords: List<TextRange>,
   ): TextRange? {
     if (index < 0) return null
 
-    var start = index
-    var end = index
+    val safeIndex = index.coerceIn(0, text.length)
+    val affectedWord = affectedWords.firstOrNull { safeIndex in it.start..it.end }
+    if (affectedWord != null) {
+      return affectedWord
+    }
 
-    while (start > 0 && !Character.isWhitespace(s[start - 1])) {
+    var start = safeIndex
+    var end = safeIndex
+
+    while (start > 0 && !Character.isWhitespace(text[start - 1])) {
       start--
     }
 
-    while (end < s.length && !Character.isWhitespace(s[end])) {
+    while (end < text.length && !Character.isWhitespace(text[end])) {
       end++
     }
 
-    val result = s.subSequence(start, end).toString()
+    if (start == end) {
+      return TextRange("", safeIndex, safeIndex)
+    }
 
-    return TextRange(result, start, end)
+    return TextRange(text.subSequence(start, end).toString(), start, end)
   }
 
   private fun canLinkBeApplied(): Boolean {
@@ -161,6 +218,7 @@ class ParametrizedStyles(
   private fun afterTextChangedLinks(
     editStart: Int,
     editEnd: Int,
+    affectedWords: List<TextRange>,
   ) {
     // Do not detect link if it's applied manually
     if (isSettingLinkSpan || !canLinkBeApplied()) return
@@ -169,28 +227,26 @@ class ParametrizedStyles(
     // If user inserted a newline right after a link, don't touch spans.
     if (isNewlineInsertedAtEndOfSpan(editable, editStart, editEnd, EnrichedLinkSpan::class.java)) return
 
-    val affectedRange = getLinksAffectedRange(editable, editStart, editEnd)
-    val contextText =
-      editable
-        .subSequence(affectedRange.first, affectedRange.last)
-        .toString()
+    if (affectedWords.isEmpty()) return
+
+    val affectedStart = affectedWords.first().start
+    val affectedEnd = affectedWords.last().end
 
     // Remove existing link spans in affected range
     val spans =
       editable
         .getSpans(
-          affectedRange.first,
-          affectedRange.last,
+          affectedStart,
+          affectedEnd,
           EnrichedLinkSpan::class.java,
         ).filter {
           !it.isManual
         }
     editable.removeSpans(spans)
 
-    // Split into words and detect links
-    for (wordMatch in wordsRegex.findAll(contextText)) {
-      var word = wordMatch.value
-      var wordStart = wordMatch.range.first
+    for (affectedWord in affectedWords) {
+      var word = affectedWord.text
+      var wordStart = affectedWord.start
 
       // Do not include zero-width space in link detection
       if (word.startsWith(Strings.ZERO_WIDTH_SPACE_CHAR)) {
@@ -203,8 +259,8 @@ class ParametrizedStyles(
         val linkStart = match.range.first
         val linkEnd = match.range.last + 1 // inclusive range
 
-        val spanStart = affectedRange.first + wordStart + linkStart
-        val spanEnd = affectedRange.first + wordStart + linkEnd
+        val spanStart = wordStart + linkStart
+        val spanEnd = wordStart + linkEnd
 
         val span = EnrichedLinkSpan(match.value, view.htmlStyle)
         val (safeStart, safeEnd) =
@@ -224,13 +280,14 @@ class ParametrizedStyles(
     s: CharSequence,
     startCursorPosition: Int,
     endCursorPosition: Int,
+    affectedWords: List<TextRange>,
   ) {
-    val mentionHandler = view.mentionHandler ?: return
+    val mentionHandler = view.mentionHandler
 
     val editable = view.editableText
     if (isNewlineInsertedAtEndOfSpan(editable, startCursorPosition, endCursorPosition, EnrichedMentionSpan::class.java)) return
 
-    val currentWord = getWordAtIndex(s, endCursorPosition) ?: return
+    val currentWord = getWordAtIndex(s, endCursorPosition, affectedWords) ?: return
     val indicatorsPattern = mentionIndicators.joinToString("|") { Regex.escape(it) }
     val mentionIndicatorRegex = Regex("^($indicatorsPattern)")
     val mentionRegex = Regex("^($indicatorsPattern)\\w*")
@@ -243,7 +300,7 @@ class ParametrizedStyles(
 
     // No mention in the current word, check previous one
     if (!mentionRegex.matches(currentWord.text)) {
-      val previousWord = getWordAtIndex(editable, currentWord.start - 1)
+      val previousWord = getWordAtIndex(editable, currentWord.start - 1, affectedWords)
 
       // No previous word -> no mention to be detected
       if (previousWord == null) {
@@ -299,8 +356,15 @@ class ParametrizedStyles(
   }
 
   fun afterTextChanged(event: TextChangedEvent) {
-    afterTextChangedLinks(event.startCursorPosition, event.endCursorPosition)
-    afterTextChangedMentions(event.text, event.startCursorPosition, event.endCursorPosition)
+    val affectedWords =
+      getAffectedWords(
+        event.text,
+        event.startCursorPosition,
+        event.endCursorPosition,
+      )
+
+    afterTextChangedLinks(event.startCursorPosition, event.endCursorPosition, affectedWords)
+    afterTextChangedMentions(event.text, event.startCursorPosition, event.endCursorPosition, affectedWords)
   }
 
   fun setImageSpan(
@@ -343,9 +407,7 @@ class ParametrizedStyles(
     editable: Editable,
     start: Int,
     end: Int,
-  ) {
-    editable.removeSpans(start, end, EnrichedMentionSpan::class.java)
-  }
+  ) = editable.removeSpans(start, end, EnrichedMentionSpan::class.java)
 
   private fun insertMentionAtSelection(
     editable: Editable,
@@ -371,7 +433,7 @@ class ParametrizedStyles(
 
     view.setSelection(spanEnd + 1)
     view.selection.validateStyles()
-    view.mentionHandler?.reset()
+    view.mentionHandler.reset()
     mentionStart = null
   }
 
@@ -383,21 +445,22 @@ class ParametrizedStyles(
     text: String,
   ) {
     view.transactionManager.runTransaction {
-      editable.replace(start, selectionEnd, text)
+      val insertedMention = SpannableStringBuilder(text)
+      insertedMention.setSpan(span, 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
       val spanEnd = start + text.length
       val (safeStart, safeEnd) =
         editable.getSafeSpanBoundaries(start, spanEnd)
 
-      editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-      val hasSpace = editable.length > safeEnd && editable[safeEnd] == ' '
+      val hasSpace = editable.length > safeEnd && editable[safeEnd].isWhitespace()
       if (!hasSpace) {
-        editable.insert(safeEnd, " ")
+        insertedMention.insert(text.length, Strings.SPACE_STRING)
       }
+
+      editable.replace(safeStart, selectionEnd, insertedMention)
     }
 
-    view.mentionHandler?.reset()
+    view.mentionHandler.reset()
     view.selection.validateStyles()
     mentionStart = null
   }
@@ -446,8 +509,6 @@ class ParametrizedStyles(
           """(/[-a-zA-Z0-9@:%_+.~#?&/=]*)?$""",
         RegexOption.IGNORE_CASE,
       )
-
-    val wordsRegex = Regex("\\S+")
 
     data class TextRange(
       val text: String,

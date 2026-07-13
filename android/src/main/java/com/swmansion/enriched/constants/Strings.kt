@@ -36,6 +36,7 @@ object Strings {
   const val GT_CHAR = '>'
   const val AMP_CHAR = '&'
   const val SPACE_CHAR = ' '
+  const val SPACE_STRING = "" + SPACE_CHAR
 
   // HTML tag delimiters
   const val LT = "<"
