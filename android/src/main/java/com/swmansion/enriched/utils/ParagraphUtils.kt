@@ -35,6 +35,7 @@ object ParagraphUtils {
     paragraphBounds: Pair<Int, Int>,
   ): EnrichedAlignmentSpan? {
     val (currentParagraphStart) = paragraphBounds
+    if (currentParagraphStart <= 0) return null
     val (prevStart, prevEnd) = spannable.getParagraphBounds(currentParagraphStart - 1)
 
     return spannable
@@ -48,6 +49,7 @@ object ParagraphUtils {
     paragraphEnd: Int,
     clazz: Class<out EnrichedSpan>,
   ): EnrichedSpan? {
+    if (paragraphStart <= 0) return null
     val (prevStart, prevEnd) = spannable.getParagraphBounds(paragraphStart - 1)
 
     return spannable
@@ -65,7 +67,7 @@ object ParagraphUtils {
   }
 
   fun findOrderedListSpan(
-    text: Spanned,
+    text: Spannable,
     paragraphStart: Int,
     paragraphEnd: Int,
   ): EnrichedOrderedListSpan? =
@@ -76,7 +78,7 @@ object ParagraphUtils {
       }
 
   fun findParagraphAlignment(
-    text: Spanned,
+    text: Spannable,
     paragraphStart: Int,
     paragraphEnd: Int,
   ): Layout.Alignment? =
@@ -87,7 +89,7 @@ object ParagraphUtils {
       }?.alignment
 
   private fun Spanned.hasSpanIntersection(
-    span: Any,
+    span: EnrichedSpan,
     paragraphStart: Int,
     paragraphEnd: Int,
   ): Boolean {

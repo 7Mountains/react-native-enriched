@@ -1,5 +1,6 @@
 package com.swmansion.enriched.styles
 
+import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -25,27 +26,27 @@ class ListStyles(
   private val view: EnrichedTextInputView,
 ) {
   private fun setSpan(
-    spannable: Spannable,
+    editable: Editable,
     name: TextStyle,
     start: Int,
     end: Int,
   ) {
-    val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, end)
+    val (safeStart, safeEnd) = editable.getSafeSpanBoundaries(start, end)
 
     when (name) {
       TextStyle.UNORDERED_LIST -> {
         val span = EnrichedUnorderedListSpan(view.htmlStyle)
-        spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
 
       TextStyle.ORDERED_LIST -> {
         val span = EnrichedOrderedListSpan(view.htmlStyle)
-        spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
 
       TextStyle.CHECK_LIST -> {
         val span = EnrichedChecklistSpan(view.htmlStyle)
-        spannable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       }
 
       else -> {}
@@ -53,26 +54,25 @@ class ListStyles(
   }
 
   private fun removeSpansForRange(
-    spannable: Spannable,
+    editable: Editable,
     start: Int,
     end: Int,
     clazz: Class<out EnrichedSpan>,
     removeZWS: Boolean = true,
   ): Boolean {
-    val ssb = spannable as SpannableStringBuilder
-    val spans = ssb.getSpans(start, end, clazz)
+    val spans = editable.getSpans(start, end, clazz)
     if (spans.isEmpty()) return false
 
     val flag = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
 
     for (span in spans) {
-      val spanStart = ssb.getSpanStart(span)
-      val spanEnd = ssb.getSpanEnd(span)
+      val spanStart = editable.getSpanStart(span)
+      val spanEnd = editable.getSpanEnd(span)
 
-      ssb.removeSpan(span)
+      editable.removeSpan(span)
 
       if (spanStart < start) {
-        ssb.setSpan(
+        editable.setSpan(
           span.copy(),
           spanStart,
           start,
@@ -81,7 +81,7 @@ class ListStyles(
       }
 
       if (spanEnd > end) {
-        ssb.setSpan(
+        editable.setSpan(
           span.copy(),
           end,
           spanEnd,
@@ -91,7 +91,7 @@ class ListStyles(
     }
 
     if (removeZWS) {
-      ssb.removeZWS(start, end)
+      editable.removeZWS(start, end)
     }
 
     return true
@@ -99,7 +99,7 @@ class ListStyles(
 
   fun toggleStyle(name: TextStyle) {
     val config = EnrichedSpans.listSpans[name] ?: return
-    val spannable = view.text as SpannableStringBuilder
+    val editable = view.editableText
     val selection = view.selection
     val spanState = view.spanState
     val (start, end) = selection.getParagraphSelection()
@@ -107,35 +107,35 @@ class ListStyles(
 
     if (styleStart != null) {
       spanState.setStart(name, null)
-      removeSpansForRange(spannable, start, end, config.clazz)
+      removeSpansForRange(editable, start, end, config.clazz)
       selection.validateStyles()
 
       return
     }
 
     if (start == end) {
-      spannable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
+      editable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
       spanState.setStartWithStateChangeEmitting(name, start + 1)
-      removeSpansForRange(spannable, start, end, config.clazz)
+      removeSpansForRange(editable, start, end, config.clazz)
       val newEnd = end + 1
-      setSpan(spannable, name, start, newEnd)
-      reapplyAlignment(spannable, start, newEnd)
+      setSpan(editable, name, start, newEnd)
+      reapplyAlignment(editable, start, newEnd)
       return
     }
 
     var currentStart = start
-    val paragraphs = spannable.substring(start, end).split(Strings.NEWLINE_STRING)
-    removeSpansForRange(spannable, start, end, config.clazz, false)
+    val paragraphs = editable.substring(start, end).split(Strings.NEWLINE_STRING)
+    removeSpansForRange(editable, start, end, config.clazz, false)
 
     for (paragraph in paragraphs) {
       var currentEnd = currentStart + paragraph.length
 
       if (!paragraph.contains(Strings.ZERO_WIDTH_SPACE_CHAR)) {
-        spannable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
+        editable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
         currentEnd += 1
       }
-      setSpan(spannable, name, currentStart, currentEnd)
-      reapplyAlignment(spannable, currentStart, currentEnd)
+      setSpan(editable, name, currentStart, currentEnd)
+      reapplyAlignment(editable, currentStart, currentEnd)
       currentStart = currentEnd + 1
     }
 
@@ -192,16 +192,16 @@ class ListStyles(
   }
 
   private fun reapplyAlignment(
-    spannable: Spannable,
+    editable: Editable,
     start: Int,
     end: Int,
   ) {
-    val spans = spannable.getSpans(start, end, EnrichedAlignmentSpan::class.java)
+    val spans = editable.getSpans(start, end, EnrichedAlignmentSpan::class.java)
     if (spans.isEmpty()) return
 
-    spans.forEach { spannable.removeSpan(it) }
+    spans.forEach { editable.removeSpan(it) }
 
-    spannable.setSpan(
+    editable.setSpan(
       spans.first().copy(),
       start,
       end,
@@ -217,7 +217,6 @@ class ListStyles(
     end: Int,
   ): Boolean {
     val config = EnrichedSpans.listSpans[name] ?: return false
-    val spannable = view.text as Spannable
-    return removeSpansForRange(spannable, start, end, config.clazz)
+    return removeSpansForRange(view.editableText, start, end, config.clazz)
   }
 }

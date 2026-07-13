@@ -1,5 +1,6 @@
 package com.swmansion.enriched.utils
 
+import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -305,8 +306,8 @@ private fun SpannableStringBuilder.applyParagraphSpans(
   }
 }
 
-// Removes zero-width spaces from the given range in the SpannableStringBuilder without affecting spans
-fun SpannableStringBuilder.removeZWS(
+// Removes zero-width spaces from the given range in the Editable without affecting spans
+fun Editable.removeZWS(
   start: Int,
   end: Int,
 ): Pair<Int, Int> {

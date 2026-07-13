@@ -1,5 +1,6 @@
 package com.swmansion.enriched.utils
 
+import android.text.Editable
 import android.text.Spannable
 import android.text.Spanned
 import com.swmansion.enriched.spans.EnrichedAlignmentSpan
@@ -7,14 +8,14 @@ import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 
 object ParagraphSpanNormalizer {
   fun normalize(
-    spannable: Spannable,
+    editable: Editable,
     cursor: Int,
   ) {
-    if (spannable.isEmpty()) return
-    val (pStart, pEnd) = spannable.getParagraphBounds(cursor)
+    if (editable.isEmpty()) return
+    val (pStart, pEnd) = editable.getParagraphBounds(cursor)
 
-    normalizeParagraphStyle(spannable, pStart, pEnd)
-    normalizeAlignment(spannable, pStart, pEnd)
+    normalizeParagraphStyle(editable, pStart, pEnd)
+    normalizeAlignment(editable, pStart, pEnd)
   }
 
   private fun normalizeParagraphStyle(
@@ -53,14 +54,14 @@ object ParagraphSpanNormalizer {
   }
 
   private fun normalizeAlignment(
-    spannable: Spannable,
+    editable: Editable,
     pStart: Int,
     pEnd: Int,
   ) {
     val spans =
-      spannable
+      editable
         .getSpans(pStart, pEnd, EnrichedAlignmentSpan::class.java)
-        .sortedBy { spannable.getSpanStart(it) }
+        .sortedBy { editable.getSpanStart(it) }
 
     if (spans.isEmpty()) return
 
@@ -70,34 +71,34 @@ object ParagraphSpanNormalizer {
     val winnerAlignment = winner.alignment
 
     for (span in spans) {
-      val start = spannable.getSpanStart(span)
-      val end = spannable.getSpanEnd(span)
+      val start = editable.getSpanStart(span)
+      val end = editable.getSpanEnd(span)
 
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
 
       val isWinner = span === winner
 
       if (start < pStart) {
         val left = span.copy()
-        spannable.setSpan(left, start, pStart, flag)
+        editable.setSpan(left, start, pStart, flag)
       }
 
       if (end > pEnd) {
         val right = span.copy()
-        spannable.setSpan(right, pEnd, end, flag)
+        editable.setSpan(right, pEnd, end, flag)
       }
 
       if (isWinner) {
         val middle = span.copy()
-        spannable.setSpan(middle, pStart, pEnd, flag)
+        editable.setSpan(middle, pStart, pEnd, flag)
       }
     }
 
     val hasSpanNow =
-      spannable.getSpans(pStart, pEnd, EnrichedAlignmentSpan::class.java).isNotEmpty()
+      editable.getSpans(pStart, pEnd, EnrichedAlignmentSpan::class.java).isNotEmpty()
     if (!hasSpanNow) {
       val middle = EnrichedAlignmentSpan(winnerAlignment)
-      spannable.setSpan(middle, pStart, pEnd, flag)
+      editable.setSpan(middle, pStart, pEnd, flag)
     }
   }
 }

@@ -1,14 +1,14 @@
 package com.swmansion.enriched.utils
 
+import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.interfaces.EnrichedListSpan
 
 object ZWSNormalizer {
-  fun normalizeNonEmptyParagraphs(spannable: Spannable) {
-    val builder = spannable as? SpannableStringBuilder ?: return
-    var len = builder.length
+  fun normalizeNonEmptyParagraphs(editable: Editable) {
+    var len = editable.length
 
     var pStart = 0
     while (pStart < len) {
@@ -16,8 +16,8 @@ object ZWSNormalizer {
       var isEmpty = true
       var hasZWS = false
 
-      while (pEnd < len && builder[pEnd] != Strings.NEWLINE) {
-        val c = builder[pEnd]
+      while (pEnd < len && editable[pEnd] != Strings.NEWLINE) {
+        val c = editable[pEnd]
         if (c == Strings.ZERO_WIDTH_SPACE_CHAR) {
           hasZWS = true
         } else {
@@ -27,11 +27,11 @@ object ZWSNormalizer {
       }
 
       if (hasZWS && !isEmpty) {
-        if (!hasListSpan(builder, pStart, pEnd)) {
-          builder.removeZWS(pStart, pEnd)
+        if (!hasListSpan(editable, pStart, pEnd)) {
+          editable.removeZWS(pStart, pEnd)
 
           // update length after ZWS removal
-          len = builder.length
+          len = editable.length
         }
       }
 

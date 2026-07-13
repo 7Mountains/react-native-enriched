@@ -1,7 +1,6 @@
 package com.swmansion.enriched.utils
 
 import android.text.Spannable
-import android.text.SpannableStringBuilder
 import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
 
 fun Spannable.getListRange(
@@ -57,5 +56,3 @@ fun Spannable.isTheSameParagraphInSelection(selection: EnrichedSelection): Boole
 
   return startParagraphBounds.first == endParagraphBounds.first
 }
-
-fun Spannable.asBuilder() = this as SpannableStringBuilder

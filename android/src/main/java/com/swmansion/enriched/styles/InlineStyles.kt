@@ -23,7 +23,7 @@ class InlineStyles(
   private val view: EnrichedTextInputView,
 ) {
   private fun <T : EnrichedSpan> setSpan(
-    spannable: Spannable,
+    editable: Editable,
     type: Class<T>,
     start: Int,
     end: Int,
@@ -31,45 +31,45 @@ class InlineStyles(
   ) {
     val previousSpanStart = (start - 1).coerceAtLeast(0)
     val previousSpanEnd = previousSpanStart + 1
-    val nextSpanStart = (end + 1).coerceAtMost(spannable.length)
-    val nextSpanEnd = (nextSpanStart + 1).coerceAtMost(spannable.length)
-    val previousSpans = spannable.getSpans(previousSpanStart, previousSpanEnd, type)
-    val nextSpans = spannable.getSpans(nextSpanStart, nextSpanEnd, type)
+    val nextSpanStart = (end + 1).coerceAtMost(editable.length)
+    val nextSpanEnd = (nextSpanStart + 1).coerceAtMost(editable.length)
+    val previousSpans = editable.getSpans(previousSpanStart, previousSpanEnd, type)
+    val nextSpans = editable.getSpans(nextSpanStart, nextSpanEnd, type)
     var minimum = start
     var maximum = end
 
     for (span in previousSpans) {
-      val spanStart = spannable.getSpanStart(span)
+      val spanStart = editable.getSpanStart(span)
       minimum = spanStart.coerceAtMost(minimum)
     }
 
     for (span in nextSpans) {
-      val spanEnd = spannable.getSpanEnd(span)
+      val spanEnd = editable.getSpanEnd(span)
       maximum = spanEnd.coerceAtLeast(maximum)
     }
 
-    val spans = spannable.getSpans(minimum, maximum, type)
+    val spans = editable.getSpans(minimum, maximum, type)
     for (span in spans) {
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
     }
 
     val span = createSpan(styleName)
-    val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(minimum, maximum)
-    spannable.setSpan(span, safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    val (safeStart, safeEnd) = editable.getSafeSpanBoundaries(minimum, maximum)
+    editable.setSpan(span, safeStart, safeEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
   private fun <T : EnrichedSpan> setAndMergeSpans(
-    spannable: Spannable,
+    editable: Editable,
     type: Class<T>,
     start: Int,
     end: Int,
     styleName: TextStyle,
   ) {
-    val spans = spannable.getSpans(start, end, type)
+    val spans = editable.getSpans(start, end, type)
 
     // No spans setup for current selection, means we just need to assign new span
     if (spans.isEmpty()) {
-      setSpan(spannable, type, start, end, styleName)
+      setSpan(editable, type, start, end, styleName)
       return
     }
 
@@ -77,19 +77,19 @@ class InlineStyles(
 
     // Some spans are present, we have to remove spans and (optionally) apply new spans
     for (span in spans) {
-      val spanStart = spannable.getSpanStart(span)
-      val spanEnd = spannable.getSpanEnd(span)
+      val spanStart = editable.getSpanStart(span)
+      val spanEnd = editable.getSpanEnd(span)
       var finalStart: Int? = null
       var finalEnd: Int? = null
       if (spanStart == -1 || spanEnd == -1) continue
 
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
 
       if (start == spanStart && end == spanEnd) {
         setSpanOnFinish = false
       } else if (start > spanStart && end < spanEnd) {
-        setSpan(spannable, type, spanStart, start, styleName)
-        setSpan(spannable, type, end, spanEnd, styleName)
+        setSpan(editable, type, spanStart, start, styleName)
+        setSpan(editable, type, end, spanEnd, styleName)
       } else if (start == spanStart && end < spanEnd) {
         finalStart = end
         finalEnd = spanEnd
@@ -107,23 +107,23 @@ class InlineStyles(
       }
 
       if (!setSpanOnFinish && finalStart != null && finalEnd != null) {
-        setSpan(spannable, type, finalStart, finalEnd, styleName)
+        setSpan(editable, type, finalStart, finalEnd, styleName)
       }
     }
 
     if (setSpanOnFinish) {
-      setSpan(spannable, type, start, end, styleName)
+      setSpan(editable, type, start, end, styleName)
     }
   }
 
   private fun applyColorSpan(
-    spannable: Spannable,
+    editable: Editable,
     start: Int,
     end: Int,
     color: Int,
   ) {
-    val (safeStart, safeEnd) = spannable.getSafeSpanBoundaries(start, end)
-    spannable.setSpan(
+    val (safeStart, safeEnd) = editable.getSafeSpanBoundaries(start, end)
+    editable.setSpan(
       EnrichedColoredSpan(color),
       safeStart,
       safeEnd,
@@ -132,18 +132,18 @@ class InlineStyles(
   }
 
   private fun splitExistingColorSpans(
-    spannable: Spannable,
+    editable: Editable,
     start: Int,
     end: Int,
     onRemain: (s: Int, e: Int, color: Int) -> Unit,
   ) {
-    val spans = spannable.getSpans(start, end, EnrichedColoredSpan::class.java)
+    val spans = editable.getSpans(start, end, EnrichedColoredSpan::class.java)
     for (span in spans) {
-      val spanStart = spannable.getSpanStart(span)
-      val spanEnd = spannable.getSpanEnd(span)
+      val spanStart = editable.getSpanStart(span)
+      val spanEnd = editable.getSpanEnd(span)
       val color = span.color
 
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
 
       if (spanStart < start) {
         onRemain(spanStart, start, color)
@@ -155,29 +155,29 @@ class InlineStyles(
     }
   }
 
-  private fun mergeAdjacentColors(spannable: Spannable) {
+  private fun mergeAdjacentColors(editable: Editable) {
     val colorSpans =
-      spannable
-        .getSpans(0, spannable.length, EnrichedColoredSpan::class.java)
-        .sortedBy { spannable.getSpanStart(it) }
+      editable
+        .getSpans(0, editable.length, EnrichedColoredSpan::class.java)
+        .sortedBy { editable.getSpanStart(it) }
 
     var index = 0
     while (index < colorSpans.size - 1) {
       val currentSpan = colorSpans[index]
       val nextSpan = colorSpans[index + 1]
 
-      val currentStart = spannable.getSpanStart(currentSpan)
-      val currentEnd = spannable.getSpanEnd(currentSpan)
-      val nextStart = spannable.getSpanStart(nextSpan)
-      val nextEnd = spannable.getSpanEnd(nextSpan)
+      val currentStart = editable.getSpanStart(currentSpan)
+      val currentEnd = editable.getSpanEnd(currentSpan)
+      val nextStart = editable.getSpanStart(nextSpan)
+      val nextEnd = editable.getSpanEnd(nextSpan)
 
       if (currentEnd == nextStart && currentSpan.color == nextSpan.color) {
-        spannable.removeSpan(currentSpan)
-        spannable.removeSpan(nextSpan)
+        editable.removeSpan(currentSpan)
+        editable.removeSpan(nextSpan)
 
-        applyColorSpan(spannable, currentStart, nextEnd, currentSpan.color)
+        applyColorSpan(editable, currentStart, nextEnd, currentSpan.color)
 
-        return mergeAdjacentColors(spannable)
+        return mergeAdjacentColors(editable)
       }
 
       index++
@@ -185,12 +185,12 @@ class InlineStyles(
   }
 
   private fun isFullyColoredWith(
-    spannable: Spannable,
+    editable: Editable,
     start: Int,
     end: Int,
     color: Int,
   ): Boolean {
-    val spans = spannable.getSpans(start, end, EnrichedColoredSpan::class.java)
+    val spans = editable.getSpans(start, end, EnrichedColoredSpan::class.java)
     if (spans.isEmpty()) return false
 
     val allSame = spans.all { it.color == color }
@@ -199,19 +199,19 @@ class InlineStyles(
       return false
     }
 
-    val minStart = spans.minOf { spannable.getSpanStart(it) }
-    val maxEnd = spans.maxOf { spannable.getSpanEnd(it) }
+    val minStart = spans.minOf { editable.getSpanStart(it) }
+    val maxEnd = spans.maxOf { editable.getSpanEnd(it) }
 
     return minStart <= start && maxEnd >= end
   }
 
   fun setColorStyle(color: Int) {
     val (start, end) = view.selection.getInlineSelection()
-    val spannable = view.text as Spannable
+    val editable = view.editableText
 
     if (start == end) {
       val spanState = view.spanState
-      splitSpan(spannable, start, end, EnrichedColoredSpan::class.java)
+      splitSpan(editable, start, end, EnrichedColoredSpan::class.java)
       if (spanState.getStart(TextStyle.COLOR) != null && color == spanState.typingColor) {
         view.spanState.setColorStartWithEventEmitting(null, null)
       } else {
@@ -220,20 +220,20 @@ class InlineStyles(
       return
     }
 
-    if (isFullyColoredWith(spannable, start, end, color)) {
+    if (isFullyColoredWith(editable, start, end, color)) {
       removeColorRange(start, end)
       view.spanState.setColorStart(null, null)
       view.selection.validateStyles()
       return
     }
 
-    splitExistingColorSpans(spannable, start, end) { spanStart, spanEnd, existingColor ->
-      applyColorSpan(spannable, spanStart, spanEnd, existingColor)
+    splitExistingColorSpans(editable, start, end) { spanStart, spanEnd, existingColor ->
+      applyColorSpan(editable, spanStart, spanEnd, existingColor)
     }
 
-    applyColorSpan(spannable, start, end, color)
+    applyColorSpan(editable, start, end, color)
 
-    mergeAdjacentColors(spannable)
+    mergeAdjacentColors(editable)
 
     view.spanState.setColorStart(null, null)
     view.selection.validateStyles()
@@ -243,11 +243,11 @@ class InlineStyles(
     start: Int,
     end: Int,
   ) {
-    val spannable = view.text as Spannable
+    val editable = view.editableText
 
-    splitExistingColorSpans(spannable, start, end) { spanStart, spanEnd, color ->
-      if (spanStart < start) applyColorSpan(spannable, spanStart, start, color)
-      if (spanEnd > end) applyColorSpan(spannable, end, spanEnd, color)
+    splitExistingColorSpans(editable, start, end) { spanStart, spanEnd, color ->
+      if (spanStart < start) applyColorSpan(editable, spanStart, start, color)
+      if (spanEnd > end) applyColorSpan(editable, end, spanEnd, color)
     }
   }
 
@@ -257,8 +257,8 @@ class InlineStyles(
     view.spanState.setColorStart(null, null)
 
     if (start == end) {
-      val spannable = view.text as Spannable
-      splitSpan(spannable, start, end, EnrichedColoredSpan::class.java)
+      val editable = view.editableText
+      splitSpan(editable, start, end, EnrichedColoredSpan::class.java)
       return
     }
 
@@ -363,7 +363,7 @@ class InlineStyles(
   }
 
   private fun applyTypingColorIfActive(
-    spannable: Spannable,
+    editable: Editable,
     cursor: Int,
   ) {
     val state = view.spanState
@@ -371,43 +371,43 @@ class InlineStyles(
     val color = state.typingColor ?: return
 
     val existing =
-      spannable
+      editable
         .getSpans(colorStart, colorStart, EnrichedColoredSpan::class.java)
         .firstOrNull { it.color == color }
 
     if (existing != null) {
-      val spanStart = spannable.getSpanStart(existing)
-      val spanEnd = spannable.getSpanEnd(existing)
+      val spanStart = editable.getSpanStart(existing)
+      val spanEnd = editable.getSpanEnd(existing)
 
       if (cursor > spanEnd) {
-        spannable.removeSpan(existing)
-        applyColorSpan(spannable, spanStart, cursor, color)
+        editable.removeSpan(existing)
+        applyColorSpan(editable, spanStart, cursor, color)
       }
 
       view.spanState.setColorStart(cursor, color)
       return
     }
 
-    applyColorSpan(spannable, colorStart, cursor, color)
+    applyColorSpan(editable, colorStart, cursor, color)
     view.spanState.setColorStart(cursor, color)
   }
 
   private fun splitSpan(
-    spannable: Spannable,
+    editable: Editable,
     start: Int,
     end: Int,
     type: Class<out EnrichedSpan>,
   ) {
-    val currentSpans = spannable.getSpans(start, end, type)
+    val currentSpans = editable.getSpans(start, end, type)
 
     for (span in currentSpans) {
-      val spanStart = spannable.getSpanStart(span)
-      val spanEnd = spannable.getSpanEnd(span)
+      val spanStart = editable.getSpanStart(span)
+      val spanEnd = editable.getSpanEnd(span)
 
-      spannable.removeSpan(span)
+      editable.removeSpan(span)
 
-      spannable.setSpan(span.copy(), spanStart, start, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-      spannable.setSpan(span.copy(), end, spanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      editable.setSpan(span.copy(), spanStart, start, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      editable.setSpan(span.copy(), end, spanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
   }
 
@@ -416,12 +416,12 @@ class InlineStyles(
     val (start, end) = view.selection.getInlineSelection()
     val config = EnrichedSpans.inlineSpans[name] ?: return
     val type = config.clazz
-    val spannable = view.text as Spannable
+    val editable = view.editableText
 
     // We either start or end current span
     if (start == end) {
       val styleStart = spanState.getStart(name)
-      splitSpan(spannable, start, end, type)
+      splitSpan(editable, start, end, type)
       if (styleStart != null) {
         spanState.setStartWithStateChangeEmitting(name, null)
       } else {
@@ -431,7 +431,7 @@ class InlineStyles(
       return
     }
 
-    setAndMergeSpans(spannable, type, start, end, name)
+    setAndMergeSpans(editable, type, start, end, name)
     view.selection.validateStyles()
   }
 
@@ -441,11 +441,11 @@ class InlineStyles(
     end: Int,
   ): Boolean {
     val config = EnrichedSpans.inlineSpans[name] ?: return false
-    val spannable = view.text as Spannable
-    val spans = spannable.getSpans(start, end, config.clazz)
+    val editable = view.editableText
+    val spans = editable.getSpans(start, end, config.clazz)
     if (spans.isEmpty()) return false
 
-    spans.forEach { it -> spannable.removeSpan(it) }
+    spans.forEach { it -> editable.removeSpan(it) }
 
     view.spanState.setStart(name, null)
 
