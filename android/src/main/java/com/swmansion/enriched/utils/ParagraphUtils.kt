@@ -67,7 +67,7 @@ object ParagraphUtils {
   }
 
   fun findOrderedListSpan(
-    text: Spannable,
+    text: Spanned,
     paragraphStart: Int,
     paragraphEnd: Int,
   ): EnrichedOrderedListSpan? =
@@ -78,7 +78,7 @@ object ParagraphUtils {
       }
 
   fun findParagraphAlignment(
-    text: Spannable,
+    text: Spanned,
     paragraphStart: Int,
     paragraphEnd: Int,
   ): Layout.Alignment? =
