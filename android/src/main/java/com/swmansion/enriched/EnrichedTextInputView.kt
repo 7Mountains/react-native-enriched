@@ -60,7 +60,9 @@ import com.swmansion.enriched.textinput.utils.EnrichedEditableFactory
 import com.swmansion.enriched.utils.EnrichedSelection
 import com.swmansion.enriched.utils.EnrichedSpanState
 import com.swmansion.enriched.utils.LineSeparatorTransformationMethod
+import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.mergeSpannables
+import com.swmansion.enriched.utils.startsWithNonEditableParagraph
 import com.swmansion.enriched.watchers.EnrichedScrollWatcher
 import com.swmansion.enriched.watchers.EnrichedSpanWatcher
 import com.swmansion.enriched.watchers.EnrichedTextWatcher
@@ -391,6 +393,20 @@ class EnrichedTextInputView : AppCompatEditText {
 
       val start = rawStart.coerceIn(0, length)
       val end = rawEnd.coerceIn(start, length)
+
+      if (start == end && spannable.startsWithNonEditableParagraph()) {
+        val (paragraphStart, paragraphEnd) = currentText.getParagraphBounds(start, end)
+
+        if (paragraphStart < paragraphEnd) {
+          val insertedText = SpannableStringBuilder(Strings.NEWLINE_STRING).append(spannable)
+
+          currentText.insert(paragraphEnd, insertedText)
+
+          val cursor = (paragraphEnd + insertedText.length).coerceIn(0, currentText.length)
+          setSelection(cursor, cursor)
+          return@runWithIgnoredSpanWatcher
+        }
+      }
 
       val result = currentText.mergeSpannables(start, end, spannable)
 

@@ -220,7 +220,7 @@ private fun SpannableStringBuilder.tryInsertNonEditableParagraph(
   return true
 }
 
-private fun Spannable.startsWithNonEditableParagraph(): Boolean {
+fun Spannable.startsWithNonEditableParagraph(): Boolean {
   val (pStart, pEnd) = getParagraphBounds(0, 0)
 
   return getSpans(

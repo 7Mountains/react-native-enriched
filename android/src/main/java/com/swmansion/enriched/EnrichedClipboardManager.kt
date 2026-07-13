@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.text.Spannable
 import android.text.SpannableString
-import android.text.SpannableStringBuilder
 import com.swmansion.enriched.parser.EnrichedParser
 
 class EnrichedClipboardManager(
@@ -18,11 +17,10 @@ class EnrichedClipboardManager(
   fun copy() {
     val start = view.selectionStart
     val end = view.selectionEnd
-    val text = view.editableText
 
     if (start >= end) return
 
-    val selectedText = text.substring(start, end) as Spannable
+    val selectedText = getSelectedText(start, end) ?: return
     val selectedHtml = EnrichedParser.toHtml(selectedText)
 
     val clip =
@@ -40,11 +38,10 @@ class EnrichedClipboardManager(
   fun cut() {
     val start = view.selectionStart
     val end = view.selectionEnd
-    val editable = view.editableText
 
     if (start >= end) return
 
-    val selectedText = editable.subSequence(start, end) as Spannable
+    val selectedText = getSelectedText(start, end) ?: return
     val selectedHtml = EnrichedParser.toHtml(selectedText)
 
     val clip =
@@ -57,7 +54,7 @@ class EnrichedClipboardManager(
     clipboard.setPrimaryClip(clip)
 
     view.transactionManager.runTransaction {
-      editable.replace(start, end, "")
+      view.editableText.replace(start, end, "")
     }
 
     moveCursorTo(start)
@@ -101,5 +98,18 @@ class EnrichedClipboardManager(
   private fun moveCursorTo(position: Int) {
     val cursor = position.coerceAtLeast(0)
     view.setSelection(cursor)
+  }
+
+  private fun getSelectedText(
+    start: Int,
+    end: Int,
+  ): Spannable? {
+    val editableText = view.editableText
+    val safeStart = start.coerceIn(0, editableText.length)
+    val safeEnd = end.coerceIn(safeStart, editableText.length)
+
+    if (safeStart >= safeEnd) return null
+
+    return SpannableString.valueOf(editableText.subSequence(safeStart, safeEnd))
   }
 }
