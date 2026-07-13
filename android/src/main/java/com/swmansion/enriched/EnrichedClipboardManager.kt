@@ -18,11 +18,11 @@ class EnrichedClipboardManager(
   fun copy() {
     val start = view.selectionStart
     val end = view.selectionEnd
-    val text = view.text as? Spannable ?: return
+    val text = view.editableText
 
     if (start >= end) return
 
-    val selectedText = text.subSequence(start, end) as Spannable
+    val selectedText = text.substring(start, end) as Spannable
     val selectedHtml = EnrichedParser.toHtml(selectedText)
 
     val clip =
@@ -40,7 +40,7 @@ class EnrichedClipboardManager(
   fun cut() {
     val start = view.selectionStart
     val end = view.selectionEnd
-    val editable = view.text as? SpannableStringBuilder ?: return
+    val editable = view.editableText
 
     if (start >= end) return
 

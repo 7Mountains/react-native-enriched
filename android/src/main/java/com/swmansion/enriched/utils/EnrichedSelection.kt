@@ -78,18 +78,15 @@ class EnrichedSelection(
     end: Int,
   ): Boolean {
     val text = view.text ?: return false
+    if (start !in 0..text.length || end !in start..text.length) return false
 
     if (start != end) {
-      return text.substring(start, end) == Strings.ZERO_WIDTH_SPACE_STRING
+      return end - start == 1 && text[start] == Strings.ZERO_WIDTH_SPACE_CHAR
     }
 
-    val isNewLine = if (start > 0) text.substring(start - 1, start) == Strings.NEWLINE_STRING else true
+    val isNewLine = start == 0 || text[start - 1] == Strings.NEWLINE
     val isNextCharacterZeroWidth =
-      if (start < text.length) {
-        text.substring(start, start + 1) == Strings.ZERO_WIDTH_SPACE_STRING
-      } else {
-        false
-      }
+      start < text.length && text[start] == Strings.ZERO_WIDTH_SPACE_CHAR
 
     return isNewLine && isNextCharacterZeroWidth
   }
@@ -185,14 +182,13 @@ class EnrichedSelection(
 
   fun getParagraphSelection(): Pair<Int, Int> {
     val (currentStart, currentEnd) = getInlineSelection()
-    val spannable = view.text as Spannable
-    return spannable.getParagraphBounds(currentStart, currentEnd)
+    return view.editableText.getParagraphBounds(currentStart, currentEnd)
   }
 
   private fun handleParagraphStyleState(paragraphSelection: Pair<Int, Int>) {
     val spanState = view.spanState
     val (start, end) = paragraphSelection
-    val spannable = view.text as? Spannable ?: return
+    val spannable = view.editableText
 
     val spans =
       spannable
@@ -230,22 +226,21 @@ class EnrichedSelection(
     paragraphSelection: Pair<Int, Int>,
   ): Int? {
     val (start, end) = paragraphSelection
-    val spannable = view.text as Spannable
+    val spannable = view.editableText
     var styleStart: Int? = null
 
     var paragraphStart = start
-    val paragraphs = spannable.substring(start, end).split(Strings.NEWLINE_STRING)
+    val paragraphs = spannable.getParagraphsBounds(start, end)
     pi@ for (paragraph in paragraphs) {
-      val paragraphEnd = paragraphStart + paragraph.length
-      val spans = spannable.getSpans(paragraphStart, paragraphEnd, type)
+      val spans = spannable.getSpans(paragraphStart, paragraph.endInclusive, type)
 
       for (span in spans) {
         val spanStart = spannable.getSpanStart(span)
         val spanEnd = spannable.getSpanEnd(span)
 
-        if (spanStart == paragraphStart && spanEnd >= paragraphEnd) {
+        if (spanStart == paragraphStart && spanEnd >= paragraph.endInclusive) {
           styleStart = spanStart
-          paragraphStart = paragraphEnd + 1
+          paragraphStart = paragraph.endInclusive + 1
           continue@pi
         }
       }
