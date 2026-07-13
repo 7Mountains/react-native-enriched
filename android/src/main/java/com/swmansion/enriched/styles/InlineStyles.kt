@@ -17,6 +17,7 @@ import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.utils.areInlineSpansTouchingOrOverlapping
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.isTheSameInlineSpan
+import com.swmansion.enriched.utils.removeSpans
 import com.swmansion.enriched.watchers.TextChangedEvent
 
 class InlineStyles(
@@ -48,10 +49,7 @@ class InlineStyles(
       maximum = spanEnd.coerceAtLeast(maximum)
     }
 
-    val spans = editable.getSpans(minimum, maximum, type)
-    for (span in spans) {
-      editable.removeSpan(span)
-    }
+    editable.removeSpans(minimum, maximum, type)
 
     val span = createSpan(styleName)
     val (safeStart, safeEnd) = editable.getSafeSpanBoundaries(minimum, maximum)
@@ -445,7 +443,7 @@ class InlineStyles(
     val spans = editable.getSpans(start, end, config.clazz)
     if (spans.isEmpty()) return false
 
-    spans.forEach { it -> editable.removeSpan(it) }
+    editable.removeSpans(spans)
 
     view.spanState.setStart(name, null)
 

@@ -32,6 +32,7 @@ import com.swmansion.enriched.utils.getListRange
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getParagraphsBounds
 import com.swmansion.enriched.utils.isTheSameParagraphInSelection
+import com.swmansion.enriched.utils.removeSpans
 import com.swmansion.enriched.utils.removeZWS
 import com.swmansion.enriched.watchers.TextChangedEvent
 
@@ -293,9 +294,7 @@ class ParagraphStyles(
       val (listStart, listEnd) =
         editable.getListRange(paragraphStart, paragraphEnd, listSpan)
 
-      editable
-        .getSpans(listStart, listEnd, EnrichedAlignmentSpan::class.java)
-        .forEach { editable.removeSpan(it) }
+      editable.removeSpans(listStart, listEnd, EnrichedAlignmentSpan::class.java)
 
       editable.setSpan(
         EnrichedAlignmentSpan(alignment),
@@ -304,9 +303,7 @@ class ParagraphStyles(
         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
       )
     } else {
-      editable.getSpans(paragraphStart, paragraphEnd, EnrichedAlignmentSpan::class.java).forEach {
-        editable.removeSpan(it)
-      }
+      editable.removeSpans(paragraphStart, paragraphEnd, EnrichedAlignmentSpan::class.java)
       editable.setSpan(EnrichedAlignmentSpan(alignment), paragraphStart, paragraphEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
   }

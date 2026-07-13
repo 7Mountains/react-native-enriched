@@ -19,6 +19,7 @@ import com.swmansion.enriched.utils.ParagraphUtils.findPreviousAlignmentSpan
 import com.swmansion.enriched.utils.ParagraphUtils.getPreviousParagraphSpan
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
+import com.swmansion.enriched.utils.removeSpans
 import com.swmansion.enriched.utils.removeZWS
 import com.swmansion.enriched.watchers.TextChangedEvent
 
@@ -199,7 +200,7 @@ class ListStyles(
     val spans = editable.getSpans(start, end, EnrichedAlignmentSpan::class.java)
     if (spans.isEmpty()) return
 
-    spans.forEach { editable.removeSpan(it) }
+    editable.removeSpans(spans)
 
     editable.setSpan(
       spans.first().copy(),
