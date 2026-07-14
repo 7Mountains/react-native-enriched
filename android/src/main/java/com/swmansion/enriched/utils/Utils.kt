@@ -100,7 +100,7 @@ fun Spannable.mergeSpannables(
   end: Int,
   inserted: Spannable,
 ): MergeResult {
-  val builder = SpannableStringBuilder(this)
+  val builder = this as? SpannableStringBuilder ?: SpannableStringBuilder(this)
 
   val safeStart = minOf(start, end)
   val safeEnd = maxOf(start, end)
@@ -117,9 +117,16 @@ fun Spannable.mergeSpannables(
     )
   }
 
-  if (builder.tryInsertNonEditableParagraph(safeStart, safeEnd, inserted) ||
-    builder.tryInsertAfterNonEditableTarget(safeStart, safeEnd, inserted)
-  ) {
+  val nonEditableParagraphInsertionEnd =
+    builder.tryInsertStartingWithNonEditableParagraph(safeStart, safeEnd, inserted)
+  if (nonEditableParagraphInsertionEnd != null) {
+    return MergeResult(
+      text = builder,
+      insertedCharactersAmount = nonEditableParagraphInsertionEnd - safeStart,
+    )
+  }
+
+  if (builder.tryInsertAfterNonEditableTarget(safeStart, safeEnd, inserted)) {
     return MergeResult(
       text = builder,
       insertedCharactersAmount = 1 + inserted.length, // newline + text
@@ -202,25 +209,33 @@ private fun SpannableStringBuilder.tryInsertAfterNonEditableTarget(
   return true
 }
 
-private fun SpannableStringBuilder.tryInsertNonEditableParagraph(
+private fun SpannableStringBuilder.tryInsertStartingWithNonEditableParagraph(
   start: Int,
   end: Int,
   inserted: Spannable,
-): Boolean {
-  if (start != end) return false
+): Int? {
+  if (!inserted.startsWithNonEditableParagraph()) return null
 
-  val hasNonEditable = inserted.getSpans(0, 0, EnrichedNonEditableParagraphSpan::class.java).isNotEmpty()
+  val paragraphBounds =
+    if (start != end) {
+      replace(start, end, "")
+      if (isEmpty()) {
+        insert(0, inserted)
+        return inserted.length
+      }
+      getParagraphBounds(start, start)
+    } else {
+      getParagraphBounds(start, end)
+    }
 
-  if (!hasNonEditable) return false
-
-  val (_, pEnd) = getParagraphBounds(start, end)
+  val (_, pEnd) = paragraphBounds
 
   insertAfter(pEnd, inserted)
 
-  return true
+  return pEnd + 1 + inserted.length
 }
 
-fun Spannable.startsWithNonEditableParagraph(): Boolean {
+private fun Spannable.startsWithNonEditableParagraph(): Boolean {
   val (pStart, pEnd) = getParagraphBounds(0, 0)
 
   return getSpans(

@@ -64,11 +64,6 @@
   NSMutableAttributedString *current = textView.textStorage;
   NSRange selectedRange = textView.selectedRange;
 
-  if (selectedRange.length == current.length) {
-    [current setAttributedString:inserted];
-    textView.selectedRange = NSMakeRange(inserted.length, 0);
-    return;
-  }
   [self handleInsertion:current inserted:inserted selectedRange:selectedRange];
 }
 
@@ -171,13 +166,59 @@
   return mutableInserted;
 }
 
+- (BOOL)tryInsertStartingWithReadOnlyParagraph:
+            (NSMutableAttributedString *)current
+                                      inserted:(NSAttributedString *)inserted
+                                 selectedRange:(NSRange)selectedRange
+                             attributedNewLine:
+                                 (NSAttributedString *)attributedNewLine {
+  if (![ParagraphsUtils isReadOnlyParagraphAtLocation:inserted location:0]) {
+    return NO;
+  }
+
+  NSUInteger start = MIN(selectedRange.location, current.length);
+
+  [current beginEditing];
+
+  if (selectedRange.length > 0) {
+    NSRange removalRange =
+        NSMakeRange(start, MIN(selectedRange.length, current.length - start));
+    [current replaceCharactersInRange:removalRange
+                 withAttributedString:[NSAttributedString new]];
+
+    if (current.length == 0) {
+      [current insertAttributedString:inserted atIndex:0];
+      [current endEditing];
+
+      _input->textView.selectedRange = NSMakeRange(inserted.length, 0);
+      return YES;
+    }
+  }
+
+  NSUInteger insertionLocation = MIN(start, current.length);
+  NSRange targetParagraphRange =
+      [current.string paragraphRangeForRange:NSMakeRange(insertionLocation, 0)];
+  NSUInteger paragraphEnd =
+      targetParagraphRange.location + targetParagraphRange.length;
+
+  NSMutableAttributedString *replacement =
+      [[NSMutableAttributedString alloc] init];
+
+  [replacement appendAttributedString:attributedNewLine];
+  [replacement appendAttributedString:inserted];
+
+  [current insertAttributedString:replacement atIndex:paragraphEnd];
+  [current endEditing];
+
+  _input->textView.selectedRange =
+      NSMakeRange(paragraphEnd + replacement.length, 0);
+  return YES;
+}
+
 - (void)handleInsertion:(NSMutableAttributedString *)current
                inserted:(NSAttributedString *)inserted
           selectedRange:(NSRange)selectedRange {
   NSUInteger start = selectedRange.location;
-
-  BOOL insertedIsReadOnly =
-      [ParagraphsUtils isReadOnlyParagraphAtLocation:inserted location:0];
 
   NSDictionary *defaultTypingAttributes = _input->defaultTypingAttributes;
   NSAttributedString *attributedNewLine =
@@ -200,7 +241,14 @@
   BOOL targetIsReadOnly = [ParagraphsUtils isReadOnlyParagraphAtLocation:current
                                                                 location:start];
 
-  if ((targetIsReadOnly || insertedIsReadOnly) && selectedRange.length == 0) {
+  if ([self tryInsertStartingWithReadOnlyParagraph:current
+                                          inserted:inserted
+                                     selectedRange:selectedRange
+                                 attributedNewLine:attributedNewLine]) {
+    return;
+  }
+
+  if (targetIsReadOnly && selectedRange.length == 0) {
     NSUInteger paragraphEnd =
         targetParagraphRange.location + targetParagraphRange.length;
 
