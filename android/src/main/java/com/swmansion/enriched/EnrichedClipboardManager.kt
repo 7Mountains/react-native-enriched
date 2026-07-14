@@ -14,18 +14,21 @@ class EnrichedClipboardManager(
   private val clipboard =
     context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-  fun copy() {
+  private fun getSafeSelection(): Pair<Int, Int> {
     val start = minOf(view.selectionStart, view.selectionEnd)
     val end = maxOf(view.selectionStart, view.selectionEnd)
+
+    return Pair(start, end)
+  }
+
+  fun copy() {
+    val (start, end) = getSafeSelection()
     val clip = createSelectedTextClipData(start, end) ?: return
     clipboard.setPrimaryClip(clip)
-
-    moveCursorTo(end)
   }
 
   fun cut() {
-    val start = minOf(view.selectionStart, view.selectionEnd)
-    val end = maxOf(view.selectionStart, view.selectionEnd)
+    val (start, end) = getSafeSelection()
 
     if (start >= end) return
 
