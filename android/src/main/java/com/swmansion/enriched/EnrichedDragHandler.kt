@@ -2,7 +2,6 @@ package com.swmansion.enriched
 
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.text.SpannableStringBuilder
 import android.util.TypedValue
 import android.view.DragEvent
 import android.view.Gravity
@@ -169,7 +168,7 @@ class EnrichedDragHandler(
     dropOffset: Int,
     lengthBeforeDrop: Int,
   ) {
-    val editable = view.text as? SpannableStringBuilder ?: return
+    val editable = view.editableText
     var dragSourceStart = localState.start
     var dragSourceEnd = localState.end
 
