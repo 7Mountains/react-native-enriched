@@ -201,17 +201,26 @@
   NSUInteger paragraphEnd =
       targetParagraphRange.location + targetParagraphRange.length;
 
+  // `paragraphRangeForRange:` includes the paragraph terminator; insert before
+  // it when present.
+  NSUInteger insertionIndex = paragraphEnd;
+  if (paragraphEnd > 0 &&
+      [[NSCharacterSet newlineCharacterSet]
+          characterIsMember:[current.string
+                                characterAtIndex:paragraphEnd - 1]]) {
+    insertionIndex = paragraphEnd - 1;
+  }
   NSMutableAttributedString *replacement =
       [[NSMutableAttributedString alloc] init];
 
   [replacement appendAttributedString:attributedNewLine];
   [replacement appendAttributedString:inserted];
 
-  [current insertAttributedString:replacement atIndex:paragraphEnd];
+  [current insertAttributedString:replacement atIndex:insertionIndex];
   [current endEditing];
 
   _input->textView.selectedRange =
-      NSMakeRange(paragraphEnd + replacement.length, 0);
+      NSMakeRange(insertionIndex + replacement.length, 0);
   return YES;
 }
 
