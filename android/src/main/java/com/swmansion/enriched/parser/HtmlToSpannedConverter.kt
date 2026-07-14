@@ -69,7 +69,7 @@ class HtmlToSpannedConverter(
     val flags: Int,
   )
 
-  fun convert(): Spanned {
+  fun convert(): Spannable {
     parser.contentHandler = this
     try {
       parser.parse(InputSource(StringReader(mSource)))

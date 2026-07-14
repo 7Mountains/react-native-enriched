@@ -1,6 +1,7 @@
 package com.swmansion.enriched.parser
 
 import android.graphics.drawable.Drawable
+import android.text.Spannable
 import android.text.Spanned
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
@@ -37,7 +38,7 @@ object EnrichedParser {
     style: HtmlStyle,
     imageGetter: ImageGetter?,
     textInputView: EnrichedTextInputView,
-  ): Spanned {
+  ): Spannable {
     val parser = Parser()
     try {
       parser.setProperty(Parser.schemaProperty, htmlSchema)

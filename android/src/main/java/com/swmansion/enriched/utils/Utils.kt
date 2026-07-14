@@ -133,14 +133,6 @@ fun Spannable.mergeSpannables(
     )
   }
 
-  if (inserted.startsWithNonEditableParagraph()) {
-    builder.insertAfter(safeEnd, inserted)
-    return MergeResult(
-      text = builder,
-      insertedCharactersAmount = 1 + inserted.length,
-    )
-  }
-
   val targetParagraphSpans =
     getSpans(safeStart, safeStart, EnrichedParagraphSpan::class.java)
 
