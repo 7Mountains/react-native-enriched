@@ -9,5 +9,5 @@ object Dimens {
 val Float.dp: Float
   get() = this * Dimens.density
 
-val Int.dp: Float
-  get() = this * Dimens.density
+val Int.dp: Int
+  get() = (this * Resources.getSystem().displayMetrics.density).toInt()

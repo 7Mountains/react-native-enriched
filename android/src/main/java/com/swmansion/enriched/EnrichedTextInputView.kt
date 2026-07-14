@@ -16,6 +16,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.util.TypedValue
 import android.view.ActionMode
+import android.view.DragEvent
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -155,6 +156,14 @@ class EnrichedTextInputView : AppCompatEditText {
     CheckListClickHandler(this)
   }
 
+  private val dragHandler by lazy {
+    EnrichedDragHandler(this, clipboardManager)
+  }
+
+  override fun onDragEvent(event: DragEvent): Boolean = dragHandler.onDragEvent(event) ?: super.onDragEvent(event)
+
+  override fun performLongClick(): Boolean = dragHandler.performLongClick() || super.performLongClick()
+
   var spanWatcher: EnrichedSpanWatcher? = null
 
   constructor(context: Context) : super(context) {
@@ -272,7 +281,9 @@ class EnrichedTextInputView : AppCompatEditText {
   // https://github.com/facebook/react-native/blob/36df97f500aa0aa8031098caf7526db358b6ddc1/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/views/textinput/ReactEditText.kt#L295C1-L296C1
   override fun onTouchEvent(event: MotionEvent): Boolean {
     if (checkboxClickHandler.handleTouch(event)) return true
-    when (event.action) {
+
+    if (dragHandler.onTouchEvent(event)) return true
+    when (event.actionMasked) {
       MotionEvent.ACTION_DOWN -> {
         detectScrollMovement = true
         // Disallow parent views to intercept touch events, until we can detect if we should be
@@ -380,7 +391,7 @@ class EnrichedTextInputView : AppCompatEditText {
     end: Int? = null,
   ) {
     transactionManager.runWithIgnoredSpanWatcher {
-      val currentText = (text as? SpannableStringBuilder) ?: return@runWithIgnoredSpanWatcher
+      val currentText = editableText
       val length = currentText.length
 
       val insertionStart = selection.start
