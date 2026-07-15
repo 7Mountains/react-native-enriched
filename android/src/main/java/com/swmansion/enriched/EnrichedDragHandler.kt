@@ -130,7 +130,7 @@ class EnrichedDragHandler(
     GradientDrawable().apply {
       shape = GradientDrawable.RECTANGLE
       cornerRadius = 10.dp.toFloat()
-      setColor(Color.LTGRAY)
+      setColor(Color.DKGRAY)
     }
 
   private fun createTextDragShadow(
