@@ -18,6 +18,7 @@ import com.swmansion.enriched.utils.ParagraphUtils.applyParagraphSpan
 import com.swmansion.enriched.utils.ParagraphUtils.findPreviousAlignmentSpan
 import com.swmansion.enriched.utils.ParagraphUtils.getPreviousParagraphSpan
 import com.swmansion.enriched.utils.getParagraphBounds
+import com.swmansion.enriched.utils.getParagraphRanges
 import com.swmansion.enriched.utils.getSafeSpanBoundaries
 import com.swmansion.enriched.utils.removeSpans
 import com.swmansion.enriched.utils.removeZWS
@@ -26,6 +27,12 @@ import com.swmansion.enriched.watchers.TextChangedEvent
 class ListStyles(
   private val view: EnrichedTextInputView,
 ) {
+  private data class StyledListReplacement(
+    val text: SpannableStringBuilder,
+    val insertedCharacters: Int,
+    val styleStart: Int,
+  )
+
   private fun setSpan(
     editable: Editable,
     name: TextStyle,
@@ -37,17 +44,17 @@ class ListStyles(
     when (name) {
       TextStyle.UNORDERED_LIST -> {
         val span = EnrichedUnorderedListSpan(view.htmlStyle)
-        editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        applyParagraphSpan(editable, span, safeStart, safeEnd)
       }
 
       TextStyle.ORDERED_LIST -> {
         val span = EnrichedOrderedListSpan(view.htmlStyle)
-        editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        applyParagraphSpan(editable, span, safeStart, safeEnd)
       }
 
       TextStyle.CHECK_LIST -> {
         val span = EnrichedChecklistSpan(view.htmlStyle)
-        editable.setSpan(span, safeStart, safeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        applyParagraphSpan(editable, span, safeStart, safeEnd)
       }
 
       else -> {}
@@ -61,7 +68,9 @@ class ListStyles(
     clazz: Class<out EnrichedSpan>,
     removeZWS: Boolean = true,
   ): Boolean {
-    val spans = editable.getSpans(start, end, clazz)
+    val safeStart = start.coerceAtMost(end).coerceAtLeast(0).coerceAtMost(editable.length)
+    val safeEnd = end.coerceAtLeast(start).coerceAtLeast(safeStart).coerceAtMost(editable.length)
+    val spans = editable.getSpans(safeStart, safeEnd, clazz)
     if (spans.isEmpty()) return false
 
     val flag = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -72,19 +81,19 @@ class ListStyles(
 
       editable.removeSpan(span)
 
-      if (spanStart < start) {
+      if (spanStart < safeStart) {
         editable.setSpan(
           span.copy(),
           spanStart,
-          start,
+          safeStart,
           flag,
         )
       }
 
-      if (spanEnd > end) {
+      if (spanEnd > safeEnd) {
         editable.setSpan(
           span.copy(),
-          end,
+          safeEnd,
           spanEnd,
           flag,
         )
@@ -92,10 +101,59 @@ class ListStyles(
     }
 
     if (removeZWS) {
-      editable.removeZWS(start, end)
+      val replacement = SpannableStringBuilder(editable.subSequence(safeStart, safeEnd))
+      replacement.removeZWS(0, replacement.length)
+      val removedCharacters = safeEnd - safeStart - replacement.length
+
+      if (removedCharacters > 0) {
+        editable.replace(safeStart, safeEnd, replacement)
+      }
     }
 
     return true
+  }
+
+  private fun buildStyledListReplacement(
+    editable: Editable,
+    start: Int,
+    end: Int,
+    name: TextStyle,
+  ): StyledListReplacement {
+    val replacement = SpannableStringBuilder(editable.subSequence(start, end))
+    var insertedCharacters = 0
+    var styleStart = 0
+    val paragraphs = replacement.getParagraphRanges()
+
+    for (paragraph in paragraphs) {
+      val currentStart = paragraph.first + insertedCharacters
+      var currentEnd = paragraph.last + insertedCharacters
+
+      if (!replacement.containsZWS(currentStart, currentEnd)) {
+        replacement.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
+        currentEnd += 1
+        insertedCharacters += 1
+      }
+
+      setSpan(replacement, name, currentStart, currentEnd)
+      reapplyAlignment(replacement, currentStart, currentEnd)
+      styleStart = currentEnd + 1
+    }
+
+    return StyledListReplacement(replacement, insertedCharacters, styleStart)
+  }
+
+  private fun CharSequence.containsZWS(
+    start: Int,
+    end: Int,
+  ): Boolean {
+    val safeStart = start.coerceIn(0, length)
+    val safeEnd = end.coerceIn(safeStart, length)
+
+    for (index in safeStart until safeEnd) {
+      if (this[index] == Strings.ZERO_WIDTH_SPACE_CHAR) return true
+    }
+
+    return false
   }
 
   fun toggleStyle(name: TextStyle) {
@@ -124,23 +182,9 @@ class ListStyles(
       return
     }
 
-    var currentStart = start
-    val paragraphs = editable.substring(start, end).split(Strings.NEWLINE_STRING)
-    removeSpansForRange(editable, start, end, config.clazz, false)
-
-    for (paragraph in paragraphs) {
-      var currentEnd = currentStart + paragraph.length
-
-      if (!paragraph.contains(Strings.ZERO_WIDTH_SPACE_CHAR)) {
-        editable.insert(currentStart, Strings.ZERO_WIDTH_SPACE_STRING)
-        currentEnd += 1
-      }
-      setSpan(editable, name, currentStart, currentEnd)
-      reapplyAlignment(editable, currentStart, currentEnd)
-      currentStart = currentEnd + 1
-    }
-
-    spanState.setStartWithStateChangeEmitting(name, currentStart)
+    val replacement = buildStyledListReplacement(editable, start, end, name)
+    editable.replace(start, end, replacement.text)
+    spanState.setStartWithStateChangeEmitting(name, start + replacement.styleStart)
   }
 
   private fun handleAfterTextChanged(
