@@ -357,3 +357,14 @@ fun Spannable.getParagraphsBounds(
 
   return result
 }
+
+fun Spannable.getParagraphRanges(): List<IntRange> =
+  getParagraphsBounds(0, length)
+    .toMutableList()
+    .apply {
+      if (isEmpty()) {
+        add(0..0)
+      } else if (this@getParagraphRanges.last() == Strings.NEWLINE) {
+        add(length..length)
+      }
+    }

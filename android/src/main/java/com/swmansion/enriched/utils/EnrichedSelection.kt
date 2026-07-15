@@ -1,6 +1,7 @@
 package com.swmansion.enriched.utils
 
 import android.text.Editable
+import android.text.Layout
 import android.text.Spannable
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
@@ -15,7 +16,7 @@ import com.swmansion.enriched.spans.EnrichedLinkSpan
 import com.swmansion.enriched.spans.EnrichedMentionSpan
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
-import com.swmansion.enriched.spans.interfaces.EnrichedParagraphSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import org.json.JSONObject
 
 class EnrichedSelection(
@@ -108,7 +109,7 @@ class EnrichedSelection(
     handleParagraphStyleState(paragraphSelection)
 
     for ((style, config) in EnrichedSpans.listSpans) {
-      state.setStart(style, getListStyleStart(config.clazz, paragraphSelection))
+      state.setStart(style, getCoveredParagraphStyleStart(config.clazz, paragraphSelection))
     }
 
     state.emitStateChangeEvent()
@@ -124,16 +125,16 @@ class EnrichedSelection(
   private fun handleInlineStyleState() {
     val spanState = view.spanState
     val (start, end) = getInlineSelection()
-    val spannable = view.text as? Spannable ?: return
+    val editable = view.editableText
 
-    val spans = spannable.getSpans(start, end, EnrichedInlineSpan::class.java)
+    val spans = editable.getSpans(start, end, EnrichedInlineSpan::class.java)
 
     if (spans.isEmpty()) {
       inlineStylesList.forEach { (type, _) ->
         spanState.setStart(type, null)
       }
-      emitLinkDetectedEvent(spannable, null, start, end)
-      emitMentionDetectedEvent(spannable, null, start, end)
+      emitLinkDetectedEvent(editable, null, start, end)
+      emitMentionDetectedEvent(editable, null, start, end)
       return
     }
 
@@ -142,7 +143,7 @@ class EnrichedSelection(
         if (config.clazz == EnrichedColoredSpan::class.java) {
           spans
             .filterIsInstance<EnrichedColoredSpan>()
-            .minByOrNull { spannable.getSpanStart(it) }
+            .minByOrNull { editable.getSpanStart(it) }
         } else {
           spans.firstOrNull { it.javaClass == config.clazz }
         }
@@ -150,8 +151,8 @@ class EnrichedSelection(
       val isSingleSelection = start == end
 
       span?.let {
-        val spanStart = spannable.getSpanStart(it)
-        val spanEnd = spannable.getSpanEnd(it)
+        val spanStart = editable.getSpanStart(it)
+        val spanEnd = editable.getSpanEnd(it)
 
         val isSpanInSelection = if (isSingleSelection) start <= spanStart || end > spanEnd else start < spanStart || end > spanEnd
 
@@ -162,11 +163,11 @@ class EnrichedSelection(
 
         when (it) {
           is EnrichedLinkSpan -> {
-            emitLinkDetectedEvent(spannable, it, spanStart, spanEnd)
+            emitLinkDetectedEvent(editable, it, spanStart, spanEnd)
           }
 
           is EnrichedMentionSpan -> {
-            emitMentionDetectedEvent(spannable, it, spanStart, spanEnd)
+            emitMentionDetectedEvent(editable, it, spanStart, spanEnd)
           }
 
           is EnrichedColoredSpan -> {
@@ -185,45 +186,44 @@ class EnrichedSelection(
     return view.editableText.getParagraphBounds(currentStart, currentEnd)
   }
 
-  private fun handleParagraphStyleState(paragraphSelection: Pair<Int, Int>) {
-    val spanState = view.spanState
-    val (start, end) = paragraphSelection
-    val spannable = view.editableText
-
-    val spans =
-      spannable
-        .getSpans(start, end, EnrichedParagraphSpan::class.java)
-
-    if (spans.isEmpty()) {
-      EnrichedSpans.paragraphSpans.keys.forEach {
-        spanState.setStart(it, null)
-      }
-      return
+  private fun getParagraphStyleStart(
+    clazz: Class<out EnrichedSpan>,
+    paragraphSelection: Pair<Int, Int>,
+  ): Int? =
+    if (clazz == EnrichedAlignmentSpan::class.java) {
+      getAlignmentStyleStart(paragraphSelection)
+    } else {
+      getCoveredParagraphStyleStart(clazz, paragraphSelection)
     }
 
-    spans
-      .filterIsInstance<EnrichedAlignmentSpan>()
-      .firstOrNull()
-      ?.let { spanState.setAlignment(it.alignmentString) }
-
-    for ((type, config) in EnrichedSpans.paragraphSpans) {
-      val matchedSpan =
-        spans.firstOrNull { span ->
-          span.javaClass == config.clazz &&
-            start >= spannable.getSpanStart(span) &&
-            end <= spannable.getSpanEnd(span)
+  private fun getAlignmentStyleStart(paragraphSelection: Pair<Int, Int>): Int? {
+    var alignment: Layout.Alignment? = null
+    val styleStart =
+      getCoveredParagraphStyleStart(EnrichedAlignmentSpan::class.java, paragraphSelection) { span ->
+        if (alignment != null && alignment != span.alignment) {
+          return@getCoveredParagraphStyleStart false
         }
 
-      spanState.setStart(
-        type,
-        matchedSpan?.let { spannable.getSpanStart(it) },
-      )
+        alignment = span.alignment
+        true
+      }
+
+    view.spanState.setAlignment(alignment?.toStringName())
+    return styleStart
+  }
+
+  private fun handleParagraphStyleState(paragraphSelection: Pair<Int, Int>) {
+    val spanState = view.spanState
+
+    for ((style, config) in EnrichedSpans.paragraphSpans) {
+      spanState.setStart(style, getParagraphStyleStart(config.clazz, paragraphSelection))
     }
   }
 
-  private fun <T> getListStyleStart(
+  private fun <T> getCoveredParagraphStyleStart(
     type: Class<T>,
     paragraphSelection: Pair<Int, Int>,
+    onCoveredSpan: (T) -> Boolean = { true },
   ): Int? {
     val (start, end) = paragraphSelection
     val spannable = view.editableText
@@ -231,22 +231,22 @@ class EnrichedSelection(
 
     var paragraphStart = start
     val paragraphs = spannable.getParagraphsBounds(start, end)
-    pi@ for (paragraph in paragraphs) {
-      val spans = spannable.getSpans(paragraphStart, paragraph.endInclusive, type)
+    for (paragraph in paragraphs) {
+      val paragraphEnd = paragraph.endInclusive
+      val span =
+        spannable
+          .getSpans(paragraphStart, paragraphEnd, type)
+          .firstOrNull {
+            spannable.getSpanStart(it) == paragraphStart &&
+              spannable.getSpanEnd(it) >= paragraphEnd
+          } ?: return null
 
-      for (span in spans) {
-        val spanStart = spannable.getSpanStart(span)
-        val spanEnd = spannable.getSpanEnd(span)
-
-        if (spanStart == paragraphStart && spanEnd >= paragraph.endInclusive) {
-          styleStart = spanStart
-          paragraphStart = paragraph.endInclusive + 1
-          continue@pi
-        }
+      if (!onCoveredSpan(span)) {
+        return null
       }
 
-      styleStart = null
-      break
+      styleStart = spannable.getSpanStart(span)
+      paragraphStart = paragraphEnd + 1
     }
 
     return styleStart
