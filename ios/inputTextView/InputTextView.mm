@@ -14,6 +14,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 
 @interface InputTextView ()
 - (void)notifySizeDidChangeForContentSize:(CGSize)contentSize;
+- (CGFloat)placeholderSingleLineHeightForWidth:(CGFloat)width;
 @end
 
 @implementation InputTextView {
@@ -25,7 +26,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   if ((self = [super initWithFrame:frame])) {
     _placeholderView = [[UILabel alloc] initWithFrame:self.bounds];
     _placeholderView.isAccessibilityElement = NO;
-    _placeholderView.numberOfLines = 1;
+    _placeholderView.numberOfLines = 0;
     _placeholderView.adjustsFontForContentSizeCategory = YES;
     [self addSubview:_placeholderView];
 
@@ -119,9 +120,7 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   CGRect textFrame = UIEdgeInsetsInsetRect(self.bounds, combinedInsets);
 
   CGFloat placeholderHeight =
-      [_placeholderView
-          sizeThatFits:CGSizeMake(textFrame.size.width, CGFLOAT_MAX)]
-          .height;
+      [self placeholderSingleLineHeightForWidth:textFrame.size.width];
   textFrame.size.height = MIN(placeholderHeight, textFrame.size.height);
 
   _placeholderView.frame = textFrame;
@@ -180,9 +179,9 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
                                                   combinedInsets.left -
                                                   combinedInsets.right;
     if (placeholderMaxWidth > 0) {
-      CGSize placeholderSize = [_placeholderView
-          sizeThatFits:CGSizeMake(placeholderMaxWidth, CGFLOAT_MAX)];
-      height = MAX(height, ceil(placeholderSize.height));
+      height = MAX(
+          height,
+          ceil([self placeholderSingleLineHeightForWidth:placeholderMaxWidth]));
     }
   }
   CGSize newSize = CGSizeMake(width, height);
@@ -193,6 +192,20 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 
   _lastCommittedSize = newSize;
   [self.layoutDelegate sizeDidChange:newSize];
+}
+
+- (CGFloat)placeholderSingleLineHeightForWidth:(CGFloat)width {
+  if (width <= 0 || _placeholderView.attributedText.length == 0) {
+    return 0;
+  }
+
+  NSInteger numberOfLines = _placeholderView.numberOfLines;
+  _placeholderView.numberOfLines = 1;
+  CGFloat height =
+      [_placeholderView sizeThatFits:CGSizeMake(width, CGFLOAT_MAX)].height;
+  _placeholderView.numberOfLines = numberOfLines;
+
+  return height;
 }
 
 @end
