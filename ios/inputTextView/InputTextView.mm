@@ -19,14 +19,13 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 @implementation InputTextView {
   UILabel *_placeholderView;
   CGSize _lastCommittedSize;
-  NSAttributedString *_lastMeasuredString;
 };
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if ((self = [super initWithFrame:frame])) {
     _placeholderView = [[UILabel alloc] initWithFrame:self.bounds];
     _placeholderView.isAccessibilityElement = NO;
-    _placeholderView.numberOfLines = 0;
+    _placeholderView.numberOfLines = 1;
     _placeholderView.adjustsFontForContentSizeCategory = YES;
     [self addSubview:_placeholderView];
 
@@ -120,14 +119,14 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
   CGRect textFrame = UIEdgeInsetsInsetRect(self.bounds, combinedInsets);
 
   CGFloat placeholderHeight =
-      [_placeholderView sizeThatFits:textFrame.size].height;
+      [_placeholderView
+          sizeThatFits:CGSizeMake(textFrame.size.width, CGFLOAT_MAX)]
+          .height;
   textFrame.size.height = MIN(placeholderHeight, textFrame.size.height);
 
   _placeholderView.frame = textFrame;
 
-  if (!self.scrollEnabled &&
-      ![_lastMeasuredString isEqualToAttributedString:self.attributedText]) {
-    _lastMeasuredString = [self.attributedText copy];
+  if (!self.scrollEnabled || !_placeholderView.hidden) {
     CGFloat maxWidth = self.bounds.size.width;
     if (maxWidth > 0) {
       CGSize fittingSize =
@@ -175,6 +174,17 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
                                  combinedInsets.bottom));
   CGFloat width = MAX(0.0, ceil(contentSize.width - combinedInsets.left -
                                 combinedInsets.right));
+  if (!_placeholderView.hidden) {
+    CGFloat placeholderMaxWidth = width > 0 ? width
+                                            : self.bounds.size.width -
+                                                  combinedInsets.left -
+                                                  combinedInsets.right;
+    if (placeholderMaxWidth > 0) {
+      CGSize placeholderSize = [_placeholderView
+          sizeThatFits:CGSizeMake(placeholderMaxWidth, CGFLOAT_MAX)];
+      height = MAX(height, ceil(placeholderSize.height));
+    }
+  }
   CGSize newSize = CGSizeMake(width, height);
 
   if (CGSizeAlmostEqual(newSize, _lastCommittedSize, 0.5)) {
