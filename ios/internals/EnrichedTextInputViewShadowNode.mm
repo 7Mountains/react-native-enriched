@@ -3,7 +3,6 @@
 #import <EnrichedTextInputView.h>
 #import <React/RCTShadowView+Layout.h>
 #import <react/utils/ManagedObjectWrapper.h>
-#import <yoga/Yoga.h>
 
 namespace facebook::react {
 
@@ -15,10 +14,9 @@ void EnrichedTextInputViewShadowNode::dirtyLayoutIfNeeded() {
   const auto nextSize = state.getContentSize();
 
   if (_prevContentSize != nextSize) {
-    YGNodeMarkDirty(&yogaNode_);
+    _prevContentSize = nextSize;
+    dirtyLayout();
   }
-
-  _prevContentSize = nextSize;
 }
 
 id EnrichedTextInputViewShadowNode::setupMockTextInputView_() const {
@@ -41,14 +39,8 @@ EnrichedTextInputViewShadowNode::EnrichedTextInputViewShadowNode(
       static_cast<const EnrichedTextInputViewShadowNode &>(source)
           .getStateData();
 
-  const auto &newState = getStateData();
-
-  const auto &oldSize = oldState.getContentSize();
-  const auto &newSize = newState.getContentSize();
-
-  if (newSize != oldSize) {
-    YGNodeMarkDirty(&yogaNode_);
-  }
+  _prevContentSize = oldState.getContentSize();
+  dirtyLayoutIfNeeded();
 }
 
 EnrichedTextInputViewShadowNode::EnrichedTextInputViewShadowNode(

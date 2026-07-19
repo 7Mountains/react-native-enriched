@@ -433,6 +433,7 @@ export interface NativeProps extends ViewProps {
     scrollIndicatorInsets?: Insets;
     automaticallyAdjustsScrollIndicatorInsets?: boolean;
     automaticallyAdjustContentInsets?: boolean;
+    bouncesVertically?: boolean;
     androidExperimentalSynchronousEvents: boolean;
     loaderCookies?: Cookie[];
 }

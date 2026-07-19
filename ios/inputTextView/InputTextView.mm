@@ -12,6 +12,10 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
          fabs(firstSize.height - secondSize.height) < epsilon;
 }
 
+@interface InputTextView ()
+- (void)notifySizeDidChangeForContentSize:(CGSize)contentSize;
+@end
+
 @implementation InputTextView {
   UILabel *_placeholderView;
   CGSize _lastCommittedSize;
@@ -31,7 +35,6 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
     self.scrollsToTop = NO;
     self.alwaysBounceVertical = YES;
     _lastCommittedSize = CGSizeZero;
-    _lastMeasuredString = [[NSAttributedString alloc] initWithString:@""];
   }
   return self;
 }
@@ -122,36 +125,16 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 
   _placeholderView.frame = textFrame;
 
-  CGSize newSize;
-
-  if (self.scrollEnabled) {
-    CGRect usedRect =
-        [self.layoutManager usedRectForTextContainer:self.textContainer];
-    newSize = usedRect.size;
-  } else {
-    if ([_lastMeasuredString isEqualToAttributedString:self.textStorage]) {
-      return;
-    }
-    _lastMeasuredString = [self.textStorage copy];
-
+  if (!self.scrollEnabled &&
+      ![_lastMeasuredString isEqualToAttributedString:self.attributedText]) {
+    _lastMeasuredString = [self.attributedText copy];
     CGFloat maxWidth = self.bounds.size.width;
-    UIEdgeInsets savedInset = self.textContainerInset;
-    CGFloat savedLinePadding = self.textContainer.lineFragmentPadding;
-
-    CGSize fitSize = [self sizeThatFits:CGSizeMake(maxWidth, CGFLOAT_MAX)];
-
-    CGFloat height = fitSize.height - savedLinePadding * 2 - savedInset.top -
-                     savedInset.bottom;
-
-    newSize = CGSizeMake(maxWidth, height);
+    if (maxWidth > 0) {
+      CGSize fittingSize =
+          [self sizeThatFits:CGSizeMake(maxWidth, CGFLOAT_MAX)];
+      [self notifySizeDidChangeForContentSize:fittingSize];
+    }
   }
-
-  if (CGSizeAlmostEqual(newSize, _lastCommittedSize, 0.5)) {
-    return;
-  }
-
-  _lastCommittedSize = newSize;
-  [self.layoutDelegate sizeDidChange:newSize];
 }
 
 - (void)setContentInset:(UIEdgeInsets)contentInset {
@@ -172,6 +155,34 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
                                   -insets.right));
 
   [self scrollRectToVisible:caretRect animated:YES];
+}
+
+- (void)setContentSize:(CGSize)contentSize {
+  [super setContentSize:contentSize];
+
+  [self notifySizeDidChangeForContentSize:contentSize];
+}
+
+- (void)notifySizeDidChangeForContentSize:(CGSize)contentSize {
+  UIEdgeInsets contentInsets = self.adjustedContentInset;
+
+  UIEdgeInsets combinedInsets =
+      UIEdgeInsetsMake(self.textContainerInset.top + contentInsets.top,
+                       self.textContainerInset.left + contentInsets.left,
+                       self.textContainerInset.bottom + contentInsets.bottom,
+                       self.textContainerInset.right + contentInsets.right);
+  CGFloat height = MAX(0.0, ceil(contentSize.height - combinedInsets.top -
+                                 combinedInsets.bottom));
+  CGFloat width = MAX(0.0, ceil(contentSize.width - combinedInsets.left -
+                                combinedInsets.right));
+  CGSize newSize = CGSizeMake(width, height);
+
+  if (CGSizeAlmostEqual(newSize, _lastCommittedSize, 0.5)) {
+    return;
+  }
+
+  _lastCommittedSize = newSize;
+  [self.layoutDelegate sizeDidChange:newSize];
 }
 
 @end

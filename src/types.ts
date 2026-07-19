@@ -213,6 +213,7 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   androidExperimentalSynchronousEvents?: boolean;
   contentInsets?: Insets;
   scrollIndicatorInsets?: Insets;
+  bouncesVertically?: boolean;
   onScroll?: (event: NativeSyntheticEvent<OnScrollEvent>) => void;
   loaderCookies?: Cookie[];
   contextMenuItems?: ContextMenuItem[];

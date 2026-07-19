@@ -224,6 +224,23 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     [textView setScrollEnabled:newViewProps.scrollEnabled];
   }
 
+  BOOL textViewBouncesVertically;
+
+  if (@available(iOS 17.4, *)) {
+    textViewBouncesVertically = textView.bouncesVertically;
+  } else {
+    textViewBouncesVertically = textView.bounces;
+  }
+
+  if (newViewProps.bouncesVertically != oldViewProps.bouncesVertically ||
+      textViewBouncesVertically != newViewProps.bouncesVertically) {
+    if (@available(iOS 17.4, *)) {
+      textView.bouncesVertically = newViewProps.bouncesVertically;
+    } else {
+      textView.bounces = newViewProps.bouncesVertically;
+    }
+  }
+
   if (newViewProps.contentInsets != oldViewProps.contentInsets) {
     _customContentInsets = toUIEdgeInsets(newViewProps.contentInsets);
     textView.textContainerInset = _layoutInsets + newViewProps.contentInsets;
@@ -1274,6 +1291,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   // update active styles as well
   [self tryUpdatingActiveStyles];
+
   if (!textView.scrollEnabled) {
     [textView setNeedsLayout];
   }
