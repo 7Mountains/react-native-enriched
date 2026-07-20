@@ -1,5 +1,7 @@
 package com.swmansion.enriched
 
+import android.text.NoCopySpan
+import android.text.Spanned
 import android.util.Log
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.TextStyle
@@ -12,6 +14,8 @@ import com.swmansion.enriched.styles.ParametrizedStyles
 class EnrichedStyleManipulator(
   private val view: EnrichedTextInputView,
 ) {
+  private var selectionRestoreDepth = 0
+  private var isRestoringSelection = false
   val inlineStyles: InlineStyles = InlineStyles(view)
   val paragraphStyles: ParagraphStyles = ParagraphStyles(view)
   val listStyles: ListStyles = ListStyles(view)
@@ -92,7 +96,6 @@ class EnrichedStyleManipulator(
 
   fun verifyStyle(name: TextStyle): Boolean {
     val spanState = view.spanState
-    val selection = view.selection
 
     if (!canApplyStyle(name)) {
       return false
@@ -113,29 +116,13 @@ class EnrichedStyleManipulator(
     }
 
     for (style in conflictingStyles) {
-      val start = selection.start
-      val end = selection.end
-      val lengthBefore = view.text?.length ?: 0
-
-      runWithIgnoredSpanWatcherTransaction {
+      view.transactionManager.runSilently {
         val targetRange = getTargetRange(name)
         val removed = removeStyle(style, targetRange.first, targetRange.second)
         if (removed) {
           spanState.setStart(style, null)
         }
       }
-
-      val lengthAfter = view.text?.length ?: 0
-      val charactersRemoved = lengthBefore - lengthAfter
-      val finalEnd =
-        if (charactersRemoved > 0) {
-          (end - charactersRemoved).coerceAtLeast(0)
-        } else {
-          end
-        }
-
-      val finalStart = start.coerceAtLeast(0).coerceAtMost(finalEnd)
-      selection.onSelection(finalStart, finalEnd)
     }
 
     return true

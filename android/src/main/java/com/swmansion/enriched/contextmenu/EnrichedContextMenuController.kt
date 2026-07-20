@@ -1,5 +1,6 @@
 package com.swmansion.enriched.contextmenu
 
+import android.text.Selection
 import android.view.ActionMode
 import com.facebook.react.bridge.ReadableArray
 import com.swmansion.enriched.EnrichedClipboardManager
@@ -71,6 +72,7 @@ class EnrichedContextMenuController(
       val prevEnd = editText.selectionEnd
       it.finish()
       currentActionMode = null
+      editText.isCursorVisible = false
       editText.setSelection(prevStart, prevEnd)
     }
   }
