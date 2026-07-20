@@ -519,6 +519,14 @@ class EnrichedTextInputViewManager :
     // NO-OP iOS only prop
   }
 
+  @ReactProp(name = "bouncesVertically")
+  override fun setBouncesVertically(
+    view: EnrichedTextInputView?,
+    value: Boolean,
+  ) {
+    // NO-OP iOS only prop
+  }
+
   override fun setContextMenuItems(
     view: EnrichedTextInputView?,
     value: ReadableArray?,

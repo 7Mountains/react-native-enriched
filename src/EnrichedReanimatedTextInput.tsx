@@ -79,6 +79,7 @@ export const EnrichedReanimatedTextInput = ({
   contentInsets = DEFAULT_INSETS,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
+  bouncesVertically = true,
   contextMenuItems,
   keyboardDismissMode = 'none',
   onKeyPress,
@@ -133,6 +134,7 @@ export const EnrichedReanimatedTextInput = ({
     <EnrichedReanimatedNativeComponent
       ref={nativeRef}
       {...rest}
+      bouncesVertically={bouncesVertically}
       automaticallyAdjustsScrollIndicatorInsets={
         automaticallyAdjustsScrollIndicatorInsets
       }
