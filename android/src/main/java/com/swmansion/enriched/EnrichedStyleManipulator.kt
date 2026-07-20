@@ -1,7 +1,5 @@
 package com.swmansion.enriched
 
-import android.text.NoCopySpan
-import android.text.Spanned
 import android.util.Log
 import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.TextStyle
@@ -14,8 +12,6 @@ import com.swmansion.enriched.styles.ParametrizedStyles
 class EnrichedStyleManipulator(
   private val view: EnrichedTextInputView,
 ) {
-  private var selectionRestoreDepth = 0
-  private var isRestoringSelection = false
   val inlineStyles: InlineStyles = InlineStyles(view)
   val paragraphStyles: ParagraphStyles = ParagraphStyles(view)
   val listStyles: ListStyles = ListStyles(view)
