@@ -79,6 +79,7 @@ export const EnrichedReanimatedTextInput = ({
   contentInsets = DEFAULT_INSETS,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
+  dragAndDropEnabled = true,
   bouncesVertically = true,
   contextMenuItems,
   keyboardDismissMode = 'none',
@@ -178,6 +179,7 @@ export const EnrichedReanimatedTextInput = ({
       contentInsets={contentInsets}
       keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}
+      dragAndDropEnabled={dragAndDropEnabled}
       contextMenuItems={nativeContextMenuItems}
       writingToolsBehavior={writingToolsBehavior}
     />

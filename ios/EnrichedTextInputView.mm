@@ -83,6 +83,7 @@ using namespace facebook::react;
   BOOL _emitOnScroll;
   EnrichedCommandHandler *_commandHandler;
   EnrichedTextClipboardHandler *_clipboardHandler;
+  UIDropInteraction *_textDropInteraction;
   UIEdgeInsets _customContentInsets;
   UIEdgeInsets _layoutInsets;
   int _paragraphsLimit;
@@ -164,6 +165,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   textView.textStorage.delegate = self;
   textView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  _textDropInteraction = textView.textDropInteraction;
 
   TextBlockTapGestureRecognizer *blockTapGesture =
       [[TextBlockTapGestureRecognizer alloc]
@@ -198,6 +200,22 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 // MARK: - Props
 
+- (void)setDragAndDropVisible:(BOOL)enabled {
+  textView.textDragInteraction.enabled = enabled;
+
+  if (!_textDropInteraction) {
+    return;
+  }
+
+  BOOL dropInteractionIsAttached =
+      [textView.interactions containsObject:_textDropInteraction];
+  if (enabled && !dropInteractionIsAttached) {
+    [textView addInteraction:_textDropInteraction];
+  } else if (!enabled && dropInteractionIsAttached) {
+    [textView removeInteraction:_textDropInteraction];
+  }
+}
+
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
   const auto &oldViewProps =
@@ -222,6 +240,11 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   if (newViewProps.scrollEnabled != oldViewProps.scrollEnabled ||
       textView.scrollEnabled != newViewProps.scrollEnabled) {
     [textView setScrollEnabled:newViewProps.scrollEnabled];
+  }
+
+  if (newViewProps.dragAndDropEnabled != oldViewProps.dragAndDropEnabled ||
+      textView.textDragInteraction.enabled != newViewProps.dragAndDropEnabled) {
+    [self setDragAndDropVisible:newViewProps.dragAndDropEnabled];
   }
 
   BOOL textViewBouncesVertically;
