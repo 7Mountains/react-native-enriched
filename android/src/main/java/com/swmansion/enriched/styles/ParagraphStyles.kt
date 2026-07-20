@@ -114,8 +114,6 @@ class ParagraphStyles(
     name: TextStyle,
     clazz: Class<out EnrichedSpan>,
   ): StyledParagraphReplacement? {
-    createSpan(name) ?: return null
-
     val replacement = SpannableStringBuilder(editable.subSequence(start, end))
 
     replacement.removeSpans(0, replacement.length, clazz)
