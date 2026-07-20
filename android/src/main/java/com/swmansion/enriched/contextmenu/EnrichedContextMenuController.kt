@@ -1,6 +1,5 @@
 package com.swmansion.enriched.contextmenu
 
-import android.text.Selection
 import android.view.ActionMode
 import com.facebook.react.bridge.ReadableArray
 import com.swmansion.enriched.EnrichedClipboardManager
