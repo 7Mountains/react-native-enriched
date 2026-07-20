@@ -126,10 +126,25 @@ class EnrichedSelection(
   }
 
   fun getInlineSelection(): Pair<Int, Int> {
-    val finalStart = start.coerceAtMost(end).coerceAtLeast(0)
-    val finalEnd = end.coerceAtLeast(start).coerceAtLeast(0)
+    val (currentStart, currentEnd) = getSelectionRestorationRange() ?: (start to end)
+    val textLength = view.editableText.length
+    val finalStart = currentStart.coerceAtMost(currentEnd).coerceIn(0, textLength)
+    val finalEnd = currentEnd.coerceAtLeast(currentStart).coerceIn(finalStart, textLength)
 
     return Pair(finalStart, finalEnd)
+  }
+
+  private fun getSelectionRestorationRange(): Pair<Int, Int>? {
+    if (selectionRestorationDepth == 0) return null
+
+    val markers = selectionMarkers ?: return null
+    val editable = view.editableText
+    val markerStart = editable.getSpanStart(markers.start)
+    val markerEnd = editable.getSpanStart(markers.end)
+
+    if (markerStart < 0 || markerEnd < 0) return null
+
+    return markerStart to markerEnd
   }
 
   private fun handleInlineStyleState() {
@@ -197,10 +212,19 @@ class EnrichedSelection(
   }
 
   fun isSingleParagraphInSelection(): Boolean {
-    val (paragraphStart, paragraphEnd) = getParagraphSelection()
-    val (currentParagraphStart, currentParagraphEnd) = view.editableText.getParagraphBounds(start)
+    val editable = view.editableText
+    val (selectionStart, selectionEnd) = getInlineSelection()
 
-    return paragraphStart == currentParagraphStart && paragraphEnd == currentParagraphEnd
+    if (editable.isEmpty() || selectionStart == selectionEnd) return true
+
+    val safeStart = selectionStart.coerceIn(0, editable.length)
+    // Selection ends are exclusive. Using end directly would inspect the following paragraph
+    // when a selection stops immediately after a newline.
+    val safeEndCharacter = (selectionEnd - 1).coerceIn(safeStart, editable.length - 1)
+    val startParagraphBounds = editable.getParagraphBounds(safeStart)
+    val endParagraphBounds = editable.getParagraphBounds(safeEndCharacter)
+
+    return startParagraphBounds == endParagraphBounds
   }
 
   private fun getParagraphStyleStart(
@@ -435,6 +459,10 @@ class EnrichedSelection(
 
     if (view.selectionStart != start || view.selectionEnd != end) {
       view.setSelection(start, end)
+    } else if (this.start != start || this.end != end) {
+      // A text replacement can transiently change the enriched selection while Android keeps the
+      // same visible selection. Synchronize the internal range after the transaction finishes.
+      onSelection(start, end)
     }
   }
 }
