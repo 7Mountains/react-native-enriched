@@ -495,6 +495,14 @@ class EnrichedTextInputViewManager :
     view.scrollEnabled = scrollEnabled
   }
 
+  @ReactProp(name = "dragAndDropEnabled", defaultBoolean = true)
+  override fun setDragAndDropEnabled(
+    view: EnrichedTextInputView,
+    dragAndDropEnabled: Boolean,
+  ) {
+    view.dragAndDropEnabled = dragAndDropEnabled
+  }
+
   @ReactProp(name = "paragraphsLimit")
   override fun setParagraphsLimit(
     view: EnrichedTextInputView?,

@@ -51,6 +51,15 @@ If `false`, text is not editable.
 > Setting `editable` to `false` will disable all user interactions with the input.
 > However, some programmatic changes (like toggling styles or changing value imperatively) via ref methods will still work.
 
+### `dragAndDropEnabled`
+
+Controls whether text can be dragged from or dropped into the input. Disabling
+this prop does not disable text selection, copying, cutting, or pasting.
+
+| Type   | Default Value | Platform |
+|--------|---------------|----------|
+| `bool` | `true`        | Both     |
+
 ### `htmlStyle`
 
 A prop for customizing styles appearances.

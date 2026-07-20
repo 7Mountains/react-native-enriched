@@ -4,6 +4,7 @@ import type {
   Float,
   Int32,
   UnsafeMixed,
+  WithDefault,
 } from 'react-native/Libraries/Types/CodegenTypes';
 import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import React from 'react';
@@ -382,6 +383,7 @@ export interface NativeProps extends ViewProps {
   autoCapitalize?: string;
   htmlStyle?: HtmlStyleInternal;
   scrollEnabled?: boolean;
+  dragAndDropEnabled?: WithDefault<boolean, true>;
   keyboardDismissMode?: string;
   iOSparagraphSpacing?: Float;
   iOSparagraphSpacingBefore?: Float;

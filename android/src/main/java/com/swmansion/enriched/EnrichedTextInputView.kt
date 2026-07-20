@@ -147,6 +147,7 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   var scrollEnabled: Boolean = true
+  var dragAndDropEnabled: Boolean = true
   private var detectScrollMovement = false
   private var scrollWatcher: EnrichedScrollWatcher? = null
 
@@ -160,9 +161,19 @@ class EnrichedTextInputView : AppCompatEditText {
     EnrichedDragHandler(this, clipboardManager)
   }
 
-  override fun onDragEvent(event: DragEvent): Boolean = dragHandler.onDragEvent(event) ?: super.onDragEvent(event)
+  override fun onDragEvent(event: DragEvent): Boolean =
+    if (dragAndDropEnabled) {
+      dragHandler.onDragEvent(event) ?: super.onDragEvent(event)
+    } else {
+      false
+    }
 
-  override fun performLongClick(): Boolean = dragHandler.performLongClick() || super.performLongClick()
+  override fun performLongClick(): Boolean =
+    if (dragAndDropEnabled) {
+      dragHandler.performLongClick() || super.performLongClick()
+    } else {
+      super.performLongClick()
+    }
 
   var spanWatcher: EnrichedSpanWatcher? = null
 
@@ -282,7 +293,7 @@ class EnrichedTextInputView : AppCompatEditText {
   override fun onTouchEvent(event: MotionEvent): Boolean {
     if (checkboxClickHandler.handleTouch(event)) return true
 
-    if (dragHandler.onTouchEvent(event)) return true
+    if (dragAndDropEnabled && dragHandler.onTouchEvent(event)) return true
     when (event.actionMasked) {
       MotionEvent.ACTION_DOWN -> {
         detectScrollMovement = true

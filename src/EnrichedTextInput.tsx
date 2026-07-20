@@ -52,6 +52,7 @@ export const EnrichedTextInput = ({
   onContextMenuItemPress,
   androidExperimentalSynchronousEvents = false,
   scrollEnabled = true,
+  dragAndDropEnabled = true,
   bouncesVertically = true,
   keyboardDismissMode = 'none',
   contextMenuItems,
@@ -146,6 +147,7 @@ export const EnrichedTextInput = ({
       bouncesVertically={bouncesVertically}
       keyboardDismissMode={keyboardDismissMode}
       scrollEnabled={scrollEnabled}
+      dragAndDropEnabled={dragAndDropEnabled}
       contextMenuItems={nativeContextMenuItems}
       writingToolsBehavior={writingToolsBehavior}
       {...rest}
