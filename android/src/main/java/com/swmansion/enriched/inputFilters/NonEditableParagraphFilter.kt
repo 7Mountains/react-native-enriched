@@ -1,6 +1,7 @@
 package com.swmansion.enriched.inputFilters
 
 import android.text.InputFilter
+import android.text.SpannableStringBuilder
 import android.text.Spanned
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
@@ -33,7 +34,7 @@ class NonEditableParagraphFilter : InputFilter {
       val spanEnd = dest.getSpanEnd(replacingSpans.first())
 
       if (spanEnd == dstart) {
-        return Strings.NEWLINE_STRING + source
+        return prependNewlineIfMissing(source, start, end)
       }
     }
 
@@ -44,7 +45,7 @@ class NonEditableParagraphFilter : InputFilter {
     if (dstart == dend) {
       val spanBeforeCursor = getNonEditableSpanBeforeCursor(dest, dstart)
       if (spanBeforeCursor != null && dest.getSpanEnd(spanBeforeCursor) == dstart) {
-        return Strings.NEWLINE_STRING + source
+        return prependNewlineIfMissing(source, start, end)
       }
     }
 
@@ -75,6 +76,19 @@ class NonEditableParagraphFilter : InputFilter {
     }
 
     return null
+  }
+
+  private fun prependNewlineIfMissing(
+    source: CharSequence,
+    start: Int,
+    end: Int,
+  ): CharSequence? {
+    if (start >= end || source[start] == Strings.NEWLINE) {
+      return null
+    }
+
+    return SpannableStringBuilder(Strings.NEWLINE_STRING)
+      .append(source, start, end)
   }
 
   private fun getNonEditableSpanBeforeCursor(
