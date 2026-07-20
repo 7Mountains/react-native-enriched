@@ -200,6 +200,22 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
 // MARK: - Props
 
+- (void)setDragAndDropVisible:(BOOL)enabled {
+  textView.textDragInteraction.enabled = enabled;
+
+  if (!_textDropInteraction) {
+    return;
+  }
+
+  BOOL dropInteractionIsAttached =
+      [textView.interactions containsObject:_textDropInteraction];
+  if (enabled && !dropInteractionIsAttached) {
+    [textView addInteraction:_textDropInteraction];
+  } else if (!enabled && dropInteractionIsAttached) {
+    [textView removeInteraction:_textDropInteraction];
+  }
+}
+
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
   const auto &oldViewProps =
@@ -228,20 +244,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
 
   if (newViewProps.dragAndDropEnabled != oldViewProps.dragAndDropEnabled ||
       textView.textDragInteraction.enabled != newViewProps.dragAndDropEnabled) {
-    BOOL enabled = newViewProps.dragAndDropEnabled;
-    textView.textDragInteraction.enabled = enabled;
-
-    if (!_textDropInteraction) {
-      return;
-    }
-
-    BOOL dropInteractionIsAttached =
-        [textView.interactions containsObject:_textDropInteraction];
-    if (enabled && !dropInteractionIsAttached) {
-      [textView addInteraction:_textDropInteraction];
-    } else if (!enabled && dropInteractionIsAttached) {
-      [textView removeInteraction:_textDropInteraction];
-    }
+    [self setDragAndDropVisible:newViewProps.dragAndDropEnabled];
   }
 
   BOOL textViewBouncesVertically;
