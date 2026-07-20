@@ -32,7 +32,6 @@ import com.swmansion.enriched.utils.getListRange
 import com.swmansion.enriched.utils.getParagraphBounds
 import com.swmansion.enriched.utils.getParagraphRanges
 import com.swmansion.enriched.utils.getParagraphsBounds
-import com.swmansion.enriched.utils.isTheSameParagraphInSelection
 import com.swmansion.enriched.utils.removeSpans
 import com.swmansion.enriched.utils.removeZWS
 import com.swmansion.enriched.watchers.TextChangedEvent
@@ -87,16 +86,16 @@ class ParagraphStyles(
       removedAny = true
     }
 
-    view.transactionManager.runSilently {
-      if (removedAny && removeZWS) {
-        val (paragraphStart, paragraphEnd) = editable.getParagraphBounds(start, end)
-        val replacement = SpannableStringBuilder(editable.subSequence(paragraphStart, paragraphEnd))
-        replacement.removeZWS(0, replacement.length)
-        val removedCharacters = paragraphEnd - paragraphStart - replacement.length
+    val safeStart = start.coerceAtMost(end).coerceAtLeast(0).coerceAtMost(editable.length)
+    val safeEnd = end.coerceAtLeast(start).coerceAtLeast(safeStart).coerceAtMost(editable.length)
 
-        if (removedCharacters > 0) {
-          editable.replace(paragraphStart, paragraphEnd, replacement)
-        }
+    if (removeZWS && removedAny) {
+      val replacement = SpannableStringBuilder(editable.subSequence(safeStart, safeEnd))
+      replacement.removeZWS(0, replacement.length)
+      val removedCharacters = safeEnd - safeStart - replacement.length
+
+      if (removedCharacters > 0) {
+        editable.replace(safeStart, safeEnd, replacement)
       }
     }
 
@@ -115,8 +114,6 @@ class ParagraphStyles(
     name: TextStyle,
     clazz: Class<out EnrichedSpan>,
   ): StyledParagraphReplacement? {
-    createSpan(name) ?: return null
-
     val replacement = SpannableStringBuilder(editable.subSequence(start, end))
 
     replacement.removeSpans(0, replacement.length, clazz)
@@ -235,6 +232,13 @@ class ParagraphStyles(
       return
     }
 
+    if (selection.isSingleParagraphInSelection() && start != end) {
+      val span = createSpan(name) ?: return
+      applyParagraphSpan(ssb, span, start, end)
+      selection.validateStyles()
+      return
+    }
+
     val replacement =
       buildStyledParagraphReplacement(ssb, start, end, name, config.clazz) ?: return
     ssb.replace(start, end, replacement.text)
@@ -287,7 +291,7 @@ class ParagraphStyles(
 
     spanState.setAlignmentStart(start, alignment)
 
-    val isSingleParagraphSelection = editable.isTheSameParagraphInSelection(selection)
+    val isSingleParagraphSelection = selection.isSingleParagraphInSelection()
 
     if (isSingleParagraphSelection) {
       applySingleParagraphAlignment(editable, pStart, pEnd, alignment)

@@ -713,11 +713,13 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   fun verifyAndToggleStyle(name: TextStyle) {
-    val isValid = styleManipulator.verifyStyle(name)
-    if (!isValid) return
+    selection.runWithSelectionRestoration {
+      val isValid = styleManipulator.verifyStyle(name)
+      if (!isValid) return@runWithSelectionRestoration
 
-    transactionManager.runTransaction {
-      styleManipulator.toggleStyle(name)
+      transactionManager.runTransaction {
+        styleManipulator.toggleStyle(name)
+      }
     }
   }
 

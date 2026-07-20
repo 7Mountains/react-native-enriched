@@ -2,7 +2,9 @@ package com.swmansion.enriched.utils
 
 import android.text.Editable
 import android.text.Layout
+import android.text.NoCopySpan
 import android.text.Spannable
+import android.text.Spanned
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.swmansion.enriched.EnrichedTextInputView
@@ -22,6 +24,11 @@ import org.json.JSONObject
 class EnrichedSelection(
   private val view: EnrichedTextInputView,
 ) {
+  private data class SelectionMarkers(
+    val start: NoCopySpan.Concrete,
+    val end: NoCopySpan.Concrete,
+  )
+
   var start: Int = 0
   var end: Int = 0
   var prevTextVersion: Int? = null
@@ -32,6 +39,9 @@ class EnrichedSelection(
 
   private var previousLinkDetectedEvent: MutableMap<String, String> = mutableMapOf("text" to "", "url" to "")
   private var previousMentionDetectedEvent: MutableMap<String, String> = mutableMapOf("text" to "", "payload" to "")
+
+  private var selectionRestorationDepth = 0
+  private var selectionMarkers: SelectionMarkers? = null
 
   fun onSelection(
     selStart: Int,
@@ -116,10 +126,25 @@ class EnrichedSelection(
   }
 
   fun getInlineSelection(): Pair<Int, Int> {
-    val finalStart = start.coerceAtMost(end).coerceAtLeast(0)
-    val finalEnd = end.coerceAtLeast(start).coerceAtLeast(0)
+    val (currentStart, currentEnd) = getSelectionRestorationRange() ?: (start to end)
+    val textLength = view.editableText.length
+    val finalStart = currentStart.coerceAtMost(currentEnd).coerceIn(0, textLength)
+    val finalEnd = currentEnd.coerceAtLeast(currentStart).coerceIn(finalStart, textLength)
 
     return Pair(finalStart, finalEnd)
+  }
+
+  private fun getSelectionRestorationRange(): Pair<Int, Int>? {
+    if (selectionRestorationDepth == 0) return null
+
+    val markers = selectionMarkers ?: return null
+    val editable = view.editableText
+    val markerStart = editable.getSpanStart(markers.start)
+    val markerEnd = editable.getSpanStart(markers.end)
+
+    if (markerStart < 0 || markerEnd < 0) return null
+
+    return markerStart to markerEnd
   }
 
   private fun handleInlineStyleState() {
@@ -184,6 +209,22 @@ class EnrichedSelection(
   fun getParagraphSelection(): Pair<Int, Int> {
     val (currentStart, currentEnd) = getInlineSelection()
     return view.editableText.getParagraphBounds(currentStart, currentEnd)
+  }
+
+  fun isSingleParagraphInSelection(): Boolean {
+    val editable = view.editableText
+    val (selectionStart, selectionEnd) = getInlineSelection()
+
+    if (editable.isEmpty() || selectionStart == selectionEnd) return true
+
+    val safeStart = selectionStart.coerceIn(0, editable.length)
+    // Selection ends are exclusive. Using end directly would inspect the following paragraph
+    // when a selection stops immediately after a newline.
+    val safeEndCharacter = (selectionEnd - 1).coerceIn(safeStart, editable.length - 1)
+    val startParagraphBounds = editable.getParagraphBounds(safeStart)
+    val endParagraphBounds = editable.getParagraphBounds(safeEndCharacter)
+
+    return startParagraphBounds == endParagraphBounds
   }
 
   private fun getParagraphStyleStart(
@@ -345,5 +386,83 @@ class EnrichedSelection(
         view.experimentalSynchronousEvents,
       ),
     )
+  }
+
+  /**
+   * Keeps the native and enriched selections in sync when a style mutation changes text length.
+   *
+   * Paragraph and list style changes can add or remove zero-width spaces. The selection spans
+   * managed by TextView can be discarded or relocated while the edited range is replaced, so use
+   * independent point markers to recover the resulting offsets before updating the selection.
+   */
+  fun <T> runWithSelectionRestoration(block: () -> T): T {
+    val isOutermost = selectionRestorationDepth == 0
+
+    if (isOutermost) {
+      val editable = view.editableText
+      val start = view.selectionStart
+      val end = view.selectionEnd
+
+      if (start >= 0 && end >= 0) {
+        val markers =
+          SelectionMarkers(
+            start = NoCopySpan.Concrete(),
+            end = NoCopySpan.Concrete(),
+          )
+
+        editable.setSpan(
+          markers.start,
+          start,
+          start,
+          Spanned.SPAN_POINT_POINT,
+        )
+        editable.setSpan(
+          markers.end,
+          end,
+          end,
+          Spanned.SPAN_POINT_POINT,
+        )
+
+        selectionMarkers = markers
+      }
+    }
+
+    selectionRestorationDepth++
+
+    try {
+      return block()
+    } finally {
+      if (isOutermost) {
+        try {
+          restoreSelection()
+        } finally {
+          selectionMarkers = null
+          selectionRestorationDepth--
+        }
+      } else {
+        selectionRestorationDepth--
+      }
+    }
+  }
+
+  private fun restoreSelection() {
+    val markers = selectionMarkers ?: return
+    val editable = view.editableText
+
+    val start = editable.getSpanStart(markers.start)
+    val end = editable.getSpanStart(markers.end)
+
+    editable.removeSpan(markers.start)
+    editable.removeSpan(markers.end)
+
+    if (start < 0 || end < 0) return
+
+    if (view.selectionStart != start || view.selectionEnd != end) {
+      view.setSelection(start, end)
+    } else if (this.start != start || this.end != end) {
+      // A text replacement can transiently change the enriched selection while Android keeps the
+      // same visible selection. Synchronize the internal range after the transaction finishes.
+      onSelection(start, end)
+    }
   }
 }

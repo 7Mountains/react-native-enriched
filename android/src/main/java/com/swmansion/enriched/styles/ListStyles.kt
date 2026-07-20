@@ -101,12 +101,23 @@ class ListStyles(
     }
 
     if (removeZWS) {
-      val replacement = SpannableStringBuilder(editable.subSequence(safeStart, safeEnd))
-      replacement.removeZWS(0, replacement.length)
-      val removedCharacters = safeEnd - safeStart - replacement.length
+      if (view.selection.isSingleParagraphInSelection()) {
+        val safeStart = start.coerceIn(0, editable.length)
+        val safeEnd = end.coerceIn(safeStart, editable.length)
 
-      if (removedCharacters > 0) {
-        editable.replace(safeStart, safeEnd, replacement)
+        for (index in safeEnd - 1 downTo safeStart) {
+          if (editable[index] == Strings.ZERO_WIDTH_SPACE_CHAR) {
+            editable.delete(index, index + 1)
+          }
+        }
+      } else {
+        val replacement = SpannableStringBuilder(editable.subSequence(safeStart, safeEnd))
+        replacement.removeZWS(0, replacement.length)
+        val removedCharacters = safeEnd - safeStart - replacement.length
+
+        if (removedCharacters > 0) {
+          editable.replace(safeStart, safeEnd, replacement)
+        }
       }
     }
 
@@ -172,10 +183,9 @@ class ListStyles(
       return
     }
 
-    if (start == end) {
+    if (start == end || selection.isSingleParagraphInSelection()) {
       editable.insert(start, Strings.ZERO_WIDTH_SPACE_STRING)
       spanState.setStartWithStateChangeEmitting(name, start + 1)
-      removeSpansForRange(editable, start, end, config.clazz)
       val newEnd = end + 1
       setSpan(editable, name, start, newEnd)
       reapplyAlignment(editable, start, newEnd)
