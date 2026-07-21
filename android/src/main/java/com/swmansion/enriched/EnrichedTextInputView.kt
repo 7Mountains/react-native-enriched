@@ -623,6 +623,7 @@ class EnrichedTextInputView : AppCompatEditText {
     try {
       // Send the normal TextView touch-up path to dismiss selection handles.
       // The coordinates point at the existing cursor, so it does not change selection.
+      // https://android.googlesource.com/platform/frameworks/base/+/37960c7/core/java/android/widget/Editor.java#1452
       super.onTouchEvent(event)
     } finally {
       event.recycle()
