@@ -157,8 +157,9 @@ static inline BOOL CGSizeAlmostEqual(CGSize firstSize, CGSize secondSize,
 
 - (void)setContentSize:(CGSize)contentSize {
   [super setContentSize:contentSize];
-
-  [self notifySizeDidChangeForContentSize:contentSize];
+  if (self.scrollEnabled) {
+    [self notifySizeDidChangeForContentSize:contentSize];
+  }
 }
 
 - (void)notifySizeDidChangeForContentSize:(CGSize)contentSize {
