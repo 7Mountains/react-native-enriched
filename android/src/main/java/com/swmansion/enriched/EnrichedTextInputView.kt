@@ -9,7 +9,6 @@ import android.graphics.Rect
 import android.graphics.text.LineBreaker
 import android.os.Build
 import android.os.SystemClock
-import android.text.Editable
 import android.text.InputType
 import android.text.Spannable
 import android.text.SpannableString
