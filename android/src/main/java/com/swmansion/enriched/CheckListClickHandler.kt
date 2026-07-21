@@ -29,7 +29,7 @@ class CheckListClickHandler(
   }
 
   fun handleTouch(event: MotionEvent): Boolean {
-    val text = view.text as? Spannable ?: return false
+    val text = view.editableText
     val layout = view.layout ?: return false
 
     val x = event.x - view.totalPaddingLeft + view.scrollX

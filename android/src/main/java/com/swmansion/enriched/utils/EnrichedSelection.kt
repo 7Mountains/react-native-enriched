@@ -66,7 +66,7 @@ class EnrichedSelection(
       prevTextVersion = view.textVersion
     }
 
-    val textLength = view.text?.length ?: 0
+    val textLength = view.length()
     val finalStart = newStart.coerceAtMost(newEnd).coerceAtLeast(0).coerceAtMost(textLength)
     val finalEnd = newEnd.coerceAtLeast(newStart).coerceAtLeast(0).coerceAtMost(textLength)
 
