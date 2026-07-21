@@ -470,7 +470,7 @@ class EnrichedTextInputView : AppCompatEditText {
       observeAsyncImages()
       if (withSelection) {
         // Scroll to the last line of text
-        setSelection(text?.length ?: 0, text?.length ?: 0)
+        setSelection(length(), length())
       }
     }
   }
@@ -479,14 +479,14 @@ class EnrichedTextInputView : AppCompatEditText {
     start: Int,
     stop: Int,
   ) {
-    val textLength = text?.length ?: 0
+    val textLength = length()
     val safeStart = start.coerceIn(0, textLength)
     val safeEnd = stop.coerceIn(0, textLength)
     super.setSelection(safeStart, safeEnd)
   }
 
   override fun setSelection(index: Int) {
-    val safeIndex = index.coerceIn(0, text?.length ?: 0)
+    val safeIndex = index.coerceIn(0, length())
     super.setSelection(safeIndex)
   }
 
@@ -502,9 +502,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
   // this method is used to update the draw state of span
   fun redrawSpan(span: EnrichedSpan) {
-    val text = text
-    if (text !is Spannable) return
-
+    val text = editableText
     val start = text.getSpanStart(span)
     val end = text.getSpanEnd(span)
 

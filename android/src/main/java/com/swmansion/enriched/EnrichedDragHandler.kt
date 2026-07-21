@@ -83,7 +83,7 @@ class EnrichedDragHandler(
       return true
     }
 
-    val lengthBeforeDrop = view.text?.length ?: 0
+    val lengthBeforeDrop = view.length()
     val didInsert = clipboardManager.insertClipData(clip, dropOffset, dropOffset)
     if (!didInsert) {
       return null
