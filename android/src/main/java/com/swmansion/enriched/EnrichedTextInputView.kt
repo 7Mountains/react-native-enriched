@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.text.LineBreaker
 import android.os.Build
+import android.os.SystemClock
 import android.text.InputType
 import android.text.Spannable
 import android.text.SpannableString
@@ -601,8 +602,36 @@ class EnrichedTextInputView : AppCompatEditText {
     return actionMode
   }
 
+  private fun invalidateSelectionHandlesForSingleSelection() {
+    if (!isFocused) return
+
+    val (start, end) = selection.getInlineSelection()
+
+    if (start != end) return
+
+    val textLayout = layout ?: return
+    val line = textLayout.getLineForOffset(start)
+    val x = totalPaddingLeft + textLayout.getPrimaryHorizontal(start) - scrollX
+    val y =
+      totalPaddingTop +
+        (textLayout.getLineTop(line) + textLayout.getLineBottom(line)) / 2f -
+        scrollY
+    val eventTime = SystemClock.uptimeMillis()
+    val event = MotionEvent.obtain(eventTime, eventTime, MotionEvent.ACTION_UP, x, y, 0)
+
+    try {
+      // Send the normal TextView touch-up path to dismiss selection handles.
+      // The coordinates point at the existing cursor, so it does not change selection.
+      // https://android.googlesource.com/platform/frameworks/base/+/37960c7/core/java/android/widget/Editor.java#1452
+      super.onTouchEvent(event)
+    } finally {
+      event.recycle()
+    }
+  }
+
   fun hideContextMenu() {
     contextMenuController.hideContextMenu()
+    invalidateSelectionHandlesForSingleSelection()
   }
 
   fun setColor(colorInt: Int?) {

@@ -71,7 +71,6 @@ class EnrichedContextMenuController(
       val prevEnd = editText.selectionEnd
       it.finish()
       currentActionMode = null
-      editText.isCursorVisible = false
       editText.setSelection(prevStart, prevEnd)
     }
   }
