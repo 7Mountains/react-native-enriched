@@ -459,10 +459,6 @@ class EnrichedSelection(
 
     if (view.selectionStart != start || view.selectionEnd != end) {
       view.setSelection(start, end)
-    } else if (this.start != start || this.end != end) {
-      // A text replacement can transiently change the enriched selection while Android keeps the
-      // same visible selection. Synchronize the internal range after the transaction finishes.
-      onSelection(start, end)
     }
   }
 }
