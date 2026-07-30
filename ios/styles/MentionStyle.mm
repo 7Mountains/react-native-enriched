@@ -308,18 +308,31 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
     // mention editing should finish
     [self removeActiveMentionRange];
   } else {
-    // add a single space after the mention
+    UITextView *textView = _input->textView;
+    NSUInteger insertionLocation = textView.selectedRange.location;
+
+    [textView.textStorage beginEditing];
     [TextInsertionUtils insertText:text
-                                at:_input->textView.selectedRange.location
+                                at:insertionLocation
               additionalAttributes:additionalAttributes
                              input:_input
                      withSelection:NO];
     [TextInsertionUtils insertText:@" "
-                                at:_input->textView.selectedRange.location +
-                                   text.length
+                                at:insertionLocation + text.length
               additionalAttributes:nil
                              input:_input
-                     withSelection:YES];
+                     withSelection:NO];
+    [textView.textStorage endEditing];
+
+    // Set selection only after both insertions. This keeps the separator out
+    // of the mention update and preserves it as plain text.
+    if (![textView isFirstResponder]) {
+      [textView reactFocus];
+    }
+    textView.selectedRange =
+        NSMakeRange(insertionLocation + text.length + 1, 0);
+    [_input setRecentlyChangedRange:NSMakeRange(insertionLocation,
+                                                text.length + 1)];
   }
 
   // mention editing should finish
