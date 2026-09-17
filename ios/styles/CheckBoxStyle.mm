@@ -290,9 +290,18 @@ static NSArray<NSTextList *> *const UncheckedLists =
       stringByReplacingCharactersInRange:NSMakeRange(lastCharacterIndex, 1)
                               withString:NewLineWithZWS];
 
+  NSMutableParagraphStyle *pStyle =
+      [[self currentTypingParagraphStyle] mutableCopy];
+  pStyle.textLists = [self listForChecked:NO];
+
+  NSMutableDictionary *newAttrbiutes =
+      [[_input->textView typingAttributes] mutableCopy];
+
+  newAttrbiutes[NSParagraphStyleAttributeName] = pStyle;
+
   [TextInsertionUtils replaceText:replacementText
                                at:range
-             additionalAttributes:nil
+             additionalAttributes:newAttrbiutes
                             input:_input
                     withSelection:YES];
   [self addAttributes:_input->textView.selectedRange isChecked:NO];
