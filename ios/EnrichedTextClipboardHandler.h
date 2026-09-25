@@ -7,7 +7,7 @@
 
 - (instancetype)initWithInput:(EnrichedTextInputView *)input;
 - (void)copy;
-- (void)paste;
+- (void)pasteWithCapacity:(NSInteger)capacity;
 - (void)cut;
 - (void)handleInsertion:(NSMutableAttributedString *)current
                inserted:(NSAttributedString *)inserted

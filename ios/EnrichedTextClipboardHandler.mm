@@ -1,4 +1,5 @@
 #import "EnrichedTextClipboardHandler.h"
+#import "EnrichedMaxLengthUtils.h"
 #import "EnrichedTextInputView.h"
 #import "ParagraphAttributesUtils.h"
 #import "ParagraphsUtils.h"
@@ -54,11 +55,21 @@
       } ]];
 }
 
-- (void)paste {
+- (void)pasteWithCapacity:(NSInteger)capacity {
   NSAttributedString *inserted =
       [self attributedStringFromPasteboard:UIPasteboard.generalPasteboard];
   if (!inserted || inserted.length == 0)
     return;
+
+  if (capacity != NSIntegerMax &&
+      [EnrichedMaxLengthUtils plainLengthOf:inserted.string] > capacity) {
+    NSUInteger cutIndex = [EnrichedMaxLengthUtils cutIndexIn:inserted.string
+                                                    capacity:capacity];
+    inserted = [inserted attributedSubstringFromRange:NSMakeRange(0, cutIndex)];
+    if (inserted.length == 0) {
+      return;
+    }
+  }
 
   UITextView *textView = _input->textView;
   NSMutableAttributedString *current = textView.textStorage;

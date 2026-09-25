@@ -8,6 +8,7 @@
 #import "EnrichedCookiesOperators.h"
 #import "EnrichedHeadingLevel.h"
 #import "EnrichedKeyPressEventPayloadBuilder.h"
+#import "EnrichedMaxLengthUtils.h"
 #import "EnrichedParagraphStyle.h"
 #import "EnrichedScrollEventPayloadBuilder.h"
 #import "EnrichedSelectionEventPayloadBuilder.h"
@@ -89,6 +90,7 @@ using namespace facebook::react;
   int _paragraphsLimit;
   NSDictionary<NSNumber *, id<BaseStyleProtocol>> *_allStyles;
   NSArray<UIMenuElement *> *_contextMenuItems;
+  NSInteger _maxLength;
 }
 
 // MARK: - Component utils
@@ -151,6 +153,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _layoutInsets = UIEdgeInsetsZero;
   _clipboardHandler = [[EnrichedTextClipboardHandler alloc] initWithInput:self];
   _paragraphsLimit = -1;
+  _maxLength = EnrichedMaxLengthUnlimited;
 }
 
 - (void)setupTextView {
@@ -188,13 +191,24 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                             styles:self->stylesDict
                  defaultAttributes:self->defaultTypingAttributes];
 
+    if (_maxLength != EnrichedMaxLengthUnlimited &&
+        [EnrichedMaxLengthUtils plainLengthOf:inserted.string] > _maxLength) {
+      NSUInteger cutIndex = [EnrichedMaxLengthUtils cutIndexIn:inserted.string
+                                                      capacity:_maxLength];
+      [inserted deleteCharactersInRange:NSMakeRange(cutIndex, inserted.length -
+                                                                  cutIndex)];
+    }
+
     NSTextStorage *storage = self->textView.textStorage;
 
     [storage beginEditing];
     [storage setAttributedString:inserted];
     [storage endEditing];
   } else {
-    textView.text = string;
+    textView.text = _maxLength == EnrichedMaxLengthUnlimited
+                        ? string
+                        : [EnrichedMaxLengthUtils truncate:string
+                                                toCapacity:_maxLength];
   }
 }
 
@@ -289,6 +303,10 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     }
 
     [[EnrichedCookieManager shared] setCookies:cookies];
+  }
+
+  if (newViewProps.maxLength != oldViewProps.maxLength) {
+    _maxLength = newViewProps.maxLength;
   }
 
   BOOL defaultValueChanged =
@@ -1129,6 +1147,24 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                      defaultAttributes:defaultTypingAttributes]
           : [[NSAttributedString alloc] initWithString:text
                                             attributes:defaultTypingAttributes];
+
+  if (_maxLength != EnrichedMaxLengthUnlimited) {
+    NSInteger capacity =
+        [EnrichedMaxLengthUtils capacityForText:textView.textStorage.string
+                                 replacingRange:range
+                                      maxLength:_maxLength];
+    if ([EnrichedMaxLengthUtils plainLengthOf:insertedText.string] > capacity) {
+      NSUInteger cutIndex =
+          [EnrichedMaxLengthUtils cutIndexIn:insertedText.string
+                                    capacity:capacity];
+      insertedText =
+          [insertedText attributedSubstringFromRange:NSMakeRange(0, cutIndex)];
+      if (insertedText.length == 0) {
+        return;
+      }
+    }
+  }
+
   [_clipboardHandler handleInsertion:textView.textStorage
                             inserted:insertedText
                        selectedRange:range];
@@ -1378,6 +1414,22 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
             replacementText:(NSString *)text {
   [self handleKeyPressInRange:text range:range];
 
+  BOOL didTruncateText = NO;
+  if (_maxLength != EnrichedMaxLengthUnlimited) {
+    NSInteger capacity =
+        [EnrichedMaxLengthUtils capacityForText:textView.textStorage.string
+                                 replacingRange:range
+                                      maxLength:_maxLength];
+    NSString *limitedText = [EnrichedMaxLengthUtils truncate:text
+                                                  toCapacity:capacity];
+    didTruncateText = limitedText.length < text.length;
+    text = limitedText;
+
+    if (didTruncateText && text.length == 0) {
+      return NO;
+    }
+  }
+
   BOOL isNewLine = [text isEqualToString:NewLine];
 
   if (_paragraphsLimit > 0 && isNewLine) {
@@ -1473,6 +1525,16 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     return NO;
   }
 
+  if (didTruncateText) {
+    [TextInsertionUtils replaceText:text
+                                 at:range
+               additionalAttributes:textView.typingAttributes
+                              input:self
+                      withSelection:YES];
+    [self anyTextMayHaveBeenModified];
+    return NO;
+  }
+
   return YES;
 }
 
@@ -1527,7 +1589,14 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
       return;
     }
   }
-  [_clipboardHandler paste];
+  NSInteger capacity = NSIntegerMax;
+  if (_maxLength != EnrichedMaxLengthUnlimited) {
+    capacity =
+        [EnrichedMaxLengthUtils capacityForText:textView.textStorage.string
+                                 replacingRange:textView.selectedRange
+                                      maxLength:_maxLength];
+  }
+  [_clipboardHandler pasteWithCapacity:capacity];
   [self->textView scrollSelectionToVisibleWithInsets:_customContentInsets];
   [self anyTextMayHaveBeenModified];
 }

@@ -37,6 +37,7 @@ import com.swmansion.enriched.events.OnMentionDetectedEvent
 import com.swmansion.enriched.events.OnMentionEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
 import com.swmansion.enriched.events.OnScrollEvent
+import com.swmansion.enriched.inputFilters.MaxLength
 import com.swmansion.enriched.loaders.EnrichedCookieManager
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.styles.HtmlStyle
@@ -533,6 +534,14 @@ class EnrichedTextInputViewManager :
     value: Boolean,
   ) {
     // NO-OP iOS only prop
+  }
+
+  @ReactProp(name = "maxLength", defaultInt = MaxLength.UNLIMITED)
+  override fun setMaxLength(
+    view: EnrichedTextInputView,
+    value: Int,
+  ) {
+    view.maxLength = value
   }
 
   override fun setContextMenuItems(
