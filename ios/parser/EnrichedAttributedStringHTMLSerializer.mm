@@ -30,8 +30,8 @@
   _modifierStyleDescriptors.clear();
 
   SEL conditionSEL = @selector(styleCondition:range:);
-  SEL conditionWithAttributesSEL = @selector(styleConditionWithAttributes:
-                                                                    range:);
+  SEL conditionWithAttributesSEL =
+      @selector(styleConditionWithAttributes:range:);
   SEL paramsSEL = @selector(getParametersFromValue:);
   SEL modifierParamsSEL = @selector(containerAttributesFromValue:);
 

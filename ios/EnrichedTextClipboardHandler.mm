@@ -1,4 +1,5 @@
 #import "EnrichedTextClipboardHandler.h"
+#import "EnrichedMaxLengthUtils.h"
 #import "EnrichedTextInputView.h"
 #import "ParagraphAttributesUtils.h"
 #import "ParagraphsUtils.h"
@@ -54,7 +55,7 @@
       } ]];
 }
 
-- (void)paste {
+- (void)pasteWithCapacity:(NSInteger)capacity {
   NSAttributedString *inserted =
       [self attributedStringFromPasteboard:UIPasteboard.generalPasteboard];
   if (!inserted || inserted.length == 0)
@@ -64,7 +65,10 @@
   NSMutableAttributedString *current = textView.textStorage;
   NSRange selectedRange = textView.selectedRange;
 
-  [self handleInsertion:current inserted:inserted selectedRange:selectedRange];
+  [self handleInsertion:current
+               inserted:inserted
+          selectedRange:selectedRange
+               capacity:capacity];
 }
 
 - (void)cut {
@@ -226,7 +230,8 @@
 
 - (void)handleInsertion:(NSMutableAttributedString *)current
                inserted:(NSAttributedString *)inserted
-          selectedRange:(NSRange)selectedRange {
+          selectedRange:(NSRange)selectedRange
+               capacity:(NSInteger)capacity {
   NSUInteger start = selectedRange.location;
 
   NSDictionary *defaultTypingAttributes = _input->defaultTypingAttributes;
@@ -237,6 +242,48 @@
   NSRange targetParagraphRange =
       [current.string paragraphRangeForRange:NSMakeRange(start, 0)];
 
+  BOOL targetIsReadOnly = targetParagraphRange.length > 0 &&
+                          [ParagraphsUtils isReadOnlyParagraphAtLocation:current
+                                                                location:start];
+  BOOL insertedStartsWithReadOnlyParagraph =
+      inserted.length > 0 &&
+      [ParagraphsUtils isReadOnlyParagraphAtLocation:inserted location:0];
+  BOOL needsStructuralNewLine = NO;
+
+  if (targetParagraphRange.length > 0) {
+    if (insertedStartsWithReadOnlyParagraph) {
+      NSUInteger safeStart = MIN(selectedRange.location, current.length);
+      NSUInteger removedLength =
+          MIN(selectedRange.length, current.length - safeStart);
+
+      // Replacing the entire document does not require a separating newline.
+      needsStructuralNewLine = current.length > removedLength;
+    } else {
+      needsStructuralNewLine = targetIsReadOnly && selectedRange.length == 0;
+    }
+  }
+
+  if (capacity != NSIntegerMax) {
+    if (needsStructuralNewLine) {
+      NSInteger newLineLength =
+          [EnrichedMaxLengthUtils plainLengthOf:attributedNewLine.string];
+      if (capacity < newLineLength) {
+        return;
+      }
+      capacity -= newLineLength;
+    }
+
+    if ([EnrichedMaxLengthUtils plainLengthOf:inserted.string] > capacity) {
+      NSUInteger cutIndex = [EnrichedMaxLengthUtils cutIndexIn:inserted.string
+                                                      capacity:capacity];
+      inserted =
+          [inserted attributedSubstringFromRange:NSMakeRange(0, cutIndex)];
+      if (inserted.length == 0) {
+        return;
+      }
+    }
+  }
+
   if (targetParagraphRange.length == 0) {
     [current beginEditing];
     [current replaceCharactersInRange:selectedRange
@@ -246,9 +293,6 @@
     _input->textView.selectedRange = NSMakeRange(start + inserted.length, 0);
     return;
   }
-
-  BOOL targetIsReadOnly = [ParagraphsUtils isReadOnlyParagraphAtLocation:current
-                                                                location:start];
 
   if ([self tryInsertStartingWithReadOnlyParagraph:current
                                           inserted:inserted

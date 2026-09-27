@@ -4663,6 +4663,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wasm-fmt/clang-format@npm:23.1.1":
+  version: 23.1.1
+  resolution: "@wasm-fmt/clang-format@npm:23.1.1"
+  bin:
+    clang-format: clang-format-cli.cjs
+    clang-format-diff: clang-format-diff.py
+    git-clang-format: git-clang-format
+  checksum: e3991b74e409edebf6fc695521e6475439ea9b64bdb24b24e3281939df115b1b7866bd661d97ee5dd66d8acbd9448adbe8a5690fae11ab4b448d8d2d322539d2
+  languageName: node
+  linkType: hard
+
 "JSONStream@npm:^1.3.5":
   version: 1.3.5
   resolution: "JSONStream@npm:1.3.5"
@@ -5070,13 +5081,6 @@ __metadata:
   dependencies:
     retry: 0.13.1
   checksum: 38a7152ff7265a9321ea214b9c69e8224ab1febbdec98efbbde6e562f17ff68405569b796b1c5271f354aef8783665d29953f051f68c1fc45306e61aec82fdc4
-  languageName: node
-  linkType: hard
-
-"async@npm:^3.2.3":
-  version: 3.2.6
-  resolution: "async@npm:3.2.6"
-  checksum: ee6eb8cd8a0ab1b58bd2a3ed6c415e93e773573a91d31df9d5ef559baafa9dab37d3b096fa7993e84585cac3697b2af6ddb9086f45d3ac8cae821bb2aab65682
   languageName: node
   linkType: hard
 
@@ -5635,21 +5639,6 @@ __metadata:
   version: 1.4.3
   resolution: "cjs-module-lexer@npm:1.4.3"
   checksum: 221a1661a9ff4944b472c85ac7cd5029b2f2dc7f6c5f4ecf887f261503611110b43a48acb6c07f8f04109c772d1637fdb20b31252bf27058f35aa97bf5ad8b12
-  languageName: node
-  linkType: hard
-
-"clang-format@npm:^1.8.0":
-  version: 1.8.0
-  resolution: "clang-format@npm:1.8.0"
-  dependencies:
-    async: ^3.2.3
-    glob: ^7.0.0
-    resolve: ^1.1.6
-  bin:
-    check-clang-format: bin/check-clang-format.js
-    clang-format: index.js
-    git-clang-format: bin/git-clang-format
-  checksum: 8e4198e976e8ca1dcb6f7eba09db89db44ce39c326a249b1a28ea2b3fd7dc5ece389d328bb9781424a708e63044b1432d85b9d8f65c46d3d5c13d2b6bf745a50
   languageName: node
   linkType: hard
 
@@ -12262,7 +12251,7 @@ __metadata:
     "@release-it/conventional-changelog": ^9.0.2
     "@types/jest": ^29.5.5
     "@types/react": ^19.1.0
-    clang-format: ^1.8.0
+    "@wasm-fmt/clang-format": 23.1.1
     commitlint: ^19.6.1
     del-cli: ^5.1.0
     eslint: ^9.22.0

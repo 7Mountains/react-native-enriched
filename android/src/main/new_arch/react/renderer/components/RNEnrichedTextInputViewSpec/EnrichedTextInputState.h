@@ -11,7 +11,7 @@ public:
   // Used by Kotlin to set current text value
   EnrichedTextInputState(EnrichedTextInputState const &previousState,
                          folly::dynamic data)
-      : contentHeight_((int)data["height"].getInt()){};
+      : contentHeight_((int)data["height"].getInt()) {};
   folly::dynamic getDynamic() const { return {}; };
 
   int getHeight() const;

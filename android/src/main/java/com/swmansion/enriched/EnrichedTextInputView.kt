@@ -42,6 +42,8 @@ import com.swmansion.enriched.events.OnAnyContentChangeEvent
 import com.swmansion.enriched.events.OnInputBlurEvent
 import com.swmansion.enriched.events.OnInputFocusEvent
 import com.swmansion.enriched.events.OnRequestHtmlResultEvent
+import com.swmansion.enriched.inputFilters.MaxLength
+import com.swmansion.enriched.inputFilters.MaxLengthFilter
 import com.swmansion.enriched.inputFilters.NonEditableParagraphFilter
 import com.swmansion.enriched.inputFilters.ParagraphLimitFilter
 import com.swmansion.enriched.loaders.EnrichedImageLoader
@@ -103,6 +105,7 @@ class EnrichedTextInputView : AppCompatEditText {
 
   var availableStyles: Map<TextStyle, ISpanConfig> = EnrichedSpans.allSpans
   var paragraphsLimit: Int = -1
+  var maxLength: Int = MaxLength.UNLIMITED
 
   var shouldEmitHtml: Boolean = false
   var shouldEmitOnChangeText: Boolean = false
@@ -240,7 +243,12 @@ class EnrichedTextInputView : AppCompatEditText {
     setEditableFactory(EnrichedEditableFactory(spanWatcher))
     transformationMethod = LineSeparatorTransformationMethod()
     addTextChangedListener(EnrichedTextWatcher(this))
-    filters = arrayOf(NonEditableParagraphFilter(), ParagraphLimitFilter(this))
+    filters =
+      arrayOf(
+        NonEditableParagraphFilter(),
+        ParagraphLimitFilter(this),
+        MaxLengthFilter(this),
+      )
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
       enrichedTextClassifier =
         EnrichedTextClassifier(textClassifier).also {
