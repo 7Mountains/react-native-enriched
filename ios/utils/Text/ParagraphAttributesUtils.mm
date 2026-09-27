@@ -246,12 +246,8 @@
   NSRange leftRange = [typedInput->textView.textStorage.string
       paragraphRangeForRange:NSMakeRange(range.location, 0)];
 
-  NSArray<id<BaseStyleProtocol>> *leftParagraphStyles =
+  NSArray<id<BaseStyleProtocol>> *leftStyledParagraphStyles =
       [self paragraphStylesForInput:typedInput range:leftRange];
-
-  if (leftParagraphStyles.count == 0) {
-    return NO;
-  }
 
   // index out of bounds
   NSUInteger rightRangeStart = range.location + range.length;
@@ -262,11 +258,16 @@
   NSRange rightRange = [typedInput->textView.textStorage.string
       paragraphRangeForRange:NSMakeRange(rightRangeStart, 1)];
 
+  if (leftStyledParagraphStyles.count == 0 &&
+      [self paragraphStylesForInput:typedInput range:rightRange].count == 0) {
+    return NO;
+  }
+
   NSMutableDictionary<NSNumber *, NSDictionary *> *leftStyleAttributes =
       [NSMutableDictionary dictionary];
   NSTextStorage *textStorage = typedInput->textView.textStorage;
 
-  for (id<BaseStyleProtocol> style in leftParagraphStyles) {
+  for (id<BaseStyleProtocol> style in leftStyledParagraphStyles) {
     NSDictionary *attributes = [self attributesForStyle:style
                                             textStorage:textStorage
                                                   range:leftRange];
@@ -283,7 +284,7 @@
   }
   [self resetParagraphAlignmentInAttributedString:textStorage range:rightRange];
 
-  for (id<BaseStyleProtocol> style in leftParagraphStyles) {
+  for (id<BaseStyleProtocol> style in leftStyledParagraphStyles) {
     NSDictionary *attributes =
         leftStyleAttributes[@([[style class] getStyleType])];
     [style addAttributesInAttributedString:textStorage

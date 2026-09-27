@@ -1,4 +1,5 @@
 #import "AlignmentConverter.h"
+#import "EnrichedParagraphStyle.h"
 #import "EnrichedTextInputView.h"
 #import "HtmlAttributeNames.h"
 #import "OccurenceUtils.h"
@@ -91,8 +92,8 @@
   return touches;
 }
 
-- (NSParagraphStyle *)paragraphStyleAtRange:(NSRange)range
-                                    storage:(NSTextStorage *)storage {
+- (EnrichedParagraphStyle *)paragraphStyleAtRange:(NSRange)range
+                                          storage:(NSTextStorage *)storage {
   if (storage.length == 0)
     return nil;
   NSUInteger index = MIN(range.location, storage.length - 1);
@@ -155,13 +156,13 @@
                            options:NSStringEnumerationByParagraphs
                         usingBlock:^(NSString *sub, NSRange paragraph,
                                      NSRange range, BOOL *stop) {
-                          NSParagraphStyle *current =
+                          EnrichedParagraphStyle *current =
                               [self paragraphStyleAtRange:paragraph
                                                   storage:storage];
 
-                          NSMutableParagraphStyle *style =
+                          EnrichedParagraphStyle *style =
                               current ? [current mutableCopy]
-                                      : [NSMutableParagraphStyle new];
+                                      : [EnrichedParagraphStyle new];
 
                           style.alignment = alignment;
 
@@ -299,12 +300,13 @@
   NSTextAlignment alignment =
       [AlignmentConverter alignmentFromString:alignmentString];
 
-  NSParagraphStyle *current = [string attribute:NSParagraphStyleAttributeName
-                                        atIndex:range.location
-                                 effectiveRange:nil];
+  EnrichedParagraphStyle *current =
+      [string attribute:NSParagraphStyleAttributeName
+                 atIndex:range.location
+          effectiveRange:nil];
 
-  NSMutableParagraphStyle *mutableParagraphStyle =
-      current ? [current mutableCopy] : [NSMutableParagraphStyle new];
+  EnrichedParagraphStyle *mutableParagraphStyle =
+      current ? [current mutableCopy] : [EnrichedParagraphStyle new];
 
   mutableParagraphStyle.alignment = alignment;
 
