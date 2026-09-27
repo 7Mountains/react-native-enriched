@@ -1,12 +1,12 @@
 package com.swmansion.enriched.inputFilters
 
+import android.icu.text.BreakIterator
 import android.text.InputFilter
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextUtils
 import com.swmansion.enriched.EnrichedTextInputView
 import com.swmansion.enriched.constants.Strings
-import java.text.BreakIterator
 
 object MaxLength {
   const val UNLIMITED = -1
@@ -23,39 +23,38 @@ object MaxLength {
     end: Int,
     capacity: Int,
   ): Int {
-    var index = start
-    var kept = 0
-
-    while (index < end) {
-      if (text[index] != Strings.ZERO_WIDTH_SPACE_CHAR) {
-        // zero width spaces are not counted, any other character needs the capacity
-        if (kept >= capacity) break
-        kept++
+    val value = text.subSequence(start, end).toString()
+    val iterator =
+      BreakIterator.getCharacterInstance().apply {
+        setText(value)
       }
-      index++
+
+    var kept = 0
+    var cut = 0
+    var clusterStart = iterator.first()
+    var clusterEnd = iterator.next()
+
+    while (clusterEnd != BreakIterator.DONE) {
+      var clusterLength = 0
+      for (index in clusterStart until clusterEnd) {
+        if (value[index] != Strings.ZERO_WIDTH_SPACE_CHAR) {
+          clusterLength++
+        }
+      }
+
+      // Capacity is measured in UTF-16 code units, but grapheme clusters are
+      // atomic and must either fit completely or be omitted.
+      if (kept + clusterLength > capacity) {
+        break
+      }
+
+      kept += clusterLength
+      cut = clusterEnd
+      clusterStart = clusterEnd
+      clusterEnd = iterator.next()
     }
 
-    return snapOutwards(text, start, end, index)
-  }
-
-  private fun snapOutwards(
-    text: CharSequence,
-    start: Int,
-    end: Int,
-    cut: Int,
-  ): Int {
-    if (cut <= start || cut >= end) return cut
-
-    // here we handle potential composing characters - emojis,
-    // surrogate pairs, etc. We don't want to split them in half
-    val iterator = BreakIterator.getCharacterInstance()
-    iterator.setText(text.subSequence(start, end).toString())
-
-    val localCut = cut - start
-    if (iterator.isBoundary(localCut)) return cut
-
-    val prev = iterator.preceding(localCut)
-    return if (prev == BreakIterator.DONE) start else start + prev
+    return start + cut
   }
 }
 

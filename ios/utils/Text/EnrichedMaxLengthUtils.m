@@ -9,21 +9,11 @@
 
 + (NSInteger)plainLengthOf:(NSString *)text inRange:(NSRange)range {
   NSInteger length = 0;
-  NSUInteger index = range.location;
-  NSUInteger end = NSMaxRange(range);
-
-  while (index < end) {
-    NSRange composed = [text rangeOfComposedCharacterSequenceAtIndex:index];
-    BOOL isZeroWidthSpace =
-        composed.length == 1 && [text characterAtIndex:index] == ZWSChar;
-
-    if (!isZeroWidthSpace) {
+  for (NSUInteger index = range.location; index < NSMaxRange(range); index++) {
+    if ([text characterAtIndex:index] != ZWSChar) {
       length++;
     }
-
-    index = NSMaxRange(composed);
   }
-
   return length;
 }
 
@@ -47,16 +37,15 @@
 
   while (index < text.length) {
     NSRange composed = [text rangeOfComposedCharacterSequenceAtIndex:index];
-    BOOL isZeroWidthSpace =
-        composed.length == 1 && [text characterAtIndex:index] == ZWSChar;
+    NSInteger composedLength = [self plainLengthOf:text inRange:composed];
 
-    if (!isZeroWidthSpace) {
-      if (kept >= capacity) {
-        break;
-      }
-      kept++;
+    // Capacity is measured in UTF-16 code units, but composed character
+    // sequences are atomic and must either fit completely or be omitted.
+    if (kept + composedLength > capacity) {
+      break;
     }
 
+    kept += composedLength;
     index = NSMaxRange(composed);
   }
 
