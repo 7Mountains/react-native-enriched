@@ -9,11 +9,21 @@
 
 + (NSInteger)plainLengthOf:(NSString *)text inRange:(NSRange)range {
   NSInteger length = 0;
-  for (NSUInteger i = range.location; i < NSMaxRange(range); i++) {
-    if ([text characterAtIndex:i] != ZWSChar) {
+  NSUInteger index = range.location;
+  NSUInteger end = NSMaxRange(range);
+
+  while (index < end) {
+    NSRange composed = [text rangeOfComposedCharacterSequenceAtIndex:index];
+    BOOL isZeroWidthSpace =
+        composed.length == 1 && [text characterAtIndex:index] == ZWSChar;
+
+    if (!isZeroWidthSpace) {
       length++;
     }
+
+    index = NSMaxRange(composed);
   }
+
   return length;
 }
 
@@ -36,24 +46,21 @@
   NSInteger kept = 0;
 
   while (index < text.length) {
-    if ([text characterAtIndex:index] != ZWSChar) {
-      // zero width spaces are free, any other character needs the capacity
+    NSRange composed = [text rangeOfComposedCharacterSequenceAtIndex:index];
+    BOOL isZeroWidthSpace =
+        composed.length == 1 && [text characterAtIndex:index] == ZWSChar;
+
+    if (!isZeroWidthSpace) {
       if (kept >= capacity) {
         break;
       }
       kept++;
     }
-    index++;
+
+    index = NSMaxRange(composed);
   }
 
-  if (index == 0 || index == text.length) {
-    return index;
-  }
-
-  // never cut a composed character in half - snap
-  // the cut point outwards instead
-  NSRange composed = [text rangeOfComposedCharacterSequenceAtIndex:index];
-  return composed.location == index ? index : NSMaxRange(composed);
+  return index;
 }
 
 + (NSString *)truncate:(NSString *)text toCapacity:(NSInteger)capacity {

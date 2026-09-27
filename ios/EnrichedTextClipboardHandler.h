@@ -11,6 +11,7 @@
 - (void)cut;
 - (void)handleInsertion:(NSMutableAttributedString *)current
                inserted:(NSAttributedString *)inserted
-          selectedRange:(NSRange)selectedRange;
+          selectedRange:(NSRange)selectedRange
+               capacity:(NSInteger)capacity;
 
 @end

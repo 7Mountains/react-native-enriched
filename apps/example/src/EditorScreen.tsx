@@ -177,6 +177,7 @@ export default function EditorScreen() {
   const [isValueModalOpen, setIsValueModalOpen] = useState(false);
   const [isContentModalVisible, setIsContentModalVisible] = useState(false);
   const [currentHtml] = useState('');
+  const [enteredCharsAmount, setEnteredCharsAmount] = useState(0);
   const [paragraphAlignment, setParagraphAlignment] =
     useState<string>('default');
   const [requestHtmlTime, setRequestHtmlTime] = useState<number | null>(null);
@@ -445,6 +446,7 @@ export default function EditorScreen() {
             ref.current?.hideContextMenu();
           }}
         />
+        <Text>entered characters: {enteredCharsAmount}</Text>
         <View style={styles.editor}>
           <EnrichedTextInput
             ref={ref}
@@ -479,6 +481,9 @@ export default function EditorScreen() {
                 visible: stylesState.link.isActive,
               },
             ]}
+            onChangeText={(e) => {
+              setEnteredCharsAmount(e.nativeEvent.value.length);
+            }}
             onContextMenuItemPress={(e) => {
               if (e.nativeEvent.key === 'test') {
                 openLinkModal();

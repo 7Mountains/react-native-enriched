@@ -51,7 +51,7 @@
     return NO;
   }
 
-  BOOL (*impl)(id, SEL) = (BOOL(*)(id, SEL))[cls methodForSelector:selector];
+  BOOL (*impl)(id, SEL) = (BOOL (*)(id, SEL))[cls methodForSelector:selector];
   return impl(cls, selector);
 }
 

@@ -1148,28 +1148,18 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
           : [[NSAttributedString alloc] initWithString:text
                                             attributes:defaultTypingAttributes];
 
+  NSInteger capacity = NSIntegerMax;
   if (_maxLength != EnrichedMaxLengthUnlimited) {
-    NSInteger capacity =
+    capacity =
         [EnrichedMaxLengthUtils capacityForText:textView.textStorage.string
                                  replacingRange:range
                                       maxLength:_maxLength];
-    if ([EnrichedMaxLengthUtils plainLengthOf:insertedText.string] > capacity) {
-      NSUInteger cutIndex =
-          [EnrichedMaxLengthUtils cutIndexIn:insertedText.string
-                                    capacity:capacity];
-      insertedText =
-          [insertedText attributedSubstringFromRange:NSMakeRange(0, cutIndex)];
-      if (insertedText.length == 0) {
-        return;
-      }
-    }
   }
 
   [_clipboardHandler handleInsertion:textView.textStorage
                             inserted:insertedText
-                       selectedRange:range];
-  NSRange newSelection = NSMakeRange(range.location + insertedText.length, 0);
-  textView.selectedRange = newSelection;
+                       selectedRange:range
+                            capacity:capacity];
   [self anyTextMayHaveBeenModified];
   [textView scrollSelectionToVisibleWithInsets:_customContentInsets];
 }
