@@ -1,5 +1,6 @@
 package com.swmansion.enriched
 
+import android.content.Context
 import androidx.core.graphics.toColorInt
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
@@ -20,6 +21,7 @@ import com.facebook.react.uimanager.style.BorderStyle
 import com.facebook.react.uimanager.style.LogicalEdge
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerDelegate
 import com.facebook.react.viewmanagers.EnrichedTextInputViewManagerInterface
+import com.facebook.yoga.YogaMeasureMode
 import com.swmansion.enriched.events.OnAlignmentChangeEvent
 import com.swmansion.enriched.events.OnAnyContentChangeEvent
 import com.swmansion.enriched.events.OnChangeHtmlEvent
@@ -923,6 +925,20 @@ class EnrichedTextInputViewManager :
   ) {
     view?.styleManipulator?.removeLink(start, end)
   }
+
+  // Only the first layout of an input is measured here, before the view has
+  // laid out its text: the props give the font and the initial text
+  override fun measure(
+    context: Context,
+    localData: ReadableMap?,
+    props: ReadableMap?,
+    state: ReadableMap?,
+    width: Float,
+    widthMode: YogaMeasureMode?,
+    height: Float,
+    heightMode: YogaMeasureMode?,
+    attachmentsPositions: FloatArray?,
+  ): Long = MeasurementStore.getMeasureById(context, null, width, props)
 
   companion object {
     const val NAME = "EnrichedTextInputView"
