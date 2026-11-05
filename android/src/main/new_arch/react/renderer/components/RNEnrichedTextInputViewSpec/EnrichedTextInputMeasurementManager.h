@@ -19,6 +19,10 @@ public:
                LayoutConstraints layoutConstraints, float stateHeight) const;
 
 private:
+  float measureInitialHeight(SurfaceId surfaceId, int viewTag,
+                             const EnrichedTextInputViewProps &props,
+                             LayoutConstraints layoutConstraints) const;
+
   const std::shared_ptr<const ContextContainer> contextContainer_;
 };
 
