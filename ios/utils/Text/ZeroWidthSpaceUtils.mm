@@ -3,7 +3,7 @@
 #import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
-#import "UIView+React.h"
+#import <React/UIView+React.h>
 
 @implementation ZWSAdjustedRange
 - (instancetype)initWithRange:(NSRange)range

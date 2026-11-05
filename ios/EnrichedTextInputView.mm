@@ -35,10 +35,10 @@
 #import "TextBlockTapGestureRecognizer.h"
 #import "TextInsertionUtils.h"
 #import "UIScrollViewKeyboardDismissMode+Parsing.h"
-#import "UIView+React.h"
 #import "WordsUtils.h"
 #import "ZeroWidthSpaceUtils.h"
 #import <React/RCTConversions.h>
+#import <React/UIView+React.h>
 #import <ReactNativeEnriched/EnrichedTextInputViewComponentDescriptor.h>
 #import <folly/dynamic.h>
 #import <react/renderer/components/RNEnrichedTextInputViewSpec/EventEmitters.h>

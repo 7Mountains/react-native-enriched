@@ -3,7 +3,7 @@
 #import "ParagraphsUtils.h"
 #import "Strings.h"
 #import "StyleHeaders.h"
-#import "UIView+React.h"
+#import <React/UIView+React.h>
 
 @implementation TextInsertionUtils
 + (void)insertText:(NSString *)text
