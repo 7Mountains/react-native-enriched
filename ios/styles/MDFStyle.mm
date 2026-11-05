@@ -6,9 +6,9 @@
 #import "Strings.h"
 #import "StyleHeaders.h"
 #import "TextInsertionUtils.h"
-#import "UIView+React.h"
 #import "WordsUtils.h"
 #import <React/RCTFont.h>
+#import <React/UIView+React.h>
 
 static NSString *const MdfAttributeName = @"MdfAttributeName";
 
