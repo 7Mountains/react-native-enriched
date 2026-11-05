@@ -68,9 +68,11 @@ import com.swmansion.enriched.utils.mergeSpannables
 import com.swmansion.enriched.watchers.EnrichedScrollWatcher
 import com.swmansion.enriched.watchers.EnrichedSpanWatcher
 import com.swmansion.enriched.watchers.EnrichedTextWatcher
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.ceil
@@ -111,7 +113,9 @@ class EnrichedTextInputView : AppCompatEditText {
   var shouldEmitOnChangeText: Boolean = false
   var experimentalSynchronousEvents: Boolean = false
 
-  private val viewScope = MainScope()
+  // Recreated on attach: the view is detached and attached again while it is
+  // kept mounted, e.g. when a screen is pushed over it
+  private var viewScope = MainScope()
 
   var fontSize: Float? = null
   private var fontFamily: String? = null
@@ -204,6 +208,10 @@ class EnrichedTextInputView : AppCompatEditText {
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
+
+    if (!viewScope.isActive) {
+      viewScope = MainScope()
+    }
 
     transactionManager.runSilently {
       // Used to ensure that text is selectable inside of removeClippedSubviews
@@ -763,30 +771,48 @@ class EnrichedTextInputView : AppCompatEditText {
     prettify: Boolean,
   ) {
     val textSnapshot = SpannableStringBuilder(text)
-    viewScope.launch {
-      val html =
-        withContext(Dispatchers.Default) {
-          try {
-            EnrichedParser.toHtmlWithDefault(textSnapshot, prettify)
-          } catch (_: Exception) {
-            null
+    val job =
+      viewScope.launch {
+        val html =
+          withContext(Dispatchers.Default) {
+            try {
+              EnrichedParser.toHtmlWithDefault(textSnapshot, prettify)
+            } catch (e: CancellationException) {
+              throw e
+            } catch (_: Exception) {
+              null
+            }
           }
-        }
 
-      val reactContext = context as ReactContext
-      val surfaceId = UIManagerHelper.getSurfaceId(reactContext)
-      val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, id)
+        dispatchHtmlResult(requestId, html)
+      }
 
-      dispatcher?.dispatchEvent(
-        OnRequestHtmlResultEvent(
-          surfaceId,
-          id,
-          requestId,
-          html,
-          experimentalSynchronousEvents,
-        ),
-      )
+    // A request cancelled with the view (or sent while it is detached) still
+    // has to settle, or its promise on the JS side never does
+    job.invokeOnCompletion { cause ->
+      if (cause is CancellationException) {
+        dispatchHtmlResult(requestId, null)
+      }
     }
+  }
+
+  private fun dispatchHtmlResult(
+    requestId: Int,
+    html: String?,
+  ) {
+    val reactContext = context as ReactContext
+    val surfaceId = UIManagerHelper.getSurfaceId(reactContext)
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, id)
+
+    dispatcher?.dispatchEvent(
+      OnRequestHtmlResultEvent(
+        surfaceId,
+        id,
+        requestId,
+        html,
+        experimentalSynchronousEvents,
+      ),
+    )
   }
 
   internal fun emitOnAnyContentChangeEvent() {

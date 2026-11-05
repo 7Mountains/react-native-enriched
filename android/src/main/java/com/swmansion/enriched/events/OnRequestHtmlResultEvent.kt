@@ -26,6 +26,10 @@ class OnRequestHtmlResultEvent(
 
   override fun experimental_isSynchronous(): Boolean = experimentalSynchronousEvents
 
+  // Every request waits for its own result: two results of the same view in
+  // one frame mustn't be merged into the last one
+  override fun canCoalesce(): Boolean = false
+
   companion object {
     const val EVENT_NAME: String = "onRequestHtmlResult"
   }
