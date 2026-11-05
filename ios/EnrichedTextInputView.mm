@@ -67,7 +67,7 @@ using namespace facebook::react;
   NSMutableSet<NSNumber *> *_blockedStyles;
   LinkData *_recentlyActiveLinkData;
   NSRange _recentlyActiveLinkRange;
-  NSString *_recentInputString;
+  NSString *_Nullable _recentInputString;
   MentionParams *_recentlyActiveMentionParams;
   NSRange _recentlyActiveMentionRange;
   NSRange _recentlyChangedRange;
@@ -130,7 +130,7 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   _recentlyActiveLinkRange = NSMakeRange(0, 0);
   _recentlyActiveMentionRange = NSMakeRange(0, 0);
   _recentlyChangedRange = NSMakeRange(0, 0);
-  _recentInputString = @"";
+  _recentInputString = nil;
   _recentlyEmittedHtml = @"<html>\n<p></p>\n</html>";
   _emitHtml = NO;
   _recentlyEmittedColor = nil;
@@ -1191,7 +1191,9 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   if (linkStyleClass != nullptr) {
     [linkStyleClass manageLinkTypingAttributes];
   }
-  NSString *currentString = [textView.textStorage.string copy];
+  BOOL isSelectionOnlyChange =
+      _recentInputString != nil &&
+      [_recentInputString isEqualToString:textView.textStorage.string];
 
   // mention typing attribtues fix and active editing
   MentionStyle *mentionStyleClass =
@@ -1202,14 +1204,13 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
     // mention editing runs if only a selection was done (no text change)
     // otherwise we would double-emit with a second call in the
     // anyTextMayHaveBeenModified method
-    if ([_recentInputString isEqualToString:currentString]) {
+    if (isSelectionOnlyChange) {
       [mentionStyleClass manageMentionEditing];
     }
   }
 
   // typing attributes for empty lines selection reset
-  if (textView.selectedRange.length == 0 &&
-      [_recentInputString isEqualToString:currentString]) {
+  if (textView.selectedRange.length == 0 && isSelectionOnlyChange) {
     // no string change means only a selection changed with no character changes
     NSRange paragraphRange = [textView.textStorage.string
         paragraphRangeForRange:textView.selectedRange];
@@ -1311,13 +1312,12 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
   auto emitter = [self getEventEmitter];
 
   BOOL isTextChanged =
+      _recentInputString == nil ||
       ![textView.textStorage.string isEqualToString:_recentInputString];
 
   if (isTextChanged) {
     _recentInputString = [textView.textStorage.string copy];
-  }
 
-  if (isTextChanged) {
     // modified words handling
     NSArray *modifiedWords =
         [WordsUtils getAffectedWordsFromText:textView.textStorage.string
