@@ -11,6 +11,7 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
 
 @implementation ImageStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
 }
 
 + (StyleType)getStyleType {
@@ -51,7 +52,8 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   return self;
 }
 
@@ -83,8 +85,8 @@ static NSString *const ImageAttributeName = @"ImageAttributeName";
 
   ImageAttachment *attachment =
       [[ImageAttachment alloc] initWithImageData:imageData];
-  attachment.delegate = _input;
-  NSMutableDictionary *attrs = [_input->defaultTypingAttributes mutableCopy];
+  attachment.delegate = _host;
+  NSMutableDictionary *attrs = [_host.defaultTypingAttributes mutableCopy];
 
   attrs[NSAttachmentAttributeName] = attachment;
   attrs[ImageAttributeName] = imageData;

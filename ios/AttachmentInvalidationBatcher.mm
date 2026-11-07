@@ -67,9 +67,6 @@
                        return;
 
                      if ([targets containsObject:value]) {
-                       [layoutManager
-                           invalidateLayoutForCharacterRange:range
-                                        actualCharacterRange:nullptr];
                        [layoutManager invalidateDisplayForCharacterRange:range];
                        [targets removeObject:value];
                      }

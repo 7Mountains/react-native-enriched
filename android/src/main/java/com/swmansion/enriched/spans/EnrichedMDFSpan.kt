@@ -7,10 +7,11 @@ import android.graphics.Paint
 import android.text.style.ReplacementSpan
 import androidx.core.graphics.toColorInt
 import androidx.core.graphics.withTranslation
-import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.EnrichedHtmlHost
 import com.swmansion.enriched.drawables.ImageLabelRenderer
 import com.swmansion.enriched.loaders.EnrichedImageLoader
 import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedHostBoundSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
@@ -21,8 +22,9 @@ class EnrichedMDFSpan(
   val htmlStyle: HtmlStyle,
 ) : ReplacementSpan(),
   EnrichedNonEditableParagraphSpan,
-  EnrichedFullWidthSpan {
-  private var tvRef: WeakReference<EnrichedTextInputView>? = null
+  EnrichedFullWidthSpan,
+  EnrichedHostBoundSpan {
+  private var tvRef: WeakReference<EnrichedHtmlHost>? = null
 
   override val dependsOnHtmlStyle: Boolean = true
 
@@ -31,8 +33,8 @@ class EnrichedMDFSpan(
   private var measuredHeight = 0
   private var hasRequestedImage = false
 
-  fun attachTo(tv: EnrichedTextInputView) {
-    tvRef = WeakReference(tv)
+  override fun attachTo(host: EnrichedHtmlHost) {
+    tvRef = WeakReference(host)
   }
 
   private fun invalidate() {

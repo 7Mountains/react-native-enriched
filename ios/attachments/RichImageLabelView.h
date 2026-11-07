@@ -1,6 +1,25 @@
 #pragma once
 
 #import "EnrichedBorderStyle.h"
+#import <UIKit/UIKit.h>
+
+@interface RichImageLabelMetrics : NSObject
+@property(nonatomic) CGFloat minHeight;
+@property(nonatomic) UIEdgeInsets padding;
+@property(nonatomic) CGSize imageContainerSize;
+@property(nonatomic) UIEdgeInsets textPadding;
+@property(nonatomic) UIEdgeInsets textMargin;
+@property(nonatomic, strong) NSAttributedString *titleText;
+@property(nonatomic) UIEdgeInsets titleMargin;
+@property(nonatomic, strong) NSAttributedString *descriptionText;
+@property(nonatomic) UIEdgeInsets descriptionMargin;
+@property(nonatomic, strong) NSAttributedString *subTitleText;
+@property(nonatomic) UIEdgeInsets subtitleMargin;
+@property(nonatomic, strong) NSAttributedString *subDescriptionText;
+@property(nonatomic) UIEdgeInsets subdescriptionMargin;
+
+- (CGSize)sizeThatFits:(CGSize)size;
+@end
 
 @interface RichImageLabelView : UIView
 
@@ -45,5 +64,7 @@
 
 @property(nonatomic, strong) NSAttributedString *subDescriptionText;
 @property(nonatomic) UIEdgeInsets subdescriptionMargin;
+
+- (void)applyMetrics:(RichImageLabelMetrics *)metrics;
 
 @end

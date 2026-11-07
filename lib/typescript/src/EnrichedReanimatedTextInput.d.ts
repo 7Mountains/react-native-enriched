@@ -3,7 +3,9 @@ import { type OnScrollEvent } from './EnrichedTextInputNativeComponent';
 import type { EnrichedTextInputInstance, EnrichedTextInputProps } from './types';
 import { type AnimatedRef, type EventHandlerProcessed } from 'react-native-reanimated';
 import type { NativeSyntheticEvent } from 'react-native';
-declare const EnrichedReanimatedNativeComponent: import("react-native-reanimated/lib/typescript/createAnimatedComponent").AnimatedComponentType<Readonly<import("./EnrichedTextInputNativeComponent").NativeProps>, import("react-native").HostComponent<import("./EnrichedTextInputNativeComponent").NativeProps>>;
+declare const EnrichedReanimatedNativeComponent: import("react-native-reanimated/lib/typescript/createAnimatedComponent").AnimatedComponentType<Readonly<Omit<import("./EnrichedTextInputNativeComponent").NativeProps, "ref"> & {
+    ref?: React.Ref<import("react-native").HostInstance> | undefined;
+}>, import("react-native").HostComponent<import("./EnrichedTextInputNativeComponent").NativeProps>, object>;
 type Props = Omit<EnrichedTextInputProps, 'onScroll'> & Pick<ComponentProps<typeof EnrichedReanimatedNativeComponent>, 'animatedProps' | 'style'> & {
     onScroll?: EventHandlerProcessed<OnScrollEvent, never> | ((event: NativeSyntheticEvent<OnScrollEvent>) => void);
     ref?: AnimatedRef<EnrichedTextInputInstance>;

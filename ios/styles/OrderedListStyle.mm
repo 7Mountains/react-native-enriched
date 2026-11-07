@@ -30,7 +30,7 @@ static NSArray<NSTextList *> *const TextLists = @[ NumberBulletList ];
 }
 
 - (CGFloat)getHeadIndent {
-  InputConfig *config = _input->config;
+  InputConfig *config = _host.config;
 
   // lists are drawn manually
   // margin before marker + gap between marker and paragraph

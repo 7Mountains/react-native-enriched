@@ -14,13 +14,15 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 
 @implementation ContentStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
 }
 
 #pragma mark - Init
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   return self;
 }
 
@@ -202,7 +204,7 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 #pragma mark - Internal: Props & Attachments
 
 - (ContentStyleProps *_Nullable)stylePropsWithParams:(ContentParams *)params {
-  return [_input->config contentStylePropsForType:params.type];
+  return [_host.config contentStylePropsForType:params.type];
 }
 
 - (ImageLabelAttachment *)prepareAttachment:(ContentParams *)params {
@@ -210,13 +212,13 @@ static NSString *const ContentAttributeName = @"ContentAttributeName";
 
   ImageLabelAttachment *attachment =
       [[ImageLabelAttachment alloc] initWithParams:params styles:styles];
-  attachment.delegate = _input;
+  attachment.delegate = _host;
 
   return attachment;
 }
 
 - (NSDictionary *)prepareAttributes:(ContentParams *)params {
-  NSMutableDictionary *attributes = _input->defaultTypingAttributes.mutableCopy;
+  NSMutableDictionary *attributes = _host.defaultTypingAttributes.mutableCopy;
   attributes[NSAttachmentAttributeName] = [self prepareAttachment:params];
   attributes[ContentAttributeName] = params;
   attributes[ReadOnlyParagraphKey] = @YES;

@@ -23,6 +23,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
 
 @implementation CheckBoxStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
 }
 
 #pragma mark - Class Info
@@ -68,7 +69,8 @@ static NSArray<NSTextList *> *const UncheckedLists =
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   return self;
 }
 
@@ -77,7 +79,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
 - (void)configureParagraphStyle:(EnrichedParagraphStyle *)pStyle
                        withList:(NSArray<NSTextList *> *)list {
 
-  CGFloat checkBoxHeight = _input->config.checkBoxHeight;
+  CGFloat checkBoxHeight = _host.config.checkBoxHeight;
 
   pStyle.textLists = list;
   pStyle.minimumLineHeight = checkBoxHeight;
@@ -91,8 +93,8 @@ static NSArray<NSTextList *> *const UncheckedLists =
 }
 
 - (CGFloat)checkboxBaselineShift {
-  UIFont *font = _input->config.primaryFont;
-  CGFloat checkBoxHeight = _input->config.checkBoxHeight;
+  UIFont *font = _host.config.primaryFont;
+  CGFloat checkBoxHeight = _host.config.checkBoxHeight;
   return (checkBoxHeight - font.lineHeight) / 2.0;
 }
 
@@ -137,8 +139,8 @@ static NSArray<NSTextList *> *const UncheckedLists =
 - (CGFloat)getHeadIndent {
   // lists are drawn manually
   // margin before checkbox + gap + checkbox width
-  return [_input->config checkboxListMarginLeft] +
-         [_input->config checkboxListGapWidth] + [_input->config checkBoxWidth];
+  return [_host.config checkboxListMarginLeft] +
+         [_host.config checkboxListGapWidth] + [_host.config checkBoxWidth];
 }
 
 - (NSArray *)listForChecked:(BOOL)checked {
@@ -210,7 +212,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
 
   NSArray *list = [self listForChecked:isChecked];
   EnrichedParagraphStyle *pStyle =
-      [_input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+      [_host.defaultTypingAttributes[NSParagraphStyleAttributeName]
           mutableCopy];
 
   [self configureParagraphStyle:pStyle withList:list];
@@ -351,7 +353,7 @@ static NSArray<NSTextList *> *const UncheckedLists =
 
 - (NSArray<StylePair *> *)findAllOccurences:(NSRange)range {
   return [OccurenceUtils all:NSParagraphStyleAttributeName
-                   withInput:_input
+                   withInput:_host
                      inRange:range
                withCondition:^BOOL(id value, NSRange r) {
                  return [self styleCondition:value range:r];
@@ -361,13 +363,13 @@ static NSArray<NSTextList *> *const UncheckedLists =
 #pragma mark - Check State
 
 - (BOOL)isCheckedAt:(NSUInteger)location {
-  if (location >= _input->textView.textStorage.length)
+  if (location >= _host.textView.textStorage.length)
     return NO;
 
   NSParagraphStyle *p =
-      [_input->textView.textStorage attribute:NSParagraphStyleAttributeName
-                                      atIndex:location
-                               effectiveRange:NULL];
+      [_host.textView.textStorage attribute:NSParagraphStyleAttributeName
+                                    atIndex:location
+                             effectiveRange:NULL];
 
   if (!p || p.textLists.count == 0)
     return NO;

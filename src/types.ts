@@ -1,19 +1,22 @@
 import type {
   ColorValue,
+  HostInstance,
   ImageRequireSource,
-  NativeMethods,
   NativeSyntheticEvent,
-  ReactNativeElement,
+  StyleProp,
   TextStyle,
   ViewProps,
   ViewStyle,
 } from 'react-native';
 import type {
+  OnLinkPressEvent,
+  OnMentionPressEvent,
+} from './EnrichedTextNativeComponent';
+import type {
   ContentStyleProperties,
   Insets,
   Cookie,
   MentionStyleProperties,
-  NativeProps,
   OnChangeColorEvent,
   OnChangeHtmlEvent,
   OnChangeSelectionEvent,
@@ -29,10 +32,14 @@ import type {
   ContextMenuItemConfig,
   OnContextMenuItemPressEvent,
 } from './EnrichedTextInputNativeComponent';
-import type { Component, RefObject } from 'react';
+import type { RefObject } from 'react';
 import type { EnrichedStyles } from './enums';
 
-export interface EnrichedTextInputInstance extends NativeMethods {
+export interface EnrichedTextInputInstance
+  extends Pick<
+    HostInstance,
+    'measure' | 'measureInWindow' | 'measureLayout' | 'setNativeProps'
+  > {
   // General commands
   focus: () => void;
   blur: () => void;
@@ -221,11 +228,36 @@ export interface EnrichedTextInputProps extends Omit<ViewProps, 'children'> {
   contextMenuItems?: ContextMenuItem[];
 }
 
-export type ComponentType =
-  | ((Component<NativeProps, {}, any> & NativeMethods) & ReactNativeElement)
-  | null;
+export type ComponentType = HostInstance | null;
 
 export type HtmlRequest = {
   resolve: (html: string) => void;
   reject: (error: Error) => void;
 };
+
+export interface EnrichedTextProps extends Omit<ViewProps, 'children'> {
+  /** The HTML of `EnrichedTextInput` (`<html>…</html>`), or plain text */
+  children: string;
+  style?: StyleProp<TextStyle>;
+  /** The same styles as `EnrichedTextInput`'s, so the text looks the same */
+  htmlStyle?: HtmlStyle;
+  numberOfLines?: number;
+  ellipsizeMode?: 'head' | 'middle' | 'tail' | 'clip';
+  selectable?: boolean;
+  selectionColor?: ColorValue;
+  allowFontScaling?: boolean;
+  /** A link is touched: comes before `onLinkPressOut` and `onLinkPress` */
+  onLinkPressIn?: (event: OnLinkPressEvent) => void;
+  /** The touch of a link ends, released or cancelled */
+  onLinkPressOut?: (event: OnLinkPressEvent) => void;
+  onLinkPress?: (event: OnLinkPressEvent) => void;
+  /** A link is held: no `onLinkPress` after it. Selectable: the link isn't selected */
+  onLinkLongPress?: (event: OnLinkPressEvent) => void;
+  /** A mention is touched: comes before `onMentionPressOut` and `onMentionPress` */
+  onMentionPressIn?: (event: OnMentionPressEvent) => void;
+  /** The touch of a mention ends, released or cancelled */
+  onMentionPressOut?: (event: OnMentionPressEvent) => void;
+  onMentionPress?: (event: OnMentionPressEvent) => void;
+  /** A mention is held: no `onMentionPress` after it. Selectable: the mention isn't selected */
+  onMentionLongPress?: (event: OnMentionPressEvent) => void;
+}

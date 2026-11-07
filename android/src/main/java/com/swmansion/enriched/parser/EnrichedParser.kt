@@ -3,7 +3,7 @@ package com.swmansion.enriched.parser
 import android.graphics.drawable.Drawable
 import android.text.Spannable
 import android.text.Spanned
-import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.EnrichedHtmlHost
 import com.swmansion.enriched.constants.Strings
 import com.swmansion.enriched.styles.HtmlStyle
 import org.ccil.cowan.tagsoup.HTMLSchema
@@ -37,7 +37,7 @@ object EnrichedParser {
     source: String?,
     style: HtmlStyle,
     imageGetter: ImageGetter?,
-    textInputView: EnrichedTextInputView,
+    textInputView: EnrichedHtmlHost,
   ): Spannable {
     val parser = Parser()
     try {

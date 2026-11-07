@@ -102,7 +102,7 @@ const generateHugeHtml = (repeat = 1) => {
     parts.push(
       `\n<content type="image" description="test description" title="Test text" src="https://picsum.photos/seed/${i}/${imgW}/${imgH}" />`,
       `<mdf tint-color="#ff0000" label="Test" />`,
-      `\n<content type="automation" description="test description" title="Test text" src="${Image.resolveAssetSource(require('../assets/images/Primary_Inline_VideoGfx.png')).uri}" />`
+      `\n<content type="automation" description="test description" title="Test text" src="${Image.resolveAssetSource(require('../assets/images/Primary_Inline_VideoGfx.png'))?.uri}" />`
     );
 
     parts.push(

@@ -10,6 +10,7 @@ NSAttributedStringKey const InlineCodeAttributeName = @"EnrichedInlineCode";
 
 @implementation InlineCodeStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
 }
 
 + (StyleType)getStyleType {
@@ -38,7 +39,8 @@ NSAttributedStringKey const InlineCodeAttributeName = @"EnrichedInlineCode";
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   return self;
 }
 
@@ -60,19 +62,19 @@ NSAttributedStringKey const InlineCodeAttributeName = @"EnrichedInlineCode";
                            value:@YES
                            range:range];
   [attributedString addAttribute:NSBackgroundColorAttributeName
-                           value:[[_input->config inlineCodeBgColor]
+                           value:[[_host.config inlineCodeBgColor]
                                      colorWithAlphaIfNotTransparent:0.4]
                            range:range];
   [attributedString addAttribute:NSForegroundColorAttributeName
-                           value:[_input->config inlineCodeFgColor]
+                           value:[_host.config inlineCodeFgColor]
                            range:range];
   [attributedString addAttribute:NSUnderlineColorAttributeName
-                           value:[_input->config inlineCodeFgColor]
+                           value:[_host.config inlineCodeFgColor]
                            range:range];
   [attributedString addAttribute:NSStrikethroughColorAttributeName
-                           value:[_input->config inlineCodeFgColor]
+                           value:[_host.config inlineCodeFgColor]
                            range:range];
-  UIFont *font = [_input->config monospacedFont];
+  UIFont *font = [_host.config monospacedFont];
   [attributedString addAttribute:NSFontAttributeName value:font range:range];
 }
 

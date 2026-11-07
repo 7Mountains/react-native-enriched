@@ -7,6 +7,7 @@
 
 @implementation DividerStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
   NSDictionary *_cachedAttributes;
   InputConfig *_cachedConfig;
 }
@@ -37,7 +38,8 @@
 
 - (instancetype)initWithInput:(id)input {
   if (self = [super init]) {
-    _input = (EnrichedTextInputView *)input;
+    _host = input;
+    _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
     _cachedConfig = nil;
     _cachedAttributes = nil;
   }
@@ -129,15 +131,14 @@
 }
 
 - (NSDictionary *)prepareAttributes {
-  InputConfig *config = _input->config;
+  InputConfig *config = _host.config;
 
   if (_cachedConfig == config && _cachedAttributes != nil) {
     return _cachedAttributes;
   }
   _cachedConfig = config;
 
-  NSMutableDictionary *attributes =
-      [_input->defaultTypingAttributes mutableCopy];
+  NSMutableDictionary *attributes = [_host.defaultTypingAttributes mutableCopy];
 
   DividerAttachment *attachment =
       [[DividerAttachment alloc] initWithStyles:config.dividerColor

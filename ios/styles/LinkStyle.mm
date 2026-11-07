@@ -17,6 +17,7 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 
 @implementation LinkStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
 }
 
 + (StyleType)getStyleType {
@@ -53,7 +54,8 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   return self;
 }
 
@@ -84,14 +86,14 @@ static NSString *const LinkAttributeName = @"LinkAttributeName";
   if (href == nullptr || href.length == 0)
     return;
 
-  UIColor *linkColor = _input->config.linkColor;
+  UIColor *linkColor = _host.config.linkColor;
 
   NSMutableDictionary *attrs = [NSMutableDictionary dictionaryWithCapacity:5];
   attrs[NSForegroundColorAttributeName] = linkColor;
   attrs[NSUnderlineColorAttributeName] = linkColor;
   attrs[NSStrikethroughColorAttributeName] = linkColor;
 
-  if ([_input->config linkDecorationLine] == DecorationUnderline) {
+  if ([_host.config linkDecorationLine] == DecorationUnderline) {
     attrs[NSUnderlineStyleAttributeName] = @(NSUnderlineStyleSingle);
   }
 

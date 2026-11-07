@@ -1621,6 +1621,24 @@ Class<RCTComponentViewProtocol> EnrichedTextInputViewCls(void) {
                    target:self.reactTag]);
 }
 
+// MARK: - Style host
+
+- (UITextView *)textView {
+  return textView;
+}
+
+- (InputConfig *)config {
+  return config;
+}
+
+- (NSDictionary<NSAttributedStringKey, id> *)defaultTypingAttributes {
+  return defaultTypingAttributes;
+}
+
+- (NSDictionary<NSNumber *, id> *)stylesDict {
+  return stylesDict;
+}
+
 // MARK: - Media attachments delegate
 
 - (void)mediaAttachmentDidUpdate:(NSTextAttachment *)attachment {

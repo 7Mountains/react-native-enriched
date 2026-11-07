@@ -1,5 +1,4 @@
-import type { DirectEventHandler, Float, Int32, UnsafeMixed, WithDefault } from 'react-native/Libraries/Types/CodegenTypes';
-import type { ColorValue, HostComponent, ViewProps } from 'react-native';
+import type { CodegenTypes, ColorValue, HostComponent, ViewProps } from 'react-native';
 import React from 'react';
 export interface OnChangeTextEvent {
     value: string;
@@ -130,8 +129,8 @@ export interface OnChangeStateEvent {
 export interface OnLinkDetected {
     text: string;
     url: string;
-    start: Int32;
-    end: Int32;
+    start: CodegenTypes.Int32;
+    end: CodegenTypes.Int32;
 }
 export interface OnMentionDetectedInternal {
     text: string;
@@ -145,18 +144,18 @@ export interface OnMentionDetected {
 }
 export interface OnMentionEvent {
     indicator: string;
-    text: UnsafeMixed;
+    text: CodegenTypes.UnsafeMixed;
 }
 export interface OnChangeSelectionEvent {
-    start: Int32;
-    end: Int32;
+    start: CodegenTypes.Int32;
+    end: CodegenTypes.Int32;
     text: string;
-    paragraphStart: Int32;
-    paragraphEnd: Int32;
+    paragraphStart: CodegenTypes.Int32;
+    paragraphEnd: CodegenTypes.Int32;
 }
 export interface OnRequestHtmlResultEvent {
-    requestId: Int32;
-    html: UnsafeMixed;
+    requestId: CodegenTypes.Int32;
+    html: CodegenTypes.UnsafeMixed;
 }
 export interface MentionStyleProperties {
     color?: ColorValue;
@@ -170,56 +169,56 @@ export interface OnParagraphAlignmentChangeEvent {
     alignment: string;
 }
 type Heading = {
-    fontSize?: Float;
+    fontSize?: CodegenTypes.Float;
     bold?: boolean;
 };
 interface ContentTextStyle {
     color?: ColorValue;
     fontWeight?: string;
-    fontSize?: Float;
+    fontSize?: CodegenTypes.Float;
     fontFamily?: string;
-    marginTop?: Float;
-    marginBottom?: Float;
-    marginRight?: Float;
-    marginLeft?: Float;
+    marginTop?: CodegenTypes.Float;
+    marginBottom?: CodegenTypes.Float;
+    marginRight?: CodegenTypes.Float;
+    marginLeft?: CodegenTypes.Float;
 }
 interface ContentContainerStyle {
-    minHeight?: Float;
-    borderWidth?: Float;
+    minHeight?: CodegenTypes.Float;
+    borderWidth?: CodegenTypes.Float;
     borderColor?: ColorValue;
-    paddingTop?: Float;
-    paddingBottom?: Float;
-    paddingRight?: Float;
-    paddingLeft?: Float;
-    marginLeft?: Float;
-    marginRight?: Float;
-    marginTop?: Float;
-    marginBottom?: Float;
+    paddingTop?: CodegenTypes.Float;
+    paddingBottom?: CodegenTypes.Float;
+    paddingRight?: CodegenTypes.Float;
+    paddingLeft?: CodegenTypes.Float;
+    marginLeft?: CodegenTypes.Float;
+    marginRight?: CodegenTypes.Float;
+    marginTop?: CodegenTypes.Float;
+    marginBottom?: CodegenTypes.Float;
     backgroundColor?: ColorValue;
     borderStyle?: string;
-    borderRadius?: Float;
-    borderLeftWidth?: Float;
+    borderRadius?: CodegenTypes.Float;
+    borderLeftWidth?: CodegenTypes.Float;
 }
 export interface ContentImageContainerStyle {
-    width?: Float;
-    height?: Float;
-    borderRadius?: Float;
+    width?: CodegenTypes.Float;
+    height?: CodegenTypes.Float;
+    borderRadius?: CodegenTypes.Float;
     backgroundColor?: ColorValue;
 }
 export interface ContentImageStyle {
-    width?: Float;
-    height?: Float;
+    width?: CodegenTypes.Float;
+    height?: CodegenTypes.Float;
     resizeMode?: string;
 }
 export interface ContentTextContainerStyle {
-    paddingTop?: Float;
-    paddingBottom?: Float;
-    paddingRight?: Float;
-    paddingLeft?: Float;
-    marginLeft?: Float;
-    marginRight?: Float;
-    marginTop?: Float;
-    marginBottom?: Float;
+    paddingTop?: CodegenTypes.Float;
+    paddingBottom?: CodegenTypes.Float;
+    paddingRight?: CodegenTypes.Float;
+    paddingLeft?: CodegenTypes.Float;
+    marginLeft?: CodegenTypes.Float;
+    marginRight?: CodegenTypes.Float;
+    marginTop?: CodegenTypes.Float;
+    marginBottom?: CodegenTypes.Float;
 }
 export interface ContentStyleProperties {
     title?: ContentTextStyle;
@@ -241,13 +240,13 @@ export interface HtmlStyleInternal {
     h6?: Heading;
     blockquote?: {
         borderColor?: ColorValue;
-        borderWidth?: Float;
-        gapWidth?: Float;
+        borderWidth?: CodegenTypes.Float;
+        gapWidth?: CodegenTypes.Float;
         color?: ColorValue;
     };
     codeblock?: {
         color?: ColorValue;
-        borderRadius?: Float;
+        borderRadius?: CodegenTypes.Float;
         backgroundColor?: ColorValue;
     };
     code?: {
@@ -258,35 +257,35 @@ export interface HtmlStyleInternal {
         color?: ColorValue;
         textDecorationLine?: string;
     };
-    mention?: UnsafeMixed;
-    content?: UnsafeMixed;
+    mention?: CodegenTypes.UnsafeMixed;
+    content?: CodegenTypes.UnsafeMixed;
     img?: {
-        width?: Float;
-        height?: Float;
+        width?: CodegenTypes.Float;
+        height?: CodegenTypes.Float;
     };
     ol?: {
-        gapWidth?: Float;
-        marginLeft?: Float;
+        gapWidth?: CodegenTypes.Float;
+        marginLeft?: CodegenTypes.Float;
         markerFontWeight?: string;
         markerColor?: ColorValue;
     };
     ul?: {
         bulletColor?: ColorValue;
-        bulletSize?: Float;
-        marginLeft?: Float;
-        gapWidth?: Float;
+        bulletSize?: CodegenTypes.Float;
+        marginLeft?: CodegenTypes.Float;
+        gapWidth?: CodegenTypes.Float;
     };
     checkbox?: {
-        imageWidth?: Float;
-        imageHeight?: Float;
-        marginLeft?: Float;
-        gapWidth?: Float;
+        imageWidth?: CodegenTypes.Float;
+        imageHeight?: CodegenTypes.Float;
+        marginLeft?: CodegenTypes.Float;
+        gapWidth?: CodegenTypes.Float;
         checkedTextColor?: ColorValue;
     };
     divider?: {
-        height?: Float;
+        height?: CodegenTypes.Float;
         color?: ColorValue;
-        thickness?: Float;
+        thickness?: CodegenTypes.Float;
     };
     mdf?: {
         imageUri: string;
@@ -299,34 +298,34 @@ export interface HtmlStyleInternal {
 }
 export interface OnScrollEvent {
     contentInset: {
-        top: Float;
-        bottom: Float;
-        left: Float;
-        right: Float;
+        top: CodegenTypes.Float;
+        bottom: CodegenTypes.Float;
+        left: CodegenTypes.Float;
+        right: CodegenTypes.Float;
     };
     contentOffset: {
-        x: Float;
-        y: Float;
+        x: CodegenTypes.Float;
+        y: CodegenTypes.Float;
     };
     contentSize: {
-        width: Float;
-        height: Float;
+        width: CodegenTypes.Float;
+        height: CodegenTypes.Float;
     };
     layoutMeasurement: {
-        width: Float;
-        height: Float;
+        width: CodegenTypes.Float;
+        height: CodegenTypes.Float;
     };
     velocity: {
-        x: Float;
-        y: Float;
+        x: CodegenTypes.Float;
+        y: CodegenTypes.Float;
     };
-    target: Int32;
+    target: CodegenTypes.Int32;
 }
 export type Insets = {
-    top: Float;
-    left: Float;
-    bottom: Float;
-    right: Float;
+    top: CodegenTypes.Float;
+    left: CodegenTypes.Float;
+    bottom: CodegenTypes.Float;
+    right: CodegenTypes.Float;
 };
 export interface Cookie {
     domain: string;
@@ -336,8 +335,8 @@ export interface Cookie {
 export interface OnKeyPressEvent {
     key: string;
     selection: {
-        start: Int32;
-        end: Int32;
+        start: CodegenTypes.Int32;
+        end: CodegenTypes.Int32;
     };
 }
 export interface ContextMenuItemConfig {
@@ -349,8 +348,8 @@ export interface OnContextMenuItemPressEvent {
     text: string;
     key: string;
     selection: {
-        start: Int32;
-        end: Int32;
+        start: CodegenTypes.Int32;
+        end: CodegenTypes.Int32;
     };
 }
 export interface NativeProps extends ViewProps {
@@ -365,44 +364,44 @@ export interface NativeProps extends ViewProps {
     autoCapitalize?: string;
     htmlStyle?: HtmlStyleInternal;
     scrollEnabled?: boolean;
-    dragAndDropEnabled?: WithDefault<boolean, true>;
+    dragAndDropEnabled?: CodegenTypes.WithDefault<boolean, true>;
     keyboardDismissMode?: string;
-    iOSparagraphSpacing?: Float;
-    iOSparagraphSpacingBefore?: Float;
-    paragraphsLimit?: Int32;
+    iOSparagraphSpacing?: CodegenTypes.Float;
+    iOSparagraphSpacingBefore?: CodegenTypes.Float;
+    paragraphsLimit?: CodegenTypes.Int32;
     stylesConfig?: string[];
     contextMenuItems?: Readonly<Array<ContextMenuItemConfig>>;
     writingToolsBehavior?: string;
-    maxLength?: WithDefault<Int32, -1>;
-    onInputFocus?: DirectEventHandler<null>;
-    onInputBlur?: DirectEventHandler<null>;
-    onChangeText?: DirectEventHandler<OnChangeTextEvent>;
-    onChangeHtml?: DirectEventHandler<OnChangeHtmlEvent>;
-    onChangeState?: DirectEventHandler<OnChangeStateEvent>;
-    onLinkDetected?: DirectEventHandler<OnLinkDetected>;
-    onMentionDetected?: DirectEventHandler<OnMentionDetectedInternal>;
-    onMention?: DirectEventHandler<OnMentionEvent>;
-    onChangeSelection?: DirectEventHandler<OnChangeSelectionEvent>;
-    onRequestHtmlResult?: DirectEventHandler<OnRequestHtmlResultEvent>;
-    onColorChangeInSelection?: DirectEventHandler<OnChangeColorEvent>;
-    onParagraphAlignmentChange?: DirectEventHandler<OnParagraphAlignmentChangeEvent>;
-    onInputScroll?: DirectEventHandler<OnScrollEvent>;
-    onCheckboxPress?: DirectEventHandler<CheckboxPressEvent>;
-    onAnyContentChange?: DirectEventHandler<null>;
-    onInputKeyPress?: DirectEventHandler<OnKeyPressEvent>;
-    onContextMenuItemPress?: DirectEventHandler<OnContextMenuItemPressEvent>;
+    maxLength?: CodegenTypes.WithDefault<CodegenTypes.Int32, -1>;
+    onInputFocus?: CodegenTypes.DirectEventHandler<null>;
+    onInputBlur?: CodegenTypes.DirectEventHandler<null>;
+    onChangeText?: CodegenTypes.DirectEventHandler<OnChangeTextEvent>;
+    onChangeHtml?: CodegenTypes.DirectEventHandler<OnChangeHtmlEvent>;
+    onChangeState?: CodegenTypes.DirectEventHandler<OnChangeStateEvent>;
+    onLinkDetected?: CodegenTypes.DirectEventHandler<OnLinkDetected>;
+    onMentionDetected?: CodegenTypes.DirectEventHandler<OnMentionDetectedInternal>;
+    onMention?: CodegenTypes.DirectEventHandler<OnMentionEvent>;
+    onChangeSelection?: CodegenTypes.DirectEventHandler<OnChangeSelectionEvent>;
+    onRequestHtmlResult?: CodegenTypes.DirectEventHandler<OnRequestHtmlResultEvent>;
+    onColorChangeInSelection?: CodegenTypes.DirectEventHandler<OnChangeColorEvent>;
+    onParagraphAlignmentChange?: CodegenTypes.DirectEventHandler<OnParagraphAlignmentChangeEvent>;
+    onInputScroll?: CodegenTypes.DirectEventHandler<OnScrollEvent>;
+    onCheckboxPress?: CodegenTypes.DirectEventHandler<CheckboxPressEvent>;
+    onAnyContentChange?: CodegenTypes.DirectEventHandler<null>;
+    onInputKeyPress?: CodegenTypes.DirectEventHandler<OnKeyPressEvent>;
+    onContextMenuItemPress?: CodegenTypes.DirectEventHandler<OnContextMenuItemPressEvent>;
     color?: ColorValue;
-    fontSize?: Float;
+    fontSize?: CodegenTypes.Float;
     fontFamily?: string;
     fontWeight?: string;
     fontStyle?: string;
-    lineHeight?: Float;
-    borderLeftWidth?: Float;
-    borderRightWidth?: Float;
-    borderTopWidth?: Float;
-    borderBottomWidth?: Float;
-    borderStartWidth?: Float;
-    borderEndWidth?: Float;
+    lineHeight?: CodegenTypes.Float;
+    borderLeftWidth?: CodegenTypes.Float;
+    borderRightWidth?: CodegenTypes.Float;
+    borderTopWidth?: CodegenTypes.Float;
+    borderBottomWidth?: CodegenTypes.Float;
+    borderStartWidth?: CodegenTypes.Float;
+    borderEndWidth?: CodegenTypes.Float;
     borderColor?: ColorValue;
     borderLeftColor?: ColorValue;
     borderRightColor?: ColorValue;
@@ -413,21 +412,21 @@ export interface NativeProps extends ViewProps {
     borderBlockColor?: ColorValue;
     borderBlockStartColor?: ColorValue;
     borderBlockEndColor?: ColorValue;
-    borderRadius?: Float;
-    borderTopLeftRadius?: Float;
-    borderTopRightRadius?: Float;
-    borderBottomLeftRadius?: Float;
-    borderBottomRightRadius?: Float;
-    borderTopStartRadius?: Float;
-    borderTopEndRadius?: Float;
-    borderBottomStartRadius?: Float;
-    borderBottomEndRadius?: Float;
-    borderStartStartRadius?: Float;
-    borderStartEndRadius?: Float;
-    borderEndStartRadius?: Float;
-    borderEndEndRadius?: Float;
+    borderRadius?: CodegenTypes.Float;
+    borderTopLeftRadius?: CodegenTypes.Float;
+    borderTopRightRadius?: CodegenTypes.Float;
+    borderBottomLeftRadius?: CodegenTypes.Float;
+    borderBottomRightRadius?: CodegenTypes.Float;
+    borderTopStartRadius?: CodegenTypes.Float;
+    borderTopEndRadius?: CodegenTypes.Float;
+    borderBottomStartRadius?: CodegenTypes.Float;
+    borderBottomEndRadius?: CodegenTypes.Float;
+    borderStartStartRadius?: CodegenTypes.Float;
+    borderStartEndRadius?: CodegenTypes.Float;
+    borderEndStartRadius?: CodegenTypes.Float;
+    borderEndEndRadius?: CodegenTypes.Float;
     borderStyle?: string;
-    borderWidth?: Float;
+    borderWidth?: CodegenTypes.Float;
     isOnChangeHtmlSet: boolean;
     isOnChangeTextSet: boolean;
     isOnScrollSet: boolean;
@@ -444,7 +443,7 @@ interface NativeCommands {
     focus: (viewRef: React.ElementRef<ComponentType>) => void;
     blur: (viewRef: React.ElementRef<ComponentType>) => void;
     setValue: (viewRef: React.ElementRef<ComponentType>, text: string) => void;
-    setSelection: (viewRef: React.ElementRef<ComponentType>, start: Int32, end: Int32) => void;
+    setSelection: (viewRef: React.ElementRef<ComponentType>, start: CodegenTypes.Int32, end: CodegenTypes.Int32) => void;
     toggleBold: (viewRef: React.ElementRef<ComponentType>) => void;
     toggleItalic: (viewRef: React.ElementRef<ComponentType>) => void;
     toggleUnderline: (viewRef: React.ElementRef<ComponentType>) => void;
@@ -460,21 +459,21 @@ interface NativeCommands {
     toggleBlockQuote: (viewRef: React.ElementRef<ComponentType>) => void;
     toggleOrderedList: (viewRef: React.ElementRef<ComponentType>) => void;
     toggleUnorderedList: (viewRef: React.ElementRef<ComponentType>) => void;
-    addLink: (viewRef: React.ElementRef<ComponentType>, start: Int32, end: Int32, text: string, url: string) => void;
-    removeLink: (viewRef: React.ElementRef<ComponentType>, start: Int32, end: Int32) => void;
-    addImage: (viewRef: React.ElementRef<ComponentType>, uri: string, width: Float, height: Float) => void;
+    addLink: (viewRef: React.ElementRef<ComponentType>, start: CodegenTypes.Int32, end: CodegenTypes.Int32, text: string, url: string) => void;
+    removeLink: (viewRef: React.ElementRef<ComponentType>, start: CodegenTypes.Int32, end: CodegenTypes.Int32) => void;
+    addImage: (viewRef: React.ElementRef<ComponentType>, uri: string, width: CodegenTypes.Float, height: CodegenTypes.Float) => void;
     startMention: (viewRef: React.ElementRef<ComponentType>, indicator: string) => void;
     addMention: (viewRef: React.ElementRef<ComponentType>, indicator: string, text: string, type: string, payload: string) => void;
-    requestHTML: (viewRef: React.ElementRef<ComponentType>, requestId: Int32, prettify: boolean) => void;
+    requestHTML: (viewRef: React.ElementRef<ComponentType>, requestId: CodegenTypes.Int32, prettify: boolean) => void;
     toggleCheckList: (viewRef: React.ElementRef<ComponentType>) => void;
     setColor: (viewRef: React.ElementRef<ComponentType>, color: string) => void;
     removeColor: (viewRef: React.ElementRef<ComponentType>) => void;
     addDividerAtNewLine: (viewRef: React.ElementRef<ComponentType>) => void;
     setParagraphAlignment: (viewRef: React.ElementRef<ComponentType>, alignment: string) => void;
-    scrollTo: (viewRef: React.ElementRef<ComponentType>, x: Float, y: Float, animated: boolean) => void;
+    scrollTo: (viewRef: React.ElementRef<ComponentType>, x: CodegenTypes.Float, y: CodegenTypes.Float, animated: boolean) => void;
     addContent: (viewRef: React.ElementRef<ComponentType>, text: string, type: string, src: string, attributes: string) => void;
     insertTextAtSelection: (viewRef: React.ElementRef<ComponentType>, text: string) => void;
-    insertText: (viewRef: React.ElementRef<ComponentType>, text: string, start: Int32 | null, end: Int32 | null) => void;
+    insertText: (viewRef: React.ElementRef<ComponentType>, text: string, start: CodegenTypes.Int32 | null, end: CodegenTypes.Int32 | null) => void;
     hideContextMenu: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 export declare const Commands: NativeCommands;

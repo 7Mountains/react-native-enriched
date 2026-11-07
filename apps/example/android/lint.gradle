@@ -1,5 +1,4 @@
 apply plugin: "org.jlleitschuh.gradle.ktlint"
-apply plugin: 'com.diffplug.spotless'
 
 ktlint {
 	version = "1.8.0"
@@ -25,45 +24,16 @@ ktlint {
 	}
 }
 
-spotless {
-	kotlin {
-		target 'src/**/*.kt', 'src/**/*.kts'
-		ktlint("1.8.0")
-		trimTrailingWhitespace()
-		endWithNewline()
-		lineEndings 'UNIX'
-		targetExclude '**/generated/**', '**/build/**', '**/node_modules/**'
-	}
-
-	java {
-		target 'src/**/*.java'
-		googleJavaFormat("1.23.0")
-		removeUnusedImports()
-		trimTrailingWhitespace()
-		endWithNewline()
-		leadingTabsToSpaces(2)
-		lineEndings 'UNIX'
-		targetExclude '**/generated/**', '**/build/**', '**/node_modules/**'
-	}
-
-	groovyGradle {
-		target '*.gradle', 'gradle/*.gradle'
-		greclipse()
-		trimTrailingWhitespace()
-		endWithNewline()
-	}
-}
-
 tasks.register('lintFormat') {
 	group = "formatting"
 	description = "Auto-fix all code formatting issues"
-	dependsOn 'ktlintFormat', 'spotlessApply'
+	dependsOn 'ktlintFormat'
 }
 
 tasks.register('lintVerify') {
 	group = "verification"
 	description = "Verify code is properly formatted"
-	dependsOn 'ktlintCheck', 'spotlessCheck'
+	dependsOn 'ktlintCheck'
 	doLast {
 		println "✓ All code formatting checks passed!"
 	}

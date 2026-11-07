@@ -8,11 +8,15 @@ import {
   initialWindowMetrics,
 } from 'react-native-safe-area-context';
 import ReanimatedEditorScreen from './ReanimatedEditorScreen';
+import TextScreen from './TextScreen';
+import ListScreen from './ListScreen';
 
 export type RootStackParamList = {
   Main: undefined;
   Editor: undefined;
   ReanimatedEditor: undefined;
+  Text: undefined;
+  List: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -28,6 +32,16 @@ export default function App() {
             <Stack.Screen
               name="ReanimatedEditor"
               component={ReanimatedEditorScreen}
+            />
+            <Stack.Screen
+              name="Text"
+              component={TextScreen}
+              options={{ title: 'EnrichedText' }}
+            />
+            <Stack.Screen
+              name="List"
+              component={ListScreen}
+              options={{ title: 'EnrichedText list' }}
             />
           </Stack.Navigator>
         </NavigationContainer>

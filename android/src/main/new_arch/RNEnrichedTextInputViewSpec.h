@@ -15,6 +15,7 @@
 #include <ReactCommon/TurboModule.h>
 #include <jsi/jsi.h>
 
+#include <react/renderer/components/RNEnrichedTextInputViewSpec/EnrichedTextComponentDescriptor.h>
 #include <react/renderer/components/RNEnrichedTextInputViewSpec/EnrichedTextInputComponentDescriptor.h>
 
 namespace facebook::react {

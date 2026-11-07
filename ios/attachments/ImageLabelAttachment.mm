@@ -12,6 +12,7 @@
   UIImage *_contentImage;
   ContentStyleProps *_styles;
   ContentParams *_params;
+  RichImageLabelMetrics *_metrics;
   BOOL _needsRedraw;
 }
 
@@ -25,38 +26,28 @@
 
   _styles = styles;
   _params = params;
+  _metrics = [self buildMetrics];
   self.image = nil;
 
   return self;
 }
 
-- (RichImageLabelView *)buildView {
-  [self loadImageAsyncWithURI:_params.url];
-  RichImageLabelView *view = [[RichImageLabelView alloc] init];
+// Built once: the bounds are measured on any thread, from the metrics
+- (RichImageLabelMetrics *)buildMetrics {
+  RichImageLabelMetrics *metrics = [RichImageLabelMetrics new];
 
-  view.minHeight = _styles.minHeight;
-  view.layer.backgroundColor = _styles.backgroundColor.CGColor;
-  view.containerBorderWidth = _styles.borderWidth;
-  view.containerCornerRadius = _styles.borderRadius;
-  view.containerBorderColor = _styles.borderColor;
-  view.borderStyle = _styles.borderStyle;
-  view.padding = _styles.padding;
+  metrics.minHeight = _styles.minHeight;
+  metrics.padding = _styles.padding;
+  metrics.textPadding = _styles.textContainerPadding;
+  metrics.textMargin = _styles.textContainerMargin;
+  metrics.imageContainerSize = _styles.imageContainerSize;
 
-  view.textPadding = _styles.textContainerPadding;
-  view.textMargin = _styles.textContainerMargin;
+  metrics.titleMargin = _styles.titleMargin;
+  metrics.descriptionMargin = _styles.descriptionMargin;
+  metrics.subtitleMargin = _styles.subtitleMargin;
+  metrics.subdescriptionMargin = _styles.subdescriptionMargin;
 
-  view.imageContainerSize = _styles.imageContainerSize;
-  view.imageSize = _styles.imageSize;
-  view.imageContainerColor = _styles.imageContainerBackgroundColor;
-
-  view.image = MakeLoaderImage();
-
-  view.titleMargin = _styles.titleMargin;
-  view.descriptionMargin = _styles.descriptionMargin;
-  view.subtitleMargin = _styles.subtitleMargin;
-  view.subdescriptionMargin = _styles.subdescriptionMargin;
-
-  view.titleText = [[NSAttributedString alloc]
+  metrics.titleText = [[NSAttributedString alloc]
       initWithString:_params.title
           attributes:@{
             NSFontAttributeName : _styles.titleFont,
@@ -65,7 +56,7 @@
 
   if ([_params.descriptionText isKindOfClass:NSString.class] &&
       _params.descriptionText.length > 0) {
-    view.descriptionText = [[NSAttributedString alloc]
+    metrics.descriptionText = [[NSAttributedString alloc]
         initWithString:_params.descriptionText
             attributes:@{
               NSFontAttributeName : _styles.descriptionFont,
@@ -74,7 +65,7 @@
   }
 
   if ([_params.subTitle isKindOfClass:NSString.class]) {
-    view.subTitleText = [[NSAttributedString alloc]
+    metrics.subTitleText = [[NSAttributedString alloc]
         initWithString:_params.subTitle
             attributes:@{
               NSFontAttributeName : _styles.subTitleFont,
@@ -83,13 +74,33 @@
   }
 
   if ([_params.subDescriptionText isKindOfClass:NSString.class]) {
-    view.subDescriptionText = [[NSAttributedString alloc]
+    metrics.subDescriptionText = [[NSAttributedString alloc]
         initWithString:_params.subDescriptionText
             attributes:@{
               NSFontAttributeName : _styles.subDescriptionFont,
               NSForegroundColorAttributeName : _styles.subdescriptionColor
             }];
   }
+
+  return metrics;
+}
+
+- (RichImageLabelView *)buildView {
+  [self loadImageAsyncWithURI:_params.url];
+  RichImageLabelView *view = [[RichImageLabelView alloc] init];
+
+  [view applyMetrics:_metrics];
+
+  view.layer.backgroundColor = _styles.backgroundColor.CGColor;
+  view.containerBorderWidth = _styles.borderWidth;
+  view.containerCornerRadius = _styles.borderRadius;
+  view.containerBorderColor = _styles.borderColor;
+  view.borderStyle = _styles.borderStyle;
+
+  view.imageSize = _styles.imageSize;
+  view.imageContainerColor = _styles.imageContainerBackgroundColor;
+
+  view.image = MakeLoaderImage();
 
   return view;
 }
@@ -111,7 +122,8 @@
   CGSize contentSize = CGSizeMake(
       width - _styles.margin.left - _styles.margin.right, CGFLOAT_MAX);
 
-  CGSize fitting = [self.view sizeThatFits:contentSize];
+  // Not with the view: the bounds are measured off the main thread too
+  CGSize fitting = [_metrics sizeThatFits:contentSize];
 
   CGFloat height = fitting.height + _styles.margin.top + _styles.margin.bottom;
 

@@ -3,6 +3,7 @@
 #import "ContentParams.h"
 #import "DividerAttachment.h"
 #import "EnrichedHeadingLevel.h"
+#import "EnrichedStyleHost.h"
 #import "ImageData.h"
 #import "LinkData.h"
 #import "MDFParams.h"
@@ -106,6 +107,7 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 @interface ListStyleBase : NSObject <BaseStyleProtocol> {
 @protected
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
   NSParagraphStyle *_cachedAttributes;
   CGFloat _cachedHeadIntent;
 }

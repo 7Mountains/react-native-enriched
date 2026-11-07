@@ -1,12 +1,12 @@
 #pragma once
 #import <Foundation/Foundation.h>
 
-@class EnrichedTextInputView;
+@protocol EnrichedStyleHost;
 
 @interface EnrichedTextStyleFactory : NSObject
 
 + (NSDictionary<NSNumber *, id> *)makeStylesWithInput:
-    (EnrichedTextInputView *)input;
+    (id<EnrichedStyleHost>)input;
 + (NSDictionary<NSNumber *, NSArray<NSNumber *> *> *)makeConflictingStyles;
 + (NSDictionary<NSNumber *, NSArray<NSNumber *> *> *)makeBlockingStyles;
 + (NSDictionary<NSNumber *, id> *)

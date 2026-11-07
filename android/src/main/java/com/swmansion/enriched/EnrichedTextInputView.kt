@@ -58,7 +58,6 @@ import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.ISpanConfig
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
-import com.swmansion.enriched.spans.utils.ForceRedrawSpan
 import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.textinput.utils.EnrichedEditableFactory
 import com.swmansion.enriched.utils.EnrichedSelection
@@ -77,7 +76,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.ceil
 
-class EnrichedTextInputView : AppCompatEditText {
+class EnrichedTextInputView :
+  AppCompatEditText,
+  EnrichedHtmlHost {
   var stateWrapper: StateWrapper? = null
   val selection: EnrichedSelection = EnrichedSelection(this)
   val spanState: EnrichedSpanState = EnrichedSpanState(this)
@@ -117,7 +118,7 @@ class EnrichedTextInputView : AppCompatEditText {
   // kept mounted, e.g. when a screen is pushed over it
   private var viewScope = MainScope()
 
-  var fontSize: Float? = null
+  override var fontSize: Float? = null
   private var fontFamily: String? = null
   private var fontStyle: Int = ReactConstants.UNSET
   private var fontWeight: Int = ReactConstants.UNSET
@@ -133,8 +134,11 @@ class EnrichedTextInputView : AppCompatEditText {
 
   var layoutManager = EnrichedTextInputViewLayoutManager(this)
 
-  var editorWidth: Int = getInitialWidth()
+  override var editorWidth: Int = getInitialWidth()
     private set
+
+  override val hostContext: Context
+    get() = context
 
   private var typefaceDirty = false
 
@@ -298,7 +302,7 @@ class EnrichedTextInputView : AppCompatEditText {
       }
     }
 
-    setText(editableText)
+    setTextKeepState(editableText)
   }
 
   override fun onDraw(canvas: Canvas) {
@@ -517,18 +521,14 @@ class EnrichedTextInputView : AppCompatEditText {
   }
 
   // this method is used to update the draw state of span
-  fun redrawSpan(span: EnrichedSpan) {
+  override fun redrawSpan(span: EnrichedSpan) {
     val text = editableText
     val start = text.getSpanStart(span)
     val end = text.getSpanEnd(span)
 
     if (start == -1 || end == -1) return
 
-    val marker = ForceRedrawSpan()
-    transactionManager.runSilently {
-      text.setSpan(marker, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-      text.removeSpan(marker)
-    }
+    invalidate()
   }
 
   private fun getActualIndex(visibleIndex: Int): Int {

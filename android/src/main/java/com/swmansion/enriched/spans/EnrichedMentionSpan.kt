@@ -5,6 +5,7 @@ import android.text.style.ClickableSpan
 import android.view.View
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
 import com.swmansion.enriched.styles.HtmlStyle
+import com.swmansion.enriched.text.EnrichedTextView
 
 class EnrichedMentionSpan(
   private val text: String,
@@ -17,8 +18,7 @@ class EnrichedMentionSpan(
   override val dependsOnHtmlStyle: Boolean = true
 
   override fun onClick(view: View) {
-    // Do nothing. Mentions inside the input are not clickable.
-    // We are using `ClickableSpan` to allow the text to be styled as a clickable element.
+    (view as? EnrichedTextView)?.performSpanClick(this)
   }
 
   override fun updateDrawState(textPaint: TextPaint) {

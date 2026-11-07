@@ -104,7 +104,7 @@ const htmlStyle: HtmlStyle = {
       },
       fallbackImageURI: Image.resolveAssetSource(
         require('../assets/placeholder.png')
-      ).uri,
+      )?.uri,
     },
     video: {
       container: {
@@ -138,7 +138,7 @@ const htmlStyle: HtmlStyle = {
       },
       fallbackImageURI: Image.resolveAssetSource(
         require('../assets/placeholder.png')
-      ).uri,
+      )?.uri,
     },
     placeholder: {
       container: {
@@ -170,7 +170,7 @@ const htmlStyle: HtmlStyle = {
       },
       fallbackImageURI: Image.resolveAssetSource(
         require('../assets/placeholder.png')
-      ).uri,
+      )?.uri,
     },
     automation: {
       container: {
@@ -260,9 +260,9 @@ const htmlStyle: HtmlStyle = {
       width: 16,
       height: 18,
     },
-    imageUri: Image.resolveAssetSource(
-      require('../assets/images/block_icon.png')
-    ).uri,
+    imageUri:
+      Image.resolveAssetSource(require('../assets/images/block_icon.png'))
+        ?.uri ?? '',
   },
 };
 

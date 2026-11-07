@@ -4,6 +4,72 @@ static const CGSize kDefaultImageSize = CGSizeMake(40.0, 40.0);
 static const CGFloat kDefaultMinHeight = 56.0;
 static const CGSize kDefaultImageContainerSize = CGSizeMake(56.0, 56.0);
 
+@implementation RichImageLabelMetrics
+
+- (instancetype)init {
+  if (self = [super init]) {
+    _minHeight = kDefaultMinHeight;
+    _imageContainerSize = kDefaultImageContainerSize;
+    _padding = UIEdgeInsetsZero;
+    _textPadding = UIEdgeInsetsZero;
+    _textMargin = UIEdgeInsetsZero;
+  }
+  return self;
+}
+
+static CGSize SizeOfText(NSAttributedString *text, CGFloat width) {
+  if (!text.length || width <= 0)
+    return CGSizeZero;
+
+  CGRect rect =
+      [text boundingRectWithSize:CGSizeMake(width, CGFLOAT_MAX)
+                         options:NSStringDrawingUsesLineFragmentOrigin |
+                                 NSStringDrawingUsesFontLeading
+                         context:nil];
+
+  return CGSizeMake(ceil(rect.size.width), ceil(rect.size.height));
+}
+
+static CGFloat HeightOfText(NSAttributedString *text, UIEdgeInsets margin,
+                            CGFloat width) {
+  if (!text.length)
+    return 0;
+
+  return margin.top + SizeOfText(text, width).height + margin.bottom;
+}
+
+- (CGSize)sizeThatFits:(CGSize)size {
+  CGFloat contentWidth = size.width;
+
+  CGFloat imageBlockWidth = _imageContainerSize.width > 0
+                                ? _imageContainerSize.width
+                                : kDefaultImageContainerSize.width;
+
+  CGFloat textX = _padding.left + imageBlockWidth + _textMargin.left;
+
+  CGFloat textWidth = contentWidth - textX - _padding.right - _textMargin.right;
+  textWidth = MAX(textWidth - _textPadding.left - _textPadding.right, 0);
+
+  CGFloat textHeight =
+      HeightOfText(_titleText, _titleMargin, textWidth) +
+      HeightOfText(_descriptionText, _descriptionMargin, textWidth) +
+      HeightOfText(_subTitleText, _subtitleMargin, textWidth) +
+      HeightOfText(_subDescriptionText, _subdescriptionMargin, textWidth) +
+      _textPadding.top + _textPadding.bottom;
+
+  CGFloat imageHeight =
+      _imageContainerSize.height > 0 ? _imageContainerSize.height : 0;
+
+  CGFloat contentHeight = MAX(textHeight, imageHeight);
+
+  CGFloat finalHeight =
+      MAX(contentHeight + _padding.top + _padding.bottom, _minHeight);
+
+  return CGSizeMake(size.width, ceil(finalHeight));
+}
+
+@end
+
 @implementation RichImageLabelView {
   CALayer *_leftBorderLayer;
   UIView *_imageContainer;
@@ -72,8 +138,6 @@ static const CGSize kDefaultImageContainerSize = CGSizeMake(56.0, 56.0);
   return CGSizeMake(ceil(rect.size.width), ceil(rect.size.height));
 }
 
-#pragma mark - Layout
-
 - (CGFloat)calculateTextHeight:(CGFloat)textWidth {
   CGSize titleSize = [self sizeForLabel:_titleLabel width:textWidth];
   CGSize descSize = [self sizeForLabel:_descriptionLabel width:textWidth];
@@ -104,32 +168,51 @@ static const CGSize kDefaultImageContainerSize = CGSizeMake(56.0, 56.0);
   return height;
 }
 
+#pragma mark - Layout
+
+- (RichImageLabelMetrics *)metrics {
+  RichImageLabelMetrics *metrics = [RichImageLabelMetrics new];
+  metrics.minHeight = _minHeight;
+  metrics.padding = _padding;
+  metrics.imageContainerSize = _imageContainerSize;
+  metrics.textPadding = _textPadding;
+  metrics.textMargin = _textMargin;
+  metrics.titleText = _titleLabel.attributedText;
+  metrics.titleMargin = _titleMargin;
+  metrics.descriptionText = _descriptionLabel.attributedText;
+  metrics.descriptionMargin = _descriptionMargin;
+  metrics.subTitleText = _subtitleLabel.attributedText;
+  metrics.subtitleMargin = _subtitleMargin;
+  metrics.subDescriptionText = _subdescriptionLabel.attributedText;
+  metrics.subdescriptionMargin = _subdescriptionMargin;
+  return metrics;
+}
+
+- (void)applyMetrics:(RichImageLabelMetrics *)metrics {
+  self.minHeight = metrics.minHeight;
+  self.padding = metrics.padding;
+  self.imageContainerSize = metrics.imageContainerSize;
+  self.textPadding = metrics.textPadding;
+  self.textMargin = metrics.textMargin;
+  self.titleMargin = metrics.titleMargin;
+  self.descriptionMargin = metrics.descriptionMargin;
+  self.subtitleMargin = metrics.subtitleMargin;
+  self.subdescriptionMargin = metrics.subdescriptionMargin;
+
+  self.titleText = metrics.titleText;
+  if (metrics.descriptionText != nil) {
+    self.descriptionText = metrics.descriptionText;
+  }
+  if (metrics.subTitleText != nil) {
+    self.subTitleText = metrics.subTitleText;
+  }
+  if (metrics.subDescriptionText != nil) {
+    self.subDescriptionText = metrics.subDescriptionText;
+  }
+}
+
 - (CGSize)sizeThatFits:(CGSize)size {
-  CGFloat contentWidth = size.width;
-
-  CGFloat imageBlockWidth = _imageContainerSize.width > 0
-                                ? _imageContainerSize.width
-                                : kDefaultImageContainerSize.width;
-
-  CGFloat textX = self.padding.left + imageBlockWidth + self.textMargin.left;
-
-  CGFloat textWidth =
-      contentWidth - textX - self.padding.right - self.textMargin.right;
-  textWidth =
-      MAX(textWidth - self.textPadding.left - self.textPadding.right, 0);
-
-  CGFloat textHeight = [self calculateTextHeight:textWidth] + _textPadding.top +
-                       _textPadding.bottom;
-
-  CGFloat imageHeight =
-      _imageContainerSize.height > 0 ? _imageContainerSize.height : 0;
-
-  CGFloat contentHeight = MAX(textHeight, imageHeight);
-
-  CGFloat finalHeight = MAX(
-      contentHeight + self.padding.top + self.padding.bottom, self.minHeight);
-
-  return CGSizeMake(size.width, ceil(finalHeight));
+  return [[self metrics] sizeThatFits:size];
 }
 
 - (void)layoutSubviews {
