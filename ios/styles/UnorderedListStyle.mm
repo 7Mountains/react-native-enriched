@@ -32,7 +32,7 @@ static NSArray<NSTextList *> *const TextLists = @[ Bullet ];
 }
 
 - (CGFloat)getHeadIndent {
-  InputConfig *config = _input->config;
+  InputConfig *config = _host.config;
 
   // lists are drawn manually
   // margin before bullet + gap between bullet and paragraph

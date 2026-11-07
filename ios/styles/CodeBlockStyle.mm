@@ -12,6 +12,7 @@ static NSString *const CodeBlockMarker = @"codeblock";
 
 @implementation CodeBlockStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
   NSArray *_stylesToExclude;
 }
 
@@ -45,7 +46,8 @@ static NSString *const CodeBlockMarker = @"codeblock";
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   _stylesToExclude = @[ @(InlineCode), @(Mention), @(Link) ];
   return self;
 }
@@ -71,14 +73,14 @@ static NSString *const CodeBlockMarker = @"codeblock";
       [[NSTextList alloc] initWithMarkerFormat:CodeBlockMarker options:0];
 
   NSMutableParagraphStyle *pStyle =
-      [self->_input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+      [self->_host.defaultTypingAttributes[NSParagraphStyleAttributeName]
           mutableCopy];
   pStyle.textLists = @[ codeBlockList ];
 
   NSDictionary *finalAttributes = @{
     NSParagraphStyleAttributeName : pStyle,
-    NSForegroundColorAttributeName : _input->config.codeBlockFgColor,
-    NSFontAttributeName : _input->config.monospacedFont
+    NSForegroundColorAttributeName : _host.config.codeBlockFgColor,
+    NSFontAttributeName : _host.config.monospacedFont
   };
 
   [attributedString addAttributes:finalAttributes range:range];
@@ -237,7 +239,7 @@ static NSString *const CodeBlockMarker = @"codeblock";
 
 - (NSArray<StylePair *> *_Nullable)findAllOccurences:(NSRange)range {
   return [OccurenceUtils all:NSParagraphStyleAttributeName
-                   withInput:_input
+                   withInput:_host
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];

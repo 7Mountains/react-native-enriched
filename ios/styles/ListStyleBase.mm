@@ -63,7 +63,8 @@
 - (instancetype)initWithInput:(id)input {
   self = [super init];
   if (self) {
-    _input = (EnrichedTextInputView *)input;
+    _host = input;
+    _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   }
   return self;
 }
@@ -83,7 +84,7 @@
   _cachedHeadIntent = headIntent;
 
   NSMutableParagraphStyle *pStyle =
-      [_input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+      [_host.defaultTypingAttributes[NSParagraphStyleAttributeName]
           mutableCopy];
 
   pStyle.textLists = [[self class] textLists];
@@ -332,7 +333,7 @@
 
 - (NSArray<StylePair *> *_Nullable)findAllOccurences:(NSRange)range {
   return [OccurenceUtils all:NSParagraphStyleAttributeName
-                   withInput:_input
+                   withInput:_host
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];

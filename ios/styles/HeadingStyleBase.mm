@@ -148,11 +148,11 @@ static EnrichedParagraphStyle *mutableEnrichedParagraphStyle(id value) {
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  EnrichedTextInputView *input = [self typedInput];
+  id<EnrichedStyleHost> host = (id<EnrichedStyleHost>)input;
   UIFont *newFont =
-      [self getHeadingFont:input->defaultTypingAttributes[NSFontAttributeName]];
+      [self getHeadingFont:host.defaultTypingAttributes[NSFontAttributeName]];
   EnrichedParagraphStyle *paragraphStyle = mutableEnrichedParagraphStyle(
-      input->defaultTypingAttributes[NSParagraphStyleAttributeName]);
+      host.defaultTypingAttributes[NSParagraphStyleAttributeName]);
   paragraphStyle.headingLevel = [self.class headingLevel];
   NSDictionary *newAttributes = @{
     NSParagraphStyleAttributeName : paragraphStyle,

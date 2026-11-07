@@ -13,6 +13,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 
 @implementation MentionStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
   NSValue *_activeMentionRange;
   NSString *_activeMentionIndicator;
   BOOL _blockMentionEditing;
@@ -72,7 +73,8 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   _activeMentionRange = nullptr;
   _activeMentionIndicator = nullptr;
   _blockMentionEditing = NO;
@@ -102,7 +104,7 @@ static NSString *const MentionAttributeName = @"MentionAttributeName";
   }
 
   MentionStyleProps *props =
-      [_input->config mentionStylePropsForType:params.type];
+      [_host.config mentionStylePropsForType:params.type];
 
   NSUnderlineStyle underlineStyle = props.decorationLine == DecorationUnderline
                                         ? NSUnderlineStyleSingle

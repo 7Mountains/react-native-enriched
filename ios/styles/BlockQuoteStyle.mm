@@ -12,6 +12,7 @@
 
 @implementation BlockQuoteStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
   NSArray *_stylesToExclude;
   UIColor *_blockQuoteForegroundColor;
   CGFloat _cachedHeadIntent;
@@ -48,19 +49,20 @@
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   _stylesToExclude = @[ @(InlineCode), @(Mention), @(Link) ];
   return self;
 }
 
 - (CGFloat)getHeadIndent {
   // rectangle width + gap
-  return [_input->config blockquoteBorderWidth] +
-         [_input->config blockquoteGapWidth];
+  return
+      [_host.config blockquoteBorderWidth] + [_host.config blockquoteGapWidth];
 }
 
 - (NSDictionary *)prepareAttributes {
-  UIColor *configBlockQuoteColor = _input->config.blockquoteColor;
+  UIColor *configBlockQuoteColor = _host.config.blockquoteColor;
   CGFloat headIntent = [self getHeadIndent];
   if (_cachedHeadIntent == headIntent && _cachedAttributes &&
       _blockQuoteForegroundColor == configBlockQuoteColor) {
@@ -71,15 +73,15 @@
   _blockQuoteForegroundColor = configBlockQuoteColor;
 
   NSMutableParagraphStyle *pStyle =
-      [self->_input->defaultTypingAttributes[NSParagraphStyleAttributeName]
+      [self->_host.defaultTypingAttributes[NSParagraphStyleAttributeName]
           mutableCopy];
   pStyle.headIndent = headIntent;
   pStyle.firstLineHeadIndent = headIntent;
   pStyle.tailIndent = DefaultListTailIndent;
   NSDictionary *attributes = @{
-    NSForegroundColorAttributeName : _input->config.blockquoteColor,
+    NSForegroundColorAttributeName : _host.config.blockquoteColor,
     NSParagraphStyleAttributeName : pStyle,
-    NSForegroundColorAttributeName : _input->config.blockquoteColor
+    NSForegroundColorAttributeName : _host.config.blockquoteColor
   };
   _cachedAttributes = attributes;
   return _cachedAttributes;
@@ -259,7 +261,7 @@
 
 - (NSArray<StylePair *> *_Nullable)findAllOccurences:(NSRange)range {
   return [OccurenceUtils all:NSParagraphStyleAttributeName
-                   withInput:_input
+                   withInput:_host
                      inRange:range
                withCondition:^BOOL(id _Nullable value, NSRange range) {
                  return [self styleCondition:value range:range];

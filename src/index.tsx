@@ -1,8 +1,10 @@
 export * from './EnrichedTextInput';
 export * from './EnrichedReanimatedTextInput';
+export * from './EnrichedText';
 export type {
   EnrichedTextInputInstance,
   EnrichedTextInputProps,
+  EnrichedTextProps,
   OnChangeMentionEvent,
   ComponentType,
   HtmlRequest,
@@ -20,6 +22,10 @@ export type {
   Cookie,
   CheckboxPressEvent,
 } from './EnrichedTextInputNativeComponent';
+export type {
+  OnLinkPressEvent,
+  OnMentionPressEvent,
+} from './EnrichedTextNativeComponent';
 
 export { EnrichedStyles } from './enums';
 

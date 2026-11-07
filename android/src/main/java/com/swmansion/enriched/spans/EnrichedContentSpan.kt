@@ -6,11 +6,12 @@ import android.graphics.Paint
 import android.text.style.ReplacementSpan
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.withTranslation
-import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.EnrichedHtmlHost
 import com.swmansion.enriched.R
 import com.swmansion.enriched.drawables.ImageLabelRenderer
 import com.swmansion.enriched.loaders.EnrichedImageLoader
 import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedHostBoundSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedNonEditableParagraphSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.ContentStyle
@@ -23,10 +24,11 @@ class EnrichedContentSpan(
   private val htmlStyle: HtmlStyle,
 ) : ReplacementSpan(),
   EnrichedNonEditableParagraphSpan,
-  EnrichedFullWidthSpan {
+  EnrichedFullWidthSpan,
+  EnrichedHostBoundSpan {
   private var hasRequestedImage = false
 
-  private var tvRef: WeakReference<EnrichedTextInputView>? = null
+  private var tvRef: WeakReference<EnrichedHtmlHost>? = null
 
   private val style = htmlStyle.contentStyle[contentParams.type] ?: ContentStyle.default()
 
@@ -40,8 +42,8 @@ class EnrichedContentSpan(
 
   override fun copy() = this
 
-  fun attachTo(tv: EnrichedTextInputView) {
-    tvRef = WeakReference(tv)
+  override fun attachTo(host: EnrichedHtmlHost) {
+    tvRef = WeakReference(host)
   }
 
   private fun invalidate() {

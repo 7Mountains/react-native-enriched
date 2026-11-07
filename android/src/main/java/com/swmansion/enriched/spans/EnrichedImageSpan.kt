@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
-import android.text.Editable
 import android.text.Spannable
 import android.text.style.ImageSpan
 import androidx.core.graphics.drawable.toDrawable
@@ -86,7 +85,7 @@ class EnrichedImageSpan :
 
   private fun registerDrawableLoadCallback(
     d: AsyncDrawable,
-    text: Editable?,
+    text: CharSequence?,
   ) {
     d.onLoaded = onLoaded@{
       val spannable = text as? Spannable ?: return@onLoaded
@@ -103,7 +102,7 @@ class EnrichedImageSpan :
     }
   }
 
-  fun observeAsyncDrawableLoaded(text: Editable?) {
+  fun observeAsyncDrawableLoaded(text: CharSequence?) {
     val d = drawable
 
     if (d !is AsyncDrawable) {
@@ -111,6 +110,20 @@ class EnrichedImageSpan :
     }
 
     registerDrawableLoadCallback(d, text)
+  }
+
+  /** Calls [onLoaded] once the image is loaded, for a text whose spans can't be changed */
+  fun observeAsyncDrawableLoaded(onLoaded: () -> Unit) {
+    val d = drawable as? AsyncDrawable ?: return
+
+    if (d.isLoaded) return
+
+    d.onLoaded = { onLoaded() }
+  }
+
+  fun stopObservingAsyncDrawableLoaded() {
+    val d = drawable as? AsyncDrawable ?: return
+    d.onLoaded = null
   }
 
   fun getWidth(): Int = width

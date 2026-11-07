@@ -10,6 +10,7 @@
   RichImageLabelView *_view;
   MDFStyleProps *_styles;
   MDFParams *_params;
+  RichImageLabelMetrics *_metrics;
   BOOL _needsRedraw;
 }
 
@@ -24,8 +25,30 @@
 
   _styles = styles;
   _params = params;
+  _metrics = [self buildMetrics];
 
   return self;
+}
+
+// Built once: the bounds are measured on any thread, from the metrics
+- (RichImageLabelMetrics *)buildMetrics {
+  RichImageLabelMetrics *metrics = [RichImageLabelMetrics new];
+
+  metrics.minHeight = _styles.minHeight;
+  metrics.padding = _styles.padding;
+  metrics.imageContainerSize = _styles.imageContainerSize;
+  metrics.textPadding = _styles.textContainerPadding;
+  metrics.textMargin = _styles.textContainerMargin;
+
+  metrics.titleText = [[NSAttributedString alloc]
+      initWithString:_params.label
+          attributes:@{
+            NSFontAttributeName : _styles.font ?: [UIFont systemFontOfSize:14],
+            NSForegroundColorAttributeName : _styles.textColor
+                ?: UIColor.labelColor
+          }];
+
+  return metrics;
 }
 
 #pragma mark - Build View
@@ -33,7 +56,7 @@
 - (RichImageLabelView *)buildView {
   RichImageLabelView *view = [[RichImageLabelView alloc] init];
 
-  view.minHeight = _styles.minHeight;
+  [view applyMetrics:_metrics];
 
   view.backgroundColor = _styles.backgroundColor;
   view.containerBorderWidth = _styles.borderWidth;
@@ -41,29 +64,15 @@
   view.containerBorderColor = _styles.borderColor;
   view.borderLeftWidth = _styles.borderLeftWidth;
 
-  view.padding = _styles.padding;
-
   view.imageSize = _styles.imageSize;
 
   view.imageContainerCornerRadius = _styles.imageContainerBorderRadius;
-  view.imageContainerSize = _styles.imageContainerSize;
-
-  view.textPadding = _styles.textContainerPadding;
-  view.textMargin = _styles.textContainerMargin;
 
   UIColor *tintColor =
       [UIColor colorFromString:_params.tintColor] ?: UIColor.clearColor;
 
   view.imageContainerColor = tintColor;
   view.borderLeftColor = tintColor;
-
-  view.titleText = [[NSAttributedString alloc]
-      initWithString:_params.label
-          attributes:@{
-            NSFontAttributeName : _styles.font ?: [UIFont systemFontOfSize:14],
-            NSForegroundColorAttributeName : _styles.textColor
-                ?: UIColor.labelColor
-          }];
 
   view.image = MakeLoaderImage();
 
@@ -92,7 +101,7 @@
   CGSize contentSize = CGSizeMake(
       width - _styles.margin.left - _styles.margin.right, CGFLOAT_MAX);
 
-  CGSize fitting = [self.view sizeThatFits:contentSize];
+  CGSize fitting = [_metrics sizeThatFits:contentSize];
 
   CGFloat height = fitting.height + _styles.margin.top + _styles.margin.bottom;
 

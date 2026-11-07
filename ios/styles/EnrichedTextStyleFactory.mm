@@ -8,7 +8,7 @@
 #pragma mark - Styles (per input)
 
 + (NSDictionary<NSNumber *, id> *)makeStylesWithInput:
-    (EnrichedTextInputView *)input {
+    (id<EnrichedStyleHost>)input {
   return @{
     @([BoldStyle getStyleType]) : [[BoldStyle alloc] initWithInput:input],
     @([ItalicStyle getStyleType]) : [[ItalicStyle alloc] initWithInput:input],

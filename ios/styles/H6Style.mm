@@ -15,9 +15,9 @@
   return EnrichedHeadingH6;
 }
 - (CGFloat)getHeadingFontSize {
-  return [((EnrichedTextInputView *)input)->config h6FontSize];
+  return [((id<EnrichedStyleHost>)input).config h6FontSize];
 }
 - (BOOL)isHeadingBold {
-  return [((EnrichedTextInputView *)input)->config h6Bold];
+  return [((id<EnrichedStyleHost>)input).config h6Bold];
 }
 @end

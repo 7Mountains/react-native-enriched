@@ -78,8 +78,9 @@
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.22.0",
     "@evilmartians/lefthook": "^1.5.0",
-    "@react-native-community/cli": "20.0.0",
-    "@react-native/eslint-config": "^0.81.0",
+    "@react-native-community/cli": "20.2.0",
+    "@react-native/eslint-config": "^0.88.1",
+    "@react-native/jest-preset": "0.88.1",
     "@release-it/conventional-changelog": "^9.0.2",
     "@types/jest": "^29.5.5",
     "@types/react": "^19.1.0",
@@ -91,10 +92,10 @@
     "eslint-plugin-prettier": "^5.2.3",
     "jest": "^29.7.0",
     "prettier": "^3.0.3",
-    "react": "19.1.0",
-    "react-native": "0.83.0",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
     "react-native-builder-bob": "^0.40.6",
-    "react-native-reanimated": "^4.2.1",
+    "react-native-reanimated": "^4.7.1",
     "release-it": "^17.10.0",
     "turbo": "^1.10.7",
     "typescript": "^5.8.3"
@@ -110,7 +111,7 @@
   ],
   "packageManager": "yarn@3.6.1",
   "jest": {
-    "preset": "react-native",
+    "preset": "@react-native/jest-preset",
     "modulePathIgnorePatterns": [
       "<rootDir>/apps/example/node_modules",
       "<rootDir>/lib/"
@@ -174,7 +175,8 @@
     },
     "ios": {
       "componentProvider": {
-        "EnrichedTextInputView": "EnrichedTextInputView"
+        "EnrichedTextInputView": "EnrichedTextInputView",
+        "EnrichedTextView": "EnrichedTextView"
       }
     }
   },

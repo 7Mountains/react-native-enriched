@@ -6,6 +6,7 @@ import android.view.View
 import com.swmansion.enriched.spans.interfaces.EnrichedInlineSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.styles.HtmlStyle
+import com.swmansion.enriched.text.EnrichedTextView
 
 class EnrichedLinkSpan(
   private val url: String,
@@ -18,8 +19,7 @@ class EnrichedLinkSpan(
   override val dependsOnHtmlStyle: Boolean = true
 
   override fun onClick(view: View) {
-    // Do nothing, links inside the input are not clickable.
-    // We are using `ClickableSpan` to allow the text to be styled as a link.
+    (view as? EnrichedTextView)?.performSpanClick(this)
   }
 
   override fun updateDrawState(textPaint: TextPaint) {

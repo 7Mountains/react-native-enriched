@@ -15,9 +15,9 @@
   return EnrichedHeadingH4;
 }
 - (CGFloat)getHeadingFontSize {
-  return [((EnrichedTextInputView *)input)->config h4FontSize];
+  return [((id<EnrichedStyleHost>)input).config h4FontSize];
 }
 - (BOOL)isHeadingBold {
-  return [((EnrichedTextInputView *)input)->config h4Bold];
+  return [((id<EnrichedStyleHost>)input).config h4Bold];
 }
 @end

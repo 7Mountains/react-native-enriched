@@ -7,7 +7,7 @@ import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
-import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.EnrichedHtmlHost
 import com.swmansion.enriched.drawables.HRDrawable
 import kotlin.Float
 import kotlin.Int
@@ -16,7 +16,7 @@ import kotlin.math.ceil
 
 class HtmlStyle {
   private var style: ReadableMap? = null
-  private var view: EnrichedTextInputView? = null
+  private var view: EnrichedHtmlHost? = null
 
   var editorWidth = view?.editorWidth ?: 0
     private set
@@ -78,7 +78,7 @@ class HtmlStyle {
 
   var mdf: ContentStyle = ContentStyle.default()
 
-  var checkboxStyle = CheckboxStyle.fromReadableMap(null, view?.context as ReactContext?)
+  var checkboxStyle = CheckboxStyle.fromReadableMap(null, view?.hostContext as ReactContext?)
 
   fun getHorizontalRuleDrawable(): Drawable {
     hrDrawable
@@ -92,7 +92,7 @@ class HtmlStyle {
     }
   }
 
-  constructor(view: EnrichedTextInputView?, style: ReadableMap?) {
+  constructor(view: EnrichedHtmlHost?, style: ReadableMap?) {
     this.view = view
     this.style = style
 
@@ -162,7 +162,7 @@ class HtmlStyle {
     val mentionStyle = style.getMap("mention")
     mentionsStyle = parseMentionsStyle(mentionStyle)
 
-    contentStyle = ContentStyle.parseComplex(style.getMap("content"), context = view?.context as ReactContext?)
+    contentStyle = ContentStyle.parseComplex(style.getMap("content"), context = view?.hostContext as ReactContext?)
 
     val dividerStyle = style.getMap("divider")
     dividerHeight = parseFloat(dividerStyle, "height")
@@ -171,9 +171,9 @@ class HtmlStyle {
     editorWidth = view?.editorWidth ?: 0
     getHorizontalRuleDrawable()
 
-    checkboxStyle = CheckboxStyle.fromReadableMap(style.getMap("checkbox"), context = view?.context as ReactContext)
+    checkboxStyle = CheckboxStyle.fromReadableMap(style.getMap("checkbox"), context = view?.hostContext as ReactContext)
 
-    mdf = ContentStyle.fromReadableMap(style.getMap("mdf"), view?.context as ReactContext)
+    mdf = ContentStyle.fromReadableMap(style.getMap("mdf"), view?.hostContext as ReactContext)
   }
 
   private fun parseFloat(
@@ -213,7 +213,7 @@ class HtmlStyle {
     val safeMap = ensureValueIsSet(map, key)
 
     val color = safeMap.getDouble(key)
-    val parsedColor = ColorPropConverter.getColor(color, view?.context as ReactContext)
+    val parsedColor = ColorPropConverter.getColor(color, view?.hostContext as ReactContext)
     if (parsedColor == null) {
       throw Error("Specified color value is not supported: $color")
     }
@@ -243,7 +243,7 @@ class HtmlStyle {
   }
 
   private fun calculateOlMarginLeft(
-    view: EnrichedTextInputView?,
+    view: EnrichedHtmlHost?,
     userMargin: Int,
   ): Int {
     val fontSize = view?.fontSize?.toInt() ?: 0

@@ -18,6 +18,14 @@ export default function MainScreen() {
         title="Open reanimated Editor"
         onPress={() => navigation.navigate('ReanimatedEditor')}
       />
+      <Button
+        title="Open EnrichedText"
+        onPress={() => navigation.navigate('Text')}
+      />
+      <Button
+        title="Open EnrichedText list"
+        onPress={() => navigation.navigate('List')}
+      />
     </View>
   );
 }

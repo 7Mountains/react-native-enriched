@@ -6,7 +6,7 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import androidx.core.graphics.toColorInt
-import com.swmansion.enriched.EnrichedTextInputView
+import com.swmansion.enriched.EnrichedHtmlHost
 import com.swmansion.enriched.constants.HtmlAttributeNames
 import com.swmansion.enriched.constants.HtmlTags
 import com.swmansion.enriched.constants.Strings
@@ -52,7 +52,7 @@ class HtmlToSpannedConverter(
   private val mStyle: HtmlStyle,
   private val mImageGetter: EnrichedParser.ImageGetter?,
   private val parser: XMLReader,
-  private val textInputView: EnrichedTextInputView,
+  private val textInputView: EnrichedHtmlHost,
 ) : ContentHandler {
   private val spannableStringBuilder: SpannableStringBuilder = SpannableStringBuilder()
   private var currentListItemIndex = 0

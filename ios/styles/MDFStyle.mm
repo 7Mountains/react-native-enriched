@@ -14,13 +14,15 @@ static NSString *const MdfAttributeName = @"MdfAttributeName";
 
 @implementation MDFStyle {
   __weak EnrichedTextInputView *_input;
+  __weak id<EnrichedStyleHost> _host;
 }
 
 #pragma mark - Init
 
 - (instancetype)initWithInput:(id)input {
   self = [super init];
-  _input = (EnrichedTextInputView *)input;
+  _host = input;
+  _input = [input isKindOfClass:[EnrichedTextInputView class]] ? input : nil;
   return self;
 }
 
@@ -155,15 +157,15 @@ static NSString *const MdfAttributeName = @"MdfAttributeName";
 - (MediaAttachment *)prepareAttachment:(MDFParams *)params {
   MDFAttachment *attachment =
       [[MDFAttachment alloc] initWithParams:params
-                                     styles:_input->config.mdfStyle];
+                                     styles:_host.config.mdfStyle];
 
-  attachment.delegate = _input;
+  attachment.delegate = _host;
 
   return attachment;
 }
 
 - (NSDictionary *)prepareAttributes:(MDFParams *)params {
-  NSMutableDictionary *attributes = _input->defaultTypingAttributes.mutableCopy;
+  NSMutableDictionary *attributes = _host.defaultTypingAttributes.mutableCopy;
   attributes[NSAttachmentAttributeName] = [self prepareAttachment:params];
   attributes[MdfAttributeName] = params;
   attributes[ReadOnlyParagraphKey] = @YES;

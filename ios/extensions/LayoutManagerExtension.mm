@@ -1,6 +1,8 @@
 #import "LayoutManagerExtension.h"
 #import "ColorExtension.h"
+#import "EnrichedStyleHost.h"
 #import "EnrichedTextInputView.h"
+#import "InputConfig.h"
 #import "ParagraphsUtils.h"
 #import "Strings.h"
 #import "StyleHeaders.h"
@@ -66,7 +68,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 
 - (void)my_drawGlyphsForGlyphRange:(NSRange)glyphsToShow
                            atPoint:(CGPoint)origin {
-  EnrichedTextInputView *input = (EnrichedTextInputView *)self.input;
+  id<EnrichedStyleHost> input = self.input;
 
   if (!input) {
     [self my_drawGlyphsForGlyphRange:glyphsToShow atPoint:origin];
@@ -80,7 +82,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                atPoint:(CGPoint)origin {
   [self my_drawBackgroundForGlyphRange:glyphRange atPoint:origin];
 
-  EnrichedTextInputView *input = (EnrichedTextInputView *)self.input;
+  id<EnrichedStyleHost> input = self.input;
   if (!input)
     return;
 
@@ -95,11 +97,11 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 
 #pragma mark - Code blocks
 
-- (void)drawCodeBlocks:(EnrichedTextInputView *)input
+- (void)drawCodeBlocks:(id<EnrichedStyleHost>)input
                 origin:(CGPoint)origin
       visibleCharRange:(NSRange)visibleCharRange {
 
-  CodeBlockStyle *style = input->stylesDict[@([CodeBlockStyle getStyleType])];
+  CodeBlockStyle *style = input.stylesDict[@([CodeBlockStyle getStyleType])];
   if (!style)
     return;
 
@@ -107,18 +109,18 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   NSArray<StylePair *> *merged = [self mergeContiguousStylePairs:blocks];
 
   UIColor *bg =
-      [[input->config codeBlockBgColor] colorWithAlphaIfNotTransparent:0.4];
-  CGFloat radius = [input->config codeBlockBorderRadius];
+      [[input.config codeBlockBgColor] colorWithAlphaIfNotTransparent:0.4];
+  CGFloat radius = [input.config codeBlockBorderRadius];
   [bg setFill];
 
-  NSUInteger textLength = input->textView.textStorage.length;
+  NSUInteger textLength = input.textView.textStorage.length;
 
   for (StylePair *pair in merged) {
     NSRange blockRange =
         NormalizeEmptyParagraph(pair.rangeValue.rangeValue, textLength);
 
     NSArray *paragraphs =
-        [ParagraphsUtils getSeparateParagraphsRangesIn:input->textView
+        [ParagraphsUtils getSeparateParagraphsRangesIn:input.textView
                                                  range:blockRange];
 
     for (NSValue *p in paragraphs) {
@@ -169,23 +171,23 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 
 #pragma mark - Block quotes
 
-- (void)drawBlockQuotes:(EnrichedTextInputView *)input
+- (void)drawBlockQuotes:(id<EnrichedStyleHost>)input
                  origin:(CGPoint)origin
        visibleCharRange:(NSRange)visibleCharRange {
 
   BlockQuoteStyle *style =
-      (BlockQuoteStyle *)input->stylesDict[@([BlockQuoteStyle getStyleType])];
+      (BlockQuoteStyle *)input.stylesDict[@([BlockQuoteStyle getStyleType])];
   if (!style)
     return;
 
-  NSString *text = input->textView.textStorage.string;
+  NSString *text = input.textView.textStorage.string;
   NSUInteger textLength = text.length;
-  CGFloat gap = input->config.blockquoteGapWidth;
-  UIFont *font = input->config.primaryFont;
+  CGFloat gap = input.config.blockquoteGapWidth;
+  UIFont *font = input.config.primaryFont;
   CGFloat naturalTextHeight = ceil(font.ascender - font.descender);
 
   NSDictionary *drawAttrs =
-      @{NSForegroundColorAttributeName : input->config.blockquoteBorderColor};
+      @{NSForegroundColorAttributeName : input.config.blockquoteBorderColor};
 
   [text
       enumerateSubstringsInRange:visibleCharRange
@@ -195,7 +197,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                         NSRange safeRange =
                             NormalizeEmptyParagraph(paragraphRange, textLength);
 
-                        NSDictionary *attrs = [input->textView.textStorage
+                        NSDictionary *attrs = [input.textView.textStorage
                             attributesAtIndex:safeRange.location
                                effectiveRange:nil];
 
@@ -287,13 +289,13 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 }
 
 #pragma mark - Lists
-- (void)drawLists:(EnrichedTextInputView *)input
+- (void)drawLists:(id<EnrichedStyleHost>)input
               origin:(CGPoint)origin
     visibleCharRange:(NSRange)visibleCharRange {
 
   UnorderedListStyle *ul =
-      input->stylesDict[@([UnorderedListStyle getStyleType])];
-  OrderedListStyle *ol = input->stylesDict[@([OrderedListStyle getStyleType])];
+      input.stylesDict[@([UnorderedListStyle getStyleType])];
+  OrderedListStyle *ol = input.stylesDict[@([OrderedListStyle getStyleType])];
 
   if (!ul && !ol)
     return;
@@ -304,19 +306,19 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   if (ol)
     [pairs addObjectsFromArray:[ol findAllOccurences:visibleCharRange]];
 
-  NSTextStorage *textStorage = input->textView.textStorage;
+  NSTextStorage *textStorage = input.textView.textStorage;
   NSUInteger textLength = textStorage.length;
 
   NSDictionary *markerAttributes = @{
-    NSFontAttributeName : [input->config orderedListMarkerFont],
-    NSForegroundColorAttributeName : [input->config orderedListMarkerColor]
+    NSFontAttributeName : [input.config orderedListMarkerFont],
+    NSForegroundColorAttributeName : [input.config orderedListMarkerColor]
   };
 
-  CGFloat bulletSize = [input->config unorderedListBulletSize];
+  CGFloat bulletSize = [input.config unorderedListBulletSize];
 
   for (StylePair *pair in pairs) {
     NSArray<NSValue *> *paragraphs = [ParagraphsUtils
-        getSeparateParagraphsRangesIn:input->textView
+        getSeparateParagraphsRangesIn:input.textView
                                 range:[pair.rangeValue rangeValue]];
 
     for (NSValue *paragraph in paragraphs) {
@@ -375,7 +377,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                        CGContextRef ctx =
                                            UIGraphicsGetCurrentContext();
                                        CGContextSaveGState(ctx);
-                                       [[input->config unorderedListBulletColor]
+                                       [[input.config unorderedListBulletColor]
                                            setFill];
                                        CGContextAddArc(ctx, bulletX, bulletY,
                                                        bulletSize / 2.0, 0,
@@ -399,7 +401,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                                                .width;
 
                                        CGFloat gap =
-                                           [input->config orderedListGapWidth];
+                                           [input.config orderedListGapWidth];
 
                                        CGFloat markerX = baseX + indentWidth -
                                                          markerWidth - gap;
@@ -419,13 +421,13 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 
 - (NSString *)markerForList:(NSTextList *)list
                   charIndex:(NSUInteger)index
-                      input:(EnrichedTextInputView *)input {
+                      input:(id<EnrichedStyleHost>)input {
 
   if ([list.markerFormat isEqualToString:NSTextListMarkerDisc]) {
     return @"•";
   }
 
-  NSTextStorage *ts = input->textView.textStorage;
+  NSTextStorage *ts = input.textView.textStorage;
   NSString *text = ts.string;
 
   NSRange currentParagraph =
@@ -468,22 +470,22 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 
 #pragma mark - Checklists
 
-- (void)drawChecklists:(EnrichedTextInputView *)input
+- (void)drawChecklists:(id<EnrichedStyleHost>)input
                 origin:(CGPoint)origin
       visibleCharRange:(NSRange)visibleCharRange {
 
   CheckBoxStyle *style =
-      (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
+      (CheckBoxStyle *)input.stylesDict[@([CheckBoxStyle getStyleType])];
   if (!style)
     return;
 
-  NSUInteger textLength = input->textView.textStorage.length;
+  NSUInteger textLength = input.textView.textStorage.length;
 
   NSArray<StylePair *> *pairs = [style findAllOccurences:visibleCharRange];
 
   for (StylePair *pair in pairs) {
     NSArray *paragraphs = [ParagraphsUtils
-        getSeparateParagraphsRangesIn:input->textView
+        getSeparateParagraphsRangesIn:input.textView
                                 range:pair.rangeValue.rangeValue];
 
     for (NSValue *p in paragraphs) {
@@ -495,16 +497,16 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
       BOOL checked = [style isCheckedAt:paragraph.location];
 
       UIImage *img =
-          checked ? input->config.checkedImage : input->config.uncheckedImage;
+          checked ? input.config.checkedImage : input.config.uncheckedImage;
 
       if (!img) {
         NSString *name = checked ? @"checkmark.square.fill" : @"square";
         img = [UIImage systemImageNamed:name];
       }
 
-      CGFloat checkBoxWidth = input->config.checkBoxWidth;
-      CGFloat checkBoxHeight = input->config.checkBoxHeight;
-      CGFloat x = origin.x + input->config.checkboxListMarginLeft;
+      CGFloat checkBoxWidth = input.config.checkBoxWidth;
+      CGFloat checkBoxHeight = input.config.checkBoxHeight;
+      CGFloat x = origin.x + input.config.checkboxListMarginLeft;
 
       [self enumerateLineFragmentsForGlyphRange:glyphRange
                                      usingBlock:^(CGRect rect, CGRect usedRect,
@@ -525,7 +527,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   }
 }
 
-- (void)drawCheckboxGlyps:(EnrichedTextInputView *)input
+- (void)drawCheckboxGlyps:(id<EnrichedStyleHost>)input
              glyphsToShow:(NSRange)glyphsToShow
                    origin:(CGPoint)origin {
   CGContextRef ctx = UIGraphicsGetCurrentContext();
@@ -536,18 +538,18 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   }
 
   CheckBoxStyle *style =
-      (CheckBoxStyle *)input->stylesDict[@([CheckBoxStyle getStyleType])];
+      (CheckBoxStyle *)input.stylesDict[@([CheckBoxStyle getStyleType])];
 
   if (!style) {
     [self my_drawGlyphsForGlyphRange:glyphsToShow atPoint:origin];
     return;
   }
 
-  UITextView *textView = input->textView;
+  UITextView *textView = input.textView;
   NSTextStorage *textStorage = textView.textStorage;
   NSString *text = textStorage.string;
-  UIColor *fallbackColor = textView.textColor ?: input->config.primaryColor;
-  UIFont *font = input->config.primaryFont;
+  UIColor *fallbackColor = textView.textColor ?: input.config.primaryColor;
+  UIFont *font = input.config.primaryFont;
   CGFloat scale = UIScreen.mainScreen.scale;
 
   static NSCharacterSet *newlineSet;
