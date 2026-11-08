@@ -9,7 +9,7 @@ import {
   type DimensionValue,
 } from 'react-native';
 import {
-  EnrichedTextView,
+  EnrichedText,
   type OnLinkPressEvent,
   type OnMentionPressEvent,
 } from 'react-native-enriched';
@@ -271,7 +271,7 @@ export default function TextScreen() {
         <View key={title} style={styles.sample}>
           <Text style={styles.sampleTitle}>{title}</Text>
           <View style={bubbleStyle}>
-            <EnrichedTextView
+            <EnrichedText
               style={textStyle}
               htmlStyle={htmlStyle}
               numberOfLines={numberOfLines}
@@ -287,7 +287,7 @@ export default function TextScreen() {
               onMentionLongPress={handleMentionLongPress}
             >
               {html}
-            </EnrichedTextView>
+            </EnrichedText>
           </View>
           {comparesWithText && (
             <View style={bubbleStyle}>

@@ -17,7 +17,6 @@
 
 #include <react/renderer/components/RNEnrichedTextInputViewSpec/EnrichedTextComponentDescriptor.h>
 #include <react/renderer/components/RNEnrichedTextInputViewSpec/EnrichedTextInputComponentDescriptor.h>
-#include <react/renderer/components/RNEnrichedTextInputViewSpec/EnrichedTextLabelComponentDescriptor.h>
 
 namespace facebook::react {
 

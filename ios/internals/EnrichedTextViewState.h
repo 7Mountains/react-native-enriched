@@ -38,22 +38,6 @@ struct EnrichedTextKey {
     };
   }
 
-  static EnrichedTextKey fromProps(const EnrichedTextProps &props,
-                                   Float fontSizeMultiplier) {
-    return {
-        .text = props.text,
-        .htmlStyle = props.htmlStyle,
-        .color = props.color,
-        .fontSize = props.fontSize,
-        .lineHeight = props.lineHeight,
-        .fontFamily = props.fontFamily,
-        .fontWeight = props.fontWeight,
-        .fontStyle = props.fontStyle,
-        .allowFontScaling = props.allowFontScaling,
-        .fontSizeMultiplier = fontSizeMultiplier,
-    };
-  }
-
   bool operator==(const EnrichedTextKey &other) const {
     return text == other.text && htmlStyle == other.htmlStyle &&
            color == other.color && fontSize == other.fontSize &&

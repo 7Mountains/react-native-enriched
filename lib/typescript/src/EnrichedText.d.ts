@@ -7,5 +7,5 @@ import type { EnrichedTextProps } from './types';
  * @param props - The component props
  * @returns The text
  */
-export declare const EnrichedText: ({ children, style, htmlStyle, numberOfLines, ellipsizeMode, allowFontScaling, onLinkPressIn, onLinkPressOut, onLinkPress, onLinkLongPress, onMentionPressIn, onMentionPressOut, onMentionPress, onMentionLongPress, ...rest }: EnrichedTextProps) => import("react/jsx-runtime").JSX.Element;
+export declare const EnrichedText: ({ children, style, htmlStyle, numberOfLines, ellipsizeMode, selectable, selectionColor, allowFontScaling, onLinkPressIn, onLinkPressOut, onLinkPress, onLinkLongPress, onMentionPressIn, onMentionPressOut, onMentionPress, onMentionLongPress, ...rest }: EnrichedTextProps) => import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=EnrichedText.d.ts.map
