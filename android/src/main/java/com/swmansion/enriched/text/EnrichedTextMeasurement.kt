@@ -6,12 +6,15 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.yoga.YogaMeasureMode
 import com.facebook.yoga.YogaMeasureOutput
+import com.swmansion.enriched.utils.LineSeparatorTransformationMethod
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
 /** Measures `EnrichedTextView` from its props, with the text and the layout the view draws */
 internal object EnrichedTextMeasurement {
+  private val lineSeparatorTransformationMethod = LineSeparatorTransformationMethod()
+
   fun measure(
     context: Context,
     props: ReadableMap?,
@@ -27,6 +30,7 @@ internal object EnrichedTextMeasurement {
     val editorWidth = if (hasWidth) width.toInt() else 0
     val offered = EnrichedTextHandoff.takeOffered()
     val content = offered ?: EnrichedTextContent.forView(buildContent(context, params, editorWidth))
+    val transformedContent = lineSeparatorTransformationMethod.getTransformation(content, null)
     val builtWidth = if (EnrichedTextContent.dependsOnWidth(content)) PixelUtil.toDIPFromPixel(editorWidth.toFloat()) else Float.NaN
     EnrichedTextHandoff.putBuilt(content, builtWidth, EnrichedTextContent.isReusable(content))
 
@@ -34,10 +38,10 @@ internal object EnrichedTextMeasurement {
       if (hasWidth) {
         width
       } else {
-        ceil(Layout.getDesiredWidth(content, paint))
+        ceil(Layout.getDesiredWidth(transformedContent, paint))
       }
 
-    val layout = EnrichedTextLayout.build(content, paint, layoutWidth.toInt(), params)
+    val layout = EnrichedTextLayout.build(transformedContent, paint, layoutWidth.toInt(), params)
 
     // StaticLayout reports all the lines for maxLines >= 2 without the END
     // ellipsis, even when they're cut
@@ -57,7 +61,7 @@ internal object EnrichedTextMeasurement {
         var widest = 0f
         for (line in 0 until lineCount) {
           val endsWithNewLine =
-            content.isNotEmpty() && content[layout.getLineEnd(line) - 1] == '\n'
+            transformedContent.isNotEmpty() && transformedContent[layout.getLineEnd(line) - 1] == '\n'
           val lineWidth =
             if (endsWithNewLine) layout.getLineMax(line) else layout.getLineWidth(line)
           widest = max(widest, lineWidth)

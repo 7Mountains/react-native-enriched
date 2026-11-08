@@ -1,10 +1,12 @@
 export * from './EnrichedTextInput';
 export * from './EnrichedReanimatedTextInput';
 export * from './EnrichedText';
+export * from './EnrichedTextView';
 export type {
   EnrichedTextInputInstance,
   EnrichedTextInputProps,
   EnrichedTextProps,
+  EnrichedTextViewProps,
   OnChangeMentionEvent,
   ComponentType,
   HtmlRequest,

@@ -16,7 +16,7 @@ import com.facebook.yoga.YogaMeasureMode
 import com.swmansion.enriched.text.events.EnrichedTextSpanPressEvent
 
 @ReactModule(name = EnrichedTextViewManager.NAME)
-class EnrichedTextViewManager :
+open class EnrichedTextViewManager :
   SimpleViewManager<EnrichedTextView>(),
   EnrichedTextViewManagerInterface<EnrichedTextView> {
   private val delegate: ViewManagerDelegate<EnrichedTextView> = EnrichedTextViewManagerDelegate(this)

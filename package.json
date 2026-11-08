@@ -175,6 +175,7 @@
     },
     "ios": {
       "componentProvider": {
+        "EnrichedText": "EnrichedText",
         "EnrichedTextInputView": "EnrichedTextInputView",
         "EnrichedTextView": "EnrichedTextView"
       }

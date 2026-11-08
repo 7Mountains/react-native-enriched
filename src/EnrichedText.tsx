@@ -5,7 +5,8 @@ import {
   type NativeSyntheticEvent,
   type TextProps,
 } from 'react-native';
-import EnrichedTextNativeComponent, {
+import EnrichedTextNativeComponent from './EnrichedTextLabelNativeComponent';
+import {
   type OnLinkPressEvent,
   type OnMentionPressEvent,
   type OnMentionPressEventInternal,
@@ -90,8 +91,6 @@ export const EnrichedText = ({
   htmlStyle = EMPTY_HTML_STYLE,
   numberOfLines = 0,
   ellipsizeMode = 'tail',
-  selectable = false,
-  selectionColor,
   allowFontScaling = true,
   onLinkPressIn,
   onLinkPressOut,
@@ -123,8 +122,7 @@ export const EnrichedText = ({
         style={style}
         numberOfLines={numberOfLines}
         ellipsizeMode={ellipsizeMode}
-        selectable={selectable}
-        selectionColor={selectionColor}
+        selectable={false}
         allowFontScaling={allowFontScaling}
         {...(rest as TextProps)}
       >
@@ -140,8 +138,6 @@ export const EnrichedText = ({
       htmlStyle={normalizedHtmlStyle}
       numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
-      selectable={selectable}
-      selectionColor={selectionColor}
       allowFontScaling={allowFontScaling}
       pressableLinks={
         !!(onLinkPressIn || onLinkPressOut || onLinkPress || onLinkLongPress)

@@ -17,9 +17,9 @@ using namespace facebook::react;
 static const Float kDefaultFontSize = 14;
 
 // The props of the input the config and the typing attributes are built from
+template <typename Props>
 static void fillInputProps(EnrichedTextInputViewProps &inputProps,
-                           const EnrichedTextViewProps &props,
-                           CGFloat fontSizeMultiplier) {
+                           const Props &props, CGFloat fontSizeMultiplier) {
   if (props.htmlStyle.isObject()) {
     ContextContainer contextContainer;
     PropsParserContext context{-1, contextContainer};
@@ -45,14 +45,13 @@ static void fillInputProps(EnrichedTextInputViewProps &inputProps,
   inputProps.fontStyle = props.fontStyle;
 }
 
-+ (EnrichedPreparedText *)preparedTextWithProps:
-                              (const EnrichedTextViewProps &)props
-                             fontSizeMultiplier:(CGFloat)fontSizeMultiplier {
+template <typename Props>
+static EnrichedPreparedText *preparedText(const Props &props,
+                                          CGFloat fontSizeMultiplier) {
   static const EnrichedTextInputViewProps defaultProps{};
   EnrichedTextInputViewProps inputProps;
   fillInputProps(inputProps, props, fontSizeMultiplier);
 
-  // As the input on its first mount: the props differing from the defaults
   InputConfig *config =
       [EnrichedTextConfigBuilder makeConfigFromProps:inputProps
                                         oldViewProps:defaultProps
@@ -84,14 +83,24 @@ static void fillInputProps(EnrichedTextInputViewProps &inputProps,
                                                   attributes:attributes];
   }
 
-  // The last paragraph doesn't end with an empty line
   while (text.length > 0 &&
          [text.string characterAtIndex:text.length - 1] == '\n') {
     [text deleteCharactersInRange:NSMakeRange(text.length - 1, 1)];
   }
 
-  // Immutable: the view and the measurement read it on different threads
   return [[EnrichedPreparedText alloc] initWithText:[text copy] config:config];
+}
+
++ (EnrichedPreparedText *)preparedTextWithProps:
+                              (const EnrichedTextViewProps &)props
+                             fontSizeMultiplier:(CGFloat)fontSizeMultiplier {
+  return preparedText(props, fontSizeMultiplier);
+}
+
++ (EnrichedPreparedText *)
+    preparedTextWithLabelProps:(const EnrichedTextProps &)props
+            fontSizeMultiplier:(CGFloat)fontSizeMultiplier {
+  return preparedText(props, fontSizeMultiplier);
 }
 
 + (CGSize)sizeOfText:(NSAttributedString *)text

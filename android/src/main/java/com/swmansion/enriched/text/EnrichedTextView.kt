@@ -33,6 +33,7 @@ import com.swmansion.enriched.spans.interfaces.EnrichedHostBoundSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
 import com.swmansion.enriched.text.events.EnrichedTextSpanPressEvent
 import com.swmansion.enriched.text.events.SpanPressPhase
+import com.swmansion.enriched.utils.LineSeparatorTransformationMethod
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -84,6 +85,7 @@ class EnrichedTextView(
   init {
     setPadding(0, 0, 0, 0)
     EnrichedTextLayout.applyTo(this)
+    transformationMethod = LineSeparatorTransformationMethod()
     setTextColor(Color.BLACK)
   }
 

@@ -9,6 +9,7 @@ module.exports = {
         componentDescriptors: [
           'EnrichedTextInputComponentDescriptor',
           'EnrichedTextComponentDescriptor',
+          'EnrichedTextLabelComponentDescriptor',
         ],
       },
     },
