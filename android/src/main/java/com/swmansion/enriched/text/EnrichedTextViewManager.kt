@@ -5,11 +5,18 @@ import com.facebook.react.bridge.Dynamic
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.ReadableType
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.uimanager.BackgroundStyleApplicator
+import com.facebook.react.uimanager.LengthPercentage
+import com.facebook.react.uimanager.LengthPercentageType
 import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewManagerDelegate
+import com.facebook.react.uimanager.ViewProps
+import com.facebook.react.uimanager.annotations.ReactProp
+import com.facebook.react.uimanager.style.BorderRadiusProp
+import com.facebook.react.uimanager.style.LogicalEdge
 import com.facebook.react.viewmanagers.EnrichedTextViewManagerDelegate
 import com.facebook.react.viewmanagers.EnrichedTextViewManagerInterface
 import com.facebook.yoga.YogaMeasureMode
@@ -162,6 +169,58 @@ class EnrichedTextViewManager :
     value: String?,
   ) {
     view?.setFontStyle(value)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_WIDTH)
+  override fun setBorderWidth(
+    view: EnrichedTextView?,
+    value: Float,
+  ) {
+    view ?: return
+    BackgroundStyleApplicator.setBorderWidth(view, LogicalEdge.ALL, value)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_COLOR, customType = "Color")
+  override fun setBorderColor(
+    view: EnrichedTextView?,
+    value: Int?,
+  ) {
+    view ?: return
+    BackgroundStyleApplicator.setBorderColor(view, LogicalEdge.ALL, value)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_TOP_END_RADIUS)
+  override fun setBorderTopEndRadius(
+    view: EnrichedTextView?,
+    value: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_TOP_END_RADIUS, value)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BOTTOM_START_RADIUS)
+  override fun setBorderBottomStartRadius(
+    view: EnrichedTextView?,
+    value: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_BOTTOM_START_RADIUS, value)
+  }
+
+  @ReactProp(name = ViewProps.BORDER_BOTTOM_END_RADIUS)
+  override fun setBorderBottomEndRadius(
+    view: EnrichedTextView?,
+    value: Float,
+  ) {
+    setBorderRadius(view, BorderRadiusProp.BORDER_BOTTOM_END_RADIUS, value)
+  }
+
+  private fun setBorderRadius(
+    view: EnrichedTextView?,
+    property: BorderRadiusProp,
+    value: Float,
+  ) {
+    view ?: return
+    val radius = LengthPercentage(value, LengthPercentageType.POINT)
+    BackgroundStyleApplicator.setBorderRadius(view, property, radius)
   }
 
   override fun setPadding(

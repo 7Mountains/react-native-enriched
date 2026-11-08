@@ -40,6 +40,11 @@ export interface NativeProps extends ViewProps {
     fontFamily?: string;
     fontWeight?: string;
     fontStyle?: string;
+    borderWidth?: CodegenTypes.Float;
+    borderColor?: ColorValue;
+    borderTopEndRadius?: CodegenTypes.Float;
+    borderBottomStartRadius?: CodegenTypes.Float;
+    borderBottomEndRadius?: CodegenTypes.Float;
 }
 declare const _default: HostComponent<NativeProps>;
 export default _default;

@@ -52,6 +52,11 @@ export interface NativeProps extends ViewProps {
   fontFamily?: string;
   fontWeight?: string;
   fontStyle?: string;
+  borderWidth?: CodegenTypes.Float;
+  borderColor?: ColorValue;
+  borderTopEndRadius?: CodegenTypes.Float;
+  borderBottomStartRadius?: CodegenTypes.Float;
+  borderBottomEndRadius?: CodegenTypes.Float;
 }
 
 export default codegenNativeComponent<NativeProps>('EnrichedTextView', {
