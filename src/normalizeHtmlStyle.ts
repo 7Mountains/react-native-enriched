@@ -201,8 +201,18 @@ const parseRecursive = (obj: any): any => {
   return result;
 };
 
+const normalizedStyles = new WeakMap<HtmlStyle, HtmlStyleInternal>();
+
 export const normalizeHtmlStyle = (style: HtmlStyle): HtmlStyleInternal => {
+  const cached = normalizedStyles.get(style);
+  if (cached) {
+    return cached;
+  }
+
   const converted = convertToHtmlStyleInternal(style);
   const withDefaults = assignDefaultValues(converted);
-  return parseRecursive(withDefaults);
+  const normalized = parseRecursive(withDefaults);
+  normalizedStyles.set(style, normalized);
+
+  return normalized;
 };
