@@ -13,8 +13,8 @@ public:
   EnrichedTextComponentDescriptor(
       const ComponentDescriptorParameters &parameters)
       : ConcreteComponentDescriptor(parameters),
-        measurementsManager_(std::make_shared<EnrichedTextMeasurementManager>(
-            contextContainer_)) {}
+        measurementsManager_(
+            std::make_shared<EnrichedTextMeasurementManager>()) {}
 
   void adopt(ShadowNode &shadowNode) const override {
     ConcreteComponentDescriptor::adopt(shadowNode);

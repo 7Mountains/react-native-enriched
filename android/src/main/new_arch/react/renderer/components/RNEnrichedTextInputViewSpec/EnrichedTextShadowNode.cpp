@@ -1,5 +1,4 @@
 #include "EnrichedTextShadowNode.h"
-#include "conversions.h"
 
 #include <react/renderer/core/LayoutContext.h>
 
@@ -13,34 +12,26 @@ void EnrichedTextShadowNode::setMeasurementsManager(
   measurementsManager_ = measurementsManager;
 }
 
-const folly::dynamic &EnrichedTextShadowNode::getLayoutProps() const {
-  if (layoutProps_.isNull()) {
-    layoutProps_ = toDynamic(getConcreteProps());
-  }
-  return layoutProps_;
-}
-
 Size EnrichedTextShadowNode::measureContent(
     const LayoutContext &layoutContext,
     const LayoutConstraints &layoutConstraints) const {
   static const EnrichedTextRef noText;
 
-  const auto &layoutProps = getLayoutProps();
+  const auto &props = getConcreteProps();
   const auto &state = getStateData();
 
   // The text built for the same props, by this node or the one it's cloned
   // from (e.g. measured again at another width), isn't parsed again
-  const auto *built = hasMeasured_                       ? &measured_
-                      : state.layoutProps == layoutProps ? &state.prepared
-                                                         : nullptr;
-  auto isReusable = built != nullptr && built->isReusable &&
-                    built->fits(layoutConstraints.maximumSize.width,
-                                layoutContext.pointScaleFactor,
-                                layoutContext.fontSizeMultiplier);
+  const auto *built = hasMeasured_               ? &measured_
+                      : state.isBuiltFrom(props) ? &state.prepared
+                                                 : nullptr;
+  auto isReusable =
+      built != nullptr && built->fits(layoutConstraints.maximumSize.width,
+                                      layoutContext.pointScaleFactor,
+                                      layoutContext.fontSizeMultiplier);
 
   auto measurement = measurementsManager_->measure(
-      getSurfaceId(), layoutProps, layoutConstraints,
-      isReusable ? built->text : noText);
+      props, layoutConstraints, isReusable ? built->text : noText);
 
   measurement.prepared.pointScaleFactor = layoutContext.pointScaleFactor;
   measurement.prepared.fontSizeMultiplier = layoutContext.fontSizeMultiplier;
@@ -53,13 +44,13 @@ Size EnrichedTextShadowNode::measureContent(
 void EnrichedTextShadowNode::layout(LayoutContext layoutContext) {
   ensureUnsealed();
 
-  const auto &layoutProps = getLayoutProps();
+  const auto &props = getConcreteProps();
   const auto &state = getStateData();
   auto size = getLayoutMetrics().getContentFrame().size;
 
-  const auto *prepared = hasMeasured_                       ? &measured_
-                         : state.layoutProps == layoutProps ? &state.prepared
-                                                            : nullptr;
+  const auto *prepared = hasMeasured_               ? &measured_
+                         : state.isBuiltFrom(props) ? &state.prepared
+                                                    : nullptr;
 
   // Not measured (Yoga knew the size), or measured at another width than
   // the final one: the text is built now for the view, laid out at its width
@@ -72,10 +63,12 @@ void EnrichedTextShadowNode::layout(LayoutContext layoutContext) {
   }
 
   if (prepared != &state.prepared &&
-      (state.layoutProps != layoutProps ||
+      (!state.isBuiltFrom(props) ||
        !jni::Environment::current()->IsSameObject(state.prepared.text.get(),
                                                   prepared->text.get()))) {
-    setStateData(EnrichedTextState{layoutProps, *prepared});
+    setStateData(EnrichedTextState{
+        std::static_pointer_cast<const EnrichedTextViewProps>(getProps()),
+        *prepared});
   }
 
   ConcreteViewShadowNode::layout(layoutContext);

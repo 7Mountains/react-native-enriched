@@ -11,4 +11,9 @@
 
 - (NSMutableAttributedString *)parseToAttributedString:(NSString *)html;
 
+// The html as UTF-8, read without a copy
+- (NSMutableAttributedString *)parseToAttributedStringFromUTF8:
+                                   (const char *)html
+                                                        length:(size_t)length;
+
 @end

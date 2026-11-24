@@ -13,9 +13,29 @@
 
 namespace facebook::react {
 
+static facebook::jsi::Value
+__hostFunction_NativeEnrichedHtmlStylesSpecJSI_registerHtmlStyle(
+    facebook::jsi::Runtime &rt, TurboModule &turboModule,
+    const facebook::jsi::Value *args, size_t count) {
+  static jmethodID cachedMethodId = nullptr;
+  return static_cast<JavaTurboModule &>(turboModule)
+      .invokeJavaMethod(rt, NumberKind, "registerHtmlStyle",
+                        "(Lcom/facebook/react/bridge/ReadableMap;)D", args,
+                        count, cachedMethodId);
+}
+
+NativeEnrichedHtmlStylesSpecJSI::NativeEnrichedHtmlStylesSpecJSI(
+    const JavaTurboModule::InitParams &params)
+    : JavaTurboModule(params) {
+  methodMap_["registerHtmlStyle"] = MethodMetadata{
+      1, __hostFunction_NativeEnrichedHtmlStylesSpecJSI_registerHtmlStyle};
+}
+
 std::shared_ptr<TurboModule> RNEnrichedTextInputViewSpec_ModuleProvider(
     const std::string &moduleName, const JavaTurboModule::InitParams &params) {
-
+  if (moduleName == "EnrichedHtmlStyles") {
+    return std::make_shared<NativeEnrichedHtmlStylesSpecJSI>(params);
+  }
   return nullptr;
 }
 

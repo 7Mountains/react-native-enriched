@@ -43,11 +43,8 @@ public:
   void layout(LayoutContext layoutContext) override;
 
 private:
-  const folly::dynamic &getLayoutProps() const;
-
   std::shared_ptr<EnrichedTextMeasurementManager> measurementsManager_;
 
-  mutable folly::dynamic layoutProps_;
   mutable bool hasMeasured_{false};
   mutable EnrichedPreparedText measured_;
 };

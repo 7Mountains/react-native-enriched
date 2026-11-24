@@ -20,6 +20,14 @@
 
 namespace facebook::react {
 
+/**
+ * JNI C++ class for module 'NativeEnrichedHtmlStyles'
+ */
+class JSI_EXPORT NativeEnrichedHtmlStylesSpecJSI : public JavaTurboModule {
+public:
+  NativeEnrichedHtmlStylesSpecJSI(const JavaTurboModule::InitParams &params);
+};
+
 JSI_EXPORT
 std::shared_ptr<TurboModule> RNEnrichedTextInputViewSpec_ModuleProvider(
     const std::string &moduleName, const JavaTurboModule::InitParams &params);

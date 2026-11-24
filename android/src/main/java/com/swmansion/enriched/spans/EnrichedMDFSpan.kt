@@ -24,14 +24,18 @@ class EnrichedMDFSpan(
   EnrichedNonEditableParagraphSpan,
   EnrichedFullWidthSpan,
   EnrichedHostBoundSpan {
+  @Volatile
   private var tvRef: WeakReference<EnrichedHtmlHost>? = null
 
   override val dependsOnHtmlStyle: Boolean = true
 
+  // Drawn by the view (on its thread), which loads the image
   private var renderer: ImageLabelRenderer? = null
   private var bitmap: Bitmap? = null
-  private var measuredHeight = 0
   private var hasRequestedImage = false
+
+  @Volatile
+  private var measured: MeasuredHeight? = null
 
   override fun attachTo(host: EnrichedHtmlHost) {
     tvRef = WeakReference(host)
@@ -49,21 +53,23 @@ class EnrichedMDFSpan(
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedSpan = copyWithStyle(htmlStyle)
 
+  private fun createRenderer(bitmap: Bitmap?) =
+    ImageLabelRenderer(
+      contentStyle = htmlStyle.mdf,
+      title = mdfParams.label,
+      description = null,
+      bitmap = bitmap,
+      imageBackgroundColor = mdfParams.tintColor,
+      borderLeftColor = mdfParams.tintColor,
+    )
+
   private fun getOrCreateRenderer(): ImageLabelRenderer {
     val existing = renderer
     if (existing != null) return existing
 
     val style = htmlStyle.mdf
 
-    val renderer =
-      ImageLabelRenderer(
-        contentStyle = style,
-        title = mdfParams.label,
-        description = null,
-        bitmap = bitmap,
-        imageBackgroundColor = mdfParams.tintColor,
-        borderLeftColor = mdfParams.tintColor,
-      )
+    val renderer = createRenderer(bitmap)
 
     this.renderer = renderer
 
@@ -83,6 +89,20 @@ class EnrichedMDFSpan(
     return renderer
   }
 
+  // Laid out by the measurement on its thread too, while the view draws it: the
+  // height is measured without the renderer of the view
+  private fun measureHeight(width: Int): Int {
+    measured?.takeIf { it.width == width }?.let { return it.height }
+
+    val margin = htmlStyle.mdf.container.margin
+    val contentWidth = width - (margin.left + margin.right)
+    val contentHeight = createRenderer(bitmap = null).measure(contentWidth.toInt())
+    val height = (contentHeight + margin.top + margin.bottom).toInt()
+
+    measured = MeasuredHeight(width, height)
+    return height
+  }
+
   override fun getSize(
     paint: Paint,
     text: CharSequence?,
@@ -90,20 +110,7 @@ class EnrichedMDFSpan(
     end: Int,
     fm: Paint.FontMetricsInt?,
   ): Int {
-    val style = htmlStyle.mdf
-    val margin = style.container.margin
-
-    val marginHorizontal = (margin.left + margin.right)
-    val marginVertical = (margin.top + margin.bottom)
-
-    val contentWidth = htmlStyle.editorWidth - marginHorizontal
-
-    val renderer = getOrCreateRenderer()
-    val contentHeight = renderer.measure(contentWidth.toInt())
-
-    val finalHeight = contentHeight + marginVertical
-
-    measuredHeight = finalHeight.toInt()
+    val measuredHeight = measureHeight(htmlStyle.editorWidth)
 
     fm?.let {
       it.ascent = -measuredHeight
@@ -135,6 +142,7 @@ class EnrichedMDFSpan(
     val marginBottom = margin.bottom
 
     val contentWidth = htmlStyle.editorWidth - (marginLeft + marginRight)
+    val measuredHeight = measureHeight(htmlStyle.editorWidth)
     val contentHeight = measuredHeight - (marginTop + marginBottom)
 
     val renderer = getOrCreateRenderer()
@@ -151,6 +159,11 @@ class EnrichedMDFSpan(
   }
 
   companion object {
+    private class MeasuredHeight(
+      val width: Int,
+      val height: Int,
+    )
+
     data class MDFParams(
       val label: String,
       val tintColor: Int,

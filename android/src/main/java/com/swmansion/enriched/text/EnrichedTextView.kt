@@ -19,7 +19,6 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.withTranslation
 import com.facebook.react.bridge.ReactContext
-import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.events.NativeGestureUtil
@@ -49,6 +48,10 @@ class EnrichedTextView(
 ) : AppCompatTextView(context),
   EnrichedHtmlHost {
   private var params = EnrichedTextParams()
+
+  // The params the typeface and the lines are set from: kept when recycled, as
+  // the view keeps them
+  private var appliedParams: EnrichedTextParams? = null
   private var preparedText: CharSequence? = null
   private var isContentDirty = true
   private var pressedSpan: ClickableSpan? = null
@@ -91,7 +94,7 @@ class EnrichedTextView(
 
   fun setValue(text: String?) = update { copy(text = text ?: "") }
 
-  fun setHtmlStyle(style: ReadableMap?) = update { copy(htmlStyle = style) }
+  fun setHtmlStyleId(id: Int) = update { copy(htmlStyleId = id) }
 
   fun setFontSize(size: Float) = update { copy(fontSize = size) }
 
@@ -134,12 +137,24 @@ class EnrichedTextView(
     if (!isContentDirty) return
     isContentDirty = false
 
-    typeface = params.typeface(context.assets)
+    val applied = appliedParams
+    appliedParams = params
+
+    // Only what changed: e.g. `setMaxLines` lays the text out again even for
+    // the same value
+    if (applied?.hasSameTypeface(params) != true) {
+      typeface = params.typeface(context.assets)
+    }
     // Before the text is built: the html style reads the font size (e.g. the
     // margin of the ordered lists)
-    setTextSize(TypedValue.COMPLEX_UNIT_PX, params.fontSizePx)
-    maxLines = if (params.numberOfLines > 0) params.numberOfLines else Int.MAX_VALUE
-    ellipsize = if (params.numberOfLines > 0) params.ellipsize else null
+    val fontSizePx = params.fontSizePx
+    if (textSize != fontSizePx) {
+      setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSizePx)
+    }
+    if (applied?.hasSameLines(params) != true) {
+      maxLines = if (params.numberOfLines > 0) params.numberOfLines else Int.MAX_VALUE
+      ellipsize = if (params.numberOfLines > 0) params.ellipsize else null
+    }
 
     detachImageSpans()
 

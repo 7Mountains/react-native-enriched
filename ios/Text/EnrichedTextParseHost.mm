@@ -21,6 +21,25 @@
   return self;
 }
 
++ (instancetype)hostForCurrentThreadWithConfig:(InputConfig *)config
+                       defaultTypingAttributes:
+                           (NSDictionary<NSAttributedStringKey, id> *)
+                               defaultTypingAttributes {
+  static NSString *const kParseHostKey = @"EnrichedTextParseHost";
+  NSMutableDictionary *threadDictionary =
+      NSThread.currentThread.threadDictionary;
+
+  EnrichedTextParseHost *host = threadDictionary[kParseHostKey];
+  if (host == nil || host->_config != config ||
+      host->_defaultTypingAttributes != defaultTypingAttributes) {
+    host =
+        [[EnrichedTextParseHost alloc] initWithConfig:config
+                              defaultTypingAttributes:defaultTypingAttributes];
+    threadDictionary[kParseHostKey] = host;
+  }
+  return host;
+}
+
 - (UITextView *)textView {
   return nil;
 }

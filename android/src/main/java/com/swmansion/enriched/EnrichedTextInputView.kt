@@ -281,7 +281,7 @@ class EnrichedTextInputView :
     val textLayoutWidth = layout?.width ?: return
     if (textLayoutWidth != editorWidth) {
       editorWidth = textLayoutWidth
-      htmlStyle.invalidateStyles()
+      htmlStyle.updateHostMetrics()
     }
   }
 
@@ -668,7 +668,7 @@ class EnrichedTextInputView :
     setTextSize(TypedValue.COMPLEX_UNIT_PX, sizeInt)
 
     // This ensured that newly created spans will take the new font size into account
-    htmlStyle.invalidateStyles()
+    htmlStyle.updateHostMetrics()
     forceScrollToSelection()
   }
 

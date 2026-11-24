@@ -6,21 +6,27 @@ import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.PixelUtil
 import com.swmansion.enriched.R
+import java.util.concurrent.ConcurrentHashMap
 
 data class CheckboxStyle(
   val imageWidth: Float = 0f,
   val imageHeight: Float = 0f,
-  var checkedImage: Drawable?,
-  var uncheckedImage: Drawable?,
+  val checkedImage: Drawable?,
+  val uncheckedImage: Drawable?,
   val marginLeft: Float = 0f,
   val gapWidth: Float = 8f,
 ) {
   companion object {
+    private val drawableIds = ConcurrentHashMap<String, Int>()
+
     private fun getDrawableByNameOrNull(
       context: ReactContext,
       name: String,
     ): Drawable? {
-      val resId = context.resources.getIdentifier(name, "drawable", context.packageName)
+      val resId =
+        drawableIds.getOrPut(name) {
+          context.resources.getIdentifier(name, "drawable", context.packageName)
+        }
       return if (resId != 0) {
         AppCompatResources.getDrawable(context, resId)
       } else {

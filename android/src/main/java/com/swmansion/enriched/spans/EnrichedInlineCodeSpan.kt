@@ -14,15 +14,13 @@ class EnrichedInlineCodeSpan(
   override val dependsOnHtmlStyle: Boolean = true
 
   override fun updateDrawState(textPaint: TextPaint) {
-    val typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
-    textPaint.typeface = typeface
+    textPaint.typeface = Typeface.MONOSPACE
     textPaint.color = htmlStyle.inlineCodeColor
     textPaint.bgColor = htmlStyle.inlineCodeBackgroundColor
   }
 
   override fun updateMeasureState(textPaint: TextPaint) {
-    val typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
-    textPaint.typeface = typeface
+    textPaint.typeface = Typeface.MONOSPACE
   }
 
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedInlineCodeSpan = EnrichedInlineCodeSpan(htmlStyle)

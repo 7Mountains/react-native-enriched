@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import {
   Platform,
   Text,
@@ -10,7 +10,7 @@ import EnrichedTextNativeComponent, {
   type OnMentionPressEvent,
   type OnMentionPressEventInternal,
 } from './EnrichedTextNativeComponent';
-import { normalizeHtmlStyle } from './normalizeHtmlStyle';
+import { getHtmlStyleId } from './htmlStyleIds';
 import type { EnrichedTextProps, HtmlStyle } from './types';
 
 const EMPTY_HTML_STYLE: HtmlStyle = {};
@@ -79,12 +79,13 @@ const useMentionHandler = (handler?: (event: OnMentionPressEvent) => void) =>
 /**
  * Shows the HTML of `EnrichedTextInput`, natively laid out and measured with
  * the same styles as the input. On the other platforms than Android and iOS it
- * shows the text without its markup.
+ * shows the text without its markup. Rendered again only when its props
+ * change: its native node isn't cloned with the same props.
  *
  * @param props - The component props
  * @returns The text
  */
-export const EnrichedText = ({
+export const EnrichedText = memo(function EnrichedTextComponent({
   children,
   style,
   htmlStyle = EMPTY_HTML_STYLE,
@@ -102,11 +103,8 @@ export const EnrichedText = ({
   onMentionPress,
   onMentionLongPress,
   ...rest
-}: EnrichedTextProps) => {
-  const normalizedHtmlStyle = useMemo(
-    () => normalizeHtmlStyle(htmlStyle),
-    [htmlStyle]
-  );
+}: EnrichedTextProps) {
+  const htmlStyleId = useMemo(() => getHtmlStyleId(htmlStyle), [htmlStyle]);
 
   const handleLinkPressIn = useLinkHandler(onLinkPressIn);
   const handleLinkPressOut = useLinkHandler(onLinkPressOut);
@@ -137,7 +135,7 @@ export const EnrichedText = ({
     <EnrichedTextNativeComponent
       text={children}
       style={style}
-      htmlStyle={normalizedHtmlStyle}
+      htmlStyleId={htmlStyleId}
       numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
       selectable={selectable}
@@ -167,4 +165,4 @@ export const EnrichedText = ({
       {...rest}
     />
   );
-};
+});

@@ -28,13 +28,17 @@ class EnrichedContentSpan(
   EnrichedHostBoundSpan {
   private var hasRequestedImage = false
 
+  @Volatile
   private var tvRef: WeakReference<EnrichedHtmlHost>? = null
 
   private val style = htmlStyle.contentStyle[contentParams.type] ?: ContentStyle.default()
 
+  // Drawn by the view (on its thread), which loads the image
   private var renderer: ImageLabelRenderer? = null
   private var bitmap: Bitmap? = ResourceManager.getDrawableResource(R.drawable.loader_placeholder).toBitmap(40, 40)
-  private var measuredHeight = 0
+
+  @Volatile
+  private var measured: MeasuredHeight? = null
 
   override val dependsOnHtmlStyle: Boolean = true
 
@@ -52,18 +56,20 @@ class EnrichedContentSpan(
     tv.redrawSpan(this)
   }
 
+  private fun createRenderer(bitmap: Bitmap?) =
+    ImageLabelRenderer(
+      contentStyle = style,
+      title = contentParams.title,
+      description = contentParams.description,
+      subTitle = contentParams.subtitle,
+      subDescription = contentParams.subDescription,
+      bitmap = bitmap,
+    )
+
   private fun getOrCreateRenderer(): ImageLabelRenderer {
     renderer?.let { return it }
 
-    val renderer =
-      ImageLabelRenderer(
-        contentStyle = style,
-        title = contentParams.title,
-        description = contentParams.description,
-        subTitle = contentParams.subtitle,
-        subDescription = contentParams.subDescription,
-        bitmap = bitmap,
-      )
+    val renderer = createRenderer(bitmap)
 
     this.renderer = renderer
 
@@ -108,6 +114,20 @@ class EnrichedContentSpan(
     invalidate()
   }
 
+  // Laid out by the measurement on its thread too, while the view draws it: the
+  // height is measured without the renderer of the view
+  private fun measureHeight(width: Int): Int {
+    measured?.takeIf { it.width == width }?.let { return it.height }
+
+    val margin = style.container.margin
+    val contentWidth = width - (margin.left + margin.right)
+    val contentHeight = createRenderer(bitmap = null).measure(contentWidth.toInt())
+    val height = (contentHeight + margin.top + margin.bottom).toInt()
+
+    measured = MeasuredHeight(width, height)
+    return height
+  }
+
   override fun getSize(
     paint: Paint,
     text: CharSequence?,
@@ -115,19 +135,7 @@ class EnrichedContentSpan(
     end: Int,
     fm: Paint.FontMetricsInt?,
   ): Int {
-    val margin = style.container.margin
-
-    val marginHorizontal = (margin.left + margin.right)
-    val marginVertical = (margin.top + margin.bottom)
-
-    val contentWidth = htmlStyle.editorWidth - marginHorizontal
-
-    val renderer = getOrCreateRenderer()
-    val contentHeight = renderer.measure(contentWidth.toInt())
-
-    val finalHeight = contentHeight + marginVertical
-
-    measuredHeight = finalHeight.toInt()
+    val measuredHeight = measureHeight(htmlStyle.editorWidth)
 
     fm?.let {
       it.ascent = -measuredHeight
@@ -159,6 +167,7 @@ class EnrichedContentSpan(
     val marginBottom = margin.bottom
 
     val contentWidth = htmlStyle.editorWidth - (marginLeft + marginRight)
+    val measuredHeight = measureHeight(htmlStyle.editorWidth)
     val contentHeight = measuredHeight - (marginTop + marginBottom)
 
     val renderer = getOrCreateRenderer()
@@ -179,6 +188,11 @@ class EnrichedContentSpan(
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedSpan = this
 
   companion object {
+    private class MeasuredHeight(
+      val width: Int,
+      val height: Int,
+    )
+
     fun createEnrichedContentSpan(
       title: String,
       description: String?,

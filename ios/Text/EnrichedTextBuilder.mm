@@ -1,86 +1,58 @@
 #import "EnrichedTextBuilder.h"
+#import "EnrichedHTMLToAttributedStringParser.h"
 #import "EnrichedPreparedText.h"
-#import "EnrichedTextConfigBuilder.h"
 #import "EnrichedTextParseHost.h"
-#import "EnrichedTypingAttributesBuilder.h"
+#import "EnrichedTextStyleCache.h"
+#import "EnrichedUTF8.h"
 #import "InputConfig.h"
-#import "InputParser.h"
-#import "StringExtension.h"
-#include <react/renderer/core/PropsParserContext.h>
-#include <react/renderer/core/RawValue.h>
-#include <react/utils/ContextContainer.h>
+
+#include <cstring>
+#include <string>
 
 using namespace facebook::react;
 
 @implementation EnrichedTextBuilder
 
-static const Float kDefaultFontSize = 14;
-
-// The props of the input the config and the typing attributes are built from
-static void fillInputProps(EnrichedTextInputViewProps &inputProps,
-                           const EnrichedTextViewProps &props,
-                           CGFloat fontSizeMultiplier) {
-  if (props.htmlStyle.isObject()) {
-    ContextContainer contextContainer;
-    PropsParserContext context{-1, contextContainer};
-    fromRawValue(context, RawValue(props.htmlStyle), inputProps.htmlStyle);
-  }
-
-  Float scale = props.allowFontScaling ? fontSizeMultiplier : 1;
-
-  auto &htmlStyle = inputProps.htmlStyle;
-  for (Float *headingFontSize :
-       {&htmlStyle.h1.fontSize, &htmlStyle.h2.fontSize, &htmlStyle.h3.fontSize,
-        &htmlStyle.h4.fontSize, &htmlStyle.h5.fontSize,
-        &htmlStyle.h6.fontSize}) {
-    *headingFontSize *= scale;
-  }
-
-  inputProps.color = props.color;
-  inputProps.fontSize =
-      (props.fontSize > 0 ? props.fontSize : kDefaultFontSize) * scale;
-  inputProps.lineHeight = props.lineHeight * scale;
-  inputProps.fontFamily = props.fontFamily;
-  inputProps.fontWeight = props.fontWeight;
-  inputProps.fontStyle = props.fontStyle;
+// The html of the text, as long as `NSString` reads it (see
+// `EnrichedValidUTF8Length`)
+static bool htmlLength(const std::string &text, size_t *length) {
+  return strncmp(text.c_str(), "<html>", 6) == 0 &&
+         EnrichedValidUTF8Length(text.c_str(), length);
 }
 
 + (EnrichedPreparedText *)preparedTextWithProps:
                               (const EnrichedTextViewProps &)props
                              fontSizeMultiplier:(CGFloat)fontSizeMultiplier {
-  static const EnrichedTextInputViewProps defaultProps{};
-  EnrichedTextInputViewProps inputProps;
-  fillInputProps(inputProps, props, fontSizeMultiplier);
+  EnrichedTextStyle style =
+      EnrichedTextStyleForProps(props, fontSizeMultiplier);
+  InputConfig *config = style.config;
+  NSDictionary<NSAttributedStringKey, id> *attributes = style.attributes;
 
-  // As the input on its first mount: the props differing from the defaults
-  InputConfig *config =
-      [EnrichedTextConfigBuilder makeConfigFromProps:inputProps
-                                        oldViewProps:defaultProps
-                                      previousConfig:nil]
-          ?: [[InputConfig alloc] init];
-
-  NSDictionary<NSAttributedStringKey, id> *attributes =
-      [EnrichedTypingAttributesBuilder buildWithConfig:config props:inputProps];
-
-  NSString *source = [NSString fromCppString:props.text] ?: @"";
+  const std::string &source = props.text;
   NSMutableAttributedString *text = nil;
-  InputParser *parser = [[InputParser alloc] init];
+  size_t length = 0;
 
-  if ([parser isHtmlString:source]) {
+  // Parsed from the bytes of the props: not decoded to a string and encoded
+  // back
+  if (htmlLength(source, &length)) {
     EnrichedTextParseHost *host =
-        [[EnrichedTextParseHost alloc] initWithConfig:config
-                              defaultTypingAttributes:attributes];
+        [EnrichedTextParseHost hostForCurrentThreadWithConfig:config
+                                      defaultTypingAttributes:attributes];
     @try {
-      text = [parser attributedFromHtml:source
-                                 styles:host.stylesDict
-                      defaultAttributes:attributes];
+      EnrichedHTMLToAttributedStringParser *parser =
+          [[EnrichedHTMLToAttributedStringParser alloc]
+                 initWithStyles:host.stylesDict
+              defaultAttributes:attributes];
+      text = [parser parseToAttributedStringFromUTF8:source.c_str()
+                                              length:length];
     } @catch (NSException *exception) {
       NSLog(@"[EnrichedText] Error parsing HTML: %@", exception.reason);
     }
   }
 
   if (text == nil) {
-    text = [[NSMutableAttributedString alloc] initWithString:source
+    NSString *string = [NSString stringWithUTF8String:source.c_str()] ?: @"";
+    text = [[NSMutableAttributedString alloc] initWithString:string
                                                   attributes:attributes];
   }
 
@@ -92,34 +64,6 @@ static void fillInputProps(EnrichedTextInputViewProps &inputProps,
 
   // Immutable: the view and the measurement read it on different threads
   return [[EnrichedPreparedText alloc] initWithText:[text copy] config:config];
-}
-
-+ (CGSize)sizeOfText:(NSAttributedString *)text
-      constrainedToWidth:(CGFloat)width
-    maximumNumberOfLines:(NSInteger)maximumNumberOfLines
-           lineBreakMode:(NSLineBreakMode)lineBreakMode {
-  CGFloat containerWidth = isfinite(width) ? width : CGFLOAT_MAX;
-
-  NSTextStorage *textStorage =
-      [[NSTextStorage alloc] initWithAttributedString:text];
-  NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
-  NSTextContainer *textContainer = [[NSTextContainer alloc]
-      initWithSize:CGSizeMake(containerWidth, CGFLOAT_MAX)];
-
-  [self configureTextContainer:textContainer
-          maximumNumberOfLines:maximumNumberOfLines
-                 lineBreakMode:lineBreakMode];
-
-  [layoutManager addTextContainer:textContainer];
-  [textStorage addLayoutManager:layoutManager];
-  [layoutManager ensureLayoutForTextContainer:textContainer];
-
-  CGRect usedRect = [layoutManager usedRectForTextContainer:textContainer];
-
-  // The widest line, as React Native's <Text>: a short text doesn't take the
-  // whole width
-  return CGSizeMake(MIN(ceil(usedRect.size.width), containerWidth),
-                    ceil(usedRect.size.height));
 }
 
 + (void)configureTextContainer:(NSTextContainer *)textContainer

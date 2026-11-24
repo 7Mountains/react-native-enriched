@@ -1,84 +1,90 @@
 package com.swmansion.enriched.styles
 
-import android.graphics.Color
 import android.graphics.drawable.Drawable
-import com.facebook.react.bridge.ColorPropConverter
-import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableMap
-import com.facebook.react.uimanager.PixelUtil
-import com.facebook.react.views.text.ReactTypefaceUtils.parseFontWeight
 import com.swmansion.enriched.EnrichedHtmlHost
 import com.swmansion.enriched.drawables.HRDrawable
-import kotlin.Float
-import kotlin.Int
-import kotlin.String
-import kotlin.math.ceil
 
-class HtmlStyle {
-  private var style: ReadableMap? = null
-  private var view: EnrichedHtmlHost? = null
+/**
+ * The html style of a view: the style parsed from the props, shared by the
+ * views with the same props, and what depends on the view (its width and its
+ * font size), updated with [updateHostMetrics].
+ *
+ * @param styleId The id of a style registered with [HtmlStyleRegistry], parsed
+ * once, instead of [style]: 0 for [style], parsed for this view
+ */
+class HtmlStyle(
+  private val view: EnrichedHtmlHost?,
+  style: ReadableMap?,
+  styleId: Int = 0,
+) {
+  private val parsed = ParsedHtmlStyle.of(style, view?.hostContext, styleId)
 
-  var editorWidth = view?.editorWidth ?: 0
+  var editorWidth = 0
     private set
 
-  // Default values are ignored as they are specified on the JS side.
-  // They are specified only because they are required by the constructor.
-  // JS passes them as a prop - so they are initialized after the constructor is called.
-  var h1FontSize: Int = 72
-  var h1Bold: Boolean = false
-
-  var h2FontSize: Int = 64
-  var h2Bold: Boolean = false
-
-  var h3FontSize: Int = 56
-  var h3Bold: Boolean = false
-
-  var h4FontSize: Int = 48
-  var h4Bold: Boolean = false
-
-  var h5FontSize: Int = 40
-  var h5Bold: Boolean = false
-
-  var h6FontSize: Int = 32
-  var h6Bold: Boolean = false
-
-  var blockquoteColor: Int? = null
-  var blockquoteBorderColor: Int = Color.BLACK
-  var blockquoteStripeWidth: Int = 2
-  var blockquoteGapWidth: Int = 16
-
-  var olGapWidth: Int = 16
-  var olMarginLeft: Int = 24
-  var olMarkerFontWeight: Int? = null
-  var olMarkerColor: Int? = null
-
-  var ulGapWidth: Int = 16
-  var ulMarginLeft: Int = 24
-  var ulBulletSize: Int = 8
-  var ulBulletColor: Int = Color.BLACK
-
-  var aColor: Int = Color.BLACK
-  var aUnderline: Boolean = true
-
-  var codeBlockColor: Int = Color.BLACK
-  var codeBlockBackgroundColor: Int = Color.BLACK
-  var codeBlockRadius: Float = 4f
-
-  var inlineCodeColor: Int = Color.BLACK
-  var inlineCodeBackgroundColor: Int = Color.BLACK
-
-  var mentionsStyle: MutableMap<String, MentionStyle> = mutableMapOf()
-  var contentStyle: Map<String, ContentStyle> = mutableMapOf()
-
-  var dividerThickness: Float = 2.0f
-  var dividerHeight: Float = 24.0f
-  var dividerColor: Int = Color.GRAY
+  var olMarginLeft = 0
+    private set
 
   private var hrDrawable: HRDrawable? = null
 
-  var mdf: ContentStyle = ContentStyle.default()
+  init {
+    updateHostMetrics()
+  }
 
-  var checkboxStyle = CheckboxStyle.fromReadableMap(null, view?.hostContext as ReactContext?)
+  /** Reads the width and the font size of the view again, without parsing the style */
+  fun updateHostMetrics() {
+    editorWidth = view?.editorWidth ?: 0
+    olMarginLeft = (view?.fontSize?.toInt() ?: 0) / 2 + parsed.olMarginLeft
+  }
+
+  val h1FontSize: Int get() = parsed.h1FontSize
+  val h1Bold: Boolean get() = parsed.h1Bold
+  val h2FontSize: Int get() = parsed.h2FontSize
+  val h2Bold: Boolean get() = parsed.h2Bold
+  val h3FontSize: Int get() = parsed.h3FontSize
+  val h3Bold: Boolean get() = parsed.h3Bold
+  val h4FontSize: Int get() = parsed.h4FontSize
+  val h4Bold: Boolean get() = parsed.h4Bold
+  val h5FontSize: Int get() = parsed.h5FontSize
+  val h5Bold: Boolean get() = parsed.h5Bold
+  val h6FontSize: Int get() = parsed.h6FontSize
+  val h6Bold: Boolean get() = parsed.h6Bold
+
+  val blockquoteColor: Int? get() = parsed.blockquoteColor
+  val blockquoteBorderColor: Int get() = parsed.blockquoteBorderColor
+  val blockquoteStripeWidth: Int get() = parsed.blockquoteStripeWidth
+  val blockquoteGapWidth: Int get() = parsed.blockquoteGapWidth
+
+  val olGapWidth: Int get() = parsed.olGapWidth
+  val olMarkerFontWeight: Int? get() = parsed.olMarkerFontWeight
+  val olMarkerColor: Int? get() = parsed.olMarkerColor
+
+  val ulGapWidth: Int get() = parsed.ulGapWidth
+  val ulMarginLeft: Int get() = parsed.ulMarginLeft
+  val ulBulletSize: Int get() = parsed.ulBulletSize
+  val ulBulletColor: Int get() = parsed.ulBulletColor
+
+  val aColor: Int get() = parsed.aColor
+  val aUnderline: Boolean get() = parsed.aUnderline
+
+  val codeBlockColor: Int get() = parsed.codeBlockColor
+  val codeBlockBackgroundColor: Int get() = parsed.codeBlockBackgroundColor
+  val codeBlockRadius: Float get() = parsed.codeBlockRadius
+
+  val inlineCodeColor: Int get() = parsed.inlineCodeColor
+  val inlineCodeBackgroundColor: Int get() = parsed.inlineCodeBackgroundColor
+
+  val mentionsStyle: Map<String, MentionStyle> get() = parsed.mentionsStyle
+  val contentStyle: Map<String, ContentStyle> get() = parsed.contentStyle
+
+  val dividerThickness: Float get() = parsed.dividerThickness
+  val dividerHeight: Float get() = parsed.dividerHeight
+  val dividerColor: Int get() = parsed.dividerColor
+
+  val checkboxStyle: CheckboxStyle get() = parsed.checkboxStyle
+
+  val mdf: ContentStyle get() = parsed.mdf
 
   fun getHorizontalRuleDrawable(): Drawable {
     hrDrawable
@@ -92,297 +98,14 @@ class HtmlStyle {
     }
   }
 
-  constructor(view: EnrichedHtmlHost?, style: ReadableMap?) {
-    this.view = view
-    this.style = style
-
-    invalidateStyles()
-  }
-
-  fun invalidateStyles() {
-    val style = this.style ?: return
-
-    val h1Style = style.getMap("h1")
-    h1FontSize = parseFloat(h1Style, "fontSize").toInt()
-    h1Bold = h1Style?.getBoolean("bold") == true
-
-    val h2Style = style.getMap("h2")
-    h2FontSize = parseFloat(h2Style, "fontSize").toInt()
-    h2Bold = h2Style?.getBoolean("bold") == true
-
-    val h3Style = style.getMap("h3")
-    h3FontSize = parseFloat(h3Style, "fontSize").toInt()
-    h3Bold = h3Style?.getBoolean("bold") == true
-
-    val h4Style = style.getMap("h4")
-    h4FontSize = parseFloat(h4Style, "fontSize").toInt()
-    h4Bold = h4Style?.getBoolean("bold") == true
-
-    val h5Style = style.getMap("h5")
-    h5FontSize = parseFloat(h5Style, "fontSize").toInt()
-    h5Bold = h5Style?.getBoolean("bold") == true
-
-    val h6Style = style.getMap("h6")
-    h6FontSize = parseFloat(h6Style, "fontSize").toInt()
-    h6Bold = h6Style?.getBoolean("bold") == true
-
-    val blockquoteStyle = style.getMap("blockquote")
-    blockquoteColor = parseOptionalColor(blockquoteStyle, "color")
-    blockquoteBorderColor = parseColor(blockquoteStyle, "borderColor")
-    blockquoteGapWidth = parseFloat(blockquoteStyle, "gapWidth").toInt()
-    blockquoteStripeWidth = parseFloat(blockquoteStyle, "borderWidth").toInt()
-
-    val olStyle = style.getMap("ol")
-    val userDefinedMarginLeft = parseFloat(olStyle, "marginLeft").toInt()
-    val calculatedMarginLeft = calculateOlMarginLeft(view, userDefinedMarginLeft)
-    olMarginLeft = calculatedMarginLeft
-    olGapWidth = parseFloat(olStyle, "gapWidth").toInt()
-    olMarkerColor = parseOptionalColor(olStyle, "markerColor")
-    olMarkerFontWeight = parseOptionalFontWeight(olStyle, "markerFontWeight")
-
-    val ulStyle = style.getMap("ul")
-    ulBulletColor = parseColor(ulStyle, "bulletColor")
-    ulGapWidth = parseFloat(ulStyle, "gapWidth").toInt()
-    ulMarginLeft = parseFloat(ulStyle, "marginLeft").toInt()
-    ulBulletSize = parseFloat(ulStyle, "bulletSize").toInt()
-
-    val aStyle = style.getMap("a")
-    aColor = parseColor(aStyle, "color")
-    aUnderline = parseIsUnderline(aStyle)
-
-    val codeBlockStyle = style.getMap("codeblock")
-    codeBlockRadius = parseFloat(codeBlockStyle, "borderRadius")
-    codeBlockColor = parseColor(codeBlockStyle, "color")
-    codeBlockBackgroundColor = parseColorWithOpacity(codeBlockStyle, "backgroundColor", 80)
-
-    val inlineCodeStyle = style.getMap("code")
-    inlineCodeColor = parseColor(inlineCodeStyle, "color")
-    inlineCodeBackgroundColor = parseColorWithOpacity(inlineCodeStyle, "backgroundColor", 80)
-
-    val mentionStyle = style.getMap("mention")
-    mentionsStyle = parseMentionsStyle(mentionStyle)
-
-    contentStyle = ContentStyle.parseComplex(style.getMap("content"), context = view?.hostContext as ReactContext?)
-
-    val dividerStyle = style.getMap("divider")
-    dividerHeight = parseFloat(dividerStyle, "height")
-    dividerThickness = parseFloat(dividerStyle, "thickness")
-    dividerColor = parseColor(dividerStyle, "color")
-    editorWidth = view?.editorWidth ?: 0
-    getHorizontalRuleDrawable()
-
-    checkboxStyle = CheckboxStyle.fromReadableMap(style.getMap("checkbox"), context = view?.hostContext as ReactContext)
-
-    mdf = ContentStyle.fromReadableMap(style.getMap("mdf"), view?.hostContext as ReactContext)
-  }
-
-  private fun parseFloat(
-    map: ReadableMap?,
-    key: String,
-  ): Float {
-    val safeMap = ensureValueIsSet(map, key)
-
-    val value = safeMap.getDouble(key)
-    return ceil(PixelUtil.toPixelFromSP(value))
-  }
-
-  private fun parseColorWithOpacity(
-    map: ReadableMap?,
-    key: String,
-    opacity: Int,
-  ): Int {
-    val color = parseColor(map, key)
-    return withOpacity(color, opacity)
-  }
-
-  private fun parseOptionalColor(
-    map: ReadableMap?,
-    key: String,
-  ): Int? {
-    if (map == null) return null
-    if (!map.hasKey(key)) return null
-    if (map.isNull(key)) return null
-
-    return parseColor(map, key)
-  }
-
-  private fun parseColor(
-    map: ReadableMap?,
-    key: String,
-  ): Int {
-    val safeMap = ensureValueIsSet(map, key)
-
-    val color = safeMap.getDouble(key)
-    val parsedColor = ColorPropConverter.getColor(color, view?.hostContext as ReactContext)
-    if (parsedColor == null) {
-      throw Error("Specified color value is not supported: $color")
-    }
-
-    return parsedColor
-  }
-
-  private fun withOpacity(
-    color: Int,
-    alpha: Int,
-  ): Int {
-    // Do not apply opacity to transparent color
-    if (Color.alpha(color) == 0) return color
-    val a = alpha.coerceIn(0, 255)
-    return (color and 0x00FFFFFF) or (a shl 24)
-  }
-
-  private fun parseIsUnderline(map: ReadableMap?): Boolean {
-    val underline = map?.getString("textDecorationLine")
-    val isEnabled = underline == "underline"
-    val isDisabled = underline == "none"
-
-    if (isEnabled) return true
-    if (isDisabled) return false
-
-    throw Error("Specified textDecorationLine value is not supported: $underline. Supported values are 'underline' and 'none'.")
-  }
-
-  private fun calculateOlMarginLeft(
-    view: EnrichedHtmlHost?,
-    userMargin: Int,
-  ): Int {
-    val fontSize = view?.fontSize?.toInt() ?: 0
-    val leadMargin = fontSize / 2
-
-    return leadMargin + userMargin
-  }
-
-  private fun ensureValueIsSet(
-    map: ReadableMap?,
-    key: String,
-  ): ReadableMap {
-    if (map == null) throw Error("Style map cannot be null")
-
-    if (!map.hasKey(key)) throw Error("Style map must contain key: $key")
-
-    if (map.isNull(key)) throw Error("Style map cannot contain null value for key: $key")
-
-    return map
-  }
-
-  private fun parseMentionsStyle(mentionsStyle: ReadableMap?): MutableMap<String, MentionStyle> {
-    if (mentionsStyle == null) throw Error("Mentions style cannot be null")
-
-    val parsedMentionsStyle: MutableMap<String, MentionStyle> = mutableMapOf()
-
-    val iterator = mentionsStyle.keySetIterator()
-    while (iterator.hasNextKey()) {
-      val key = iterator.nextKey()
-      val value = mentionsStyle.getMap(key)
-
-      if (value == null) throw Error("Mention style for key '$key' cannot be null")
-
-      val color = parseColor(value, "color")
-      val backgroundColor = parseColorWithOpacity(value, "backgroundColor", 80)
-      val isUnderline = parseIsUnderline(value)
-      val parsedStyle = MentionStyle(color, backgroundColor, isUnderline)
-      parsedMentionsStyle.put(key, parsedStyle)
-    }
-
-    return parsedMentionsStyle
-  }
-
-  private fun parseOptionalFontWeight(
-    map: ReadableMap?,
-    key: String,
-  ): Int? {
-    if (map == null) return null
-    if (!map.hasKey(key)) return null
-    if (map.isNull(key)) return null
-
-    val fontWeight = map.getString(key) ?: return null
-    return parseFontWeight(fontWeight)
-  }
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is HtmlStyle) return false
 
-    return h1FontSize == other.h1FontSize &&
-      h1Bold == other.h1Bold &&
-      h2FontSize == other.h2FontSize &&
-      h2Bold == other.h2Bold &&
-      h3FontSize == other.h3FontSize &&
-      h3Bold == other.h3Bold &&
-
-      blockquoteColor == other.blockquoteColor &&
-      blockquoteBorderColor == other.blockquoteBorderColor &&
-      blockquoteStripeWidth == other.blockquoteStripeWidth &&
-      blockquoteGapWidth == other.blockquoteGapWidth &&
-
-      olGapWidth == other.olGapWidth &&
-      olMarginLeft == other.olMarginLeft &&
-      olMarkerFontWeight == other.olMarkerFontWeight &&
-      olMarkerColor == other.olMarkerColor &&
-
-      ulGapWidth == other.ulGapWidth &&
-      ulMarginLeft == other.ulMarginLeft &&
-      ulBulletSize == other.ulBulletSize &&
-      ulBulletColor == other.ulBulletColor &&
-
-      aColor == other.aColor &&
-      aUnderline == other.aUnderline &&
-
-      codeBlockColor == other.codeBlockColor &&
-      codeBlockBackgroundColor == other.codeBlockBackgroundColor &&
-      codeBlockRadius == other.codeBlockRadius &&
-
-      inlineCodeColor == other.inlineCodeColor &&
-      inlineCodeBackgroundColor == other.inlineCodeBackgroundColor &&
-
-      checkboxStyle == other.checkboxStyle &&
-
-      contentStyle == other.contentStyle &&
-
-      mentionsStyle == other.mentionsStyle
+    return parsed == other.parsed && olMarginLeft == other.olMarginLeft
   }
 
-  override fun hashCode(): Int {
-    var result = h1FontSize.hashCode()
-    result = 31 * result + h1Bold.hashCode()
-    result = 31 * result + h2FontSize.hashCode()
-    result = 31 * result + h2Bold.hashCode()
-    result = 31 * result + h3FontSize.hashCode()
-    result = 31 * result + h3Bold.hashCode()
-
-    result = 31 * result + (blockquoteColor ?: 0)
-    result = 31 * result + blockquoteBorderColor.hashCode()
-    result = 31 * result + blockquoteStripeWidth.hashCode()
-    result = 31 * result + blockquoteGapWidth.hashCode()
-
-    result = 31 * result + olGapWidth.hashCode()
-    result = 31 * result + olMarginLeft.hashCode()
-    result = 31 * result + (olMarkerFontWeight?.hashCode() ?: 0)
-    result = 31 * result + (olMarkerColor ?: 0)
-
-    result = 31 * result + ulGapWidth.hashCode()
-    result = 31 * result + ulMarginLeft.hashCode()
-    result = 31 * result + ulBulletSize.hashCode()
-    result = 31 * result + ulBulletColor.hashCode()
-
-    result = 31 * result + aColor.hashCode()
-    result = 31 * result + aUnderline.hashCode()
-
-    result = 31 * result + codeBlockColor.hashCode()
-    result = 31 * result + codeBlockBackgroundColor.hashCode()
-    result = 31 * result + codeBlockRadius.hashCode()
-
-    result = 31 * result + inlineCodeColor.hashCode()
-    result = 31 * result + inlineCodeBackgroundColor.hashCode()
-
-    result = 31 * result + checkboxStyle.hashCode()
-
-    result = 31 * result + contentStyle.hashCode()
-
-    result = 31 * result + mentionsStyle.hashCode()
-
-    return result
-  }
+  override fun hashCode(): Int = 31 * parsed.hashCode() + olMarginLeft
 
   companion object {
     data class MentionStyle(

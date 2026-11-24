@@ -28,5 +28,6 @@ export type {
 } from './EnrichedTextNativeComponent';
 
 export { EnrichedStyles } from './enums';
+export { EnrichedStyleSheet } from './EnrichedStyleSheet';
 
 export { default as useReanimatedScrollOffset } from './hooks/useReanimatedScrollOffset';

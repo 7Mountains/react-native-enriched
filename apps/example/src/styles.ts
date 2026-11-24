@@ -1,7 +1,7 @@
-import type { HtmlStyle } from 'react-native-enriched';
+import { EnrichedStyleSheet, type HtmlStyle } from 'react-native-enriched';
 import { Image } from 'react-native';
 
-const htmlStyle: HtmlStyle = {
+const htmlStyle = EnrichedStyleSheet.createHtmlStyle<HtmlStyle>({
   h1: {
     fontSize: 72,
     bold: false,
@@ -264,6 +264,6 @@ const htmlStyle: HtmlStyle = {
       Image.resolveAssetSource(require('../assets/images/block_icon.png'))
         ?.uri ?? '',
   },
-};
+});
 
 export default htmlStyle;

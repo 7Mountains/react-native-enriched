@@ -15,7 +15,7 @@
 
 #pragma mark - Font cache helpers
 
-static NSCache<NSString *, FontVariants *> *FontVariantsCache(void) {
+static NSCache<UIFont *, FontVariants *> *FontVariantsCache(void) {
   static NSCache *cache;
   static dispatch_once_t once;
   dispatch_once(&once, ^{
@@ -23,10 +23,6 @@ static NSCache<NSString *, FontVariants *> *FontVariantsCache(void) {
     cache.countLimit = 32;
   });
   return cache;
-}
-
-static NSString *FontKey(UIFont *font) {
-  return [NSString stringWithFormat:@"%@-%.2f", font.fontName, font.pointSize];
 }
 
 static UIFont *MakeFont(UIFont *base, UIFontDescriptorSymbolicTraits traits) {
@@ -73,11 +69,13 @@ static FontVariants *VariantsForFont(UIFont *font) {
   if (!font)
     return nil;
 
-  NSString *key = FontKey(font);
-  FontVariants *v = [FontVariantsCache() objectForKey:key];
+  // Keyed by the font itself (equal by descriptor and size): called for every
+  // bold or italic run, a key built from a string would cost more than the
+  // lookup
+  FontVariants *v = [FontVariantsCache() objectForKey:font];
   if (!v) {
     v = BuildVariants(font);
-    [FontVariantsCache() setObject:v forKey:key];
+    [FontVariantsCache() setObject:v forKey:font];
   }
   return v;
 }

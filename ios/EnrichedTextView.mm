@@ -60,11 +60,13 @@ static MentionEvent mentionEventFrom(MentionParams *mention) {
   UITextView *_textView;
   NSTextStorage *_textStorage;
   EnrichedPreparedText *_preparedText;
+  EnrichedPreparedText *_pendingPreparedText;
   NSDictionary<NSNumber *, id> *_stylesDict;
   AttachmentInvalidationBatcher *_attachmentBatcher;
   EnrichedTextPressRecognizer *_pressRecognizer;
   CAShapeLayer *_pressLayer;
   NSInteger _numberOfLines;
+  SharedColor _selectionColor;
   NSLineBreakMode _lineBreakMode;
   BOOL _pressableLinks;
   BOOL _pressableMentions;
@@ -186,7 +188,11 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
     _textView.textDragInteraction.enabled = NO;
   }
 
-  _textView.tintColor = RCTUIColorFromSharedColor(newProps.selectionColor);
+  // Set, it's passed down to all the subviews of the text view
+  if (!(newProps.selectionColor == _selectionColor)) {
+    _selectionColor = newProps.selectionColor;
+    _textView.tintColor = RCTUIColorFromSharedColor(_selectionColor);
+  }
 
   _pressableLinks = newProps.pressableLinks;
   _pressableMentions = newProps.pressableMentions;
@@ -218,7 +224,16 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
                                            fontSizeMultiplier:1];
   }
 
-  [self setPreparedText:preparedText];
+  _pendingPreparedText = preparedText;
+}
+
+- (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask {
+  [super finalizeUpdates:updateMask];
+
+  if (_pendingPreparedText != nil) {
+    [self setPreparedText:_pendingPreparedText];
+    _pendingPreparedText = nil;
+  }
 }
 
 - (void)setPreparedText:(EnrichedPreparedText *)preparedText {
@@ -229,6 +244,13 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
   [self cancelCurrentPress];
 
   _preparedText = preparedText;
+
+  NSTextContainer *textContainer = _textView.textContainer;
+  if (textContainer.size.height != CGFLOAT_MAX) {
+    [_textStorage setAttributedString:[[NSAttributedString alloc] init]];
+    textContainer.size = CGSizeMake(textContainer.size.width, CGFLOAT_MAX);
+  }
+
   [_textStorage setAttributedString:preparedText.text];
   _accessibilityElements = nil;
 
@@ -252,10 +274,42 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 
   // The measured text, inside the padding and the border
   CGRect contentFrame = RCTCGRectFromRect(layoutMetrics.getContentFrame());
-  _textView.frame = contentFrame;
-  _textView.textContainer.size =
-      CGSizeMake(contentFrame.size.width, CGFLOAT_MAX);
+  if (_pendingPreparedText != nil && _pendingPreparedText != _preparedText &&
+      _textStorage.length > 0 &&
+      !CGSizeEqualToSize(_textView.frame.size, contentFrame.size)) {
+    [_textStorage setAttributedString:[[NSAttributedString alloc] init]];
+  }
+
+  // Resized, the text view fits its container to its size and lays the text
+  // out again
+  if (!CGRectEqualToRect(_textView.frame, contentFrame)) {
+    _textView.frame = contentFrame;
+  }
+  [self fitTextContainer];
   _accessibilityElements = nil;
+}
+
+// As wide as the text view and, as in the measurement, as high as the text
+// needs: with the height of the view, rounded, the last line could be left
+// out. Not resized when the text already fits: each resize lays it out again
+- (void)fitTextContainer {
+  NSTextContainer *textContainer = _textView.textContainer;
+  CGFloat width = _textView.frame.size.width;
+
+  if (textContainer.size.width == width &&
+      (textContainer.size.height == CGFLOAT_MAX || [self isTextLaidOut])) {
+    return;
+  }
+
+  textContainer.size = CGSizeMake(width, CGFLOAT_MAX);
+}
+
+// Whether the whole text is laid out in the container
+- (BOOL)isTextLaidOut {
+  NSLayoutManager *layoutManager = _textView.layoutManager;
+  NSRange glyphRange =
+      [layoutManager glyphRangeForTextContainer:_textView.textContainer];
+  return NSMaxRange(glyphRange) >= layoutManager.numberOfGlyphs;
 }
 
 - (void)prepareForRecycle {
@@ -263,6 +317,7 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 
   [self cancelCurrentPress];
   _preparedText = nil;
+  _pendingPreparedText = nil;
   [_textStorage setAttributedString:[[NSAttributedString alloc] init]];
   _accessibilityElements = nil;
 }

@@ -20,9 +20,10 @@ bool isBlockTag(const char *tag);
 
 BOOL isHTMLWhitespace(unsigned char c);
 
-NSString *collapseWhiteSpace(NSString *text);
-
-NSString *collapseWhiteSpaceIfNeeded(NSString *text);
+// The text with its white space collapsed to single spaces, without its
+// leading space when `dropsLeadingSpace`
+NSString *_Nullable collapsedWhiteSpaceString(const char *utf8,
+                                              BOOL dropsLeadingSpace);
 
 BOOL isWhiteSpaceOnly(NSString *text);
 

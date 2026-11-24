@@ -1883,7 +1883,7 @@ PODS:
     - React-utils (= 0.88.1)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.88.1)
-  - ReactNativeEnriched (0.0.87):
+  - ReactNativeEnriched (0.0.93):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2518,7 +2518,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 944c3b82977d2940d595087c48c280764515950a
   ReactCommon: b815fa26d04751d8b1a076de6888634fb34fb44e
   ReactNativeDependencies: a5164c3ebbe90d992022b5d9cbabbf770a6d7d05
-  ReactNativeEnriched: 2cbf24a5d42f752646fd07e505cfd10f9823f12b
+  ReactNativeEnriched: dacd14072479d8c5b7fd32a133f14ed9130f69e8
   RNReanimated: 02d6b0d54a0d4e9e02659f19be971935a371d12d
   RNScreens: 67fd45f1f30aa2849ab847156c133bd592a26533
   RNWorklets: 23dd840ca444b9e0e5ae5f6964b16ef39253ccb2
@@ -2526,6 +2526,6 @@ SPEC CHECKSUMS:
   SocketRocket: d57b1af80c029e12a75cd9b218287c67381e4593
   Yoga: 58b502c52b14ad3c4468805d461fc37d275c2a42
 
-PODFILE CHECKSUM: 88c10840d02e9884b2dc3f457d5120f83ac3803b
+PODFILE CHECKSUM: 5f14de480f5def80311617b6dd43182a52e6b9d6
 
 COCOAPODS: 1.15.2

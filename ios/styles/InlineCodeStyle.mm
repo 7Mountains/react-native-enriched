@@ -58,24 +58,17 @@ NSAttributedStringKey const InlineCodeAttributeName = @"EnrichedInlineCode";
                                   range:(NSRange)range
                              attributes:(NSDictionary<NSString *, NSString *>
                                              *_Nullable)attributes {
-  [attributedString addAttribute:InlineCodeAttributeName
-                           value:@YES
-                           range:range];
-  [attributedString addAttribute:NSBackgroundColorAttributeName
-                           value:[[_host.config inlineCodeBgColor]
-                                     colorWithAlphaIfNotTransparent:0.4]
-                           range:range];
-  [attributedString addAttribute:NSForegroundColorAttributeName
-                           value:[_host.config inlineCodeFgColor]
-                           range:range];
-  [attributedString addAttribute:NSUnderlineColorAttributeName
-                           value:[_host.config inlineCodeFgColor]
-                           range:range];
-  [attributedString addAttribute:NSStrikethroughColorAttributeName
-                           value:[_host.config inlineCodeFgColor]
-                           range:range];
-  UIFont *font = [_host.config monospacedFont];
-  [attributedString addAttribute:NSFontAttributeName value:font range:range];
+  UIColor *foregroundColor = [_host.config inlineCodeFgColor];
+  [attributedString addAttributes:@{
+    InlineCodeAttributeName : @YES,
+    NSBackgroundColorAttributeName :
+        [[_host.config inlineCodeBgColor] colorWithAlphaIfNotTransparent:0.4],
+    NSForegroundColorAttributeName : foregroundColor,
+    NSUnderlineColorAttributeName : foregroundColor,
+    NSStrikethroughColorAttributeName : foregroundColor,
+    NSFontAttributeName : [_host.config monospacedFont]
+  }
+                            range:range];
 }
 
 - (void)addAttributes:(NSRange)range {

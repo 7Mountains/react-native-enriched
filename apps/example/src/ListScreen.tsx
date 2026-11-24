@@ -25,7 +25,7 @@ const TEMPLATES = [
     `<html><p>Message ${i}: Lorem Ipsum is simply dummy text of the printing and typesetting industry. ` +
     "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p></html>",
   (i: number) =>
-    `<html><p>Message ${i} with <b>bold</b>, <i>italic</i>, <u>underline</u> and <code>code</code>.</p></html>`,
+    `<html><p>Message ${i} with <b>bold</b>, <i>italic</i>, <u>underline</u>.</p></html>`,
   (i: number) =>
     `<html><p>Message ${i}: ask <mention text="@alex" type="user" indicator="@">@alex</mention> ` +
     `or open <a href="https://example.com/${i}">the link ${i}</a>.</p></html>`,

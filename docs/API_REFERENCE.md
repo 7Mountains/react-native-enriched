@@ -595,6 +595,21 @@ interface MentionStyleProperties {
 }
 ```
 
+### `EnrichedStyleSheet.createHtmlStyle()`
+
+Prepares an html style once, outside of the render, as React Native's `StyleSheet.create`. `EnrichedText` and `EnrichedTextInput` then take it without converting it on each render, which matters for long lists of texts.
+
+```tsx
+const htmlStyle = EnrichedStyleSheet.createHtmlStyle({
+  h1: { fontSize: 28, bold: true },
+  a: { color: 'teal' },
+});
+
+<EnrichedText htmlStyle={htmlStyle}>{html}</EnrichedText>;
+```
+
+It returns the same style, frozen: change it by creating another one.
+
 ### h1/h2/h3 (headings)
 
 - `fontSize` is the size of the heading's font, defaults to `32`/`24`/`20` for h1/h2/h3.

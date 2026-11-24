@@ -118,15 +118,17 @@ dependencies {
     }
 }
 
-// Run Codegen during development for the example app.
+// Run Codegen during development for the example app. Not with bob: for the
+// modules of the library, it needs `codegenConfig.outputDir`, removed to keep
+// the generated files out of the source folders
 tasks.register('invokeLibraryCodegen', Exec) {
   workingDir "$rootDir/../../../"
   def isWindows = System.getProperty('os.name').toLowerCase().contains('windows')
 
   if (isWindows) {
-    commandLine 'cmd', '/c', 'npx bob build --target codegen'
+    commandLine 'cmd', '/c', 'npx @react-native-community/cli codegen --source library'
   } else {
-    commandLine 'sh', '-c', 'npx bob build --target codegen'
+    commandLine 'sh', '-c', 'npx @react-native-community/cli codegen --source library'
   }
 }
 

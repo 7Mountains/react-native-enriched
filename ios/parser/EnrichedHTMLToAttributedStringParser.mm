@@ -1,11 +1,14 @@
 #import "EnrichedHTMLToAttributedStringParser.h"
+#import "EnrichedHTMLDocumentReader.h"
 #import "EnrichedHTMLToAttributedStringParserUtils.h"
+#import "EnrichedParserStyleRegistry.h"
 #import "StylesStack.h"
 
 #import "Strings.h"
 #import <libxml/HTMLparser.h>
 #import <libxml/tree.h>
 
+#include <cstring>
 #include <vector>
 
 @implementation EnrichedHTMLToAttributedStringParser {
@@ -13,7 +16,7 @@
 
   StyleStack _styleStack;
   NSDictionary *_defaultTypingAttributes;
-  NSDictionary *_tagsRegistry;
+  EnrichedParserStyleRegistry *_registry;
   NSArray<id> *_paragraphModifiers;
 
   std::vector<StyleContext> _styleContexts;
@@ -28,41 +31,29 @@
     return nil;
 
   _defaultTypingAttributes = defaultAttributes ?: @{};
-
-  NSMutableDictionary *tags = [NSMutableDictionary dictionary];
-  NSMutableArray<id> *paragraphModifiers = [NSMutableArray new];
-
-  [styles enumerateKeysAndObjectsUsingBlock:^(
-              NSNumber *key, id<BaseStyleProtocol> style, BOOL *stop) {
-    const char *tagName = [[style class] tagName];
-    if (!tagName && [style.class isParagraphStyle]) {
-      [paragraphModifiers addObject:style];
-    }
-    if (tagName) {
-      NSString *tag = [NSString stringWithUTF8String:tagName];
-      tags[tag] = style;
-    }
-  }];
-
-  _tagsRegistry = tags.copy;
-  _paragraphModifiers = paragraphModifiers.copy;
   _plain = [NSMutableString new];
+
+  _registry = [EnrichedParserStyleRegistry registryForStyles:styles];
+  _paragraphModifiers = _registry.paragraphModifiers;
 
   return self;
 }
 
 - (NSMutableAttributedString *)parseToAttributedString:(NSString *)html {
-  if (html.length == 0) {
+  const char *cHtml = html.UTF8String ?: "";
+  return [self parseToAttributedStringFromUTF8:cHtml length:strlen(cHtml)];
+}
+
+- (NSMutableAttributedString *)parseToAttributedStringFromUTF8:
+                                   (const char *)html
+                                                        length:(size_t)length {
+  if (length == 0) {
     return [[NSMutableAttributedString alloc]
         initWithString:@""
             attributes:_defaultTypingAttributes];
   }
 
-  const char *cHtml = html.UTF8String ?: "";
-
-  htmlDocPtr doc = htmlReadMemory(cHtml, (int)strlen(cHtml), NULL, "UTF-8",
-                                  HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING |
-                                      HTML_PARSE_RECOVER);
+  htmlDocPtr doc = EnrichedReadHTMLDocument(html, length);
 
   if (!doc) {
     return [[NSMutableAttributedString alloc]
@@ -129,17 +120,18 @@
     return;
   }
 
-  NSString *tag = tagChar ? [NSString stringWithUTF8String:tagChar] : @"";
-
-  id<BaseStyleProtocol> style = _tagsRegistry[tag];
-  NSDictionary *attributes = HTMLAttributesFromNodeAndParents(cur);
-
+  id<BaseStyleProtocol> style = [_registry styleForTag:tagChar];
   BOOL isBlock = isBlockTag(tagChar);
+  BOOL isTopLevelLast = isLastRenderable && isTopLevelNode(cur);
+
+  NSDictionary *attributes = (style || isBlock || isTopLevelLast)
+                                 ? HTMLAttributesFromNodeAndParents(cur)
+                                 : nil;
 
   NSUInteger lengthBefore = _plain.length;
 
   if (style && [[style class] isSelfClosing]) {
-    [self traverseSelfClosing:style attributes:attributes tag:tag];
+    [self traverseSelfClosing:style attributes:attributes];
     return;
   }
 
@@ -159,7 +151,7 @@
     [self appendEmptyBlockPlaceholder];
   }
 
-  if (isBlockTag(tagChar)) {
+  if (isBlock) {
     [self collectParagraphModifiersIfNeeded:attributes];
     if (!HTMLIsLastParagraphInBlockContext(
             cur, cur->name, cur->parent ? cur->parent->name : NULL,
@@ -169,7 +161,7 @@
     }
   }
 
-  if (isTopLevelNode(cur) && isLastRenderable) {
+  if (isTopLevelLast) {
     [self collectParagraphModifiersIfNeeded:attributes];
     return;
   }
@@ -183,20 +175,15 @@
   if (!node->content)
     return;
 
-  NSString *text = [NSString stringWithUTF8String:(const char *)node->content];
-  if (!text)
-    return;
-
-  NSString *collapsed = collapseWhiteSpaceIfNeeded(text);
+  // After white space, its leading space is left out as it's made: not cut
+  // from it after
+  NSString *collapsed = collapsedWhiteSpaceString((const char *)node->content,
+                                                  [self endsWithWhiteSpace]);
   if (collapsed.length == 0)
     return;
 
   if (_plain.length == 0 && isWhiteSpaceOnly(collapsed))
     return;
-
-  if ([self shouldTrimLeadingSpaceForText:collapsed]) {
-    collapsed = [collapsed substringFromIndex:1];
-  }
 
   [self appendText:collapsed];
 }
@@ -225,8 +212,7 @@
 #pragma mark - Self closing
 
 - (void)traverseSelfClosing:(id<BaseStyleProtocol>)style
-                 attributes:(NSDictionary *)attributes
-                        tag:(NSString *)tag {
+                 attributes:(NSDictionary *)attributes {
   const BOOL isBlock = [style.class isParagraphStyle];
 
   // if it's a block tag close previous style
@@ -293,10 +279,8 @@
   return NULL;
 }
 
-- (BOOL)shouldTrimLeadingSpaceForText:(NSString *)text {
+- (BOOL)endsWithWhiteSpace {
   if (_plain.length == 0)
-    return NO;
-  if (![text hasPrefix:@" "])
     return NO;
 
   unichar last = [_plain characterAtIndex:_plain.length - 1];

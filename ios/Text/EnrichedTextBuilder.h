@@ -14,11 +14,6 @@ NS_ASSUME_NONNULL_BEGIN
     preparedTextWithProps:(const facebook::react::EnrichedTextViewProps &)props
        fontSizeMultiplier:(CGFloat)fontSizeMultiplier;
 
-+ (CGSize)sizeOfText:(NSAttributedString *)text
-      constrainedToWidth:(CGFloat)width
-    maximumNumberOfLines:(NSInteger)maximumNumberOfLines
-           lineBreakMode:(NSLineBreakMode)lineBreakMode;
-
 // The same container for the measurement and the view
 + (void)configureTextContainer:(NSTextContainer *)textContainer
           maximumNumberOfLines:(NSInteger)maximumNumberOfLines

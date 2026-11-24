@@ -9,7 +9,6 @@ import com.swmansion.enriched.EnrichedHtmlHost
 import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.CustomLineHeightSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
-import com.swmansion.enriched.spans.interfaces.EnrichedHostBoundSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 /** Builds the text shown by `EnrichedTextView`, the same for the view and its measurement */
@@ -41,12 +40,6 @@ internal object EnrichedTextContent {
   /** Whether the text is laid out for its width: its spans take the width of their host (e.g. the horizontal rule) */
   fun dependsOnWidth(content: CharSequence): Boolean = content.hasSpans(EnrichedFullWidthSpan::class.java)
 
-  /**
-   * Whether a measurement can lay the text out again once its view shows it,
-   * on another thread: not with spans bound to their host
-   */
-  fun isReusable(content: CharSequence): Boolean = !content.hasSpans(EnrichedHostBoundSpan::class.java)
-
   private fun CharSequence.hasSpans(type: Class<*>): Boolean = this is Spanned && getSpans(0, length, type).isNotEmpty()
 
   private fun parseHtml(
@@ -56,10 +49,14 @@ internal object EnrichedTextContent {
     if (!EnrichedParser.isHtml(params.text)) return null
 
     return try {
-      val htmlStyle = HtmlStyle(host, params.htmlStyle)
+      val htmlStyle = HtmlStyle(host, null, params.htmlStyleId)
       val parsed = EnrichedParser.fromHtml(params.text.trim(), htmlStyle, null, host)
 
-      SpannableStringBuilder(parsed.trimEnd('\n'))
+      if (parsed is SpannableStringBuilder && !parsed.endsWith('\n')) {
+        parsed
+      } else {
+        SpannableStringBuilder(parsed.trimEnd('\n'))
+      }
     } catch (e: Exception) {
       Log.w(TAG, "Error parsing HTML: ${e.message}")
       null

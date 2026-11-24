@@ -855,7 +855,7 @@ class HtmlToSpannedConverter(
         val parts: Array<String?> =
           css
             .substring(4, css.length - 1)
-            .split(",".toRegex())
+            .split(',')
             .dropLastWhile { it.isEmpty() }
             .toTypedArray()
         val r = parts[0]!!.trim { it <= Strings.SPACE_CHAR }.toInt()
@@ -868,7 +868,7 @@ class HtmlToSpannedConverter(
         val parts: Array<String?> =
           css
             .substring(5, css.length - 1)
-            .split(",".toRegex())
+            .split(',')
             .dropLastWhile { it.isEmpty() }
             .toTypedArray()
         val r = parts[0]!!.trim { it <= Strings.SPACE_CHAR }.toInt()

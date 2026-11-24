@@ -37,18 +37,18 @@ Size EnrichedTextViewShadowNode::measureContent(
     const LayoutContext &layoutContext,
     const LayoutConstraints &layoutConstraints) const {
   const auto &props = getConcreteProps();
-  auto key =
-      EnrichedTextKey::fromProps(props, layoutContext.fontSizeMultiplier);
+  auto key = EnrichedTextKey::fromProps(
+      std::static_pointer_cast<const EnrichedTextViewProps>(getProps()),
+      layoutContext.fontSizeMultiplier);
 
   EnrichedPreparedText *preparedText =
       (EnrichedPreparedText *)unwrapManagedObject(prepare(key));
 
-  CGSize size =
-      [EnrichedTextBuilder sizeOfText:preparedText.text
-                   constrainedToWidth:layoutConstraints.maximumSize.width
-                 maximumNumberOfLines:props.numberOfLines
-                        lineBreakMode:EnrichedNSLineBreakModeFromEllipsizeMode(
-                                          props.ellipsizeMode)];
+  CGSize size = [preparedText
+      sizeConstrainedToWidth:layoutConstraints.maximumSize.width
+        maximumNumberOfLines:props.numberOfLines
+               lineBreakMode:EnrichedNSLineBreakModeFromEllipsizeMode(
+                                 props.ellipsizeMode)];
 
   return layoutConstraints.clamp({size.width, size.height});
 }
@@ -57,8 +57,9 @@ void EnrichedTextViewShadowNode::layout(LayoutContext layoutContext) {
   ensureUnsealed();
 
   // Measured, or not (Yoga knew the size): the view gets the text either way
-  auto key = EnrichedTextKey::fromProps(getConcreteProps(),
-                                        layoutContext.fontSizeMultiplier);
+  auto key = EnrichedTextKey::fromProps(
+      std::static_pointer_cast<const EnrichedTextViewProps>(getProps()),
+      layoutContext.fontSizeMultiplier);
   const auto &preparedText = prepare(key);
   const auto &state = getStateData();
 

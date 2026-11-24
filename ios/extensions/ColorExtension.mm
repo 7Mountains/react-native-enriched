@@ -38,7 +38,29 @@
 @end
 
 @implementation UIColor (FromString)
+// Parsed once per string: the same colors come with every text
 + (UIColor *)colorFromString:(NSString *)string {
+  if (!string)
+    return nil;
+
+  static NSCache<NSString *, id> *colors;
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    colors = [NSCache new];
+    colors.countLimit = 256;
+  });
+
+  id cached = [colors objectForKey:string];
+  if (cached != nil) {
+    return cached == NSNull.null ? nil : cached;
+  }
+
+  UIColor *color = [self parseColorFromString:string];
+  [colors setObject:color ?: NSNull.null forKey:[string copy]];
+  return color;
+}
+
++ (UIColor *)parseColorFromString:(NSString *)string {
   if (!string)
     return nil;
 

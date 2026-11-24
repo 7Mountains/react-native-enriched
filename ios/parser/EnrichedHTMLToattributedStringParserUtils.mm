@@ -1,10 +1,21 @@
 #import "EnrichedHTMLToAttributedStringParserUtils.h"
 #import "BaseStyleProtocol.h"
+#include <vector>
 
 NSDictionary<NSString *, NSString *> *
 HTMLAttributesFromNodeAndParents(xmlNodePtr node) {
   if (!node)
     return nullptr;
+
+  BOOL hasAttributes = NO;
+  for (xmlNodePtr n = node; n; n = n->parent) {
+    if (n->type == XML_ELEMENT_NODE && n->properties) {
+      hasAttributes = YES;
+      break;
+    }
+  }
+  if (!hasAttributes)
+    return @{};
 
   NSMutableDictionary *result = [NSMutableDictionary dictionary];
 
@@ -113,53 +124,65 @@ BOOL isHTMLWhitespace(unsigned char c) {
   return c == ' ' || c == '\n' || c == '\t' || c == '\r' || c == '\f';
 }
 
-NSString *collapseWhiteSpace(NSString *text) {
-  CFIndex len = CFStringGetLength((CFStringRef)text);
-  if (len == 0)
-    return text;
+static inline BOOL isCollapsibleWhiteSpace(const unsigned char *c) {
+  return *c == ' ' || *c == '\n' || *c == '\t' || *c == '\r' || *c == '\f';
+}
 
-  CFMutableStringRef out = CFStringCreateMutable(kCFAllocatorDefault, len);
+static inline BOOL isNoBreakSpace(const unsigned char *c) {
+  return c[0] == 0xC2 && c[1] == 0xA0;
+}
 
-  CFStringInlineBuffer buffer;
-  CFStringInitInlineBuffer((CFStringRef)text, &buffer, CFRangeMake(0, len));
+NSString *_Nullable collapsedWhiteSpaceString(const char *utf8,
+                                              BOOL dropsLeadingSpace) {
+  const unsigned char *src = (const unsigned char *)utf8;
 
-  BOOL lastWasWhitespace = NO;
-
-  for (CFIndex i = 0; i < len; i++) {
-    unichar c = CFStringGetCharacterFromInlineBuffer(&buffer, i);
-
-    BOOL isWhitespace = (c == ' ' || c == '\n' || c == '\t' || c == '\r' ||
-                         c == '\f' || c == 0x00A0);
-
-    if (isWhitespace) {
-      if (!lastWasWhitespace) {
-        UniChar space = ' ';
-        CFStringAppendCharacters(out, &space, 1);
-        lastWasWhitespace = YES;
+  BOOL needsCollapse = NO;
+  BOOL lastWasSpace = NO;
+  size_t len = 0;
+  for (; src[len]; len++) {
+    if (src[len] == ' ') {
+      if (lastWasSpace) {
+        needsCollapse = YES;
       }
+      lastWasSpace = YES;
+    } else if (isCollapsibleWhiteSpace(src + len) ||
+               isNoBreakSpace(src + len)) {
+      needsCollapse = YES;
     } else {
-      CFStringAppendCharacters(out, &c, 1);
-      lastWasWhitespace = NO;
+      lastWasSpace = NO;
     }
   }
 
-  return CFBridgingRelease(out);
-}
+  if (!needsCollapse)
+    return [NSString stringWithUTF8String:dropsLeadingSpace && src[0] == ' '
+                                              ? utf8 + 1
+                                              : utf8];
 
-NSString *collapseWhiteSpaceIfNeeded(NSString *text) {
-  if (text.length == 0)
-    return text;
+  std::vector<char> out(len + 1);
+  size_t o = 0;
+  lastWasSpace = NO;
+  for (size_t i = 0; i < len; i++) {
+    BOOL isWhitespace = isCollapsibleWhiteSpace(src + i);
+    if (!isWhitespace && isNoBreakSpace(src + i)) {
+      isWhitespace = YES;
+      i++;
+    }
 
-  static NSCharacterSet *ws;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    ws = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-  });
+    if (isWhitespace) {
+      if (!lastWasSpace) {
+        if (!(dropsLeadingSpace && o == 0)) {
+          out[o++] = ' ';
+        }
+        lastWasSpace = YES;
+      }
+    } else {
+      out[o++] = (char)src[i];
+      lastWasSpace = NO;
+    }
+  }
+  out[o] = '\0';
 
-  if ([text rangeOfCharacterFromSet:ws].location == NSNotFound)
-    return text;
-
-  return collapseWhiteSpace(text);
+  return [NSString stringWithUTF8String:out.data()];
 }
 
 BOOL isWhiteSpaceOnly(NSString *text) {

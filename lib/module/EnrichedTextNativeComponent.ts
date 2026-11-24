@@ -26,7 +26,7 @@ export interface OnMentionPressEvent {
 
 export interface NativeProps extends ViewProps {
   text: string;
-  htmlStyle?: CodegenTypes.UnsafeMixed;
+  htmlStyleId?: CodegenTypes.WithDefault<CodegenTypes.Int32, 0>;
   numberOfLines?: CodegenTypes.WithDefault<CodegenTypes.Int32, 0>;
   ellipsizeMode?: CodegenTypes.WithDefault<string, 'tail'>;
   selectable?: CodegenTypes.WithDefault<boolean, false>;

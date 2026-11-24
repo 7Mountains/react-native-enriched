@@ -1,9 +1,5 @@
 package com.swmansion.enriched.text
 
-import android.content.Context
-import com.facebook.react.bridge.Dynamic
-import com.facebook.react.bridge.ReadableMap
-import com.facebook.react.bridge.ReadableType
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.uimanager.BackgroundStyleApplicator
 import com.facebook.react.uimanager.LengthPercentage
@@ -19,7 +15,6 @@ import com.facebook.react.uimanager.style.BorderRadiusProp
 import com.facebook.react.uimanager.style.LogicalEdge
 import com.facebook.react.viewmanagers.EnrichedTextViewManagerDelegate
 import com.facebook.react.viewmanagers.EnrichedTextViewManagerInterface
-import com.facebook.yoga.YogaMeasureMode
 import com.swmansion.enriched.text.events.EnrichedTextSpanPressEvent
 
 @ReactModule(name = EnrichedTextViewManager.NAME)
@@ -59,11 +54,11 @@ class EnrichedTextViewManager :
     view?.setValue(value)
   }
 
-  override fun setHtmlStyle(
+  override fun setHtmlStyleId(
     view: EnrichedTextView?,
-    value: Dynamic,
+    value: Int,
   ) {
-    view?.setHtmlStyle(if (value.type == ReadableType.Map) value.asMap() else null)
+    view?.setHtmlStyleId(value)
   }
 
   override fun setNumberOfLines(
@@ -243,18 +238,6 @@ class EnrichedTextViewManager :
     view.setPreparedText(EnrichedTextStateReader.readText(stateWrapper))
     return null
   }
-
-  override fun measure(
-    context: Context,
-    localData: ReadableMap?,
-    props: ReadableMap?,
-    state: ReadableMap?,
-    width: Float,
-    widthMode: YogaMeasureMode?,
-    height: Float,
-    heightMode: YogaMeasureMode?,
-    attachmentsPositions: FloatArray?,
-  ): Long = EnrichedTextMeasurement.measure(context, props, width, widthMode, height, heightMode)
 
   companion object {
     const val NAME = "EnrichedTextView"
