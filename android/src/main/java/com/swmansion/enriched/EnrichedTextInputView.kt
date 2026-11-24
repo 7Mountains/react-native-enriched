@@ -58,6 +58,7 @@ import com.swmansion.enriched.spans.EnrichedSpans
 import com.swmansion.enriched.spans.ISpanConfig
 import com.swmansion.enriched.spans.TextStyle
 import com.swmansion.enriched.spans.interfaces.EnrichedSpan
+import com.swmansion.enriched.spans.utils.ForceRedrawSpan
 import com.swmansion.enriched.styles.HtmlStyle
 import com.swmansion.enriched.textinput.utils.EnrichedEditableFactory
 import com.swmansion.enriched.utils.EnrichedSelection
@@ -528,7 +529,9 @@ class EnrichedTextInputView :
 
     if (start == -1 || end == -1) return
 
-    invalidate()
+    val redrawSpan = ForceRedrawSpan()
+    text.setSpan(redrawSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    text.removeSpan(redrawSpan)
   }
 
   private fun getActualIndex(visibleIndex: Int): Int {
