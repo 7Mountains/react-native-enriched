@@ -1,6 +1,6 @@
 {
   "name": "react-native-enriched",
-  "version": "0.0.93",
+  "version": "0.0.94",
   "description": "Rich Text Editor component for React Native",
   "source": "./src/index.tsx",
   "main": "./lib/module/index.js",
