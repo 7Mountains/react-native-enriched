@@ -2,6 +2,8 @@
 #import <Foundation/Foundation.h>
 #import <libxml/tree.h>
 
+#include <string>
+
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol BaseStyleProtocol;
@@ -20,12 +22,14 @@ bool isBlockTag(const char *tag);
 
 BOOL isHTMLWhitespace(unsigned char c);
 
-// The text with its white space collapsed to single spaces, without its
-// leading space when `dropsLeadingSpace`
-NSString *_Nullable collapsedWhiteSpaceString(const char *utf8,
-                                              BOOL dropsLeadingSpace);
+// Appends the text with its white space collapsed to single spaces, without
+// its leading space when `dropsLeadingSpace`. `buffer` holds the collapsed
+// text, reused between the calls. Returns the length appended
+NSUInteger appendCollapsedWhiteSpace(NSMutableString *text, const char *utf8,
+                                     BOOL dropsLeadingSpace,
+                                     std::string &buffer);
 
-BOOL isWhiteSpaceOnly(NSString *text);
+BOOL isWhiteSpaceOnly(NSString *text, NSRange range);
 
 BOOL HTMLIsLastParagraphInBlockContext(xmlNodePtr node, const xmlChar *tag,
                                        const xmlChar *parentTag, BOOL isLast);

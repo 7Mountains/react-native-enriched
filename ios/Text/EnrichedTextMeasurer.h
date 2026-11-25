@@ -1,4 +1,5 @@
 #pragma once
+#import "EnrichedLaidOutText.h"
 #import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -7,10 +8,10 @@ NS_ASSUME_NONNULL_BEGIN
 // them out (see `EnrichedTextBuilder`), on any thread
 @interface EnrichedTextMeasurer : NSObject
 
-+ (CGSize)sizeOfText:(NSAttributedString *)text
-      constrainedToWidth:(CGFloat)width
-    maximumNumberOfLines:(NSInteger)maximumNumberOfLines
-           lineBreakMode:(NSLineBreakMode)lineBreakMode;
++ (EnrichedLaidOutText *)layOutText:(NSAttributedString *)text
+                 constrainedToWidth:(CGFloat)width
+               maximumNumberOfLines:(NSInteger)maximumNumberOfLines
+                      lineBreakMode:(NSLineBreakMode)lineBreakMode;
 
 @end
 

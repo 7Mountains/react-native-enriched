@@ -3,9 +3,7 @@ package com.swmansion.enriched.text
 import android.content.Context
 import android.text.Layout
 import com.facebook.proguard.annotations.DoNotStrip
-import com.facebook.react.common.ReactConstants
 import com.facebook.react.uimanager.PixelUtil
-import com.facebook.react.views.text.ReactTypefaceUtils
 import com.facebook.yoga.YogaMeasureMode
 import com.facebook.yoga.YogaMeasureOutput
 import com.swmansion.enriched.utils.LineSeparatorTransformationMethod
@@ -24,6 +22,8 @@ internal class EnrichedTextMeasurementResult(
   @JvmField @DoNotStrip val text: Any,
   /** The width (dp) the text is laid out for, NaN when it doesn't depend on it */
   @JvmField @DoNotStrip val builtWidth: Float,
+  /** Whether other nodes can show the text, see [EnrichedTextContent.isShareable] */
+  @JvmField @DoNotStrip val isShareable: Boolean,
 )
 
 /**
@@ -41,6 +41,9 @@ internal object EnrichedTextMeasurement {
 
   /**
    * @param text The text of the props, `null` with [offeredText]
+   * @param fontWeight Parsed by the shadow node, as `ReactTypefaceUtils.parseFontWeight`
+   * @param fontStyle Parsed by the shadow node, as `ReactTypefaceUtils.parseFontStyle`
+   * @param ellipsizeMode The code of the mode, see [toEllipsizeMode]
    * @param offeredText The text built by a previous measurement of the same
    * props and width, laid out again without parsing the HTML
    */
@@ -52,11 +55,11 @@ internal object EnrichedTextMeasurement {
     fontSize: Float,
     lineHeight: Float,
     fontFamily: String?,
-    fontWeight: String?,
-    fontStyle: String?,
+    fontWeight: Int,
+    fontStyle: Int,
     allowFontScaling: Boolean,
     numberOfLines: Int,
-    ellipsizeMode: String?,
+    ellipsizeMode: Int,
     minWidth: Float,
     maxWidth: Float,
     minHeight: Float,
@@ -70,11 +73,11 @@ internal object EnrichedTextMeasurement {
         fontSize = fontSize,
         lineHeight = lineHeight,
         fontFamily = fontFamily,
-        fontWeight = if (fontWeight != null) ReactTypefaceUtils.parseFontWeight(fontWeight) else ReactConstants.UNSET,
-        fontStyle = if (fontStyle != null) ReactTypefaceUtils.parseFontStyle(fontStyle) else ReactConstants.UNSET,
+        fontWeight = fontWeight,
+        fontStyle = fontStyle,
         allowFontScaling = allowFontScaling,
         numberOfLines = numberOfLines,
-        ellipsizeMode = ellipsizeMode,
+        ellipsizeMode = toEllipsizeMode(ellipsizeMode),
       )
 
     return measure(
@@ -87,6 +90,22 @@ internal object EnrichedTextMeasurement {
       offeredText as? CharSequence,
     )
   }
+
+  // The codes of `EnrichedTextMeasurementManager.cpp`, to the values of the
+  // prop: string constants, not made for each measurement
+  private fun toEllipsizeMode(code: Int): String? =
+    when (code) {
+      ELLIPSIZE_HEAD -> "head"
+      ELLIPSIZE_MIDDLE -> "middle"
+      ELLIPSIZE_TAIL -> "tail"
+      ELLIPSIZE_CLIP -> "clip"
+      else -> null
+    }
+
+  private const val ELLIPSIZE_HEAD = 1
+  private const val ELLIPSIZE_MIDDLE = 2
+  private const val ELLIPSIZE_TAIL = 3
+  private const val ELLIPSIZE_CLIP = 4
 
   // As `FabricUIManager.measure`: the constraints (dp) of the shadow node to
   // the size (px) and the mode of Yoga
@@ -115,7 +134,7 @@ internal object EnrichedTextMeasurement {
     offeredText: CharSequence?,
   ): EnrichedTextMeasurementResult {
     val typeface = params.typeface(context.assets)
-    val paint = EnrichedTextLayout.createPaint(params, typeface)
+    val paint = EnrichedTextLayout.obtainPaint(params, typeface)
     val hasWidth = widthMode != YogaMeasureMode.UNDEFINED && !width.isNaN() && !width.isInfinite()
     val editorWidth = if (hasWidth) width.toInt() else 0
     val content = offeredText ?: EnrichedTextContent.forView(buildContent(context, params, editorWidth))
@@ -172,6 +191,7 @@ internal object EnrichedTextMeasurement {
         ),
       text = content,
       builtWidth = builtWidth,
+      isShareable = EnrichedTextContent.isShareable(content),
     )
   }
 

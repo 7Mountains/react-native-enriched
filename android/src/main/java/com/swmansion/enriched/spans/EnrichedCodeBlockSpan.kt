@@ -56,8 +56,8 @@ class EnrichedCodeBlockSpan(
     val isFirstLineOfSpan = start == spanStart
     val isLastLineOfSpan = end == spanEnd || (spanEnd + 1 == end && text[spanEnd] == '\n')
 
-    val path = Path()
-    val radii = floatArrayOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)
+    path.reset()
+    radii.fill(0f)
 
     if (isFirstLineOfSpan) {
       // Top-Left and Top-Right corners
@@ -75,7 +75,7 @@ class EnrichedCodeBlockSpan(
       radii[7] = radius
     }
 
-    val rect = RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+    rect.set(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
 
     path.addRoundRect(rect, radii, Path.Direction.CW)
     canvas.drawPath(path, p)
@@ -85,4 +85,11 @@ class EnrichedCodeBlockSpan(
   override fun rebuildWithStyle(htmlStyle: HtmlStyle): EnrichedCodeBlockSpan = EnrichedCodeBlockSpan(htmlStyle)
 
   override fun copy(): EnrichedCodeBlockSpan = EnrichedCodeBlockSpan(htmlStyle)
+
+  // Reused by the drawing of each line, always on the UI thread
+  private companion object {
+    val path = Path()
+    val rect = RectF()
+    val radii = FloatArray(8)
+  }
 }

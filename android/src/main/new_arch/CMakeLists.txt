@@ -26,6 +26,7 @@ target_include_directories(
     PUBLIC
     .
     ./react/renderer/components/${LIB_LITERAL}
+    ${LIB_ANDROID_DIR}/../cpp
     ${LIB_ANDROID_GENERATED_JNI_DIR}
     ${LIB_ANDROID_GENERATED_COMPONENTS_DIR}
 )

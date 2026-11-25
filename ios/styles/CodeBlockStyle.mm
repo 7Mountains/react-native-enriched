@@ -204,9 +204,12 @@ static NSString *const CodeBlockMarker = @"codeblock";
 }
 
 - (BOOL)styleCondition:(id _Nullable)value range:(NSRange)range {
-  NSParagraphStyle *paragraph = (NSParagraphStyle *)value;
-  return paragraph != nullptr && paragraph.textLists.count == 1 &&
-         paragraph.textLists.firstObject.markerFormat == CodeBlockMarker;
+  return [CodeBlockStyle isCodeBlockParagraphStyle:(NSParagraphStyle *)value];
+}
+
++ (BOOL)isCodeBlockParagraphStyle:(NSParagraphStyle *)style {
+  return style != nullptr && style.textLists.count == 1 &&
+         style.textLists.firstObject.markerFormat == CodeBlockMarker;
 }
 
 - (BOOL)detectStyle:(NSRange)range {

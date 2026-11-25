@@ -132,6 +132,8 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
 
 @interface CodeBlockStyle : NSObject <BaseStyleProtocol>
 - (void)manageCodeBlockFontAndColor;
+// Whether the paragraph is of a code block, drawn as wide as its container
++ (BOOL)isCodeBlockParagraphStyle:(nullable NSParagraphStyle *)style;
 @end
 
 @interface ImageStyle : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
@@ -146,6 +148,8 @@ static NSString *const ReadOnlyParagraphKey = @"ReadOnlyParagraph";
     : NSObject <BaseStyleProtocol, ParameterizedStyleProtocol>
 - (BOOL)handleNewlinesInRange:(NSRange)range replacementText:(NSString *)text;
 - (BOOL)isCheckedAt:(NSUInteger)location;
+// In any text, e.g. of the layout manager drawing it
++ (BOOL)isCheckedAt:(NSUInteger)location inText:(NSAttributedString *)text;
 - (void)toggleCheckedAt:(NSUInteger)location;
 - (void)addCheckBoxAtRange:(NSRange)range isChecked:(BOOL)isChecked;
 @property(nonatomic, strong)

@@ -1,13 +1,12 @@
 #import "EnrichedTextView.h"
-#import "AttachmentInvalidationBatcher.h"
 #import "ColorExtension.h"
 #import "EnrichedPreparedText.h"
 #import "EnrichedTextAccessibilityElement.h"
 #import "EnrichedTextBuilder.h"
+#import "EnrichedTextContent.h"
 #import "EnrichedTextPressRecognizer.h"
 #import "EnrichedTextStyleFactory.h"
 #import "InputConfig.h"
-#import "LayoutManagerExtension.h"
 #import "MediaAttachment.h"
 #import "MentionParams.h"
 #import "StringExtension.h"
@@ -57,12 +56,9 @@ static MentionEvent mentionEventFrom(MentionParams *mention) {
 @end
 
 @implementation EnrichedTextView {
-  UITextView *_textView;
-  NSTextStorage *_textStorage;
-  EnrichedPreparedText *_preparedText;
+  EnrichedTextContent *_content;
   EnrichedPreparedText *_pendingPreparedText;
   NSDictionary<NSNumber *, id> *_stylesDict;
-  AttachmentInvalidationBatcher *_attachmentBatcher;
   EnrichedTextPressRecognizer *_pressRecognizer;
   CAShapeLayer *_pressLayer;
   NSInteger _numberOfLines;
@@ -95,61 +91,54 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
     _props = defaultProps;
     _lineBreakMode = NSLineBreakByTruncatingTail;
 
-    [self setupTextView];
+    // Behind the text
+    _pressLayer = [CAShapeLayer layer];
+
+    _pressRecognizer = [[EnrichedTextPressRecognizer alloc] init];
+    _pressRecognizer.pressDelegate = self;
+    _pressRecognizer.delegate = self;
+
+    [self setupContentSelectable:NO];
 
     // For the drawing of the lists, quotes, code blocks and checkboxes
     _stylesDict = [EnrichedTextStyleFactory makeStylesWithInput:self];
-    _attachmentBatcher =
-        [[AttachmentInvalidationBatcher alloc] initWithTextView:_textView];
   }
   return self;
 }
 
-- (void)setupTextView {
-  // TextKit 1, as the measurement (EnrichedTextBuilder) and the drawing of
-  // the paragraphs (LayoutManagerExtension)
-  _textStorage = [[NSTextStorage alloc] init];
-  NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
-  NSTextContainer *textContainer =
-      [[NSTextContainer alloc] initWithSize:CGSizeMake(0, CGFLOAT_MAX)];
-  textContainer.widthTracksTextView = NO;
-  textContainer.heightTracksTextView = NO;
-  [EnrichedTextBuilder configureTextContainer:textContainer
-                         maximumNumberOfLines:_numberOfLines
-                                lineBreakMode:_lineBreakMode];
-  [layoutManager addTextContainer:textContainer];
-  [_textStorage addLayoutManager:layoutManager];
+// Made again when the text becomes selectable or not, with the text it shows
+- (void)setupContentSelectable:(BOOL)selectable {
+  UIView *previousView = _content.view;
+  EnrichedPreparedText *preparedText = _content.preparedText;
+  [previousView removeFromSuperview];
 
-  _textView = [[UITextView alloc] initWithFrame:CGRectZero
-                                  textContainer:textContainer];
-  _textView.editable = NO;
-  _textView.selectable = NO;
-  _textView.scrollEnabled = NO;
-  _textView.backgroundColor = UIColor.clearColor;
-  _textView.textContainerInset = UIEdgeInsetsZero;
-  _textView.dataDetectorTypes = UIDataDetectorTypeNone;
-  _textView.textDragInteraction.enabled = NO;
-  _textView.layoutManager.input = self;
-  [self addSubview:_textView];
+  _content = [[EnrichedTextContent alloc] initWithHost:self
+                                            selectable:selectable
+                                  maximumNumberOfLines:_numberOfLines
+                                         lineBreakMode:_lineBreakMode];
+  UIView *view = _content.view;
+  // Set, it's passed down to all the subviews of the text view
+  view.tintColor = RCTUIColorFromSharedColor(_selectionColor);
+  [self addSubview:view];
+  [self.layer insertSublayer:_pressLayer below:view.layer];
+  [view addGestureRecognizer:_pressRecognizer];
+  [_content setFrame:previousView != nil ? previousView.frame : CGRectZero
+            nextText:_pendingPreparedText];
 
-  // Behind the text
-  _pressLayer = [CAShapeLayer layer];
-  [_textView.layer insertSublayer:_pressLayer atIndex:0];
-
-  _pressRecognizer = [[EnrichedTextPressRecognizer alloc] init];
-  _pressRecognizer.pressDelegate = self;
-  _pressRecognizer.delegate = self;
-  [_textView addGestureRecognizer:_pressRecognizer];
+  if (preparedText != nil) {
+    [self setPreparedText:preparedText];
+  }
+  _accessibilityElements = nil;
 }
 
 // MARK: - Style host
 
 - (UITextView *)textView {
-  return _textView;
+  return _content.textView;
 }
 
 - (InputConfig *)config {
-  return _preparedText.config;
+  return _content.preparedText.config;
 }
 
 - (NSDictionary<NSAttributedStringKey, id> *)defaultTypingAttributes {
@@ -161,7 +150,7 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 }
 
 - (void)mediaAttachmentDidUpdate:(MediaAttachment *)attachment {
-  [_attachmentBatcher enqueueAttachment:attachment];
+  [_content redrawAttachment:attachment];
 }
 
 // MARK: - Props
@@ -178,20 +167,18 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
       lineBreakMode != _lineBreakMode) {
     _numberOfLines = newProps.numberOfLines;
     _lineBreakMode = lineBreakMode;
-    [EnrichedTextBuilder configureTextContainer:_textView.textContainer
-                           maximumNumberOfLines:_numberOfLines
-                                  lineBreakMode:_lineBreakMode];
+    [_content setMaximumNumberOfLines:_numberOfLines
+                        lineBreakMode:_lineBreakMode];
   }
 
-  if (_textView.selectable != newProps.selectable) {
-    _textView.selectable = newProps.selectable;
-    _textView.textDragInteraction.enabled = NO;
+  if (_content.isSelectable != newProps.selectable) {
+    [self setupContentSelectable:newProps.selectable];
   }
 
   // Set, it's passed down to all the subviews of the text view
   if (!(newProps.selectionColor == _selectionColor)) {
     _selectionColor = newProps.selectionColor;
-    _textView.tintColor = RCTUIColorFromSharedColor(_selectionColor);
+    _content.view.tintColor = RCTUIColorFromSharedColor(_selectionColor);
   }
 
   _pressableLinks = newProps.pressableLinks;
@@ -237,33 +224,13 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 }
 
 - (void)setPreparedText:(EnrichedPreparedText *)preparedText {
-  if (preparedText == _preparedText) {
+  if (preparedText == _content.preparedText) {
     return;
   }
 
   [self cancelCurrentPress];
-
-  _preparedText = preparedText;
-
-  NSTextContainer *textContainer = _textView.textContainer;
-  if (textContainer.size.height != CGFLOAT_MAX) {
-    [_textStorage setAttributedString:[[NSAttributedString alloc] init]];
-    textContainer.size = CGSizeMake(textContainer.size.width, CGFLOAT_MAX);
-  }
-
-  [_textStorage setAttributedString:preparedText.text];
+  [_content setPreparedText:preparedText];
   _accessibilityElements = nil;
-
-  // Built for a host without a view: the attachments are redrawn by this one
-  // once their images load
-  [_textStorage enumerateAttribute:NSAttachmentAttributeName
-                           inRange:NSMakeRange(0, _textStorage.length)
-                           options:0
-                        usingBlock:^(id value, NSRange range, BOOL *stop) {
-                          if ([value isKindOfClass:[MediaAttachment class]]) {
-                            ((MediaAttachment *)value).delegate = self;
-                          }
-                        }];
 }
 
 // MARK: - Layout
@@ -274,51 +241,24 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 
   // The measured text, inside the padding and the border
   CGRect contentFrame = RCTCGRectFromRect(layoutMetrics.getContentFrame());
-  if (_pendingPreparedText != nil && _pendingPreparedText != _preparedText &&
-      _textStorage.length > 0 &&
-      !CGSizeEqualToSize(_textView.frame.size, contentFrame.size)) {
-    [_textStorage setAttributedString:[[NSAttributedString alloc] init]];
-  }
 
-  // Resized, the text view fits its container to its size and lays the text
-  // out again
-  if (!CGRectEqualToRect(_textView.frame, contentFrame)) {
-    _textView.frame = contentFrame;
+  if (!CGRectEqualToRect(_content.view.frame, contentFrame)) {
+    // Behind the text, in its coordinates: not animated as a layer of its own
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    _pressLayer.frame = contentFrame;
+    [CATransaction commit];
   }
-  [self fitTextContainer];
+  [_content setFrame:contentFrame nextText:_pendingPreparedText];
   _accessibilityElements = nil;
-}
-
-// As wide as the text view and, as in the measurement, as high as the text
-// needs: with the height of the view, rounded, the last line could be left
-// out. Not resized when the text already fits: each resize lays it out again
-- (void)fitTextContainer {
-  NSTextContainer *textContainer = _textView.textContainer;
-  CGFloat width = _textView.frame.size.width;
-
-  if (textContainer.size.width == width &&
-      (textContainer.size.height == CGFLOAT_MAX || [self isTextLaidOut])) {
-    return;
-  }
-
-  textContainer.size = CGSizeMake(width, CGFLOAT_MAX);
-}
-
-// Whether the whole text is laid out in the container
-- (BOOL)isTextLaidOut {
-  NSLayoutManager *layoutManager = _textView.layoutManager;
-  NSRange glyphRange =
-      [layoutManager glyphRangeForTextContainer:_textView.textContainer];
-  return NSMaxRange(glyphRange) >= layoutManager.numberOfGlyphs;
 }
 
 - (void)prepareForRecycle {
   [super prepareForRecycle];
 
   [self cancelCurrentPress];
-  _preparedText = nil;
   _pendingPreparedText = nil;
-  [_textStorage setAttributedString:[[NSAttributedString alloc] init]];
+  [_content clear];
   _accessibilityElements = nil;
 }
 
@@ -336,14 +276,15 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
     return nil;
   }
 
-  NSRange textRange = NSMakeRange(0, _textStorage.length);
+  NSTextStorage *textStorage = _content.textStorage;
+  NSRange textRange = NSMakeRange(0, textStorage.length);
   NSRange range;
 
   if (_pressableLinks) {
-    id url = [_textStorage attribute:[LinkStyle attributeKey]
-                             atIndex:index
-               longestEffectiveRange:&range
-                             inRange:textRange];
+    id url = [textStorage attribute:[LinkStyle attributeKey]
+                            atIndex:index
+              longestEffectiveRange:&range
+                            inRange:textRange];
     if ([url isKindOfClass:NSString.class]) {
       EnrichedTextPressableRange *link =
           [[EnrichedTextPressableRange alloc] init];
@@ -354,10 +295,10 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
   }
 
   if (_pressableMentions) {
-    id mention = [_textStorage attribute:[MentionStyle attributeKey]
-                                 atIndex:index
-                   longestEffectiveRange:&range
-                                 inRange:textRange];
+    id mention = [textStorage attribute:[MentionStyle attributeKey]
+                                atIndex:index
+                  longestEffectiveRange:&range
+                                inRange:textRange];
     if ([mention isKindOfClass:MentionParams.class]) {
       EnrichedTextPressableRange *mentionRange =
           [[EnrichedTextPressableRange alloc] init];
@@ -422,15 +363,14 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 
 // The character under the point: the nearest glyph only when it's touched
 - (NSUInteger)characterIndexAtPoint:(CGPoint)point {
-  if (_textStorage.length == 0) {
+  if (_content.textStorage.length == 0) {
     return NSNotFound;
   }
 
-  NSLayoutManager *layoutManager = _textView.layoutManager;
-  NSTextContainer *textContainer = _textView.textContainer;
-  UIEdgeInsets inset = _textView.textContainerInset;
-  CGPoint containerPoint =
-      CGPointMake(point.x - inset.left, point.y - inset.top);
+  // In the content view: its container at its origin, without an inset
+  NSLayoutManager *layoutManager = _content.layoutManager;
+  NSTextContainer *textContainer = _content.textContainer;
+  CGPoint containerPoint = point;
 
   NSUInteger glyphIndex = [layoutManager glyphIndexForPoint:containerPoint
                                             inTextContainer:textContainer
@@ -448,19 +388,16 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 
 - (void)enumerateRectsForRange:(EnrichedTextPressableRange *)range
                     usingBlock:(void (^)(CGRect rect, BOOL *stop))block {
-  NSLayoutManager *layoutManager = _textView.layoutManager;
-  UIEdgeInsets inset = _textView.textContainerInset;
+  NSLayoutManager *layoutManager = _content.layoutManager;
   NSRange glyphRange = [layoutManager glyphRangeForCharacterRange:range.range
                                              actualCharacterRange:NULL];
 
   [layoutManager
       enumerateEnclosingRectsForGlyphRange:glyphRange
                   withinSelectedGlyphRange:NSMakeRange(NSNotFound, 0)
-                           inTextContainer:_textView.textContainer
+                           inTextContainer:_content.textContainer
                                 usingBlock:^(CGRect rect, BOOL *stop) {
-                                  block(
-                                      CGRectOffset(rect, inset.left, inset.top),
-                                      stop);
+                                  block(rect, stop);
                                 }];
 }
 
@@ -516,10 +453,11 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
                                                        kPressedCornerRadius]];
                       }];
 
-    UIColor *color = [_textStorage attribute:NSForegroundColorAttributeName
-                                     atIndex:range.range.location
-                              effectiveRange:NULL]
-                         ?: UIColor.labelColor;
+    UIColor *color =
+        [_content.textStorage attribute:NSForegroundColorAttributeName
+                                atIndex:range.range.location
+                         effectiveRange:NULL]
+            ?: UIColor.labelColor;
 
     _pressLayer.fillColor =
         [[color resolvedColorWithTraitCollection:self.traitCollection]
@@ -603,11 +541,12 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 }
 
 - (NSArray<EnrichedTextAccessibilityElement *> *)buildAccessibilityElements {
-  if (_textStorage.length == 0) {
+  NSString *text = _content.textStorage.string;
+  if (text.length == 0) {
     return @[];
   }
 
-  CGRect textFrame = _textView.frame;
+  CGRect textFrame = _content.view.frame;
   NSMutableArray<EnrichedTextAccessibilityElement *> *elements =
       [NSMutableArray array];
 
@@ -615,8 +554,7 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
       [[EnrichedTextAccessibilityElement alloc]
           initWithAccessibilityContainer:self];
   NSString *label = super.accessibilityLabel;
-  textElement.accessibilityLabel =
-      label.length > 0 ? label : _textStorage.string;
+  textElement.accessibilityLabel = label.length > 0 ? label : text;
   textElement.accessibilityTraits =
       super.accessibilityTraits | UIAccessibilityTraitStaticText;
   textElement.accessibilityFrameInContainerSpace = textFrame;
@@ -646,8 +584,7 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
         [[EnrichedTextAccessibilityElement alloc]
             initWithAccessibilityContainer:self];
     element.pressableRange = range;
-    element.accessibilityLabel =
-        [_textStorage.string substringWithRange:range.range];
+    element.accessibilityLabel = [text substringWithRange:range.range];
     element.accessibilityTraits = range.url != nil ? UIAccessibilityTraitLink
                                                    : UIAccessibilityTraitButton;
     element.accessibilityFrameInContainerSpace =
@@ -665,36 +602,37 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 // The links and the mentions that can be pressed, in the order of the text
 - (NSArray<EnrichedTextPressableRange *> *)pressableRanges {
   NSMutableArray<EnrichedTextPressableRange *> *ranges = [NSMutableArray array];
-  NSRange textRange = NSMakeRange(0, _textStorage.length);
+  NSTextStorage *textStorage = _content.textStorage;
+  NSRange textRange = NSMakeRange(0, textStorage.length);
 
   if (_pressableLinks) {
-    [_textStorage enumerateAttribute:[LinkStyle attributeKey]
-                             inRange:textRange
-                             options:0
-                          usingBlock:^(id value, NSRange range, BOOL *stop) {
-                            if ([value isKindOfClass:NSString.class]) {
-                              EnrichedTextPressableRange *link =
-                                  [[EnrichedTextPressableRange alloc] init];
-                              link.range = range;
-                              link.url = value;
-                              [ranges addObject:link];
-                            }
-                          }];
+    [textStorage enumerateAttribute:[LinkStyle attributeKey]
+                            inRange:textRange
+                            options:0
+                         usingBlock:^(id value, NSRange range, BOOL *stop) {
+                           if ([value isKindOfClass:NSString.class]) {
+                             EnrichedTextPressableRange *link =
+                                 [[EnrichedTextPressableRange alloc] init];
+                             link.range = range;
+                             link.url = value;
+                             [ranges addObject:link];
+                           }
+                         }];
   }
 
   if (_pressableMentions) {
-    [_textStorage enumerateAttribute:[MentionStyle attributeKey]
-                             inRange:textRange
-                             options:0
-                          usingBlock:^(id value, NSRange range, BOOL *stop) {
-                            if ([value isKindOfClass:MentionParams.class]) {
-                              EnrichedTextPressableRange *mention =
-                                  [[EnrichedTextPressableRange alloc] init];
-                              mention.range = range;
-                              mention.mention = value;
-                              [ranges addObject:mention];
-                            }
-                          }];
+    [textStorage enumerateAttribute:[MentionStyle attributeKey]
+                            inRange:textRange
+                            options:0
+                         usingBlock:^(id value, NSRange range, BOOL *stop) {
+                           if ([value isKindOfClass:MentionParams.class]) {
+                             EnrichedTextPressableRange *mention =
+                                 [[EnrichedTextPressableRange alloc] init];
+                             mention.range = range;
+                             mention.mention = value;
+                             [ranges addObject:mention];
+                           }
+                         }];
   }
 
   [ranges sortUsingComparator:^NSComparisonResult(
@@ -725,7 +663,7 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
   // A scroll starting on a link still scrolls: the press ends as the finger
   // moves
   if ([otherView isKindOfClass:[UIScrollView class]] &&
-      otherView != _textView &&
+      otherView != _content.view &&
       otherGestureRecognizer ==
           ((UIScrollView *)otherView).panGestureRecognizer) {
     return YES;
@@ -733,7 +671,7 @@ Class<RCTComponentViewProtocol> EnrichedTextViewCls(void) {
 
   // Selectable: the text view selects the text held, unless the range has a
   // long press of its own
-  if (otherView == _textView) {
+  if (otherView == _content.view) {
     EnrichedTextPressableRange *range = _pressRecognizer.pressedRange;
     return range == nil || ![self canLongPressRange:range];
   }

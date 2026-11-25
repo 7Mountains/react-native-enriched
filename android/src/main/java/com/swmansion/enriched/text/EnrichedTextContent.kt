@@ -1,6 +1,7 @@
 package com.swmansion.enriched.text
 
 import android.text.Spannable
+import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.SpannedString
@@ -8,7 +9,9 @@ import android.util.Log
 import com.swmansion.enriched.EnrichedHtmlHost
 import com.swmansion.enriched.parser.EnrichedParser
 import com.swmansion.enriched.spans.CustomLineHeightSpan
+import com.swmansion.enriched.spans.EnrichedImageSpan
 import com.swmansion.enriched.spans.interfaces.EnrichedFullWidthSpan
+import com.swmansion.enriched.spans.interfaces.EnrichedHostBoundSpan
 import com.swmansion.enriched.styles.HtmlStyle
 
 /** Builds the text shown by `EnrichedTextView`, the same for the view and its measurement */
@@ -24,7 +27,8 @@ internal object EnrichedTextContent {
 
     if (lineHeightPx <= 0) return content
 
-    val spannable = content as? SpannableStringBuilder ?: SpannableStringBuilder(content)
+    // A plain text isn't edited: not in a builder, with room to grow
+    val spannable = content as? Spannable ?: SpannableString(content)
     spannable.setSpan(CustomLineHeightSpan(lineHeightPx), 0, spannable.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
 
     return spannable
@@ -39,6 +43,13 @@ internal object EnrichedTextContent {
 
   /** Whether the text is laid out for its width: its spans take the width of their host (e.g. the horizontal rule) */
   fun dependsOnWidth(content: CharSequence): Boolean = content.hasSpans(EnrichedFullWidthSpan::class.java)
+
+  /**
+   * Whether views can show the text at once: its spans don't belong to the
+   * view showing them (e.g. the images, redrawn by it once they load)
+   */
+  fun isShareable(content: CharSequence): Boolean =
+    !content.hasSpans(EnrichedImageSpan::class.java) && !content.hasSpans(EnrichedHostBoundSpan::class.java)
 
   private fun CharSequence.hasSpans(type: Class<*>): Boolean = this is Spanned && getSpans(0, length, type).isNotEmpty()
 

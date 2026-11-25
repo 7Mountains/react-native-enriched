@@ -30,11 +30,10 @@ Size EnrichedTextShadowNode::measureContent(
                                       layoutContext.pointScaleFactor,
                                       layoutContext.fontSizeMultiplier);
 
-  auto measurement = measurementsManager_->measure(
-      props, layoutConstraints, isReusable ? built->text : noText);
+  auto measurement =
+      measurementsManager_->measure(props, layoutContext, layoutConstraints,
+                                    isReusable ? built->text : noText);
 
-  measurement.prepared.pointScaleFactor = layoutContext.pointScaleFactor;
-  measurement.prepared.fontSizeMultiplier = layoutContext.fontSizeMultiplier;
   measured_ = std::move(measurement.prepared);
   hasMeasured_ = true;
 

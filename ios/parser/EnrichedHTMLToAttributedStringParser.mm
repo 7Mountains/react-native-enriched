@@ -9,6 +9,7 @@
 #import <libxml/tree.h>
 
 #include <cstring>
+#include <string>
 #include <vector>
 
 @implementation EnrichedHTMLToAttributedStringParser {
@@ -21,6 +22,9 @@
 
   std::vector<StyleContext> _styleContexts;
   std::vector<StyleContext> _paragraphModifierStyleContexts;
+
+  // The collapsed white space of the text nodes
+  std::string _collapsedText;
 }
 
 - (instancetype)initWithStyles:
@@ -175,17 +179,23 @@
   if (!node->content)
     return;
 
+  NSUInteger start = _plain.length;
+
   // After white space, its leading space is left out as it's made: not cut
   // from it after
-  NSString *collapsed = collapsedWhiteSpaceString((const char *)node->content,
-                                                  [self endsWithWhiteSpace]);
-  if (collapsed.length == 0)
+  NSUInteger length =
+      appendCollapsedWhiteSpace(_plain, (const char *)node->content,
+                                [self endsWithWhiteSpace], _collapsedText);
+  if (length == 0)
     return;
 
-  if (_plain.length == 0 && isWhiteSpaceOnly(collapsed))
+  NSRange range = NSMakeRange(start, length);
+  if (start == 0 && isWhiteSpaceOnly(_plain, range)) {
+    [_plain deleteCharactersInRange:range];
     return;
+  }
 
-  [self appendText:collapsed];
+  _styleStack.applyActiveStyles(_styleContexts, range);
 }
 
 - (void)appendText:(NSString *)text {

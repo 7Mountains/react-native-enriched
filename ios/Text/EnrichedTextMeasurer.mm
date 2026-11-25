@@ -3,13 +3,12 @@
 
 @implementation EnrichedTextMeasurer
 
-+ (CGSize)sizeOfText:(NSAttributedString *)text
-      constrainedToWidth:(CGFloat)width
-    maximumNumberOfLines:(NSInteger)maximumNumberOfLines
-           lineBreakMode:(NSLineBreakMode)lineBreakMode {
++ (EnrichedLaidOutText *)layOutText:(NSAttributedString *)text
+                 constrainedToWidth:(CGFloat)width
+               maximumNumberOfLines:(NSInteger)maximumNumberOfLines
+                      lineBreakMode:(NSLineBreakMode)lineBreakMode {
   CGFloat containerWidth = isfinite(width) ? width : CGFLOAT_MAX;
 
-  // Not kept: a layout per text would take memory for the text's lifetime
   NSTextStorage *textStorage =
       [[NSTextStorage alloc] initWithAttributedString:text];
   NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
@@ -26,13 +25,20 @@
 
   CGRect usedRect = [layoutManager usedRectForTextContainer:textContainer];
 
-  // The widest line, as React Native's <Text>: a short text doesn't take the
-  // whole width
   CGFloat textWidth =
       MAX(usedRect.size.width, [self widestLineInLayoutManager:layoutManager
                                                  textContainer:textContainer]);
-  return CGSizeMake(MIN(ceil(textWidth), containerWidth),
-                    ceil(usedRect.size.height));
+  CGSize size = CGSizeMake(MIN(ceil(textWidth), containerWidth),
+                           ceil(usedRect.size.height));
+
+  // Laid out: nothing left for this thread to do with it once it's given to
+  // the view
+  [NSObject cancelPreviousPerformRequestsWithTarget:layoutManager];
+
+  return [[EnrichedLaidOutText alloc] initWithTextStorage:textStorage
+                                            layoutManager:layoutManager
+                                            textContainer:textContainer
+                                                     size:size];
 }
 
 // The lines with the room their paragraphs keep after them (a negative tail

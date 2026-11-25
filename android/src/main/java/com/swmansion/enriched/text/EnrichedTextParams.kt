@@ -5,7 +5,7 @@ import android.graphics.Typeface
 import android.text.TextUtils
 import com.facebook.react.common.ReactConstants
 import com.facebook.react.uimanager.PixelUtil
-import com.facebook.react.views.text.ReactTypefaceUtils
+import com.swmansion.enriched.utils.TypefaceCache
 import kotlin.math.ceil
 
 /** What the layout of the text depends on, the same for the view and its measurement */
@@ -41,7 +41,7 @@ internal data class EnrichedTextParams(
 
   fun hasSameLines(other: EnrichedTextParams): Boolean = numberOfLines == other.numberOfLines && ellipsizeMode == other.ellipsizeMode
 
-  fun typeface(assets: AssetManager): Typeface = ReactTypefaceUtils.applyStyles(null, fontStyle, fontWeight, fontFamily, assets)
+  fun typeface(assets: AssetManager): Typeface = TypefaceCache.get(fontFamily, fontStyle, fontWeight, assets)
 
   private fun toPixels(value: Float): Float = if (allowFontScaling) PixelUtil.toPixelFromSP(value) else PixelUtil.toPixelFromDIP(value)
 

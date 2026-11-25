@@ -1,6 +1,7 @@
 #import "EnrichedTextViewShadowNode.h"
 #import "EnrichedPreparedText.h"
 #import "EnrichedTextBuilder.h"
+#import "EnrichedTextSizeCache.h"
 #import <react/utils/ManagedObjectWrapper.h>
 
 #include <react/renderer/core/LayoutConstraints.h>
@@ -37,6 +38,17 @@ Size EnrichedTextViewShadowNode::measureContent(
     const LayoutContext &layoutContext,
     const LayoutConstraints &layoutConstraints) const {
   const auto &props = getConcreteProps();
+  EnrichedTextMeasureContext context{
+      .layoutConstraints = layoutConstraints,
+      .pointScaleFactor = layoutContext.pointScaleFactor,
+      .fontSizeMultiplier = layoutContext.fontSizeMultiplier,
+  };
+
+  // Measured before, e.g. by another node: neither built nor laid out here
+  if (auto size = EnrichedTextSizeCache().get(props, context)) {
+    return layoutConstraints.clamp(*size);
+  }
+
   auto key = EnrichedTextKey::fromProps(
       std::static_pointer_cast<const EnrichedTextViewProps>(getProps()),
       layoutContext.fontSizeMultiplier);
@@ -44,13 +56,19 @@ Size EnrichedTextViewShadowNode::measureContent(
   EnrichedPreparedText *preparedText =
       (EnrichedPreparedText *)unwrapManagedObject(prepare(key));
 
-  CGSize size = [preparedText
-      sizeConstrainedToWidth:layoutConstraints.maximumSize.width
-        maximumNumberOfLines:props.numberOfLines
-               lineBreakMode:EnrichedNSLineBreakModeFromEllipsizeMode(
-                                 props.ellipsizeMode)];
+  // Its objects released as it ends: not with the whole layout of the tree
+  CGSize measured;
+  @autoreleasepool {
+    measured = [preparedText
+        sizeConstrainedToWidth:layoutConstraints.maximumSize.width
+          maximumNumberOfLines:props.numberOfLines
+                 lineBreakMode:EnrichedNSLineBreakModeFromEllipsizeMode(
+                                   props.ellipsizeMode)];
+  }
 
-  return layoutConstraints.clamp({size.width, size.height});
+  Size size{measured.width, measured.height};
+  EnrichedTextSizeCache().set(props, context, size);
+  return layoutConstraints.clamp(size);
 }
 
 void EnrichedTextViewShadowNode::layout(LayoutContext layoutContext) {

@@ -112,7 +112,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   if (!blockQuote && !unorderedList && !orderedList && !codeBlock && !checkBox)
     return;
 
-  [input.textView.textStorage
+  [self.textStorage
       enumerateAttribute:NSParagraphStyleAttributeName
                  inRange:visibleCharRange
                  options:0
@@ -143,13 +143,13 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   CGFloat radius = [input.config codeBlockBorderRadius];
   [bg setFill];
 
-  NSUInteger textLength = input.textView.textStorage.length;
+  NSUInteger textLength = self.textStorage.length;
 
   NSRange blockRange = NormalizeEmptyParagraph(range, textLength);
 
-  NSArray *paragraphs =
-      [ParagraphsUtils getSeparateParagraphsRangesIn:input.textView
-                                               range:blockRange];
+  NSArray *paragraphs = [ParagraphsUtils
+      getSeparateParagraphsRangesInAttributedString:self.textStorage
+                                              range:blockRange];
 
   for (NSValue *p in paragraphs) {
     NSRange paragraph = NormalizeEmptyParagraph(p.rangeValue, textLength);
@@ -206,7 +206,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   if (!style)
     return;
 
-  NSString *text = input.textView.textStorage.string;
+  NSString *text = self.textStorage.string;
   NSUInteger textLength = text.length;
   CGFloat gap = input.config.blockquoteGapWidth;
   UIFont *font = input.config.primaryFont;
@@ -224,7 +224,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
                         NSRange safeRange =
                             NormalizeEmptyParagraph(paragraphRange, textLength);
 
-                        NSDictionary *attrs = [input.textView.textStorage
+                        NSDictionary *attrs = [self.textStorage
                             attributesAtIndex:safeRange.location
                                effectiveRange:nil];
 
@@ -319,7 +319,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 - (void)drawList:(id<EnrichedStyleHost>)input
           origin:(CGPoint)origin
            range:(NSRange)range {
-  NSTextStorage *textStorage = input.textView.textStorage;
+  NSTextStorage *textStorage = self.textStorage;
   NSUInteger textLength = textStorage.length;
 
   NSDictionary *markerAttributes = @{
@@ -329,9 +329,9 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
 
   CGFloat bulletSize = [input.config unorderedListBulletSize];
 
-  NSArray<NSValue *> *paragraphs =
-      [ParagraphsUtils getSeparateParagraphsRangesIn:input.textView
-                                               range:range];
+  NSArray<NSValue *> *paragraphs = [ParagraphsUtils
+      getSeparateParagraphsRangesInAttributedString:self.textStorage
+                                              range:range];
 
   for (NSValue *paragraph in paragraphs) {
     NSRange paragraphRange = [paragraph rangeValue];
@@ -437,7 +437,7 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
     return @"•";
   }
 
-  NSTextStorage *ts = input.textView.textStorage;
+  NSTextStorage *ts = self.textStorage;
   NSString *text = ts.string;
 
   NSRange currentParagraph =
@@ -489,11 +489,11 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
   if (!style)
     return;
 
-  NSUInteger textLength = input.textView.textStorage.length;
+  NSUInteger textLength = self.textStorage.length;
 
-  NSArray *paragraphs =
-      [ParagraphsUtils getSeparateParagraphsRangesIn:input.textView
-                                               range:range];
+  NSArray *paragraphs = [ParagraphsUtils
+      getSeparateParagraphsRangesInAttributedString:self.textStorage
+                                              range:range];
 
   for (NSValue *p in paragraphs) {
     NSRange paragraph = NormalizeEmptyParagraph(p.rangeValue, textLength);
@@ -501,7 +501,8 @@ static NSRange NormalizeEmptyParagraph(NSRange range, NSUInteger textLength) {
     NSRange glyphRange = [self glyphRangeForCharacterRange:paragraph
                                       actualCharacterRange:nil];
 
-    BOOL checked = [style isCheckedAt:paragraph.location];
+    BOOL checked = [CheckBoxStyle isCheckedAt:paragraph.location
+                                       inText:self.textStorage];
 
     UIImage *img =
         checked ? input.config.checkedImage : input.config.uncheckedImage;
@@ -568,10 +569,12 @@ static BOOL HasCheckedParagraph(NSTextStorage *textStorage, NSRange range) {
     return;
   }
 
-  UITextView *textView = input.textView;
-  NSTextStorage *textStorage = textView.textStorage;
+  // The text of this layout manager: the host shows it in a text view, or
+  // draws it itself (EnrichedTextDrawingView)
+  NSTextStorage *textStorage = self.textStorage;
   NSString *text = textStorage.string;
-  UIColor *fallbackColor = textView.textColor ?: input.config.primaryColor;
+  UIColor *fallbackColor =
+      input.textView.textColor ?: input.config.primaryColor;
   UIFont *font = input.config.primaryFont;
   CGFloat scale = UIScreen.mainScreen.scale;
 
@@ -610,8 +613,9 @@ static BOOL HasCheckedParagraph(NSTextStorage *textStorage, NSRange range) {
 
                                  NSRange paragraph =
                                      [text paragraphRangeForRange:charRange];
-                                 BOOL checked =
-                                     [style isCheckedAt:paragraph.location];
+                                 BOOL checked = [CheckBoxStyle
+                                     isCheckedAt:paragraph.location
+                                          inText:self.textStorage];
 
                                  if (!checked) {
                                    [self

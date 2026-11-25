@@ -363,13 +363,16 @@ static NSArray<NSTextList *> *const UncheckedLists =
 #pragma mark - Check State
 
 - (BOOL)isCheckedAt:(NSUInteger)location {
-  if (location >= _host.textView.textStorage.length)
+  return [CheckBoxStyle isCheckedAt:location inText:_host.textView.textStorage];
+}
+
++ (BOOL)isCheckedAt:(NSUInteger)location inText:(NSAttributedString *)text {
+  if (location >= text.length)
     return NO;
 
-  NSParagraphStyle *p =
-      [_host.textView.textStorage attribute:NSParagraphStyleAttributeName
-                                    atIndex:location
-                             effectiveRange:NULL];
+  NSParagraphStyle *p = [text attribute:NSParagraphStyleAttributeName
+                                atIndex:location
+                         effectiveRange:NULL];
 
   if (!p || p.textLists.count == 0)
     return NO;

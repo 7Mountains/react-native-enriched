@@ -1,6 +1,6 @@
 #import "EnrichedHTMLToAttributedStringParserUtils.h"
 #import "BaseStyleProtocol.h"
-#include <vector>
+#include <string>
 
 NSDictionary<NSString *, NSString *> *
 HTMLAttributesFromNodeAndParents(xmlNodePtr node) {
@@ -132,9 +132,11 @@ static inline BOOL isNoBreakSpace(const unsigned char *c) {
   return c[0] == 0xC2 && c[1] == 0xA0;
 }
 
-NSString *_Nullable collapsedWhiteSpaceString(const char *utf8,
-                                              BOOL dropsLeadingSpace) {
+NSUInteger appendCollapsedWhiteSpace(NSMutableString *text, const char *utf8,
+                                     BOOL dropsLeadingSpace,
+                                     std::string &buffer) {
   const unsigned char *src = (const unsigned char *)utf8;
+  NSUInteger lengthBefore = text.length;
 
   BOOL needsCollapse = NO;
   BOOL lastWasSpace = NO;
@@ -153,12 +155,16 @@ NSString *_Nullable collapsedWhiteSpaceString(const char *utf8,
     }
   }
 
-  if (!needsCollapse)
-    return [NSString stringWithUTF8String:dropsLeadingSpace && src[0] == ' '
-                                              ? utf8 + 1
-                                              : utf8];
+  // Decoded into the text: no string made for it
+  if (!needsCollapse) {
+    CFStringAppendCString((__bridge CFMutableStringRef)text,
+                          dropsLeadingSpace && src[0] == ' ' ? utf8 + 1 : utf8,
+                          kCFStringEncodingUTF8);
+    return text.length - lengthBefore;
+  }
 
-  std::vector<char> out(len + 1);
+  buffer.resize(len + 1);
+  char *out = buffer.data();
   size_t o = 0;
   lastWasSpace = NO;
   for (size_t i = 0; i < len; i++) {
@@ -182,12 +188,14 @@ NSString *_Nullable collapsedWhiteSpaceString(const char *utf8,
   }
   out[o] = '\0';
 
-  return [NSString stringWithUTF8String:out.data()];
+  CFStringAppendCString((__bridge CFMutableStringRef)text, out,
+                        kCFStringEncodingUTF8);
+  return text.length - lengthBefore;
 }
 
-BOOL isWhiteSpaceOnly(NSString *text) {
+BOOL isWhiteSpaceOnly(NSString *text, NSRange range) {
   NSCharacterSet *ws = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-  for (NSUInteger i = 0; i < text.length; i++) {
+  for (NSUInteger i = range.location; i < NSMaxRange(range); i++) {
     if (![ws characterIsMember:[text characterAtIndex:i]]) {
       return NO;
     }

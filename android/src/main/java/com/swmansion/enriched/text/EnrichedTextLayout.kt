@@ -28,11 +28,19 @@ internal object EnrichedTextLayout {
     view.setLineSpacing(0f, 1f)
   }
 
-  fun createPaint(
+  private val defaultPaint = ThreadLocal.withInitial { TextPaint(Paint.ANTI_ALIAS_FLAG) }
+  private val measurementPaint = ThreadLocal.withInitial { TextPaint() }
+
+  /**
+   * The paint of a measurement on this thread, as a new one: valid until the
+   * next measurement on it. Not kept by the layout, which is only measured
+   */
+  fun obtainPaint(
     params: EnrichedTextParams,
     typeface: android.graphics.Typeface,
   ): TextPaint =
-    TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    measurementPaint.get()!!.apply {
+      set(defaultPaint.get()!!)
       this.typeface = typeface
       textSize = params.fontSizePx
     }
